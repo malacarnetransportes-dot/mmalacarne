@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M-Malacarne Transporte & Logística</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #8B7355;
+            --secondary: #2d2d2d;
+            --accent: #d4af37;
+            --light: #f8f9fa;
+            --dark: #1a1a1a;
+            --text: #2d3748;
+            --text-light: #718096;
+            --premium-dark: #1e2a3a;
+            --success: #38a169;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Header Premium */
+        header {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            padding: 0.8rem 5%;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 30px rgba(0,0,0,0.08);
+            border-bottom: 1px solid rgba(139, 115, 85, 0.1);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-img {
+            height: 50px;
+            width: auto;
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.1;
+        }
+
+        .logo-main {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+        }
+
+        .logo-sub {
+            font-size: 0.65rem;
+            font-weight: 500;
+            color: var(--text-light);
+            letter-spacing: 1.2px;
+            margin-top: 1px;
+            text-transform: uppercase;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--accent);
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        /* Hero Section Compacta */
+        .hero {
+            height: 60vh;
+            background: linear-gradient(135deg, rgba(30, 42, 58, 0.9) 0%, rgba(26, 32, 44, 0.9) 100%), 
+                        url('IMG-20220924-WA0022 (1).jpg');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            margin-top: 70px;
+            padding: 0 5%;
+        }
+
+        .hero-content h1 {
+            font-size: 2.2rem;
+            margin-bottom: 1rem;
+            animation: fadeInUp 1s ease;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .hero-content p {
+            font-size: 1rem;
+            margin-bottom: 2rem;
+            animation: fadeInUp 1s ease 0.3s both;
+            opacity: 0.9;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-button {
+            background: linear-gradient(135deg, var(--accent) 0%, #b8941f 100%);
+            color: var(--dark);
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            animation: fadeInUp 1s ease 0.6s both;
+            text-decoration: none;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
+        }
+
+        /* Stats Section Compacta */
+        .stats {
+            background: var(--light);
+            padding: 2.5rem 5%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.5rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            transition: transform 0.3s;
+            border: 1px solid rgba(139, 115, 85, 0.1);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        /* Values Section Compacta */
+        .values {
+            padding: 3rem 5%;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: var(--premium-dark);
+            font-weight: 700;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 0.9rem;
+            margin-bottom: 2.5rem;
+            color: var(--text-light);
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .values-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .value-card {
+            background: white;
+            padding: 1.8rem;
+            border-radius: 10px;
+            color: var(--text);
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            border: 1px solid rgba(139, 115, 85, 0.1);
+            text-align: center;
+        }
+
+        .value-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .value-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--accent);
+        }
+
+        .value-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--premium-dark);
+        }
+
+        .value-card p {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        /* Gallery Section Compacta */
+        .gallery {
+            padding: 3rem 5%;
+            background: var(--light);
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.2rem;
+            max-width: 1000px;
+            margin: 2rem auto 0;
+        }
+
+        .gallery-item {
+            height: 220px;
+            background: var(--dark);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.05);
+        }
+
+        .gallery-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(30, 42, 58, 0.9));
+            padding: 1.2rem;
+            color: white;
+            transform: translateY(100%);
+            transition: transform 0.3s;
+        }
+
+        .gallery-item:hover .gallery-overlay {
+            transform: translateY(0);
+        }
+
+        .gallery-overlay h3 {
+            font-size: 1rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .gallery-overlay p {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+
+        /* Jobs Section */
+        .jobs {
+            padding: 4rem 5%;
+            background: linear-gradient(135deg, var(--premium-dark) 0%, #2d3748 100%);
+            color: white;
+        }
+
+        .jobs-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .job-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            color: var(--text);
+            margin-top: 2rem;
+        }
+
+        .job-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 1.5rem;
+        }
+
+        .job-title {
+            font-size: 2rem;
+            color: var(--premium-dark);
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .job-subtitle {
+            font-size: 1.1rem;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .job-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .job-benefits, .job-requirements {
+            background: var(--light);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .job-benefits h3, .job-requirements h3 {
+            color: var(--premium-dark);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .benefits-list, .requirements-list {
+            list-style: none;
+        }
+
+        .benefits-list li, .requirements-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .benefits-list li:before {
+            content: "✅";
+            font-size: 0.9rem;
+        }
+
+        .requirements-list li:before {
+            content: "✔️";
+            font-size: 0.9rem;
+            color: var(--success);
+        }
+
+        .job-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .apply-button {
+            background: linear-gradient(135deg, var(--success) 0%, #2f855a 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .apply-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(56, 161, 105, 0.4);
+        }
+
+        .whatsapp-button {
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .whatsapp-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(37, 211, 102, 0.4);
+        }
+
+        /* Contact Section Premium */
+        .contact {
+            padding: 3rem 5%;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2.5rem;
+            margin-top: 2rem;
+        }
+
+        .contact-info {
+            background: var(--premium-dark);
+            padding: 2.2rem;
+            border-radius: 10px;
+            color: white;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+
+        .contact-info h3 {
+            color: var(--accent);
+            margin-bottom: 1.2rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .contact-item {
+            margin-bottom: 1.2rem;
+            line-height: 1.6;
+            font-size: 0.85rem;
+        }
+
+        .contact-item strong {
+            color: var(--accent);
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+
+        .map-container {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            height: 100%;
+        }
+
+        .map-container iframe {
+            width: 100%;
+            height: 100%;
+            min-height: 300px;
+        }
+
+        .careers-button {
+            background: var(--accent);
+            color: var(--dark);
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 1rem;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .careers-button:hover {
+            background: #b8941f;
+            transform: translateY(-2px);
+        }
+
+        /* WhatsApp Float Button */
+        .whatsapp-float {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .whatsapp-button-float {
+            background: #25D366;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+        }
+
+        .whatsapp-button-float:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
+        }
+
+        /* Footer Compacto */
+        footer {
+            background: var(--premium-dark);
+            color: white;
+            text-align: center;
+            padding: 2rem 5%;
+        }
+
+        .footer-logo {
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .footer-img {
+            height: 40px;
+            width: auto;
+        }
+
+        .footer-text {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            line-height: 1.1;
+        }
+
+        .footer-main {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .footer-sub {
+            font-size: 0.65rem;
+            color: #a0aec0;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+        }
+
+        footer p {
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.8;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Mobile Menu */
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--text);
+        }
+
+        @media (max-width: 768px) {
+            .hero {
+                height: 50vh;
+                margin-top: 60px;
+            }
+            
+            .hero-content h1 {
+                font-size: 1.8rem;
+            }
+            
+            .contact-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background: white;
+                flex-direction: column;
+                padding: 1rem;
+                box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+                gap: 0;
+            }
+            
+            .nav-links.active {
+                display: flex;
+            }
+            
+            .nav-links li {
+                margin: 0.5rem 0;
+            }
+            
+            .menu-toggle {
+                display: block;
+            }
+
+            .logo {
+                gap: 0.7rem;
+            }
+
+            .logo-img {
+                height: 40px;
+            }
+
+            .logo-main {
+                font-size: 1.3rem;
+            }
+
+            .logo-sub {
+                font-size: 0.55rem;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+                padding: 2rem 5%;
+            }
+
+            .values-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .gallery-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section-title {
+                font-size: 1.6rem;
+            }
+
+            .job-content {
+                grid-template-columns: 1fr;
+            }
+
+            .job-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .apply-button, .whatsapp-button {
+                width: 100%;
+                text-align: center;
+                justify-content: center;
+            }
+
+            .footer-logo {
+                flex-direction: column;
+                gap: 0.5rem;
+                text-align: center;
+            }
+
+            .footer-text {
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- WhatsApp Float Button -->
+    <div class="whatsapp-float">
+        <a href="https://wa.me/5549999675448" target="_blank" class="whatsapp-button-float">
+            📱 WhatsApp
+        </a>
+    </div>
+
+    <header>
+        <nav>
+            <div class="logo">
+                <img src="Screenshot_2.jpg" alt="M-Malacarne Transporte & Logística" class="logo-img">
+                <div class="logo-text">
+                    <div class="logo-main">M-MALACARNE</div>
+                    <div class="logo-sub">TRANSPORTE & LOGISTICA</div>
+                </div>
+            </div>
+            <button class="menu-toggle">☰</button>
+            <ul class="nav-links">
+                <li><a href="#home">Início</a></li>
+                <li><a href="#sobre">Sobre</a></li>
+                <li><a href="#valores">Valores</a></li>
+                <li><a href="#infraestrutura">Infraestrutura</a></li>
+                <li><a href="#vagas">Vagas</a></li>
+                <li><a href="#contato">Contato</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h1>40 Anos Movendo o Brasil</h1>
+            <p>Excelência em Transporte e Logística desde 1982</p>
+            <a href="#vagas" class="cta-button">Ver Vagas</a>
+        </div>
+    </section>
+
+    <section class="stats">
+        <div class="stat-card">
+            <div class="stat-number">40+</div>
+            <div class="stat-label">Anos de Tradição</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">100%</div>
+            <div class="stat-label">Frota Frigorífica</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">BRF</div>
+            <div class="stat-label">Parceiro Exclusivo</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">SC</div>
+            <div class="stat-label">Concórdia - SC</div>
+        </div>
+    </section>
+
+    <section id="sobre" class="values">
+        <h2 class="section-title">Nossa História</h2>
+        <p class="section-subtitle">Mais de quatro décadas de excelência no transporte rodoviário</p>
+        <div style="max-width: 700px; margin: 0 auto; line-height: 1.7; text-align: center;">
+            <p style="margin-bottom: 1.2rem;">
+                Criada em <strong>1982</strong>, a M-Malacarne Transportes e Logística surge para reforçar o segmento de transporte rodoviário de cargas. Há 40 anos, o Sr. Maximino integra como sócio proprietário com 2 veículos frigoríficos, sendo que era o motorista de um dos caminhões.
+            </p>
+            <p>
+                Com grande experiência de motorista, o Sr. Maximino sempre trabalhou carregando exclusivamente produtos Frigorificados da marca SADIA, hoje <strong>BRF</strong>, mesma empresa que possui até hoje com a mesma exclusividade, visando agregar forças de gestão para conseguir melhores resultados.
+            </p>
+        </div>
+    </section>
+
+    <section id="valores" class="values" style="background: var(--light);">
+        <h2 class="section-title">Nossos Pilares</h2>
+        <p class="section-subtitle">Os fundamentos que guiam nossa operação há 40 anos</p>
+        <div class="values-grid">
+            <div class="value-card">
+                <div class="value-icon">🎯</div>
+                <h3>Visão</h3>
+                <p>Ser reconhecida pela excelência em transportes e logística para atendimentos às demandas da cadeia de suprimentos</p>
+            </div>
+            <div class="value-card">
+                <div class="value-icon">🚛</div>
+                <h3>Missão</h3>
+                <p>Oferecer e integrar soluções logísticas em toda cadeia de suprimentos no Brasil com simplicidade, qualidade e efetividade</p>
+            </div>
+            <div class="value-card">
+                <div class="value-icon">⭐</div>
+                <h3>Valores</h3>
+                <p>Simplicidade e Efetividade • Reconhecimento Humano • Honra ao Trabalho</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="infraestrutura" class="gallery">
+        <h2 class="section-title">Nossa Infraestrutura</h2>
+        <p class="section-subtitle">Frota especializada e tecnologia de ponta para melhor atendimento</p>
+        <div class="gallery-grid">
+            <div class="gallery-item">
+                <img src="IMG-20220924-WA0022 (1).jpg" alt="Frota M-Malacarne">
+                <div class="gallery-overlay">
+                    <h3>Frota Especializada</h3>
+                    <p>Veículos frigoríficos de última geração</p>
+                </div>
+            </div>
+            <div class="gallery-item">
+                <img src="img87.jpg" alt="Instalações M-Malacarne">
+                <div class="gallery-overlay">
+                    <h3>Galpão Moderno</h3>
+                    <p>Estrutura completa com energia solar</p>
+                </div>
+            </div>
+            <div class="gallery-item">
+                <img src="2.jpg" alt="Logística M-Malacarne">
+                <div class="gallery-overlay">
+                    <h3>Logística Eficiente</h3>
+                    <p>Armazenamento e distribuição estratégica</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="vagas" class="jobs">
+        <div class="jobs-container">
+            <h2 class="section-title" style="color: white;">Trabalhe Conosco</h2>
+            <p class="section-subtitle" style="color: rgba(255,255,255,0.8);">Junte-se à nossa equipe de profissionais</p>
+            
+            <div class="job-card">
+                <div class="job-header">
+                    <h3 class="job-title">Motorista de Carreta</h3>
+                    <p class="job-subtitle">Vaga disponível - Contratação imediata</p>
+                </div>
+                
+                <div class="job-content">
+                    <div class="job-benefits">
+                        <h3>📊 Benefícios</h3>
+                        <ul class="benefits-list">
+                            <li>Salário competitivo</li>
+                            <li>Bônus por média de desempenho</li>
+                            <li>Férias remuneradas</li>
+                            <li>Oportunidade de crescimento</li>
+                            <li>Ambiente de trabalho familiar</li>
+                            <li>Estabilidade de 40 anos no mercado</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="job-requirements">
+                        <h3>✅ Pré-requisitos</h3>
+                        <ul class="requirements-list">
+                            <li>Experiência comprovada na função</li>
+                            <li>CNH Categoria E</li>
+                            <li>Conhecimento de rotas Sul/Sudeste/Sudoeste</li>
+                            <li>Conhecimento em carreta frigorífica</li>
+                            <li>Documentação em dia</li>
+                            <li>Disponibilidade para viagens</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="job-actions">
+                    <a href="https://docs.google.com/forms/d/1AbknS9cnRL9M_kPLYkaqRorpsFFodZdgJps36zhJ_ms/viewform?edit_requested=true" 
+                       target="_blank" class="apply-button">
+                        📝 Candidate-se Online
+                    </a>
+                    <a href="https://wa.me/5549999675448?text=Olá! Tenho interesse na vaga de Motorista de Carreta e gostaria de enviar meu currículo." 
+                       target="_blank" class="whatsapp-button">
+                        📱 Enviar Currículo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contato" class="contact">
+        <h2 class="section-title">Entre em Contato</h2>
+        <p class="section-subtitle">Estamos prontos para atender suas necessidades logísticas</p>
+        <div class="contact-grid">
+            <div class="contact-info">
+                <h3>📍 Localização</h3>
+                <div class="contact-item">
+                    <strong>Endereço:</strong>
+                    Rua Domingos Casagrande, 25<br>
+                    Bairro Arvoredo<br>
+                    CEP: 89701-450<br>
+                    Concórdia - Santa Catarina
+                </div>
+                
+                <h3>📞 Contato</h3>
+                <div class="contact-item">
+                    <strong>Telefone:</strong> (49) 3442-2325<br>
+                    <strong>WhatsApp:</strong> (49) 99967-5448
+                </div>
+                
+                <h3>✉️ E-mail</h3>
+                <div class="contact-item">
+                    financeirommalacarne@gmail.com<br>
+                    dmalacarne@netcon.com.br
+                </div>
+
+                <h3>💼 Trabalhe Conosco</h3>
+                <a href="#vagas" class="careers-button">Ver Vagas Disponíveis</a>
+            </div>
+
+            <div class="map-container">
+                <iframe 
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3535.234!2d-52.027!3d-27.234!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjfCsDE4JzAyLjQiUyA1MsKwMDEnMzcuMiJX!5e0!3m2!1spt-BR!2sbr!4v1234567890"
+                    width="100%" 
+                    height="100%" 
+                    style="border:0;" 
+                    allowfullscreen="" 
+                    loading="lazy">
+                </iframe>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-logo">
+            <img src="Screenshot_2.jpg" alt="M-Malacarne Transporte & Logística" class="footer-img">
+            <div class="footer-text">
+                <div class="footer-main">M-MALACARNE</div>
+                <div class="footer-sub">TRANSPORTE & LOGISTICA</div>
+            </div>
+        </div>
+        <p>CNPJ: 76.344.936/0001-00</p>
+        <p>© 2025 M-Malacarne Transporte e Logística Ltda EPP. Todos os direitos reservados.</p>
+        <p style="color: var(--accent); margin-top: 0.5rem;">40 anos de excelência e tradição no transporte rodoviário</p>
+    </footer>
+
+    <script>
+        // Menu Mobile Toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuToggle = document.querySelector('.menu-toggle');
+            const navLinks = document.querySelector('.nav-links');
+            
+            menuToggle.addEventListener('click', function() {
+                navLinks.classList.toggle('active');
+            });
+            
+            // Fechar menu ao clicar em um link
+            document.querySelectorAll('.nav-links a').forEach(link => {
+                link.addEventListener('click', () => {
+                    navLinks.classList.remove('active');
+                });
+            });
+
+            // Smooth scroll para links internos
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
