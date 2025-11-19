@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>M-Malacarne Transporte & Logística</title>
+    <meta name="description" content="M-Malacarne Transporte & Logística - 40 anos de excelência em transporte rodoviário. Frota 100% frigorífica, parceira exclusiva da BRF.">
+    <meta name="keywords" content="transporte, logística, caminhão, frigorífico, BRF, Concórdia, Santa Catarina, vagas motorista">
+    <meta name="author" content="M-Malacarne Transporte & Logística">
     <style>
         * {
             margin: 0;
@@ -23,8 +26,10 @@
             --success: #38a169;
         }
 
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
         body {
-            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             color: var(--text);
             overflow-x: hidden;
             line-height: 1.6;
@@ -760,13 +765,14 @@
                     <div class="logo-sub">TRANSPORTE & LOGISTICA</div>
                 </div>
             </div>
-            <button class="menu-toggle">☰</button>
+            <button class="menu-toggle" aria-label="Abrir menu" aria-expanded="false">☰</button>
             <ul class="nav-links">
                 <li><a href="#home">Início</a></li>
                 <li><a href="#sobre">Sobre</a></li>
                 <li><a href="#valores">Valores</a></li>
                 <li><a href="#infraestrutura">Infraestrutura</a></li>
                 <li><a href="#vagas">Vagas</a></li>
+                <li><a href="login.html">iStudio</a></li>
                 <li><a href="#contato">Contato</a></li>
             </ul>
         </nav>
@@ -839,21 +845,21 @@
         <p class="section-subtitle">Frota especializada e tecnologia de ponta para melhor atendimento</p>
         <div class="gallery-grid">
             <div class="gallery-item">
-                <img src="IMG-20220924-WA0022 (1).jpg" alt="Frota M-Malacarne">
+                <img src="IMG-20220924-WA0022 (1).jpg" alt="Frota M-Malacarne" loading="lazy">
                 <div class="gallery-overlay">
                     <h3>Frota Especializada</h3>
                     <p>Veículos frigoríficos de última geração</p>
                 </div>
             </div>
             <div class="gallery-item">
-                <img src="img87.jpg" alt="Instalações M-Malacarne">
+                <img src="img87.jpg" alt="Instalações M-Malacarne" loading="lazy">
                 <div class="gallery-overlay">
                     <h3>Galpão Moderno</h3>
                     <p>Estrutura completa com energia solar</p>
                 </div>
             </div>
             <div class="gallery-item">
-                <img src="2.jpg" alt="Logística M-Malacarne">
+                <img src="2.jpg" alt="Logística M-Malacarne" loading="lazy">
                 <div class="gallery-overlay">
                     <h3>Logística Eficiente</h3>
                     <p>Armazenamento e distribuição estratégica</p>
@@ -945,12 +951,13 @@
 
             <div class="map-container">
                 <iframe 
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3535.234!2d-52.027!3d-27.234!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjfCsDE4JzAyLjQiUyA1MsKwMDEnMzcuMiJX!5e0!3m2!1spt-BR!2sbr!4v1234567890"
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3535.234!2d-52.027!3d-27.234!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94e0f82b6347e36f%3A0x3b9d7d2e2541c0e5!2sRua%20Domingos%20Casagrande%2C%2025%20-%20Arvoredo%2C%20Conc%C3%B3rdia%20-%20SC%2C%2089701-450!5e0!3m2!1spt-BR!2sbr!4v1640000000000!5m2!1spt-BR!2sbr"
                     width="100%" 
                     height="100%" 
                     style="border:0;" 
                     allowfullscreen="" 
-                    loading="lazy">
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade">
                 </iframe>
             </div>
         </div>
@@ -976,14 +983,27 @@
             const navLinks = document.querySelector('.nav-links');
             
             menuToggle.addEventListener('click', function() {
-                navLinks.classList.toggle('active');
+                const isExpanded = navLinks.classList.toggle('active');
+                menuToggle.textContent = isExpanded ? '✕' : '☰';
+                menuToggle.setAttribute('aria-expanded', isExpanded);
             });
             
             // Fechar menu ao clicar em um link
             document.querySelectorAll('.nav-links a').forEach(link => {
                 link.addEventListener('click', () => {
                     navLinks.classList.remove('active');
+                    menuToggle.textContent = '☰';
+                    menuToggle.setAttribute('aria-expanded', 'false');
                 });
+            });
+
+            // Fechar menu ao clicar fora
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('nav')) {
+                    navLinks.classList.remove('active');
+                    menuToggle.textContent = '☰';
+                    menuToggle.setAttribute('aria-expanded', 'false');
+                }
             });
 
             // Smooth scroll para links internos
