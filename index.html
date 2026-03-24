@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>M-Malacarne Transporte & Logística</title>
     <style>
+        /* (todo o CSS permanece igual ao anterior) */
         * {
             margin: 0;
             padding: 0;
@@ -30,7 +31,6 @@
             line-height: 1.6;
         }
 
-        /* Header Premium */
         header {
             background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(20px);
@@ -118,7 +118,6 @@
             color: var(--primary);
         }
 
-        /* Hero Section Compacta */
         .hero {
             height: 60vh;
             background: linear-gradient(135deg, rgba(30, 42, 58, 0.9) 0%, rgba(26, 32, 44, 0.9) 100%), 
@@ -173,7 +172,6 @@
             box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
         }
 
-        /* Stats Section Compacta */
         .stats {
             background: var(--light);
             padding: 2.5rem 5%;
@@ -211,7 +209,6 @@
             font-weight: 500;
         }
 
-        /* Values Section Compacta */
         .values {
             padding: 3rem 5%;
             max-width: 1000px;
@@ -276,7 +273,6 @@
             line-height: 1.6;
         }
 
-        /* Gallery Section Compacta */
         .gallery {
             padding: 3rem 5%;
             background: var(--light);
@@ -343,7 +339,104 @@
             opacity: 0.9;
         }
 
-        /* Seção Calculadora ANTT */
+        /* Seção Preços de Combustíveis */
+        .fuels-section {
+            padding: 3rem 5%;
+            background: #ffffff;
+            border-top: 1px solid rgba(139,115,85,0.15);
+            border-bottom: 1px solid rgba(139,115,85,0.15);
+        }
+
+        .stations-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .stations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.8rem;
+            margin-top: 2rem;
+        }
+
+        .state-group {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            overflow: hidden;
+            border: 1px solid rgba(139,115,85,0.2);
+        }
+
+        .state-header {
+            background: var(--premium-dark);
+            color: white;
+            padding: 1rem 1.5rem;
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .station-list {
+            padding: 1.2rem;
+        }
+
+        .station-item {
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 0;
+        }
+
+        .station-item:last-child {
+            border-bottom: none;
+        }
+
+        .station-name {
+            font-weight: 700;
+            color: var(--premium-dark);
+            font-size: 1rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .station-address {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .station-links {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+
+        .price-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.7rem;
+            background: var(--light);
+            padding: 0.25rem 0.7rem;
+            border-radius: 20px;
+            text-decoration: none;
+            color: var(--primary);
+            transition: all 0.2s;
+        }
+
+        .price-link:hover {
+            background: var(--accent);
+            color: var(--dark);
+        }
+
+        .info-note {
+            background: #fef9e6;
+            border-left: 4px solid var(--accent);
+            padding: 1rem;
+            margin-top: 2rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
         .freight-calculator-section {
             padding: 3rem 5%;
             background: #ffffff;
@@ -416,7 +509,6 @@
             color: #6c757d;
         }
 
-        /* Jobs Section */
         .jobs {
             padding: 4rem 5%;
             background: linear-gradient(135deg, var(--premium-dark) 0%, #2d3748 100%);
@@ -545,7 +637,6 @@
             box-shadow: 0 8px 25px rgba(37, 211, 102, 0.4);
         }
 
-        /* Contact Section Premium */
         .contact {
             padding: 3rem 5%;
             max-width: 1000px;
@@ -619,7 +710,6 @@
             transform: translateY(-2px);
         }
 
-        /* WhatsApp Float Button */
         .whatsapp-float {
             position: fixed;
             bottom: 20px;
@@ -647,7 +737,6 @@
             box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
         }
 
-        /* Footer Compacto */
         footer {
             background: var(--premium-dark);
             color: white;
@@ -705,7 +794,6 @@
             }
         }
 
-        /* Mobile Menu */
         .menu-toggle {
             display: none;
             background: none;
@@ -720,16 +808,13 @@
                 height: 50vh;
                 margin-top: 60px;
             }
-            
             .hero-content h1 {
                 font-size: 1.8rem;
             }
-            
             .contact-grid {
                 grid-template-columns: 1fr;
                 gap: 2rem;
             }
-            
             .nav-links {
                 display: none;
                 position: absolute;
@@ -742,82 +827,68 @@
                 box-shadow: 0 5px 10px rgba(0,0,0,0.1);
                 gap: 0;
             }
-            
             .nav-links.active {
                 display: flex;
             }
-            
             .nav-links li {
                 margin: 0.5rem 0;
             }
-            
             .menu-toggle {
                 display: block;
             }
-
             .logo {
                 gap: 0.7rem;
             }
-
             .logo-img {
                 height: 40px;
             }
-
             .logo-main {
                 font-size: 1.3rem;
             }
-
             .logo-sub {
                 font-size: 0.55rem;
             }
-
             .stats {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 1rem;
                 padding: 2rem 5%;
             }
-
             .values-grid {
                 grid-template-columns: 1fr;
             }
-
             .gallery-grid {
                 grid-template-columns: 1fr;
             }
-
             .section-title {
                 font-size: 1.6rem;
             }
-
             .job-content {
                 grid-template-columns: 1fr;
             }
-
             .job-actions {
                 flex-direction: column;
                 align-items: center;
             }
-
             .apply-button, .whatsapp-button {
                 width: 100%;
                 text-align: center;
                 justify-content: center;
             }
-
             .footer-logo {
                 flex-direction: column;
                 gap: 0.5rem;
                 text-align: center;
             }
-
             .footer-text {
                 align-items: center;
+            }
+            .stations-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
-    <!-- WhatsApp Float Button -->
     <div class="whatsapp-float">
         <a href="https://wa.me/5549999675448" target="_blank" class="whatsapp-button-float">
             📱 WhatsApp
@@ -839,6 +910,7 @@
                 <li><a href="#sobre">Sobre</a></li>
                 <li><a href="#valores">Valores</a></li>
                 <li><a href="#infraestrutura">Infraestrutura</a></li>
+                <li><a href="#precos">Preços Combustível</a></li>
                 <li><a href="#calculadora-antt">Calculadora ANTT</a></li>
                 <li><a href="#vagas">Vagas</a></li>
                 <li><a href="#contato">Contato</a></li>
@@ -936,7 +1008,216 @@
         </div>
     </section>
 
-    <!-- CALCULADORA ANTT - ABRE EM NOVA ABA (SITE OFICIAL) -->
+    <!-- NOVA SEÇÃO: PREÇOS DE COMBUSTÍVEIS -->
+    <section id="precos" class="fuels-section">
+        <div class="stations-container">
+            <h2 class="section-title">⛽ Preços de Combustíveis</h2>
+            <p class="section-subtitle">Postos de referência para nossa frota e motoristas parceiros</p>
+
+            <div class="stations-grid">
+                <!-- Santa Catarina -->
+                <div class="state-group">
+                    <div class="state-header">📍 Santa Catarina (SC)</div>
+                    <div class="station-list">
+                        <div class="station-item">
+                            <div class="station-name">Edemar Russi e Cia Ltda - Matriz</div>
+                            <div class="station-address">ROD BR 470, 3515 - SALTO PILÃO - CEP 89.182-000 - Lontras - SC<br>📞 (047) 3523-0766</div>
+                            <div class="station-links">
+                                <a href="https://www.google.com/maps/search/ROD+BR+470,+3515+Lontras+SC" target="_blank" class="price-link">🗺️ Ver no Mapa</a>
+                                <a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a>
+                            </div>
+                        </div>
+                        <div class="station-item">
+                            <div class="station-name">Posto Colpani & Bottega LTDA</div>
+                            <div class="station-address">Rua Monge João Maria, 704 – Alto Irani - Irani - SC</div>
+                            <div class="station-links">
+                                <a href="https://www.google.com/maps/search/Rua+Monge+João+Maria,+704+Irani+SC" target="_blank" class="price-link">🗺️ Ver no Mapa</a>
+                                <a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a>
+                            </div>
+                        </div>
+                        <div class="station-item">
+                            <div class="station-name">Auto Posto Contorno LTDA</div>
+                            <div class="station-address">Rod. Caetano Chiuchetta, 6601 – Contorno Norte - Concórdia - SC</div>
+                            <div class="station-links">
+                                <a href="https://www.google.com/maps/search/Rod.+Caetano+Chiuchetta,+6601+Concórdia+SC" target="_blank" class="price-link">🗺️ Ver no Mapa</a>
+                                <a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a>
+                            </div>
+                        </div>
+                        <div class="station-item">
+                            <div class="station-name">Auto Posto Norte Sul LTDA</div>
+                            <div class="station-address">Rod. BR-116 – Passo Ruim - Papanduva - SC</div>
+                            <div class="station-links">
+                                <a href="https://www.google.com/maps/search/BR-116+Passo+Ruim+Papanduva+SC" target="_blank" class="price-link">🗺️ Ver no Mapa</a>
+                                <a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Paraná -->
+                <div class="state-group">
+                    <div class="state-header">📍 Paraná (PR)</div>
+                    <div class="station-list">
+                        <div class="station-item">
+                            <div class="station-name">Auto Posto Túlio RBO (Graal)</div>
+                            <div class="station-address">Rod. BR-116, Km 52 – Rio Bonito - Campina Grande do Sul - PR</div>
+                            <div class="station-links">
+                                <a href="https://www.google.com/maps/search/BR-116,+Km+52+Rio+Bonito+Campina+Grande+do+Sul+PR" target="_blank" class="price-link">🗺️ Ver no Mapa</a>
+                                <a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a>
+                            </div>
+                        </div>
+                        <div class="station-item">
+                            <div class="station-name">Auto Posto Túlio CTA (Graal)</div>
+                            <div class="station-address">Rod. BR-116, Km 68 – Caraguatá - Campina Grande do Sul - PR</div>
+                            <div class="station-links">
+                                <a href="https://www.google.com/maps/search/BR-116,+Km+68+Caraguatá+Campina+Grande+do+Sul+PR" target="_blank" class="price-link">🗺️ Ver no Mapa</a>
+                                <a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a>
+                            </div>
+                        </div>
+                        <div class="station-item">
+                            <div class="station-name">Auto Posto Costa Brava (Graal)</div>
+                            <div class="station-address">Rod. Régis Bittencourt, Km 67 – Palmitalzinho - Quatro Barras - PR</div>
+                            <div class="station-links">
+                                <a href="https://www.google.com/maps/search/Rod.+Régis+Bittencourt,+Km+67+Quatro+Barras+PR" target="_blank" class="price-link">🗺️ Ver no Mapa</a>
+                                <a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a>
+                            </div>
+                        </div>
+                        <div class="station-item">
+                            <div class="station-name">Postos Pelanda</div>
+                            <div class="station-address">Rod. PR-151, Km 216,7 – Zona Rural - Jaguariaíva - PR</div>
+                            <div class="station-links">
+                                <a href="https://www.google.com/maps/search/PR-151,+Km+216,7+Jaguariaíva+PR" target="_blank" class="price-link">🗺️ Ver no Mapa</a>
+                                <a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a>
+                            </div>
+                        </div>
+                        <div class="station-item">
+                            <div class="station-name">Posto Carretão (Auto Posto Ipiranga LTDA)</div>
+                            <div class="station-address">Rod. BR-476, Km 344 – Rondinha - Paula Freitas - PR</div>
+                            <div class="station-links">
+                                <a href="https://www.google.com/maps/search/BR-476,+Km+344+Paula+Freitas+PR" target="_blank" class="price-link">🗺️ Ver no Mapa</a>
+                                <a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a>
+                            </div>
+                        </div>
+                        <div class="station-item">
+                            <div class="station-name">Auto Posto Ravanello LTDA</div>
+                            <div class="station-address">Rod. BR-376 – Colônia Witmarsum - Palmeira - PR</div>
+                            <div class="station-links">
+                                <a href="https://www.google.com/maps/search/BR-376+Colônia+Witmarsum+Palmeira+PR" target="_blank" class="price-link">🗺️ Ver no Mapa</a>
+                                <a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- São Paulo -->
+                <div class="state-group">
+                    <div class="state-header">📍 São Paulo (SP)</div>
+                    <div class="station-list">
+                        <div class="station-item">
+                            <div class="station-name">Posto Califórnia de Ourinhos LTDA</div>
+                            <div class="station-address">Rod. BR-153 – Zona Rural - Ourinhos - SP</div>
+                            <div class="station-links">
+                                <a href="https://www.google.com/maps/search/BR-153+Ourinhos+SP" target="_blank" class="price-link">🗺️ Ver no Mapa</a>
+                                <a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a>
+                            </div>
+                        </div>
+                        <div class="station-item">
+                            <div class="station-name">Posto Três Garças LTDA</div>
+                            <div class="station-address">Rod. Presidente Dutra, Km 59 – Jardim Modelo - Guaratinguetá - SP</div>
+                            <div class="station-links">
+                                <a href="https://www.google.com/maps/search/Rod.+Presidente+Dutra,+Km+59+Guaratinguetá+SP" target="_blank" class="price-link">🗺️ Ver no Mapa</a>
+                                <a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a>
+                            </div>
+                        </div>
+                        <div class="station-item">
+                            <div class="station-name">Rodoposto Bandeirantes Jundiaí</div>
+                            <div class="station-address">Rod. dos Bandeirantes – Chácara Malota - Jundiaí - SP</div>
+                            <div class="station-links">
+                                <a href="https://www.google.com/maps/search/Rod.+dos+Bandeirantes+Jundiaí+SP" target="_blank" class="price-link">🗺️ Ver no Mapa</a>
+                                <a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a>
+                            </div>
+                        </div>
+                        <div class="station-item">
+                            <div class="station-name">Auto Posto Búfalo do Vale LTDA (Pariquera-Açu)</div>
+                            <div class="station-address">Rod. BR-116 – Conchal - Pariquera-Açu - SP</div>
+                            <div class="station-links">
+                                <a href="https://www.google.com/maps/search/BR-116+Pariquera-Açu+SP" target="_blank" class="price-link">🗺️ Ver no Mapa</a>
+                                <a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a>
+                            </div>
+                        </div>
+                        <div class="station-item">
+                            <div class="station-name">Auto Posto Búfalo do Vale LTDA (Osasco)</div>
+                            <div class="station-address">Av. dos Autonomistas, 896 – Vila Yara - Osasco - SP</div>
+                            <div class="station-links">
+                                <a href="https://www.google.com/maps/search/Av.+dos+Autonomistas,+896+Osasco+SP" target="_blank" class="price-link">🗺️ Ver no Mapa</a>
+                                <a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a>
+                            </div>
+                        </div>
+                        <div class="station-item">
+                            <div class="station-name">Posto Sem Limites LTDA</div>
+                            <div class="station-address">Rod. Marechal Rondon – Vila Cardia - Bauru - SP</div>
+                            <div class="station-links">
+                                <a href="https://www.google.com/maps/search/Rod.+Marechal+Rondon+Bauru+SP" target="_blank" class="price-link">🗺️ Ver no Mapa</a>
+                                <a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a>
+                            </div>
+                        </div>
+                        <div class="station-item">
+                            <div class="station-name">Posto 56 (Graal) – Osasco</div>
+                            <div class="station-address">Osasco - SP (Rede Graal)</div>
+                            <div class="station-links">
+                                <a href="https://www.google.com/maps/search/Posto+56+Osasco+SP" target="_blank" class="price-link">🗺️ Ver no Mapa</a>
+                                <a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Minas Gerais -->
+                <div class="state-group">
+                    <div class="state-header">📍 Minas Gerais (MG)</div>
+                    <div class="station-list">
+                        <div class="station-item">
+                            <div class="station-name">Posto Flórida LTDA</div>
+                            <div class="station-address">Rod. BR-040, Km 496 – Florida - Esmeraldas - MG</div>
+                            <div class="station-links">
+                                <a href="https://www.google.com/maps/search/BR-040,+Km+496+Esmeraldas+MG" target="_blank" class="price-link">🗺️ Ver no Mapa</a>
+                                <a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a>
+                            </div>
+                        </div>
+                        <div class="station-item">
+                            <div class="station-name">Rodo Posto Silvio’s LTDA (Graal)</div>
+                            <div class="station-address">Rod. BR-040, nº 771 – Barreira do Triunfo - Juiz de Fora - MG</div>
+                            <div class="station-links">
+                                <a href="https://www.google.com/maps/search/BR-040,+771+Juiz+de+Fora+MG" target="_blank" class="price-link">🗺️ Ver no Mapa</a>
+                                <a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rio de Janeiro -->
+                <div class="state-group">
+                    <div class="state-header">📍 Rio de Janeiro (RJ)</div>
+                    <div class="station-list">
+                        <div class="station-item">
+                            <div class="station-name">Posto Sol da Dutra LTDA (Graal)</div>
+                            <div class="station-address">Rod. Presidente Dutra, Km 304 – Paraíso - Resende - RJ</div>
+                            <div class="station-links">
+                                <a href="https://www.google.com/maps/search/Rod.+Presidente+Dutra,+Km+304+Resende+RJ" target="_blank" class="price-link">🗺️ Ver no Mapa</a>
+                                <a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-note">
+                ⚠️ Os preços dos combustíveis variam diariamente. Para ver o valor atualizado, utilize o link "Consultar preços ANP" que direciona para a pesquisa oficial da Agência Nacional do Petróleo, onde é possível buscar pelo nome do posto ou município.
+            </div>
+        </div>
+    </section>
+
+    <!-- SEÇÃO CALCULADORA ANTT -->
     <section id="calculadora-antt" class="freight-calculator-section">
         <div class="calculator-container">
             <div class="calculator-header">
@@ -1071,7 +1352,6 @@
     </footer>
 
     <script>
-        // Menu Mobile Toggle
         document.addEventListener('DOMContentLoaded', function() {
             const menuToggle = document.querySelector('.menu-toggle');
             const navLinks = document.querySelector('.nav-links');
@@ -1082,14 +1362,12 @@
                 });
             }
             
-            // Fechar menu ao clicar em um link
             document.querySelectorAll('.nav-links a').forEach(link => {
                 link.addEventListener('click', () => {
                     navLinks.classList.remove('active');
                 });
             });
 
-            // Smooth scroll para links internos
             document.querySelectorAll('a[href^="#"]').forEach(anchor => {
                 anchor.addEventListener('click', function (e) {
                     const targetId = this.getAttribute('href');
