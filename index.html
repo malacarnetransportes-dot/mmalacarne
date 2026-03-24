@@ -31,7 +31,6 @@
             line-height: 1.6;
         }
 
-        /* HEADER (fixo) */
         header {
             background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(20px);
@@ -114,7 +113,10 @@
             width: 100%;
         }
 
-        /* HERO */
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
         .hero {
             height: 60vh;
             background: linear-gradient(135deg, rgba(30, 42, 58, 0.9) 0%, rgba(26, 32, 44, 0.9) 100%), 
@@ -133,12 +135,16 @@
         .hero-content h1 {
             font-size: 2.2rem;
             margin-bottom: 1rem;
+            animation: fadeInUp 1s ease;
             font-weight: 700;
+            line-height: 1.2;
         }
 
         .hero-content p {
             font-size: 1rem;
             margin-bottom: 2rem;
+            animation: fadeInUp 1s ease 0.3s both;
+            opacity: 0.9;
             max-width: 500px;
             margin-left: auto;
             margin-right: auto;
@@ -148,12 +154,16 @@
             background: linear-gradient(135deg, var(--accent) 0%, #b8941f 100%);
             color: var(--dark);
             padding: 0.8rem 2rem;
+            border: none;
             border-radius: 6px;
             font-size: 0.9rem;
             font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            animation: fadeInUp 1s ease 0.6s both;
             text-decoration: none;
             display: inline-block;
-            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
         }
 
         .cta-button:hover {
@@ -161,7 +171,6 @@
             box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
         }
 
-        /* STATS */
         .stats {
             background: var(--light);
             padding: 2.5rem 5%;
@@ -178,17 +187,28 @@
             background: white;
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            transition: transform 0.3s;
             border: 1px solid rgba(139, 115, 85, 0.1);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
         }
 
         .stat-number {
             font-size: 1.8rem;
             font-weight: bold;
             color: var(--primary);
+            margin-bottom: 0.5rem;
         }
 
-        /* SEÇÕES GERAIS */
-        .values, .freight-calculator-section, .contact {
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .values {
             padding: 3rem 5%;
             max-width: 1000px;
             margin: 0 auto;
@@ -197,7 +217,7 @@
         .section-title {
             text-align: center;
             font-size: 1.8rem;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             color: var(--premium-dark);
             font-weight: 700;
         }
@@ -205,8 +225,287 @@
         .section-subtitle {
             text-align: center;
             font-size: 0.9rem;
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
             color: var(--text-light);
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .values-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .value-card {
+            background: white;
+            padding: 1.8rem;
+            border-radius: 10px;
+            color: var(--text);
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            border: 1px solid rgba(139, 115, 85, 0.1);
+            text-align: center;
+        }
+
+        .value-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .value-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--accent);
+        }
+
+        .value-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--premium-dark);
+        }
+
+        .value-card p {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        .gallery {
+            padding: 3rem 5%;
+            background: var(--light);
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.2rem;
+            max-width: 1000px;
+            margin: 2rem auto 0;
+        }
+
+        .gallery-item {
+            height: 220px;
+            background: var(--dark);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.05);
+        }
+
+        .gallery-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(30, 42, 58, 0.9));
+            padding: 1.2rem;
+            color: white;
+            transform: translateY(100%);
+            transition: transform 0.3s;
+        }
+
+        .gallery-item:hover .gallery-overlay {
+            transform: translateY(0);
+        }
+
+        .gallery-overlay h3 {
+            font-size: 1rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .gallery-overlay p {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+
+        /* Seção Preços de Combustíveis */
+        .fuels-section {
+            padding: 3rem 5%;
+            background: #ffffff;
+            border-top: 1px solid rgba(139,115,85,0.15);
+            border-bottom: 1px solid rgba(139,115,85,0.15);
+        }
+
+        .stations-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .stations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.8rem;
+            margin-top: 2rem;
+        }
+
+        .state-group {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            overflow: hidden;
+            border: 1px solid rgba(139,115,85,0.2);
+        }
+
+        .state-header {
+            background: var(--premium-dark);
+            color: white;
+            padding: 1rem 1.5rem;
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .station-list {
+            padding: 1.2rem;
+        }
+
+        .station-item {
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 0;
+        }
+
+        .station-item:last-child {
+            border-bottom: none;
+        }
+
+        .station-name {
+            font-weight: 700;
+            color: var(--premium-dark);
+            font-size: 1rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .station-address {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .station-links {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+
+        .price-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.7rem;
+            background: var(--light);
+            padding: 0.25rem 0.7rem;
+            border-radius: 20px;
+            text-decoration: none;
+            color: var(--primary);
+            transition: all 0.2s;
+        }
+
+        .price-link:hover {
+            background: var(--accent);
+            color: var(--dark);
+        }
+
+        .info-note {
+            background: #fef9e6;
+            border-left: 4px solid var(--accent);
+            padding: 1rem;
+            margin-top: 2rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        .freight-calculator-section {
+            padding: 3rem 5%;
+            background: #ffffff;
+            border-top: 1px solid rgba(139,115,85,0.15);
+            border-bottom: 1px solid rgba(139,115,85,0.15);
+        }
+
+        .calculator-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #fefefe;
+            border-radius: 24px;
+            box-shadow: 0 20px 35px -10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .calculator-header {
+            background: var(--premium-dark);
+            padding: 1.5rem 2rem;
+            text-align: center;
+            color: white;
+        }
+
+        .calculator-header h2 {
+            font-size: 1.6rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+        }
+
+        .calculator-header p {
+            font-size: 0.9rem;
+            opacity: 0.85;
+        }
+
+        .calculator-content {
+            background: #f0f4f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 320px;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .calculator-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            font-size: 1rem;
+        }
+
+        .calculator-button:hover {
+            background: #6d533b;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(139,115,85,0.3);
+        }
+
+        .calculator-note {
+            margin-top: 1.2rem;
+            font-size: 0.7rem;
+            color: #6c757d;
         }
 
         /* SIMULADOR DE ROTA */
@@ -235,6 +534,7 @@
 
         .simulator-header h2 {
             font-size: 1.6rem;
+            margin-bottom: 0.5rem;
             color: var(--accent);
         }
 
@@ -318,22 +618,237 @@
             font-weight: bold;
         }
 
-        /* JOB SECTION (simplificada) */
+        /* Jobs Section */
         .jobs {
             padding: 4rem 5%;
             background: linear-gradient(135deg, var(--premium-dark) 0%, #2d3748 100%);
             color: white;
         }
 
+        .jobs-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
         .job-card {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 12px;
-            padding: 2rem;
+            padding: 2.5rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
             color: var(--text);
-            margin-top: 1rem;
+            margin-top: 2rem;
         }
 
-        /* CHATBOT (igual anterior) */
+        .job-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 1.5rem;
+        }
+
+        .job-title {
+            font-size: 2rem;
+            color: var(--premium-dark);
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .job-subtitle {
+            font-size: 1.1rem;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .job-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .job-benefits, .job-requirements {
+            background: var(--light);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .job-benefits h3, .job-requirements h3 {
+            color: var(--premium-dark);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .benefits-list, .requirements-list {
+            list-style: none;
+        }
+
+        .benefits-list li, .requirements-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .benefits-list li:before {
+            content: "✅";
+            font-size: 0.9rem;
+        }
+
+        .requirements-list li:before {
+            content: "✔️";
+            font-size: 0.9rem;
+            color: var(--success);
+        }
+
+        .job-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .apply-button {
+            background: linear-gradient(135deg, var(--success) 0%, #2f855a 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .apply-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(56, 161, 105, 0.4);
+        }
+
+        .whatsapp-button {
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .whatsapp-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(37, 211, 102, 0.4);
+        }
+
+        .contact {
+            padding: 3rem 5%;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2.5rem;
+            margin-top: 2rem;
+        }
+
+        .contact-info {
+            background: var(--premium-dark);
+            padding: 2.2rem;
+            border-radius: 10px;
+            color: white;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+
+        .contact-info h3 {
+            color: var(--accent);
+            margin-bottom: 1.2rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .contact-item {
+            margin-bottom: 1.2rem;
+            line-height: 1.6;
+            font-size: 0.85rem;
+        }
+
+        .contact-item strong {
+            color: var(--accent);
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+
+        .map-container {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            height: 100%;
+        }
+
+        .map-container iframe {
+            width: 100%;
+            height: 100%;
+            min-height: 300px;
+        }
+
+        .careers-button {
+            background: var(--accent);
+            color: var(--dark);
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 1rem;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .careers-button:hover {
+            background: #b8941f;
+            transform: translateY(-2px);
+        }
+
+        /* WhatsApp Float Button */
+        .whatsapp-float {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .whatsapp-button-float {
+            background: #25D366;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+        }
+
+        .whatsapp-button-float:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
+        }
+
+        /* AI Chatbot Widget */
         .chatbot-button {
             position: fixed;
             bottom: 90px;
@@ -347,14 +862,15 @@
             justify-content: center;
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s;
             z-index: 1000;
             color: white;
             font-size: 28px;
-            transition: 0.3s;
         }
 
         .chatbot-button:hover {
             transform: scale(1.05);
+            background: #6d533b;
         }
 
         .chatbot-window {
@@ -370,6 +886,7 @@
             flex-direction: column;
             z-index: 1000;
             overflow: hidden;
+            transition: all 0.3s ease;
             font-family: 'Inter', sans-serif;
             border: 1px solid rgba(139,115,85,0.2);
         }
@@ -384,6 +901,23 @@
             padding: 1rem;
             display: flex;
             justify-content: space-between;
+            align-items: center;
+        }
+
+        .chatbot-header h3 {
+            font-size: 1rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chatbot-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
         }
 
         .chatbot-messages {
@@ -401,23 +935,29 @@
             padding: 0.6rem 1rem;
             border-radius: 18px;
             font-size: 0.85rem;
+            line-height: 1.4;
         }
 
         .user-message {
             background: var(--primary);
             color: white;
             align-self: flex-end;
+            border-bottom-right-radius: 4px;
         }
 
         .bot-message {
             background: white;
+            color: var(--text);
             align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
             border: 1px solid #e2e8f0;
         }
 
         .chatbot-input-area {
             display: flex;
             padding: 0.8rem;
+            background: white;
             border-top: 1px solid #e2e8f0;
         }
 
@@ -426,6 +966,8 @@
             padding: 0.6rem;
             border: 1px solid #cbd5e1;
             border-radius: 20px;
+            font-size: 0.8rem;
+            outline: none;
         }
 
         .chatbot-send {
@@ -437,9 +979,17 @@
             border-radius: 50%;
             margin-left: 0.5rem;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        /* FOOTER */
+        .typing {
+            color: var(--text-light);
+            font-size: 0.75rem;
+            padding: 0.3rem 1rem;
+        }
+
         footer {
             background: var(--premium-dark);
             color: white;
@@ -447,33 +997,174 @@
             padding: 2rem 5%;
         }
 
+        .footer-logo {
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .footer-img {
+            height: 40px;
+            width: auto;
+        }
+
+        .footer-text {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            line-height: 1.1;
+        }
+
+        .footer-main {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .footer-sub {
+            font-size: 0.65rem;
+            color: #a0aec0;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+        }
+
+        footer p {
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.8;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--text);
+        }
+
         @media (max-width: 768px) {
+            .hero {
+                height: 50vh;
+                margin-top: 60px;
+            }
+            .hero-content h1 {
+                font-size: 1.8rem;
+            }
+            .contact-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
             .nav-links {
                 display: none;
-                flex-direction: column;
-                background: white;
                 position: absolute;
                 top: 100%;
                 left: 0;
                 width: 100%;
+                background: white;
+                flex-direction: column;
                 padding: 1rem;
+                box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+                gap: 0;
             }
-            .nav-links.active { display: flex; }
-            .menu-toggle { display: block; background: none; border: none; font-size: 1.5rem; }
-            .simulator-form .form-row { flex-direction: column; }
+            .nav-links.active {
+                display: flex;
+            }
+            .nav-links li {
+                margin: 0.5rem 0;
+            }
+            .menu-toggle {
+                display: block;
+            }
+            .logo {
+                gap: 0.7rem;
+            }
+            .logo-img {
+                height: 40px;
+            }
+            .logo-main {
+                font-size: 1.3rem;
+            }
+            .logo-sub {
+                font-size: 0.55rem;
+            }
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+                padding: 2rem 5%;
+            }
+            .values-grid {
+                grid-template-columns: 1fr;
+            }
+            .gallery-grid {
+                grid-template-columns: 1fr;
+            }
+            .section-title {
+                font-size: 1.6rem;
+            }
+            .job-content {
+                grid-template-columns: 1fr;
+            }
+            .job-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            .apply-button, .whatsapp-button {
+                width: 100%;
+                text-align: center;
+                justify-content: center;
+            }
+            .footer-logo {
+                flex-direction: column;
+                gap: 0.5rem;
+                text-align: center;
+            }
+            .footer-text {
+                align-items: center;
+            }
+            .stations-grid {
+                grid-template-columns: 1fr;
+            }
+            .form-row {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- CHATBOT (agente IA) -->
-    <div class="chatbot-button" id="chatbotToggle">💬</div>
+    <!-- WhatsApp Float Button -->
+    <div class="whatsapp-float">
+        <a href="https://wa.me/5549999675448" target="_blank" class="whatsapp-button-float">
+            📱 WhatsApp
+        </a>
+    </div>
+
+    <!-- AI Chatbot - Agente IA Especialista -->
+    <div class="chatbot-button" id="chatbotToggle">
+        💬
+    </div>
     <div class="chatbot-window closed" id="chatbotWindow">
         <div class="chatbot-header">
-            <h3>🤖 Agente IA - Transporte</h3>
-            <button class="chatbot-close" id="chatbotClose" style="background:none; border:none; color:white; font-size:1.2rem;">✕</button>
+            <h3>🤖 Agente IA - Especialista em Transporte</h3>
+            <button class="chatbot-close" id="chatbotClose">✕</button>
         </div>
         <div class="chatbot-messages" id="chatbotMessages">
-            <div class="message bot-message">Olá! Sou seu assistente de logística. Posso ajudar com MP 1343, ANTT, rotas e viabilidade. Use o simulador de rotas para cálculos personalizados!</div>
+            <div class="message bot-message">
+                Olá! Sou o assistente da M-Malacarne. Conheço a MP 1.343/2026 (CIOT, multas), ANTT, rotas, custos e mais. Use o simulador de rotas para cálculos precisos. Pergunte à vontade! 🚛
+            </div>
         </div>
         <div class="chatbot-input-area">
             <input type="text" id="chatbotInput" class="chatbot-input" placeholder="Digite sua pergunta...">
@@ -484,7 +1175,7 @@
     <header>
         <nav>
             <div class="logo">
-                <img src="Screenshot_2.jpg" alt="Logo" class="logo-img">
+                <img src="Screenshot_2.jpg" alt="M-Malacarne Transporte & Logística" class="logo-img">
                 <div class="logo-text">
                     <div class="logo-main">M-MALACARNE</div>
                     <div class="logo-sub">TRANSPORTE & LOGISTICA</div>
@@ -493,6 +1184,11 @@
             <button class="menu-toggle">☰</button>
             <ul class="nav-links">
                 <li><a href="#home">Início</a></li>
+                <li><a href="#sobre">Sobre</a></li>
+                <li><a href="#valores">Valores</a></li>
+                <li><a href="#infraestrutura">Infraestrutura</a></li>
+                <li><a href="#precos">Preços Combustível</a></li>
+                <li><a href="#calculadora-antt">Calculadora ANTT</a></li>
                 <li><a href="#simulador">Simulador</a></li>
                 <li><a href="#vagas">Vagas</a></li>
                 <li><a href="#contato">Contato</a></li>
@@ -503,16 +1199,131 @@
     <section id="home" class="hero">
         <div class="hero-content">
             <h1>40 Anos Movendo o Brasil</h1>
-            <p>Simule rotas, calcule viabilidade e fique por dentro das novas regras da MP 1.343/2026.</p>
-            <a href="#simulador" class="cta-button">Simular Rota →</a>
+            <p>Excelência em Transporte e Logística desde 1982</p>
+            <a href="#simulador" class="cta-button">Simular Rota</a>
         </div>
     </section>
 
     <section class="stats">
-        <div class="stat-card"><div class="stat-number">40+</div><div>Anos de Tradição</div></div>
-        <div class="stat-card"><div class="stat-number">100%</div><div>Frota Frigorífica</div></div>
-        <div class="stat-card"><div class="stat-number">BRF</div><div>Parceiro Exclusivo</div></div>
-        <div class="stat-card"><div class="stat-number">SC</div><div>Concórdia - SC</div></div>
+        <div class="stat-card">
+            <div class="stat-number">40+</div>
+            <div class="stat-label">Anos de Tradição</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">100%</div>
+            <div class="stat-label">Frota Frigorífica</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">BRF</div>
+            <div class="stat-label">Parceiro Exclusivo</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">SC</div>
+            <div class="stat-label">Concórdia - SC</div>
+        </div>
+    </section>
+
+    <section id="sobre" class="values">
+        <h2 class="section-title">Nossa História</h2>
+        <p class="section-subtitle">Mais de quatro décadas de excelência no transporte rodoviário</p>
+        <div style="max-width: 700px; margin: 0 auto; line-height: 1.7; text-align: center;">
+            <p style="margin-bottom: 1.2rem;">
+                Criada em <strong>1982</strong>, a M-Malacarne Transportes e Logística surge para reforçar o segmento de transporte rodoviário de cargas. Há 40 anos, o Sr. Maximino integra como sócio proprietário com 2 veículos frigoríficos, sendo que era o motorista de um dos caminhões.
+            </p>
+            <p>
+                Com grande experiência de motorista, o Sr. Maximino sempre trabalhou carregando exclusivamente produtos Frigorificados da marca SADIA, hoje <strong>BRF</strong>, mesma empresa que possui até hoje com a mesma exclusividade, visando agregar forças de gestão para conseguir melhores resultados.
+            </p>
+        </div>
+    </section>
+
+    <section id="valores" class="values" style="background: var(--light);">
+        <h2 class="section-title">Nossos Pilares</h2>
+        <p class="section-subtitle">Os fundamentos que guiam nossa operação há 40 anos</p>
+        <div class="values-grid">
+            <div class="value-card">
+                <div class="value-icon">🎯</div>
+                <h3>Visão</h3>
+                <p>Ser reconhecida pela excelência em transportes e logística para atendimentos às demandas da cadeia de suprimentos</p>
+            </div>
+            <div class="value-card">
+                <div class="value-icon">🚛</div>
+                <h3>Missão</h3>
+                <p>Oferecer e integrar soluções logísticas em toda cadeia de suprimentos no Brasil com simplicidade, qualidade e efetividade</p>
+            </div>
+            <div class="value-card">
+                <div class="value-icon">⭐</div>
+                <h3>Valores</h3>
+                <p>Simplicidade e Efetividade • Reconhecimento Humano • Honra ao Trabalho</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="infraestrutura" class="gallery">
+        <h2 class="section-title">Nossa Infraestrutura</h2>
+        <p class="section-subtitle">Frota especializada e tecnologia de ponta para melhor atendimento</p>
+        <div class="gallery-grid">
+            <div class="gallery-item">
+                <img src="IMG-20220924-WA0022 (1).jpg" alt="Frota M-Malacarne">
+                <div class="gallery-overlay">
+                    <h3>Frota Especializada</h3>
+                    <p>Veículos frigoríficos de última geração</p>
+                </div>
+            </div>
+            <div class="gallery-item">
+                <img src="img87.jpg" alt="Instalações M-Malacarne">
+                <div class="gallery-overlay">
+                    <h3>Galpão Moderno</h3>
+                    <p>Estrutura completa com energia solar</p>
+                </div>
+            </div>
+            <div class="gallery-item">
+                <img src="2.jpg" alt="Logística M-Malacarne">
+                <div class="gallery-overlay">
+                    <h3>Logística Eficiente</h3>
+                    <p>Armazenamento e distribuição estratégica</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Seção Preços de Combustíveis (todos os postos) -->
+    <section id="precos" class="fuels-section">
+        <div class="stations-container">
+            <h2 class="section-title">⛽ Preços de Combustíveis</h2>
+            <p class="section-subtitle">Postos de referência para nossa frota e motoristas parceiros</p>
+            <div class="stations-grid">
+                <div class="state-group"><div class="state-header">📍 Santa Catarina (SC)</div><div class="station-list"><div class="station-item"><div class="station-name">Edemar Russi e Cia Ltda - Matriz</div><div class="station-address">ROD BR 470, 3515 - SALTO PILÃO - Lontras - SC<br>📞 (047) 3523-0766</div><div class="station-links"><a href="https://www.google.com/maps/search/ROD+BR+470,+3515+Lontras+SC" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div><div class="station-item"><div class="station-name">Posto Colpani & Bottega LTDA</div><div class="station-address">Rua Monge João Maria, 704 – Alto Irani - Irani - SC</div><div class="station-links"><a href="https://www.google.com/maps/search/Rua+Monge+João+Maria,+704+Irani+SC" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div><div class="station-item"><div class="station-name">Auto Posto Contorno LTDA</div><div class="station-address">Rod. Caetano Chiuchetta, 6601 – Contorno Norte - Concórdia - SC</div><div class="station-links"><a href="https://www.google.com/maps/search/Rod.+Caetano+Chiuchetta,+6601+Concórdia+SC" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div><div class="station-item"><div class="station-name">Auto Posto Norte Sul LTDA</div><div class="station-address">Rod. BR-116 – Passo Ruim - Papanduva - SC</div><div class="station-links"><a href="https://www.google.com/maps/search/BR-116+Passo+Ruim+Papanduva+SC" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div></div></div>
+                <div class="state-group"><div class="state-header">📍 Paraná (PR)</div><div class="station-list"><div class="station-item"><div class="station-name">Auto Posto Túlio RBO (Graal)</div><div class="station-address">Rod. BR-116, Km 52 – Rio Bonito - Campina Grande do Sul - PR</div><div class="station-links"><a href="https://www.google.com/maps/search/BR-116,+Km+52+Rio+Bonito+Campina+Grande+do+Sul+PR" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div><div class="station-item"><div class="station-name">Auto Posto Túlio CTA (Graal)</div><div class="station-address">Rod. BR-116, Km 68 – Caraguatá - Campina Grande do Sul - PR</div><div class="station-links"><a href="https://www.google.com/maps/search/BR-116,+Km+68+Caraguatá+Campina+Grande+do+Sul+PR" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div><div class="station-item"><div class="station-name">Auto Posto Costa Brava (Graal)</div><div class="station-address">Rod. Régis Bittencourt, Km 67 – Palmitalzinho - Quatro Barras - PR</div><div class="station-links"><a href="https://www.google.com/maps/search/Rod.+Régis+Bittencourt,+Km+67+Quatro+Barras+PR" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div><div class="station-item"><div class="station-name">Postos Pelanda</div><div class="station-address">Rod. PR-151, Km 216,7 – Zona Rural - Jaguariaíva - PR</div><div class="station-links"><a href="https://www.google.com/maps/search/PR-151,+Km+216,7+Jaguariaíva+PR" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div><div class="station-item"><div class="station-name">Posto Carretão (Auto Posto Ipiranga LTDA)</div><div class="station-address">Rod. BR-476, Km 344 – Rondinha - Paula Freitas - PR</div><div class="station-links"><a href="https://www.google.com/maps/search/BR-476,+Km+344+Paula+Freitas+PR" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div><div class="station-item"><div class="station-name">Auto Posto Ravanello LTDA</div><div class="station-address">Rod. BR-376 – Colônia Witmarsum - Palmeira - PR</div><div class="station-links"><a href="https://www.google.com/maps/search/BR-376+Colônia+Witmarsum+Palmeira+PR" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div></div></div>
+                <div class="state-group"><div class="state-header">📍 São Paulo (SP)</div><div class="station-list"><div class="station-item"><div class="station-name">Posto Califórnia de Ourinhos LTDA</div><div class="station-address">Rod. BR-153 – Zona Rural - Ourinhos - SP</div><div class="station-links"><a href="https://www.google.com/maps/search/BR-153+Ourinhos+SP" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div><div class="station-item"><div class="station-name">Posto Três Garças LTDA</div><div class="station-address">Rod. Presidente Dutra, Km 59 – Jardim Modelo - Guaratinguetá - SP</div><div class="station-links"><a href="https://www.google.com/maps/search/Rod.+Presidente+Dutra,+Km+59+Guaratinguetá+SP" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div><div class="station-item"><div class="station-name">Rodoposto Bandeirantes Jundiaí</div><div class="station-address">Rod. dos Bandeirantes – Chácara Malota - Jundiaí - SP</div><div class="station-links"><a href="https://www.google.com/maps/search/Rod.+dos+Bandeirantes+Jundiaí+SP" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div><div class="station-item"><div class="station-name">Auto Posto Búfalo do Vale LTDA (Pariquera-Açu)</div><div class="station-address">Rod. BR-116 – Conchal - Pariquera-Açu - SP</div><div class="station-links"><a href="https://www.google.com/maps/search/BR-116+Pariquera-Açu+SP" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div><div class="station-item"><div class="station-name">Auto Posto Búfalo do Vale LTDA (Osasco)</div><div class="station-address">Av. dos Autonomistas, 896 – Vila Yara - Osasco - SP</div><div class="station-links"><a href="https://www.google.com/maps/search/Av.+dos+Autonomistas,+896+Osasco+SP" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div><div class="station-item"><div class="station-name">Posto Sem Limites LTDA</div><div class="station-address">Rod. Marechal Rondon – Vila Cardia - Bauru - SP</div><div class="station-links"><a href="https://www.google.com/maps/search/Rod.+Marechal+Rondon+Bauru+SP" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div><div class="station-item"><div class="station-name">Posto 56 (Graal) – Osasco</div><div class="station-address">Osasco - SP (Rede Graal)</div><div class="station-links"><a href="https://www.google.com/maps/search/Posto+56+Osasco+SP" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div></div></div>
+                <div class="state-group"><div class="state-header">📍 Minas Gerais (MG)</div><div class="station-list"><div class="station-item"><div class="station-name">Posto Flórida LTDA</div><div class="station-address">Rod. BR-040, Km 496 – Florida - Esmeraldas - MG</div><div class="station-links"><a href="https://www.google.com/maps/search/BR-040,+Km+496+Esmeraldas+MG" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div><div class="station-item"><div class="station-name">Rodo Posto Silvio’s LTDA (Graal)</div><div class="station-address">Rod. BR-040, nº 771 – Barreira do Triunfo - Juiz de Fora - MG</div><div class="station-links"><a href="https://www.google.com/maps/search/BR-040,+771+Juiz+de+Fora+MG" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div></div></div>
+                <div class="state-group"><div class="state-header">📍 Rio de Janeiro (RJ)</div><div class="station-list"><div class="station-item"><div class="station-name">Posto Sol da Dutra LTDA (Graal)</div><div class="station-address">Rod. Presidente Dutra, Km 304 – Paraíso - Resende - RJ</div><div class="station-links"><a href="https://www.google.com/maps/search/Rod.+Presidente+Dutra,+Km+304+Resende+RJ" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div></div></div>
+            </div>
+            <div class="info-note">
+                ⚠️ Os preços dos combustíveis variam diariamente. Para ver o valor atualizado, utilize o link "Consultar preços ANP" que direciona para a pesquisa oficial da Agência Nacional do Petróleo.
+            </div>
+        </div>
+    </section>
+
+    <!-- Calculadora ANTT -->
+    <section id="calculadora-antt" class="freight-calculator-section">
+        <div class="calculator-container">
+            <div class="calculator-header">
+                <h2>📊 Calculadora Oficial de Frete ANTT</h2>
+                <p>Piso mínimo de frete rodoviário de cargas | Consulte valores por eixo, distância e tipo de carga</p>
+            </div>
+            <div class="calculator-content">
+                <div style="max-width: 500px;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📐⚖️</div>
+                    <h3 style="color: var(--premium-dark); margin-bottom: 1rem;">Acesse a calculadora oficial do governo</h3>
+                    <p style="margin-bottom: 1.5rem; color: #4b5563;">A ferramenta da ANTT é disponibilizada diretamente no site da Agência. Clique no botão abaixo para consultar os pisos mínimos de frete de forma rápida e segura.</p>
+                    <a href="https://calculadorafrete.antt.gov.br/?utm_source=mmalacarne" target="_blank" rel="noopener noreferrer" class="calculator-button">🔢 Abrir Calculadora ANTT →</a>
+                    <p class="calculator-note">Fonte: Agência Nacional de Transportes Terrestres (ANTT) – Ferramenta oficial do governo federal.</p>
+                </div>
+            </div>
+            <div style="background: #f8f9fa; padding: 0.8rem; text-align: center; font-size: 0.7rem; color: #4b5563; border-top: 1px solid #e2e8f0;">
+                🔗 A calculadora é externa e será aberta em uma nova aba. Consulte sempre o site oficial da ANTT para dados atualizados.
+            </div>
+        </div>
     </section>
 
     <!-- SIMULADOR DE ROTA E VIABILIDADE -->
@@ -569,13 +1380,41 @@
     </section>
 
     <section id="vagas" class="jobs">
-        <div class="jobs-container" style="max-width:1000px; margin:0 auto;">
-            <h2 class="section-title" style="color:white;">Trabalhe Conosco</h2>
+        <div class="jobs-container">
+            <h2 class="section-title" style="color: white;">Trabalhe Conosco</h2>
+            <p class="section-subtitle" style="color: rgba(255,255,255,0.8);">Junte-se à nossa equipe de profissionais</p>
             <div class="job-card">
-                <h3>Motorista de Carreta</h3>
-                <p>Requisitos: CNH E, experiência em frigorífico, disponibilidade. Benefícios: salário competitivo + bônus.</p>
-                <div style="margin-top:1rem;">
-                    <a href="https://wa.me/5549999675448" target="_blank" class="whatsapp-button" style="background:#25D366; padding:0.5rem 1rem; border-radius:30px; color:white; text-decoration:none;">📱 Candidatar via WhatsApp</a>
+                <div class="job-header">
+                    <h3 class="job-title">Motorista de Carreta</h3>
+                    <p class="job-subtitle">Vaga disponível - Contratação imediata</p>
+                </div>
+                <div class="job-content">
+                    <div class="job-benefits">
+                        <h3>📊 Benefícios</h3>
+                        <ul class="benefits-list">
+                            <li>Salário competitivo</li>
+                            <li>Bônus por média de desempenho</li>
+                            <li>Férias remuneradas</li>
+                            <li>Oportunidade de crescimento</li>
+                            <li>Ambiente de trabalho familiar</li>
+                            <li>Estabilidade de 40 anos no mercado</li>
+                        </ul>
+                    </div>
+                    <div class="job-requirements">
+                        <h3>✅ Pré-requisitos</h3>
+                        <ul class="requirements-list">
+                            <li>Experiência comprovada na função</li>
+                            <li>CNH Categoria E</li>
+                            <li>Conhecimento de rotas Sul/Sudeste/Sudoeste</li>
+                            <li>Conhecimento em carreta frigorífica</li>
+                            <li>Documentação em dia</li>
+                            <li>Disponibilidade para viagens</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="job-actions">
+                    <a href="https://docs.google.com/forms/d/1AbknS9cnRL9M_kPLYkaqRorpsFFodZdgJps36zhJ_ms/viewform?edit_requested=true" target="_blank" class="apply-button">📝 Candidate-se Online</a>
+                    <a href="https://wa.me/5549999675448?text=Olá! Tenho interesse na vaga de Motorista de Carreta e gostaria de enviar meu currículo." target="_blank" class="whatsapp-button">📱 Enviar Currículo</a>
                 </div>
             </div>
         </div>
@@ -583,30 +1422,59 @@
 
     <section id="contato" class="contact">
         <h2 class="section-title">Entre em Contato</h2>
-        <div style="display:flex; gap:2rem; flex-wrap:wrap;">
-            <div style="flex:1; background:var(--premium-dark); color:white; padding:1.5rem; border-radius:16px;">
-                <h3>📍 Endereço</h3>
-                <p>Rua Domingos Casagrande, 25 - Concórdia/SC</p>
-                <h3>📞 Telefone</h3>
-                <p>(49) 3442-2325</p>
+        <p class="section-subtitle">Estamos prontos para atender suas necessidades logísticas</p>
+        <div class="contact-grid">
+            <div class="contact-info">
+                <h3>📍 Localização</h3>
+                <div class="contact-item"><strong>Endereço:</strong> Rua Domingos Casagrande, 25<br>Bairro Arvoredo<br>CEP: 89701-450<br>Concórdia - Santa Catarina</div>
+                <h3>📞 Contato</h3>
+                <div class="contact-item"><strong>Telefone:</strong> (49) 3442-2325<br><strong>WhatsApp:</strong> (49) 99967-5448</div>
                 <h3>✉️ E-mail</h3>
-                <p>financeirommalacarne@gmail.com</p>
+                <div class="contact-item">financeirommalacarne@gmail.com<br>dmalacarne@netcon.com.br</div>
+                <h3>💼 Trabalhe Conosco</h3>
+                <a href="#vagas" class="careers-button">Ver Vagas Disponíveis</a>
             </div>
-            <div style="flex:1; min-height:250px;">
-                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3535.234!2d-52.027!3d-27.234!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjfCsDE4JzAyLjQiUyA1MsKwMDEnMzcuMiJX!5e0!3m2!1spt-BR!2sbr!4v1234567890" width="100%" height="100%" style="border:0; border-radius:16px;"></iframe>
+            <div class="map-container">
+                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3535.234!2d-52.027!3d-27.234!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjfCsDE4JzAyLjQiUyA1MsKwMDEnMzcuMiJX!5e0!3m2!1spt-BR!2sbr!4v1234567890" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
             </div>
         </div>
     </section>
 
     <footer>
-        <p>M-Malacarne Transporte e Logística Ltda EPP | CNPJ: 76.344.936/0001-00</p>
-        <p>© 2025 - 40 anos de excelência</p>
+        <div class="footer-logo">
+            <img src="Screenshot_2.jpg" alt="M-Malacarne Transporte & Logística" class="footer-img">
+            <div class="footer-text">
+                <div class="footer-main">M-MALACARNE</div>
+                <div class="footer-sub">TRANSPORTE & LOGISTICA</div>
+            </div>
+        </div>
+        <p>CNPJ: 76.344.936/0001-00</p>
+        <p>© 2025 M-Malacarne Transporte e Logística Ltda EPP. Todos os direitos reservados.</p>
+        <p style="color: var(--accent); margin-top: 0.5rem;">40 anos de excelência e tradição no transporte rodoviário</p>
     </footer>
 
     <script>
         // Menu mobile
-        document.querySelector('.menu-toggle').addEventListener('click', () => {
-            document.querySelector('.nav-links').classList.toggle('active');
+        const menuToggle = document.querySelector('.menu-toggle');
+        const navLinks = document.querySelector('.nav-links');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+        }
+        // Fechar menu ao clicar
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', () => navLinks.classList.remove('active'));
+        });
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                const targetId = this.getAttribute('href');
+                if (targetId === "#") return;
+                const target = document.querySelector(targetId);
+                if (target) {
+                    e.preventDefault();
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
         });
 
         // ========== SIMULADOR DE ROTA ==========
@@ -614,10 +1482,8 @@
         const resultArea = document.getElementById('resultArea');
         const resultContent = document.getElementById('resultContent');
 
-        // Consumo médio por eixo (L/100km) - aproximado
         const consumptionByAxles = { 2: 35, 3: 45, 4: 52, 5: 60, 6: 68 };
-        // Pedágio médio por km (R$) - estimativa
-        const avgTollPerKm = 0.12; // R$0,12 por km (média nacional)
+        const avgTollPerKm = 0.12;
 
         async function geocode(location) {
             const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`;
@@ -639,12 +1505,9 @@
             };
         }
 
-        // Cálculo do piso mínimo simplificado (baseado na tabela ANTT média)
         function estimateMinFreight(distanceKm, axles, weight) {
-            // Valor médio por km para carga lotação (R$/km) - aproximado
-            const ratePerKm = axles * 1.2; // ex: 3 eixos = 3,6 R$/km
+            const ratePerKm = axles * 1.2;
             const base = distanceKm * ratePerKm;
-            // Ajuste pelo peso (se maior que 10t, incremento)
             const weightFactor = Math.max(1, weight / 15);
             return base * weightFactor;
         }
@@ -666,28 +1529,22 @@
             resultContent.innerHTML = '<div style="text-align:center">🔄 Buscando coordenadas e calculando rota...</div>';
 
             try {
-                // Geocodificação
                 const originGeo = await geocode(origin);
                 const destGeo = await geocode(destination);
-
-                // Rota
                 const route = await getRoute(originGeo, destGeo);
                 const distance = route.distanceKm;
                 const duration = route.durationHours;
 
-                // Cálculo de custos
                 const consumption = consumptionByAxles[axles] || 50;
                 const fuelLiters = (distance / 100) * consumption;
                 const fuelCost = fuelLiters * dieselPrice;
                 const tollCost = distance * avgTollPerKm;
                 const totalCost = fuelCost + tollCost;
 
-                // Piso mínimo estimado
                 const minFreight = estimateMinFreight(distance, axles, weight);
                 const isViable = offeredFreight >= minFreight;
                 const profit = offeredFreight - totalCost;
 
-                // Montar resultado
                 resultContent.innerHTML = `
                     <div class="result-line"><strong>📍 Origem:</strong> ${originGeo.name}</div>
                     <div class="result-line"><strong>📍 Destino:</strong> ${destGeo.name}</div>
