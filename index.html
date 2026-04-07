@@ -9,7 +9,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <style>
-        /* (mesmos estilos anteriores, omitidos por brevidade - manter iguais) */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
             --primary: #8B7355;
@@ -129,7 +128,9 @@
         .data-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
         .data-table th, .data-table td { border-bottom: 1px solid #e2e8f0; padding: 0.7rem 0.3rem; text-align: left; }
         .data-table th { background: #f1f5f9; }
-        .forecast-card { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; border-radius: 20px; padding: 1rem; text-align: center; }
+        .forecast-table { width: 100%; margin-top: 1rem; border-collapse: collapse; }
+        .forecast-table th, .forecast-table td { padding: 0.5rem; border: 1px solid #e2e8f0; text-align: center; }
+        .forecast-card { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; border-radius: 20px; padding: 1rem; }
         .logout-btn { background: #ef4444; color: white; border: none; padding: 0.5rem 1.2rem; border-radius: 40px; cursor: pointer; font-weight: 600; }
         .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 2000; display: flex; align-items: center; justify-content: center; visibility: hidden; opacity: 0; transition: 0.2s; }
         .login-overlay.active { visibility: visible; opacity: 1; }
@@ -144,11 +145,12 @@
         .salary-row input { padding: 0.4rem; border-radius: 12px; border: 1px solid #cbd5e1; width: 120px; }
         .result-value { font-size: 1.4rem; font-weight: 800; color: var(--success); }
         .diagnostic-box { background: #fff3cd; border-left: 6px solid #ffc107; padding: 1rem; margin-bottom: 1.5rem; border-radius: 16px; font-size: 0.8rem; }
+        .fretes-list { max-height: 300px; overflow-y: auto; margin-top: 1rem; }
     </style>
 </head>
 <body>
 
-<!-- SITE PÚBLICO (mesmo conteúdo) -->
+<!-- SITE PÚBLICO -->
 <div id="publicSite">
     <div class="whatsapp-float">
         <a href="https://wa.me/5549999675448" target="_blank" style="background:#25D366; color:white; padding:10px 16px; border-radius:50px; text-decoration:none;">📱 WhatsApp</a>
@@ -194,16 +196,48 @@
     <div class="private-header"><h2><i class="fas fa-chart-line"></i> Central de Gestão M-Malacarne</h2><div><button id="refreshDataBtn" class="btn-export btn-refresh"><i class="fas fa-sync-alt"></i> Atualizar Dados</button><button id="logoutPrivateBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sair</button></div></div>
     <div class="tabs"><button class="tab-btn active" data-tab="tabFinanceiro">📊 Financeiro</button><button class="tab-btn" data-tab="tabFaturamento">🚛 Faturamento</button><button class="tab-btn" data-tab="tabCalculadora">💰 Calculadora de Salário</button></div>
     
-    <div id="tabFinanceiro" class="tab-content active"><div class="dashboard-card"><h3><i class="fas fa-filter"></i> Filtros</h3><div><div class="filter-group"><label>Data Início</label><input type="date" id="finDataInicio"></div><div class="filter-group"><label>Data Fim</label><input type="date" id="finDataFim"></div><div class="filter-group"><label>Local</label><input list="finLocalList" id="finLocal" placeholder="Digite o local"><datalist id="finLocalList"></datalist></div><div class="filter-group"><label>Tipo Conta</label><input list="finTipoList" id="finTipo" placeholder="Digite o tipo"><datalist id="finTipoList"></datalist></div><button id="finAplicarFiltros" class="btn-export">Aplicar</button><button id="finExportarCSV" class="btn-export">📎 CSV</button><button id="finExportarPDF" class="btn-export">📄 PDF</button></div></div><div class="dashboard-card"><h3>📈 Previsão próximos 3 meses</h3><div class="forecast-card" id="finPrevisao">Calculando...</div></div><div class="dashboard-card"><h3>🏆 Ranking por Tipo de Conta (maior → menor)</h3><div id="finRanking"></div></div><div class="dashboard-card"><h3>📄 Documentos Financeiros</h3><div style="overflow-x:auto"><table class="data-table" id="finTable"><thead><tr><th>Local</th><th>Tipo</th><th>Vencimento</th><th>Documento</th><th>Valor (R$)</th><th>Serviço</th></tr></thead><tbody></tbody></table></div></div></div>
+    <!-- FINANCEIRO -->
+    <div id="tabFinanceiro" class="tab-content active">
+        <div class="dashboard-card"><h3><i class="fas fa-filter"></i> Filtros</h3><div><div class="filter-group"><label>Data Início</label><input type="date" id="finDataInicio"></div><div class="filter-group"><label>Data Fim</label><input type="date" id="finDataFim"></div><div class="filter-group"><label>Local</label><input list="finLocalList" id="finLocal" placeholder="Digite o local"><datalist id="finLocalList"></datalist></div><div class="filter-group"><label>Tipo Conta</label><input list="finTipoList" id="finTipo" placeholder="Digite o tipo"><datalist id="finTipoList"></datalist></div><button id="finAplicarFiltros" class="btn-export">Aplicar</button><button id="finExportarCSV" class="btn-export">📎 CSV</button><button id="finExportarPDF" class="btn-export">📄 PDF</button></div></div>
+        <div class="dashboard-card"><h3>📈 Previsão para os próximos meses (até dezembro)</h3><div class="forecast-card" id="finPrevisaoContainer"><table class="forecast-table" id="finPrevisaoTable"><thead><tr><th>Mês</th><th>Previsão (R$)</th></tr></thead><tbody><tr><td colspan="2">Calculando...</td></tr></tbody></table></div></div>
+        <div class="dashboard-card"><h3>🏆 Ranking por Tipo de Conta (maior → menor)</h3><div id="finRanking"></div></div>
+        <div class="dashboard-card"><h3>📄 Documentos Financeiros</h3><div style="overflow-x:auto"><table class="data-table" id="finTable"><thead><tr><th>Local</th><th>Tipo</th><th>Vencimento</th><th>Documento</th><th>Valor (R$)</th><th>Serviço</th></tr></thead><tbody></tbody></table></div></div>
+    </div>
     
+    <!-- FATURAMENTO -->
     <div id="tabFaturamento" class="tab-content">
-        <div class="dashboard-card"><h3><i class="fas fa-filter"></i> Filtros com autocomplete</h3><div><div class="filter-group"><label>Mês</label><select id="fatMesSelect"><option value="all">Todos</option></select></div><div class="filter-group"><label>Motorista</label><input list="fatMotoristaList" id="fatMotorista" placeholder="Digite o motorista"><datalist id="fatMotoristaList"></datalist></div><div class="filter-group"><label>Placa do Cavalo</label><input list="fatPlacaCavaloList" id="fatPlacaCavalo" placeholder="Placa do trator"><datalist id="fatPlacaCavaloList"></datalist></div><div class="filter-group"><label>Placa da Carreta</label><input list="fatPlacaCarretaList" id="fatPlacaCarreta" placeholder="Placa do reboque"><datalist id="fatPlacaCarretaList"></datalist></div><div class="filter-group"><label>Embarcadora</label><input list="fatEmbarcadoraList" id="fatEmbarcadora" placeholder="Embarcadora"><datalist id="fatEmbarcadoraList"></datalist></div><div class="filter-group"><label>Origem</label><input list="fatOrigemList" id="fatOrigem" placeholder="Origem"><datalist id="fatOrigemList"></datalist></div><div class="filter-group"><label>Destino</label><input list="fatDestinoList" id="fatDestino" placeholder="Destino"><datalist id="fatDestinoList"></datalist></div><div class="filter-group"><label>Valor Mínimo</label><input type="number" id="fatValorMin" placeholder="R$ mínimo"></div><button id="fatAplicarFiltros" class="btn-export">Aplicar</button><button id="fatExportarCSV" class="btn-export">📎 CSV</button><button id="fatExportarPDF" class="btn-export">📄 PDF</button></div></div>
+        <div class="dashboard-card"><h3><i class="fas fa-filter"></i> Filtros</h3><div><div class="filter-group"><label>Mês</label><select id="fatMesSelect"><option value="all">Todos</option></select></div><div class="filter-group"><label>Motorista</label><input list="fatMotoristaList" id="fatMotorista" placeholder="Digite o motorista"><datalist id="fatMotoristaList"></datalist></div><div class="filter-group"><label>Placa Cavalo</label><input list="fatPlacaCavaloList" id="fatPlacaCavalo" placeholder="Placa do trator"><datalist id="fatPlacaCavaloList"></datalist></div><div class="filter-group"><label>Placa Carreta</label><input list="fatPlacaCarretaList" id="fatPlacaCarreta" placeholder="Placa do reboque"><datalist id="fatPlacaCarretaList"></datalist></div><div class="filter-group"><label>Embarcadora</label><input list="fatEmbarcadoraList" id="fatEmbarcadora" placeholder="Embarcadora"><datalist id="fatEmbarcadoraList"></datalist></div><div class="filter-group"><label>Origem</label><input list="fatOrigemList" id="fatOrigem" placeholder="Origem"><datalist id="fatOrigemList"></datalist></div><div class="filter-group"><label>Destino</label><input list="fatDestinoList" id="fatDestino" placeholder="Destino"><datalist id="fatDestinoList"></datalist></div><div class="filter-group"><label>Valor Mínimo</label><input type="number" id="fatValorMin" placeholder="R$ mínimo"></div><button id="fatAplicarFiltros" class="btn-export">Aplicar</button><button id="fatExportarCSV" class="btn-export">📎 CSV</button><button id="fatExportarPDF" class="btn-export">📄 PDF</button></div></div>
         <div id="fatDiagnostic" class="diagnostic-box" style="display:none;"></div>
-        <div class="dashboard-card"><h3>🏆 Top 5 Maiores Fretes</h3><div id="rankMelhoresViagens"></div></div><div class="dashboard-card"><h3>📊 Rankings por Valor Total</h3><div class="ranking-grid"><div class="ranking-box"><h4>Motoristas</h4><div id="rankMotorista"></div></div><div class="ranking-box"><h4>Placas (Cavalo)</h4><div id="rankPlacaCavalo"></div></div><div class="ranking-box"><h4>Placas (Carreta)</h4><div id="rankPlacaCarreta"></div></div><div class="ranking-box"><h4>Embarcadoras</h4><div id="rankEmbarcadora"></div></div></div></div>
+        <div class="dashboard-card"><h3>🏆 Top 5 Maiores Fretes</h3><div id="rankMelhoresViagens"></div></div>
+        <div class="dashboard-card"><h3>📊 Rankings por Valor Total</h3><div class="ranking-grid"><div class="ranking-box"><h4>Motoristas</h4><div id="rankMotorista"></div></div><div class="ranking-box"><h4>Placas (Cavalo)</h4><div id="rankPlacaCavalo"></div></div><div class="ranking-box"><h4>Placas (Carreta)</h4><div id="rankPlacaCarreta"></div></div><div class="ranking-box"><h4>Embarcadoras</h4><div id="rankEmbarcadora"></div></div></div></div>
         <div class="dashboard-card"><h3>🚛 Tabela de Fretes (clique na placa do cavalo para ver ficha)</h3><div style="overflow-x:auto"><table class="data-table" id="fatTable"><thead><tr><th>Data</th><th>Placa Cavalo</th><th>Placa Carreta</th><th>Motorista</th><th>Embarcadora</th><th>Origem</th><th>Destino</th><th>Valor (R$)</th></tr></thead><tbody></tbody></table></div><div id="fichaPlaca" class="ficha-placa" style="display:none;"></div></div>
     </div>
     
-    <div id="tabCalculadora" class="tab-content"><div class="dashboard-card salary-calc"><h4><i class="fas fa-calculator"></i> Calculadora de Salário do Motorista</h4><p style="margin-bottom:1rem;">Baseado nos filtros atuais da aba "Faturamento".</p><div id="salaryInfo">Faturamento total: <strong id="totalFreteValor">R$ 0,00</strong></div><div class="salary-row"><label>% Comissão:</label><input type="number" id="comissaoPercent" value="5" step="0.5"> %</div><div class="salary-row"><label>Despesas (R$):</label><input type="number" id="despesasMot" value="0" step="100"></div><div class="salary-row"><label>Diária (R$):</label><input type="number" id="diaria" value="0" step="50"></div><div class="salary-row"><label>Bônus (R$):</label><input type="number" id="bonus" value="0" step="100"></div><div class="salary-row"><label>Vales/Manobra (R$):</label><input type="number" id="vales" value="0" step="100"></div><div class="salary-row"><label>IR (R$):</label><input type="number" id="ir" value="0" step="50"></div><div class="salary-row"><label>Multa (R$):</label><input type="number" id="multa" value="0" step="100"></div><div class="salary-row"><label>Dep. Folha (R$):</label><input type="number" id="depFolha" value="0" step="100"></div><div class="salary-row"><label><strong>Valor a Receber:</strong></label><span id="valorReceber" class="result-value">R$ 0,00</span></div><small><i class="fas fa-info-circle"></i> Cálculo: (Frete Total × %Comissão) + Despesas + Diária + Bônus - Vales - IR - Multa - Dep. Folha</small></div></div>
+    <!-- CALCULADORA DE SALÁRIO (INDEPENDENTE) -->
+    <div id="tabCalculadora" class="tab-content">
+        <div class="dashboard-card salary-calc">
+            <h4><i class="fas fa-calculator"></i> Calculadora de Salário do Motorista</h4>
+            <div class="filter-group"><label>Selecione o Motorista</label><select id="calcMotoristaSelect"><option value="">Carregando...</option></select></div>
+            <div class="filter-group"><label>Mês/Ano</label><input type="month" id="calcPeriodo"></div>
+            <button id="calcAplicarFiltros" class="btn-export">Calcular</button>
+            <div id="calcResultado">
+                <p><strong>Faturamento total no período:</strong> <span id="calcTotalFrete">R$ 0,00</span></p>
+                <div><strong>Fretes do período:</strong></div>
+                <div id="calcListaFretes" class="fretes-list"><small>Selecione um motorista e período.</small></div>
+            </div>
+            <hr style="margin: 1rem 0;">
+            <div class="salary-row"><label>% Comissão sobre frete:</label><input type="number" id="calcComissaoPercent" value="5" step="0.5"> %</div>
+            <div class="salary-row"><label>Despesas do Motorista (R$):</label><input type="number" id="calcDespesasMot" value="0" step="100"></div>
+            <div class="salary-row"><label>Diária (R$):</label><input type="number" id="calcDiaria" value="0" step="50"></div>
+            <div class="salary-row"><label>Bônus (R$):</label><input type="number" id="calcBonus" value="0" step="100"></div>
+            <div class="salary-row"><label>Vales / Manobra (R$):</label><input type="number" id="calcVales" value="0" step="100"></div>
+            <div class="salary-row"><label>IR (R$):</label><input type="number" id="calcIr" value="0" step="50"></div>
+            <div class="salary-row"><label>Multa (R$):</label><input type="number" id="calcMulta" value="0" step="100"></div>
+            <div class="salary-row"><label>Dep. Folha (R$):</label><input type="number" id="calcDepFolha" value="0" step="100"></div>
+            <div class="salary-row"><label><strong>Valor a Receber:</strong></label><span id="calcValorReceber" class="result-value">R$ 0,00</span></div>
+            <small><i class="fas fa-info-circle"></i> Cálculo: (Frete Total × %Comissão) + Despesas + Diária + Bônus - Vales - IR - Multa - Dep. Folha</small>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -243,10 +277,11 @@
         refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar Dados';
         applyFinFilters();
         aplicarFiltrosFaturamento();
+        atualizarSelectMotoristasCalculadora();
     }
     refreshBtn.addEventListener('click', refreshAllData);
 
-    // ========== FINANCEIRO (igual antes) ==========
+    // ========== FINANCEIRO ==========
     async function loadFinanceiroData(skipFilter = false) {
         try {
             const resp = await fetch(URL_FINANCEIRO);
@@ -318,13 +353,27 @@
             let dateStr = item.vencimentoDate ? moment(item.vencimentoDate).format('DD/MM/YYYY') : '---';
             row.innerHTML = `<td>${item.local}</td><td>${item.tipoConta}</td><td>${dateStr}</td><td>${item.documento}</td><td style="text-align:right">R$ ${item.valor.toFixed(2)}</td><td>${item.servico.substring(0,40)}</td>`;
         });
+        // Previsão mês a mês até dezembro do ano corrente
         const monthly = new Map();
         financeiroData.forEach(i => { if(i.vencimentoDate) { const key = moment(i.vencimentoDate).format('YYYY-MM'); monthly.set(key, (monthly.get(key)||0) + i.valor); } });
-        let values = Array.from(monthly.values());
-        let last3 = values.slice(-3);
-        let avg = last3.length ? last3.reduce((a,b)=>a+b,0)/last3.length : 0;
-        let total3 = avg * 3;
-        document.getElementById('finPrevisao').innerHTML = `<i class="fas fa-calendar-alt"></i> Projeção para os próximos 3 meses: <strong style="font-size:1.4rem;">R$ ${total3.toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong><br><small>Média mensal: R$ ${avg.toLocaleString('pt-BR',{minimumFractionDigits:2})}</small>`;
+        let monthsWithData = Array.from(monthly.keys()).sort();
+        let last3Values = monthsWithData.slice(-3).map(m => monthly.get(m));
+        let avg = last3Values.length ? last3Values.reduce((a,b)=>a+b,0)/last3Values.length : 0;
+        let currentYear = new Date().getFullYear();
+        let nextMonths = [];
+        let currentDate = new Date();
+        for (let i = 1; i <= 12; i++) {
+            let monthDate = new Date(currentYear, i-1, 1);
+            if (monthDate >= currentDate) {
+                nextMonths.push({ year: currentYear, month: i });
+            }
+        }
+        let forecastRows = '';
+        for (let {year, month} of nextMonths) {
+            let monthName = moment(`${year}-${month}`, 'YYYY-M').format('MMMM/YYYY');
+            forecastRows += `<tr><td>${monthName}</td><td>R$ ${avg.toLocaleString('pt-BR', {minimumFractionDigits:2})}</td></tr>`;
+        }
+        document.getElementById('finPrevisaoTable').innerHTML = `<thead><tr><th>Mês</th><th>Previsão (R$)</th></tr></thead><tbody>${forecastRows || '<tr><td colspan="2">Nenhum mês restante no ano</td></tr>'}</tbody>`;
     }
     document.getElementById('finAplicarFiltros').addEventListener('click', applyFinFilters);
     document.getElementById('finExportarCSV').addEventListener('click', () => {
@@ -344,7 +393,7 @@
     });
     document.getElementById('finExportarPDF').addEventListener('click', () => alert("Use Ctrl+P para salvar como PDF."));
 
-    // ========== FATURAMENTO COM DIAGNÓSTICO ==========
+    // ========== FATURAMENTO ==========
     async function loadFaturamentoData(skipFilter = false) {
         const diagDiv = document.getElementById('fatDiagnostic');
         try {
@@ -354,10 +403,8 @@
             const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
             if (parsed.errors && parsed.errors.length) console.warn(parsed.errors);
             const rows = parsed.data;
-            if (!rows.length) throw new Error("Planilha vazia (nenhuma linha)");
-            
+            if (!rows.length) throw new Error("Planilha vazia");
             const headers = Object.keys(rows[0]);
-            // Mapeamento flexível com suporte a "Placa Cavalo" e "Placa Carreta"
             const colData = headers.find(h => /data|emissão|mes/i.test(h)) || headers[0];
             const colMotorista = headers.find(h => /motorista/i.test(h)) || headers[1];
             const colPlacaCavalo = headers.find(h => /cavalo|trator|placa.*cavalo/i.test(h)) || (headers[2] || headers[0]);
@@ -366,9 +413,7 @@
             const colOrigem = headers.find(h => /origem|de/i.test(h)) || headers[5];
             const colDestino = headers.find(h => /destino|para/i.test(h)) || headers[6];
             const colValor = headers.find(h => /valor|frete|r\$|total/i.test(h)) || headers[7];
-            
             faturamentoData = [];
-            let linhasValidas = 0;
             for (let row of rows) {
                 let val = parseMoney(row[colValor]);
                 if (val === 0) continue;
@@ -383,28 +428,23 @@
                     destino: row[colDestino] || "",
                     valor: val
                 });
-                linhasValidas++;
             }
-            if (faturamentoData.length === 0) {
-                throw new Error(`Nenhuma linha com valor >0 encontrada. Total de linhas na planilha: ${rows.length}`);
-            }
-            // Se chegou aqui, dados carregados com sucesso
+            if (faturamentoData.length === 0) throw new Error("Nenhuma linha com valor >0");
             diagDiv.style.display = 'none';
             atualizarDatalistsFaturamento();
             if (!skipFilter) aplicarFiltrosFaturamento();
+            atualizarSelectMotoristasCalculadora();
         } catch(e) {
-            console.error("Erro no faturamento:", e);
+            console.error(e);
             diagDiv.style.display = 'block';
-            diagDiv.innerHTML = `<strong>⚠️ Diagnóstico - Faturamento</strong><br>Erro: ${e.message}<br><br>Verifique se a planilha está pública e com as colunas corretas. 
-            <br><strong>Esperado:</strong> colunas com "Data", "Motorista", "Placa Cavalo/Trator", "Placa Carreta/Reboque", "Embarcadora", "Origem", "Destino", "Valor Frete".
-            <br><br>Link utilizado: <a href="${URL_FATURAMENTO}" target="_blank">Abrir planilha</a>`;
-            // Dados de exemplo para não quebrar o layout
+            diagDiv.innerHTML = `<strong>⚠️ Diagnóstico - Faturamento</strong><br>Erro: ${e.message}<br><br>Verifique a planilha. Link: <a href="${URL_FATURAMENTO}" target="_blank">Abrir planilha</a>`;
             faturamentoData = [
                 { data: new Date(2025,2,10), placaCavalo: "ABC1234", placaCarreta: "CAR1234", motorista: "João Silva", embarcadora: "BRF", origem: "Concórdia", destino: "São Paulo", valor: 4500 },
                 { data: new Date(2025,2,15), placaCavalo: "XYZ5678", placaCarreta: "CAR5678", motorista: "Carlos Souza", embarcadora: "Sadia", origem: "Chapecó", destino: "Rio", valor: 3800 },
             ];
             atualizarDatalistsFaturamento();
             if (!skipFilter) aplicarFiltrosFaturamento();
+            atualizarSelectMotoristasCalculadora();
         }
     }
     function atualizarDatalistsFaturamento() {
@@ -423,19 +463,6 @@
         document.getElementById('fatDestinoList').innerHTML = destinos.map(d=>`<option value="${d}">`).join('');
         const mesSelect = document.getElementById('fatMesSelect');
         mesSelect.innerHTML = '<option value="all">Todos os meses</option>' + meses.sort().map(m => `<option value="${m}">${moment(m, 'YYYY-MM').format('MMMM/YYYY')}</option>`).join('');
-    }
-    function atualizarCalculoSalario(totalFrete) {
-        const comissao = parseFloat(document.getElementById('comissaoPercent').value) || 0;
-        const despesas = parseFloat(document.getElementById('despesasMot').value) || 0;
-        const diaria = parseFloat(document.getElementById('diaria').value) || 0;
-        const bonus = parseFloat(document.getElementById('bonus').value) || 0;
-        const vales = parseFloat(document.getElementById('vales').value) || 0;
-        const ir = parseFloat(document.getElementById('ir').value) || 0;
-        const multa = parseFloat(document.getElementById('multa').value) || 0;
-        const depFolha = parseFloat(document.getElementById('depFolha').value) || 0;
-        const comissaoValor = totalFrete * (comissao / 100);
-        const valorReceber = comissaoValor + despesas + diaria + bonus - vales - ir - multa - depFolha;
-        document.getElementById('valorReceber').innerHTML = `R$ ${valorReceber.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
     }
     function aplicarFiltrosFaturamento() {
         let mes = document.getElementById('fatMesSelect').value;
@@ -459,8 +486,6 @@
         });
         currentFiltroFaturamento.filtered = filtered;
         const totalFrete = filtered.reduce((sum, i) => sum + i.valor, 0);
-        document.getElementById('totalFreteValor').innerHTML = `R$ ${totalFrete.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-        atualizarCalculoSalario(totalFrete);
         // Rankings
         let rankMotorista = new Map(), rankPlacaCavalo = new Map(), rankPlacaCarreta = new Map(), rankEmbarcadora = new Map();
         filtered.forEach(i => {
@@ -497,14 +522,6 @@
         document.getElementById('fecharFicha').addEventListener('click', () => fichaDiv.style.display = 'none');
     }
     document.getElementById('fatAplicarFiltros').addEventListener('click', aplicarFiltrosFaturamento);
-    document.getElementById('comissaoPercent').addEventListener('input', () => { const total = currentFiltroFaturamento.filtered.reduce((s,i)=>s+i.valor,0); atualizarCalculoSalario(total); });
-    document.getElementById('despesasMot').addEventListener('input', () => { const total = currentFiltroFaturamento.filtered.reduce((s,i)=>s+i.valor,0); atualizarCalculoSalario(total); });
-    document.getElementById('diaria').addEventListener('input', () => { const total = currentFiltroFaturamento.filtered.reduce((s,i)=>s+i.valor,0); atualizarCalculoSalario(total); });
-    document.getElementById('bonus').addEventListener('input', () => { const total = currentFiltroFaturamento.filtered.reduce((s,i)=>s+i.valor,0); atualizarCalculoSalario(total); });
-    document.getElementById('vales').addEventListener('input', () => { const total = currentFiltroFaturamento.filtered.reduce((s,i)=>s+i.valor,0); atualizarCalculoSalario(total); });
-    document.getElementById('ir').addEventListener('input', () => { const total = currentFiltroFaturamento.filtered.reduce((s,i)=>s+i.valor,0); atualizarCalculoSalario(total); });
-    document.getElementById('multa').addEventListener('input', () => { const total = currentFiltroFaturamento.filtered.reduce((s,i)=>s+i.valor,0); atualizarCalculoSalario(total); });
-    document.getElementById('depFolha').addEventListener('input', () => { const total = currentFiltroFaturamento.filtered.reduce((s,i)=>s+i.valor,0); atualizarCalculoSalario(total); });
     document.getElementById('fatExportarCSV').addEventListener('click', () => {
         let mes = document.getElementById('fatMesSelect').value;
         let motorista = document.getElementById('fatMotorista').value.trim();
@@ -533,6 +550,65 @@
     });
     document.getElementById('fatExportarPDF').addEventListener('click', () => alert("Use Ctrl+P para salvar como PDF."));
 
+    // ========== CALCULADORA DE SALÁRIO ==========
+    function atualizarSelectMotoristasCalculadora() {
+        const motoristas = [...new Set(faturamentoData.map(i => i.motorista))];
+        const select = document.getElementById('calcMotoristaSelect');
+        select.innerHTML = '<option value="">Selecione um motorista</option>' + motoristas.map(m => `<option value="${m}">${m}</option>`).join('');
+    }
+    function calcularSalarioMotorista() {
+        const motorista = document.getElementById('calcMotoristaSelect').value;
+        const periodo = document.getElementById('calcPeriodo').value;
+        if (!motorista) {
+            document.getElementById('calcTotalFrete').innerHTML = 'R$ 0,00';
+            document.getElementById('calcListaFretes').innerHTML = '<small>Selecione um motorista.</small>';
+            atualizarValorReceberCalculadora(0);
+            return;
+        }
+        let fretes = faturamentoData.filter(f => f.motorista === motorista);
+        if (periodo) {
+            const [ano, mes] = periodo.split('-');
+            fretes = fretes.filter(f => f.data && f.data.getFullYear() == ano && f.data.getMonth() + 1 == mes);
+        }
+        const total = fretes.reduce((s, f) => s + f.valor, 0);
+        document.getElementById('calcTotalFrete').innerHTML = `R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+        if (fretes.length === 0) {
+            document.getElementById('calcListaFretes').innerHTML = '<small>Nenhum frete encontrado para o período selecionado.</small>';
+        } else {
+            let html = '<table class="data-table" style="width:100%"><thead><tr><th>Data</th><th>Origem</th><th>Destino</th><th>Valor (R$)</th></tr></thead><tbody>';
+            fretes.forEach(f => {
+                let dataStr = f.data ? moment(f.data).format('DD/MM/YYYY') : '---';
+                html += `<tr><td>${dataStr}</td><td>${f.origem}</td><td>${f.destino}</td><td style="text-align:right">R$ ${f.valor.toFixed(2)}</td></tr>`;
+            });
+            html += '</tbody></table>';
+            document.getElementById('calcListaFretes').innerHTML = html;
+        }
+        atualizarValorReceberCalculadora(total);
+    }
+    function atualizarValorReceberCalculadora(totalFrete) {
+        const comissao = parseFloat(document.getElementById('calcComissaoPercent').value) || 0;
+        const despesas = parseFloat(document.getElementById('calcDespesasMot').value) || 0;
+        const diaria = parseFloat(document.getElementById('calcDiaria').value) || 0;
+        const bonus = parseFloat(document.getElementById('calcBonus').value) || 0;
+        const vales = parseFloat(document.getElementById('calcVales').value) || 0;
+        const ir = parseFloat(document.getElementById('calcIr').value) || 0;
+        const multa = parseFloat(document.getElementById('calcMulta').value) || 0;
+        const depFolha = parseFloat(document.getElementById('calcDepFolha').value) || 0;
+        const comissaoValor = totalFrete * (comissao / 100);
+        const valorReceber = comissaoValor + despesas + diaria + bonus - vales - ir - multa - depFolha;
+        document.getElementById('calcValorReceber').innerHTML = `R$ ${valorReceber.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+    }
+    document.getElementById('calcAplicarFiltros').addEventListener('click', calcularSalarioMotorista);
+    document.getElementById('calcComissaoPercent').addEventListener('input', () => { const total = parseFloat(document.getElementById('calcTotalFrete').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarValorReceberCalculadora(total); });
+    document.getElementById('calcDespesasMot').addEventListener('input', () => { const total = parseFloat(document.getElementById('calcTotalFrete').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarValorReceberCalculadora(total); });
+    document.getElementById('calcDiaria').addEventListener('input', () => { const total = parseFloat(document.getElementById('calcTotalFrete').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarValorReceberCalculadora(total); });
+    document.getElementById('calcBonus').addEventListener('input', () => { const total = parseFloat(document.getElementById('calcTotalFrete').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarValorReceberCalculadora(total); });
+    document.getElementById('calcVales').addEventListener('input', () => { const total = parseFloat(document.getElementById('calcTotalFrete').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarValorReceberCalculadora(total); });
+    document.getElementById('calcIr').addEventListener('input', () => { const total = parseFloat(document.getElementById('calcTotalFrete').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarValorReceberCalculadora(total); });
+    document.getElementById('calcMulta').addEventListener('input', () => { const total = parseFloat(document.getElementById('calcTotalFrete').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarValorReceberCalculadora(total); });
+    document.getElementById('calcDepFolha').addEventListener('input', () => { const total = parseFloat(document.getElementById('calcTotalFrete').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarValorReceberCalculadora(total); });
+
+    // Abas
     const tabs = document.querySelectorAll('.tab-btn'), contents = document.querySelectorAll('.tab-content');
     tabs.forEach(btn => btn.addEventListener('click', () => { const tabId = btn.getAttribute('data-tab'); tabs.forEach(b=>b.classList.remove('active')); btn.classList.add('active'); contents.forEach(c=>c.classList.remove('active')); document.getElementById(tabId).classList.add('active'); }));
 
