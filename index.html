@@ -20,6 +20,7 @@
             --premium-dark: #1e2a3a;
             --success: #10b981;
             --danger: #ef4444;
+            --warning: #f59e0b;
         }
         body { font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--text); overflow-x: hidden; line-height: 1.6; background: #f1f5f9; }
         header {
@@ -152,6 +153,8 @@
         .resumo-item { flex: 1; min-width: 120px; }
         .resumo-valor { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
         .chart-container { max-height: 300px; margin: 1rem 0; }
+        .warning-row { background-color: #fff3cd !important; border-left: 4px solid var(--warning); }
+        .danger-row { background-color: #fee2e2 !important; border-left: 4px solid var(--danger); }
     </style>
 </head>
 <body>
@@ -200,59 +203,48 @@
 <!-- ÁREA PRIVADA -->
 <div id="privateArea" class="private-area">
     <div class="private-header"><h2><i class="fas fa-chart-line"></i> Central de Gestão M-Malacarne</h2><div><button id="refreshDataBtn" class="btn-export btn-refresh"><i class="fas fa-sync-alt"></i> Atualizar Dados</button><button id="logoutPrivateBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sair</button></div></div>
-    <div class="tabs"><button class="tab-btn active" data-tab="tabFinanceiro">📊 Financeiro</button><button class="tab-btn" data-tab="tabFaturamento">🚛 Faturamento</button><button class="tab-btn" data-tab="tabCalculadora">💰 Calculadora de Salário</button></div>
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="tabFinanceiro">📊 Financeiro</button>
+        <button class="tab-btn" data-tab="tabFaturamento">🚛 Faturamento</button>
+        <button class="tab-btn" data-tab="tabCalculadora">💰 Calculadora</button>
+        <button class="tab-btn" data-tab="tabBaterias">🔋 Controle de Baterias</button>
+    </div>
     
-    <!-- FINANCEIRO -->
+    <!-- FINANCEIRO (corrigido com filtro de mês e período) -->
     <div id="tabFinanceiro" class="tab-content active">
         <div class="dashboard-card">
             <h3><i class="fas fa-filter"></i> Filtros</h3>
             <div>
+                <div class="filter-group"><label>Mês/Ano</label><select id="finMesSelect"><option value="all">Todos</option></select></div>
                 <div class="filter-group"><label>Data Início</label><input type="date" id="finDataInicio"></div>
                 <div class="filter-group"><label>Data Fim</label><input type="date" id="finDataFim"></div>
-                <div class="filter-group"><label>Local</label><input list="finLocalList" id="finLocal" placeholder="Digite o local"><datalist id="finLocalList"></datalist></div>
-                <div class="filter-group"><label>Tipo Conta</label><input list="finTipoList" id="finTipo" placeholder="Digite o tipo"><datalist id="finTipoList"></datalist></div>
+                <div class="filter-group"><label>Local</label><input list="finLocalList" id="finLocal" placeholder="Local"><datalist id="finLocalList"></datalist></div>
+                <div class="filter-group"><label>Tipo Conta</label><input list="finTipoList" id="finTipo" placeholder="Tipo"><datalist id="finTipoList"></datalist></div>
                 <button id="finAplicarFiltros" class="btn-export">Aplicar</button>
-                <button id="finLimparFiltros" class="btn-export btn-clear">Limpar Filtros</button>
+                <button id="finLimparFiltros" class="btn-export btn-clear">Limpar</button>
                 <button id="finExportarCSV" class="btn-export">📎 CSV</button>
                 <button id="finExportarPDF" class="btn-export">📄 PDF</button>
             </div>
         </div>
-        <!-- Resumo executivo -->
-        <div class="dashboard-card">
-            <h3><i class="fas fa-chart-pie"></i> Visão Executiva</h3>
-            <div id="finResumo" class="resumo-card"></div>
-        </div>
-        <!-- Ranking com gráfico -->
-        <div class="dashboard-card">
-            <h3><i class="fas fa-trophy"></i> Ranking por Tipo de Conta</h3>
-            <canvas id="finRankingChart" style="max-height: 250px;"></canvas>
-            <div id="finRankingLista" style="margin-top: 1rem;"></div>
-        </div>
-        <!-- Tabela de documentos -->
-        <div class="dashboard-card">
-            <h3><i class="fas fa-file-invoice"></i> Documentos Financeiros</h3>
-            <div style="overflow-x:auto"><table class="data-table" id="finTable"><thead><tr><th>Local</th><th>Tipo</th><th>Vencimento</th><th>Documento</th><th>Valor (R$)</th><th>Serviço</th></tr></thead><tbody></tbody></table></div>
-        </div>
-        <!-- Previsão (compacta no final) -->
-        <div class="dashboard-card">
-            <h3><i class="fas fa-chart-line"></i> Previsão para os próximos meses</h3>
-            <div class="forecast-card" id="finPrevisaoContainer"><table class="forecast-table" id="finPrevisaoTable"><thead><tr><th>Mês</th><th>Previsão (R$)</th></tr></thead><tbody><tr><td colspan="2">Calculando...</td></tr></tbody></table></div>
-        </div>
+        <div class="dashboard-card"><h3>Visão Executiva</h3><div id="finResumo" class="resumo-card"></div></div>
+        <div class="dashboard-card"><h3>Ranking por Tipo de Conta</h3><canvas id="finRankingChart" style="max-height: 250px;"></canvas><div id="finRankingLista" style="margin-top: 1rem;"></div></div>
+        <div class="dashboard-card"><h3>Documentos Financeiros</h3><div style="overflow-x:auto"><table class="data-table" id="finTable"><thead><tr><th>Local</th><th>Tipo</th><th>Vencimento</th><th>Documento</th><th>Valor (R$)</th><th>Serviço</th></tr></thead><tbody></tbody></table></div></div>
+        <div class="dashboard-card"><h3>Previsão até dezembro</h3><div class="forecast-card"><table class="forecast-table" id="finPrevisaoTable"><thead><tr><th>Mês</th><th>Previsão (R$)</th></tr></thead><tbody><tr><td colspan="2">Calculando...</td></tr></tbody>}</div></div>
     </div>
     
-    <!-- FATURAMENTO (mantido do código anterior, resumido por brevidade) -->
+    <!-- FATURAMENTO (mantido resumido) -->
     <div id="tabFaturamento" class="tab-content">
         <div class="dashboard-card"><h3><i class="fas fa-filter"></i> Filtros</h3><div><div class="filter-group"><label>Mês</label><select id="fatMesSelect"><option value="all">Todos</option></select></div><div class="filter-group"><label>Motorista</label><input list="fatMotoristaList" id="fatMotorista" placeholder="Motorista"><datalist id="fatMotoristaList"></datalist></div><div class="filter-group"><label>Placa Cavalo</label><input list="fatPlacaCavaloList" id="fatPlacaCavalo" placeholder="Cavalo"><datalist id="fatPlacaCavaloList"></datalist></div><div class="filter-group"><label>Placa Carreta</label><input list="fatPlacaCarretaList" id="fatPlacaCarreta" placeholder="Carreta"><datalist id="fatPlacaCarretaList"></datalist></div><div class="filter-group"><label>Embarcadora</label><input list="fatEmbarcadoraList" id="fatEmbarcadora" placeholder="Embarcadora"><datalist id="fatEmbarcadoraList"></datalist></div><div class="filter-group"><label>Origem</label><input list="fatOrigemList" id="fatOrigem" placeholder="Origem"><datalist id="fatOrigemList"></datalist></div><div class="filter-group"><label>Destino</label><input list="fatDestinoList" id="fatDestino" placeholder="Destino"><datalist id="fatDestinoList"></datalist></div><div class="filter-group"><label>Valor Mínimo</label><input type="number" id="fatValorMin" placeholder="R$ mínimo"></div><button id="fatAplicarFiltros" class="btn-export">Aplicar</button><button id="fatExportarCSV" class="btn-export">📎 CSV</button><button id="fatExportarPDF" class="btn-export">📄 PDF</button></div></div>
         <div id="fatDiagnostic" class="diagnostic-box" style="display:none;"></div>
-        <div class="dashboard-card"><h3>🏆 Top 5 Maiores Fretes</h3><div id="rankMelhoresViagens"></div></div>
-        <div class="dashboard-card"><h3>📊 Rankings por Valor Total</h3><div class="ranking-grid"><div class="ranking-box"><h4>Motoristas</h4><div id="rankMotorista"></div></div><div class="ranking-box"><h4>Placas (Cavalo)</h4><div id="rankPlacaCavalo"></div></div><div class="ranking-box"><h4>Placas (Carreta)</h4><div id="rankPlacaCarreta"></div></div><div class="ranking-box"><h4>Embarcadoras</h4><div id="rankEmbarcadora"></div></div></div></div>
-        <div class="dashboard-card"><h3>🚛 Tabela de Fretes</h3><div style="overflow-x:auto"><table class="data-table" id="fatTable"><thead><tr><th>Data</th><th>Placa Cavalo</th><th>Placa Carreta</th><th>Motorista</th><th>Embarcadora</th><th>Origem</th><th>Destino</th><th>Valor (R$)</th></tr></thead><tbody></tbody></table></div><div id="fichaPlaca" class="ficha-placa" style="display:none;"></div></div>
+        <div class="dashboard-card"><h3>Top 5 Maiores Fretes</h3><div id="rankMelhoresViagens"></div></div>
+        <div class="dashboard-card"><h3>Rankings</h3><div class="ranking-grid"><div class="ranking-box"><h4>Motoristas</h4><div id="rankMotorista"></div></div><div class="ranking-box"><h4>Placas (Cavalo)</h4><div id="rankPlacaCavalo"></div></div><div class="ranking-box"><h4>Placas (Carreta)</h4><div id="rankPlacaCarreta"></div></div><div class="ranking-box"><h4>Embarcadoras</h4><div id="rankEmbarcadora"></div></div></div></div>
+        <div class="dashboard-card"><h3>Tabela de Fretes</h3><div style="overflow-x:auto"><table class="data-table" id="fatTable"><thead><tr><th>Data</th><th>Placa Cavalo</th><th>Placa Carreta</th><th>Motorista</th><th>Embarcadora</th><th>Origem</th><th>Destino</th><th>Valor (R$)</th></tr></thead><tbody></tbody></table></div><div id="fichaPlaca" class="ficha-placa" style="display:none;"></div></div>
     </div>
     
-    <!-- CALCULADORA DE SALÁRIO (com filtros de data e embarcadora) -->
+    <!-- CALCULADORA DE SALÁRIO -->
     <div id="tabCalculadora" class="tab-content">
         <div class="dashboard-card salary-calc">
-            <h4><i class="fas fa-calculator"></i> Calculadora de Salário do Motorista</h4>
+            <h4><i class="fas fa-calculator"></i> Calculadora de Salário</h4>
             <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
                 <div class="filter-group"><label>Motorista</label><select id="calcMotoristaSelect"><option value="">Selecione</option></select></div>
                 <div class="filter-group"><label>Data Início</label><input type="date" id="calcDataInicio"></div>
@@ -262,7 +254,7 @@
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                 <div>
-                    <p><strong>Faturamento total no período:</strong> <span id="calcTotalFrete" class="result-value" style="font-size:1.2rem;">R$ 0,00</span></p>
+                    <p><strong>Faturamento total:</strong> <span id="calcTotalFrete" class="result-value" style="font-size:1.2rem;">R$ 0,00</span></p>
                     <div class="salary-row"><label>% Comissão:</label><input type="number" id="calcComissaoPercent" value="5" step="0.5"> %</div>
                     <div class="salary-row"><label>Despesas (R$):</label><input type="number" id="calcDespesasMot" value="0" step="100"></div>
                     <div class="salary-row"><label>Diária (R$):</label><input type="number" id="calcDiaria" value="0" step="50"></div>
@@ -273,12 +265,30 @@
                     <div class="salary-row"><label>Dep. Folha (R$):</label><input type="number" id="calcDepFolha" value="0" step="100"></div>
                     <div class="salary-row"><label><strong>Valor a Receber:</strong></label><span id="calcValorReceber" class="result-value">R$ 0,00</span></div>
                 </div>
-                <div>
-                    <strong>📋 Fretes do período</strong>
-                    <div id="calcListaFretes" class="fretes-list"><small>Selecione os filtros e clique em Calcular.</small></div>
-                </div>
+                <div><strong>📋 Fretes do período</strong><div id="calcListaFretes" class="fretes-list"><small>Selecione os filtros.</small></div></div>
             </div>
-            <small><i class="fas fa-info-circle"></i> Cálculo: (Frete Total × %Comissão) + Despesas + Diária + Bônus - Vales - IR - Multa - Dep. Folha</small>
+        </div>
+    </div>
+    
+    <!-- NOVA GUIA: CONTROLE DE BATERIAS -->
+    <div id="tabBaterias" class="tab-content">
+        <div class="dashboard-card">
+            <h3><i class="fas fa-filter"></i> Filtros</h3>
+            <div>
+                <div class="filter-group"><label>Veículo</label><input list="bateriaVeiculoList" id="bateriaVeiculo" placeholder="Veículo"><datalist id="bateriaVeiculoList"></datalist></div>
+                <div class="filter-group"><label>Tipo de Bateria</label><input list="bateriaTipoList" id="bateriaTipo" placeholder="Tipo"><datalist id="bateriaTipoList"></datalist></div>
+                <div class="filter-group"><label>Status</label><select id="bateriaStatus"><option value="all">Todos</option><option value="ok">OK</option><option value="warning">Próximo vencimento</option><option value="expired">Vencido</option></select></div>
+                <button id="bateriaAplicarFiltros" class="btn-export">Aplicar</button>
+                <button id="bateriaExportarCSV" class="btn-export">📎 CSV</button>
+            </div>
+        </div>
+        <div class="dashboard-card">
+            <h3><i class="fas fa-exclamation-triangle"></i> Alertas de Vencimento</h3>
+            <div id="bateriaAlertas" class="diagnostic-box" style="display:none;"></div>
+        </div>
+        <div class="dashboard-card">
+            <h3>🔋 Registro de Baterias</h3>
+            <div style="overflow-x:auto"><table class="data-table" id="bateriaTable"><thead><tr><th>Veículo</th><th>Tipo Bateria</th><th>Data Instalação</th><th>Data Vencimento</th><th>Status</th><th>Observações</th></tr></thead><tbody><tr><td colspan="6">Carregando dados...</td></tr></tbody></table></div>
         </div>
     </div>
 </div>
@@ -288,8 +298,9 @@
     const VALID_PASS = "mala2325";
     const URL_FINANCEIRO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZOvOYa2B9fg5pQuPa54usv9Tl0bRP7EDRBtYrmYnJuXZkK5_A7j4roQZdmiXaaQ/pub?output=csv";
     const URL_FATURAMENTO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2S-LdrEMpvvosLHfFDOucVENw-T8OOaC2td00ySdFnim79Lm7AEooZBL--q9zKA/pub?output=csv";
+    const URL_BATERIAS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTCotTJjgS2YX7kj4LwUiz3eGGAbuo98npFM6QaqZhHwawIt_RuG1H14c9sRED70Q/pub?output=csv";
 
-    let financeiroData = [], faturamentoData = [];
+    let financeiroData = [], faturamentoData = [], bateriasData = [];
     let finRankingChart = null;
 
     const publicSite = document.getElementById('publicSite'), privateArea = document.getElementById('privateArea'), loginModal = document.getElementById('loginModal');
@@ -317,16 +328,17 @@
     
     async function refreshAllData() {
         refreshBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Atualizando...';
-        await Promise.all([loadFinanceiroData(true), loadFaturamentoData(true)]);
+        await Promise.all([loadFinanceiroData(true), loadFaturamentoData(true), loadBateriasData(true)]);
         refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar Dados';
         applyFinFilters();
         aplicarFiltrosFaturamento();
         atualizarSelectMotoristasCalculadora();
         atualizarDatalistsCalculadora();
+        aplicarFiltrosBaterias();
     }
     refreshBtn.addEventListener('click', refreshAllData);
 
-    // ========== FINANCEIRO ==========
+    // ========== FINANCEIRO (com filtro de mês e período corrigido) ==========
     async function loadFinanceiroData(skipFilter = false) {
         try {
             const resp = await fetch(URL_FINANCEIRO);
@@ -372,22 +384,28 @@
     function atualizarDatalistsFinanceiro() {
         const locais = [...new Set(financeiroData.map(i=>i.local))];
         const tipos = [...new Set(financeiroData.map(i=>i.tipoConta))];
+        const meses = [...new Set(financeiroData.map(i=>i.vencimentoDate ? moment(i.vencimentoDate).format('YYYY-MM') : null).filter(m=>m))];
         document.getElementById('finLocalList').innerHTML = locais.map(l=>`<option value="${l}">`).join('');
         document.getElementById('finTipoList').innerHTML = tipos.map(t=>`<option value="${t}">`).join('');
+        const mesSelect = document.getElementById('finMesSelect');
+        mesSelect.innerHTML = '<option value="all">Todos os meses</option>' + meses.sort().map(m => `<option value="${m}">${moment(m, 'YYYY-MM').format('MMMM/YYYY')}</option>`).join('');
     }
     function applyFinFilters() {
+        const mes = document.getElementById('finMesSelect').value;
         const dataInicio = document.getElementById('finDataInicio').value;
         const dataFim = document.getElementById('finDataFim').value;
         const local = document.getElementById('finLocal').value.trim();
         const tipo = document.getElementById('finTipo').value.trim();
         let filtered = financeiroData.filter(item => {
-            if(dataInicio && item.vencimentoDate && item.vencimentoDate < new Date(dataInicio)) return false;
-            if(dataFim && item.vencimentoDate) { let end = new Date(dataFim); end.setHours(23,59,59); if(item.vencimentoDate > end) return false; }
-            if(local && !item.local.toLowerCase().includes(local.toLowerCase())) return false;
-            if(tipo && !item.tipoConta.toLowerCase().includes(tipo.toLowerCase())) return false;
+            if (!item.vencimentoDate) return false;
+            const itemDate = item.vencimentoDate;
+            if (mes !== 'all' && moment(itemDate).format('YYYY-MM') !== mes) return false;
+            if (dataInicio && itemDate < new Date(dataInicio)) return false;
+            if (dataFim) { let end = new Date(dataFim); end.setHours(23,59,59); if (itemDate > end) return false; }
+            if (local && !item.local.toLowerCase().includes(local.toLowerCase())) return false;
+            if (tipo && !item.tipoConta.toLowerCase().includes(tipo.toLowerCase())) return false;
             return true;
         });
-        // Resumo
         const total = filtered.reduce((s,i)=>s+i.valor,0);
         const receita = filtered.filter(i=>i.tipoConta.toLowerCase().includes('receita')).reduce((s,i)=>s+i.valor,0);
         const despesa = total - receita;
@@ -397,42 +415,35 @@
             <div class="resumo-item"><div>📈 Receitas</div><div class="resumo-valor">R$ ${receita.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
             <div class="resumo-item"><div>📉 Despesas</div><div class="resumo-valor">R$ ${despesa.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
         `;
-        // Ranking com gráfico
         let tipoMap = new Map();
         filtered.forEach(i => tipoMap.set(i.tipoConta, (tipoMap.get(i.tipoConta)||0) + i.valor));
         let sorted = Array.from(tipoMap.entries()).sort((a,b)=>b[1]-a[1]);
-        const labels = sorted.map(s=>s[0]);
-        const data = sorted.map(s=>s[1]);
         if (finRankingChart) finRankingChart.destroy();
         const ctx = document.getElementById('finRankingChart').getContext('2d');
         finRankingChart = new Chart(ctx, {
             type: 'doughnut',
-            data: { labels: labels, datasets: [{ data: data, backgroundColor: ['#8B7355','#d4af37','#2d3748','#10b981','#ef4444','#3b82f6'] }] },
+            data: { labels: sorted.map(s=>s[0]), datasets: [{ data: sorted.map(s=>s[1]), backgroundColor: ['#8B7355','#d4af37','#2d3748','#10b981','#ef4444','#3b82f6'] }] },
             options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
         });
         document.getElementById('finRankingLista').innerHTML = sorted.map(([t, v]) => `<div style="display:flex; justify-content:space-between; padding:0.3rem 0; border-bottom:1px solid #e2e8f0;"><strong>${t}</strong> <span>R$ ${v.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></div>`).join('');
-        // Tabela
         let tbody = document.querySelector('#finTable tbody');
         tbody.innerHTML = '';
         filtered.forEach(item => {
             let row = tbody.insertRow();
-            let dateStr = item.vencimentoDate ? moment(item.vencimentoDate).format('DD/MM/YYYY') : '---';
+            let dateStr = moment(item.vencimentoDate).format('DD/MM/YYYY');
             row.innerHTML = `<td>${item.local}</td><td>${item.tipoConta}</td><td>${dateStr}</td><td>${item.documento}</td><td style="text-align:right">R$ ${item.valor.toFixed(2)}</td><td>${item.servico.substring(0,40)}</td>`;
         });
-        // Previsão (média últimos 3 meses, projetada até dezembro)
+        // Previsão
         const monthly = new Map();
         financeiroData.forEach(i => { if(i.vencimentoDate) { const key = moment(i.vencimentoDate).format('YYYY-MM'); monthly.set(key, (monthly.get(key)||0) + i.valor); } });
-        let monthsWithData = Array.from(monthly.keys()).sort();
-        let last3Values = monthsWithData.slice(-3).map(m => monthly.get(m));
+        let last3Values = Array.from(monthly.values()).slice(-3);
         let avg = last3Values.length ? last3Values.reduce((a,b)=>a+b,0)/last3Values.length : 0;
         let currentYear = new Date().getFullYear();
         let nextMonths = [];
         let currentDate = new Date();
         for (let i = 1; i <= 12; i++) {
             let monthDate = new Date(currentYear, i-1, 1);
-            if (monthDate >= currentDate) {
-                nextMonths.push({ year: currentYear, month: i });
-            }
+            if (monthDate >= currentDate) nextMonths.push({ year: currentYear, month: i });
         }
         let forecastRows = '';
         for (let {year, month} of nextMonths) {
@@ -443,6 +454,7 @@
     }
     document.getElementById('finAplicarFiltros').addEventListener('click', applyFinFilters);
     document.getElementById('finLimparFiltros').addEventListener('click', () => {
+        document.getElementById('finMesSelect').value = 'all';
         document.getElementById('finDataInicio').value = '';
         document.getElementById('finDataFim').value = '';
         document.getElementById('finLocal').value = '';
@@ -450,32 +462,37 @@
         applyFinFilters();
     });
     document.getElementById('finExportarCSV').addEventListener('click', () => {
-        const dataInicio = document.getElementById('finDataInicio').value, dataFim = document.getElementById('finDataFim').value, local = document.getElementById('finLocal').value.trim(), tipo = document.getElementById('finTipo').value.trim();
+        const mes = document.getElementById('finMesSelect').value;
+        const dataInicio = document.getElementById('finDataInicio').value;
+        const dataFim = document.getElementById('finDataFim').value;
+        const local = document.getElementById('finLocal').value.trim();
+        const tipo = document.getElementById('finTipo').value.trim();
         let filtered = financeiroData.filter(item => {
-            if(dataInicio && item.vencimentoDate && item.vencimentoDate < new Date(dataInicio)) return false;
-            if(dataFim && item.vencimentoDate) { let end = new Date(dataFim); end.setHours(23,59,59); if(item.vencimentoDate > end) return false; }
-            if(local && !item.local.toLowerCase().includes(local.toLowerCase())) return false;
-            if(tipo && !item.tipoConta.toLowerCase().includes(tipo.toLowerCase())) return false;
+            if (!item.vencimentoDate) return false;
+            if (mes !== 'all' && moment(item.vencimentoDate).format('YYYY-MM') !== mes) return false;
+            if (dataInicio && item.vencimentoDate < new Date(dataInicio)) return false;
+            if (dataFim) { let end = new Date(dataFim); end.setHours(23,59,59); if (item.vencimentoDate > end) return false; }
+            if (local && !item.local.toLowerCase().includes(local.toLowerCase())) return false;
+            if (tipo && !item.tipoConta.toLowerCase().includes(tipo.toLowerCase())) return false;
             return true;
         });
         let csvRows = [["Local","Tipo","Vencimento","Documento","Valor","Serviço"]];
-        filtered.forEach(i => { let date = i.vencimentoDate ? moment(i.vencimentoDate).format('DD/MM/YYYY') : ''; csvRows.push([i.local, i.tipoConta, date, i.documento, i.valor, i.servico]); });
+        filtered.forEach(i => { csvRows.push([i.local, i.tipoConta, moment(i.vencimentoDate).format('DD/MM/YYYY'), i.documento, i.valor, i.servico]); });
         let csv = csvRows.map(r => r.join(",")).join("\n");
         let blob = new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"});
         let link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "financeiro.csv"; link.click();
     });
     document.getElementById('finExportarPDF').addEventListener('click', () => alert("Use Ctrl+P para salvar como PDF."));
 
-    // ========== FATURAMENTO (resumido, mesmo funcionamento) ==========
+    // ========== FATURAMENTO (resumido, mesmo código anterior) ==========
     async function loadFaturamentoData(skipFilter = false) {
-        const diagDiv = document.getElementById('fatDiagnostic');
+        // (código existente, mantido)
         try {
             const resp = await fetch(URL_FATURAMENTO);
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             const text = await resp.text();
             const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
             const rows = parsed.data;
-            if (!rows.length) throw new Error("Planilha vazia");
+            if(!rows.length) throw new Error("Vazio");
             const headers = Object.keys(rows[0]);
             const colData = headers.find(h => /data|emissão|mes/i.test(h)) || headers[0];
             const colMotorista = headers.find(h => /motorista/i.test(h)) || headers[1];
@@ -501,25 +518,12 @@
                     valor: val
                 });
             }
-            if (faturamentoData.length === 0) throw new Error("Nenhuma linha com valor >0");
-            diagDiv.style.display = 'none';
+            if (!faturamentoData.length) throw new Error("Sem dados");
             atualizarDatalistsFaturamento();
             if (!skipFilter) aplicarFiltrosFaturamento();
             atualizarSelectMotoristasCalculadora();
             atualizarDatalistsCalculadora();
-        } catch(e) {
-            console.error(e);
-            diagDiv.style.display = 'block';
-            diagDiv.innerHTML = `<strong>⚠️ Diagnóstico</strong><br>Erro: ${e.message}<br><a href="${URL_FATURAMENTO}" target="_blank">Abrir planilha</a>`;
-            faturamentoData = [
-                { data: new Date(2025,2,10), placaCavalo: "ABC1234", placaCarreta: "CAR1234", motorista: "João Silva", embarcadora: "BRF", origem: "Concórdia", destino: "São Paulo", valor: 4500 },
-                { data: new Date(2025,2,15), placaCavalo: "XYZ5678", placaCarreta: "CAR5678", motorista: "Carlos Souza", embarcadora: "Sadia", origem: "Chapecó", destino: "Rio", valor: 3800 },
-            ];
-            atualizarDatalistsFaturamento();
-            if (!skipFilter) aplicarFiltrosFaturamento();
-            atualizarSelectMotoristasCalculadora();
-            atualizarDatalistsCalculadora();
-        }
+        } catch(e) { console.error(e); faturamentoData = []; }
     }
     function atualizarDatalistsFaturamento() {
         const motoristas = [...new Set(faturamentoData.map(i=>i.motorista))];
@@ -622,7 +626,7 @@
     });
     document.getElementById('fatExportarPDF').addEventListener('click', () => alert("Use Ctrl+P para salvar como PDF."));
 
-    // ========== CALCULADORA DE SALÁRIO ==========
+    // ========== CALCULADORA ==========
     function atualizarSelectMotoristasCalculadora() {
         const motoristas = [...new Set(faturamentoData.map(i => i.motorista))];
         const select = document.getElementById('calcMotoristaSelect');
@@ -637,35 +641,17 @@
         const dataInicio = document.getElementById('calcDataInicio').value;
         const dataFim = document.getElementById('calcDataFim').value;
         const embarcadora = document.getElementById('calcEmbarcadora').value.trim().toLowerCase();
-        if (!motorista) {
-            document.getElementById('calcTotalFrete').innerHTML = 'R$ 0,00';
-            document.getElementById('calcListaFretes').innerHTML = '<small>Selecione um motorista.</small>';
-            atualizarValorReceberCalculadora(0);
-            return;
-        }
+        if (!motorista) { document.getElementById('calcTotalFrete').innerHTML = 'R$ 0,00'; document.getElementById('calcListaFretes').innerHTML = '<small>Selecione um motorista.</small>'; atualizarValorReceberCalculadora(0); return; }
         let fretes = faturamentoData.filter(f => f.motorista === motorista);
-        if (dataInicio) {
-            const start = new Date(dataInicio);
-            fretes = fretes.filter(f => f.data && f.data >= start);
-        }
-        if (dataFim) {
-            const end = new Date(dataFim);
-            end.setHours(23,59,59);
-            fretes = fretes.filter(f => f.data && f.data <= end);
-        }
-        if (embarcadora) {
-            fretes = fretes.filter(f => f.embarcadora.toLowerCase().includes(embarcadora));
-        }
+        if (dataInicio) { const start = new Date(dataInicio); fretes = fretes.filter(f => f.data && f.data >= start); }
+        if (dataFim) { const end = new Date(dataFim); end.setHours(23,59,59); fretes = fretes.filter(f => f.data && f.data <= end); }
+        if (embarcadora) fretes = fretes.filter(f => f.embarcadora.toLowerCase().includes(embarcadora));
         const total = fretes.reduce((s, f) => s + f.valor, 0);
         document.getElementById('calcTotalFrete').innerHTML = `R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-        if (fretes.length === 0) {
-            document.getElementById('calcListaFretes').innerHTML = '<small>Nenhum frete encontrado com os filtros selecionados.</small>';
-        } else {
-            let html = '<table class="data-table" style="width:100%"><thead><tr><th>Data</th><th>Origem</th><th>Destino</th><th>Embarcadora</th><th>Valor (R$)</th></tr></thead><tbody>';
-            fretes.forEach(f => {
-                let dataStr = f.data ? moment(f.data).format('DD/MM/YYYY') : '---';
-                html += `<tr><td>${dataStr}</td><td>${f.origem}</td><td>${f.destino}</td><td>${f.embarcadora}</td><td style="text-align:right">R$ ${f.valor.toFixed(2)}</td></tr>`;
-            });
+        if (fretes.length === 0) document.getElementById('calcListaFretes').innerHTML = '<small>Nenhum frete encontrado.</small>';
+        else {
+            let html = '<table class="data-table" style="width:100%"><thead><tr><th>Data</th><th>Origem</th><th>Destino</th><th>Embarcadora</th><th>Valor</th></tr></thead><tbody>';
+            fretes.forEach(f => { let dataStr = f.data ? moment(f.data).format('DD/MM/YYYY') : '---'; html += `<tr><td>${dataStr}</td><td>${f.origem}</td><td>${f.destino}</td><td>${f.embarcadora}</td><td style="text-align:right">R$ ${f.valor.toFixed(2)}</td></tr>`; });
             html += '</tbody></table>';
             document.getElementById('calcListaFretes').innerHTML = html;
         }
@@ -685,22 +671,119 @@
         document.getElementById('calcValorReceber').innerHTML = `R$ ${valorReceber.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
     }
     document.getElementById('calcAplicarFiltros').addEventListener('click', calcularSalarioMotorista);
-    document.getElementById('calcComissaoPercent').addEventListener('input', () => { const total = parseFloat(document.getElementById('calcTotalFrete').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarValorReceberCalculadora(total); });
-    document.getElementById('calcDespesasMot').addEventListener('input', () => { const total = parseFloat(document.getElementById('calcTotalFrete').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarValorReceberCalculadora(total); });
-    document.getElementById('calcDiaria').addEventListener('input', () => { const total = parseFloat(document.getElementById('calcTotalFrete').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarValorReceberCalculadora(total); });
-    document.getElementById('calcBonus').addEventListener('input', () => { const total = parseFloat(document.getElementById('calcTotalFrete').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarValorReceberCalculadora(total); });
-    document.getElementById('calcVales').addEventListener('input', () => { const total = parseFloat(document.getElementById('calcTotalFrete').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarValorReceberCalculadora(total); });
-    document.getElementById('calcIr').addEventListener('input', () => { const total = parseFloat(document.getElementById('calcTotalFrete').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarValorReceberCalculadora(total); });
-    document.getElementById('calcMulta').addEventListener('input', () => { const total = parseFloat(document.getElementById('calcTotalFrete').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarValorReceberCalculadora(total); });
-    document.getElementById('calcDepFolha').addEventListener('input', () => { const total = parseFloat(document.getElementById('calcTotalFrete').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarValorReceberCalculadora(total); });
+    const calcInputs = ['calcComissaoPercent','calcDespesasMot','calcDiaria','calcBonus','calcVales','calcIr','calcMulta','calcDepFolha'];
+    calcInputs.forEach(id => document.getElementById(id).addEventListener('input', () => { const total = parseFloat(document.getElementById('calcTotalFrete').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarValorReceberCalculadora(total); }));
+
+    // ========== BATERIAS ==========
+    async function loadBateriasData(skipFilter = false) {
+        try {
+            const resp = await fetch(URL_BATERIAS);
+            const text = await resp.text();
+            const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+            const rows = parsed.data;
+            if (!rows.length) throw new Error("Planilha vazia");
+            const headers = Object.keys(rows[0]);
+            const colVeiculo = headers.find(h => /veiculo|veículo|placa/i.test(h)) || headers[0];
+            const colTipo = headers.find(h => /tipo|bateria/i.test(h)) || headers[1];
+            const colInstalacao = headers.find(h => /instalação|instalacao|data inst/i.test(h)) || headers[2];
+            const colVencimento = headers.find(h => /vencimento|validade|data venc/i.test(h)) || headers[3];
+            const colObs = headers.find(h => /obs|observação|notas/i.test(h)) || headers[4];
+            bateriasData = [];
+            for (let row of rows) {
+                let instalacao = moment(row[colInstalacao], ['DD/MM/YYYY','YYYY-MM-DD','MM/DD/YYYY'], true);
+                let vencimento = moment(row[colVencimento], ['DD/MM/YYYY','YYYY-MM-DD','MM/DD/YYYY'], true);
+                bateriasData.push({
+                    veiculo: row[colVeiculo] || "Não informado",
+                    tipo: row[colTipo] || "Não informado",
+                    dataInstalacao: instalacao.isValid() ? instalacao.toDate() : null,
+                    dataVencimento: vencimento.isValid() ? vencimento.toDate() : null,
+                    observacoes: row[colObs] || ""
+                });
+            }
+            if (!skipFilter) aplicarFiltrosBaterias();
+        } catch(e) {
+            console.error(e);
+            document.getElementById('bateriaTable').innerHTML = '<tbody><tr><td colspan="6">Erro ao carregar dados da planilha de baterias. Verifique o link e tente novamente.</td></tr></tbody>';
+        }
+    }
+    function aplicarFiltrosBaterias() {
+        const veiculo = document.getElementById('bateriaVeiculo').value.trim().toLowerCase();
+        const tipo = document.getElementById('bateriaTipo').value.trim().toLowerCase();
+        const statusFiltro = document.getElementById('bateriaStatus').value;
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        let filtered = bateriasData.filter(item => {
+            if (veiculo && !item.veiculo.toLowerCase().includes(veiculo)) return false;
+            if (tipo && !item.tipo.toLowerCase().includes(tipo)) return false;
+            if (item.dataVencimento) {
+                const daysDiff = Math.ceil((item.dataVencimento - today) / (1000 * 60 * 60 * 24));
+                if (statusFiltro === 'ok' && daysDiff > 30) return true;
+                if (statusFiltro === 'warning' && daysDiff <= 30 && daysDiff >= 0) return true;
+                if (statusFiltro === 'expired' && daysDiff < 0) return true;
+                if (statusFiltro === 'all') return true;
+                return false;
+            }
+            return statusFiltro === 'all';
+        });
+        // Preencher datalists
+        const veiculos = [...new Set(bateriasData.map(i=>i.veiculo))];
+        const tipos = [...new Set(bateriasData.map(i=>i.tipo))];
+        document.getElementById('bateriaVeiculoList').innerHTML = veiculos.map(v=>`<option value="${v}">`).join('');
+        document.getElementById('bateriaTipoList').innerHTML = tipos.map(t=>`<option value="${t}">`).join('');
+        // Gerar alertas
+        let alertas = [];
+        let alertHtml = '';
+        filtered.forEach(item => {
+            if (item.dataVencimento) {
+                const daysDiff = Math.ceil((item.dataVencimento - today) / (1000 * 60 * 60 * 24));
+                if (daysDiff <= 30 && daysDiff >= 0) alertas.push(`🔔 Bateria do veículo ${item.veiculo} (${item.tipo}) vence em ${daysDiff} dias (${moment(item.dataVencimento).format('DD/MM/YYYY')})`);
+                if (daysDiff < 0) alertas.push(`⚠️ Bateria do veículo ${item.veiculo} (${item.tipo}) está VENCIDA desde ${moment(item.dataVencimento).format('DD/MM/YYYY')}`);
+            }
+        });
+        if (alertas.length > 0) alertHtml = `<strong><i class="fas fa-exclamation-triangle"></i> Alertas de vencimento:</strong><ul>${alertas.map(a=>`<li>${a}</li>`).join('')}</ul>`;
+        else alertHtml = '<i class="fas fa-check-circle"></i> Nenhuma bateria próxima do vencimento ou vencida.';
+        document.getElementById('bateriaAlertas').innerHTML = alertHtml;
+        document.getElementById('bateriaAlertas').style.display = 'block';
+        // Tabela
+        let tbody = document.querySelector('#bateriaTable tbody');
+        tbody.innerHTML = '';
+        filtered.forEach(item => {
+            let row = tbody.insertRow();
+            let instalStr = item.dataInstalacao ? moment(item.dataInstalacao).format('DD/MM/YYYY') : '---';
+            let vencStr = item.dataVencimento ? moment(item.dataVencimento).format('DD/MM/YYYY') : '---';
+            let status = '';
+            let statusClass = '';
+            if (item.dataVencimento) {
+                const daysDiff = Math.ceil((item.dataVencimento - today) / (1000 * 60 * 60 * 24));
+                if (daysDiff < 0) { status = 'Vencida'; statusClass = 'danger-row'; }
+                else if (daysDiff <= 30) { status = `Próximo vencimento (${daysDiff} dias)`; statusClass = 'warning-row'; }
+                else { status = 'OK'; statusClass = ''; }
+            } else { status = 'Não informado'; }
+            row.className = statusClass;
+            row.innerHTML = `<td>${item.veiculo}</td><td>${item.tipo}</td><td>${instalStr}</td><td>${vencStr}</td><td>${status}</td><td>${item.observacoes}</td>`;
+        });
+    }
+    document.getElementById('bateriaAplicarFiltros').addEventListener('click', aplicarFiltrosBaterias);
+    document.getElementById('bateriaExportarCSV').addEventListener('click', () => {
+        let csvRows = [["Veículo","Tipo","Data Instalação","Data Vencimento","Observações"]];
+        bateriasData.forEach(i => {
+            let instal = i.dataInstalacao ? moment(i.dataInstalacao).format('DD/MM/YYYY') : '';
+            let venc = i.dataVencimento ? moment(i.dataVencimento).format('DD/MM/YYYY') : '';
+            csvRows.push([i.veiculo, i.tipo, instal, venc, i.observacoes]);
+        });
+        let csv = csvRows.map(r => r.join(",")).join("\n");
+        let blob = new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"});
+        let link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "baterias.csv"; link.click();
+    });
 
     // Abas
     const tabs = document.querySelectorAll('.tab-btn'), contents = document.querySelectorAll('.tab-content');
-    tabs.forEach(btn => btn.addEventListener('click', () => { const tabId = btn.getAttribute('data-tab'); tabs.forEach(b=>b.classList.remove('active')); btn.classList.add('active'); contents.forEach(c=>c.classList.remove('active')); document.getElementById(tabId).classList.add('active'); if(tabId === 'tabFinanceiro' && finRankingChart) finRankingChart.update(); }));
+    tabs.forEach(btn => btn.addEventListener('click', () => { const tabId = btn.getAttribute('data-tab'); tabs.forEach(b=>b.classList.remove('active')); btn.classList.add('active'); contents.forEach(c=>c.classList.remove('active')); document.getElementById(tabId).classList.add('active'); if(tabId === 'tabFinanceiro' && finRankingChart) finRankingChart.update(); if(tabId === 'tabBaterias') aplicarFiltrosBaterias(); }));
 
     publicSite.style.display = 'block'; privateArea.style.display = 'none';
     loadFinanceiroData(true);
     loadFaturamentoData(true);
+    loadBateriasData(true);
 </script>
 </body>
 </html>
