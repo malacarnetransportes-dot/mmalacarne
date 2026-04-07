@@ -9,6 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <style>
+        /* (mesmos estilos anteriores, omitidos por brevidade - manter iguais) */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
             --primary: #8B7355;
@@ -142,11 +143,12 @@
         .salary-row label { min-width: 140px; font-weight: 600; }
         .salary-row input { padding: 0.4rem; border-radius: 12px; border: 1px solid #cbd5e1; width: 120px; }
         .result-value { font-size: 1.4rem; font-weight: 800; color: var(--success); }
+        .diagnostic-box { background: #fff3cd; border-left: 6px solid #ffc107; padding: 1rem; margin-bottom: 1.5rem; border-radius: 16px; font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
-<!-- SITE PÚBLICO -->
+<!-- SITE PÚBLICO (mesmo conteúdo) -->
 <div id="publicSite">
     <div class="whatsapp-float">
         <a href="https://wa.me/5549999675448" target="_blank" style="background:#25D366; color:white; padding:10px 16px; border-radius:50px; text-decoration:none;">📱 WhatsApp</a>
@@ -173,182 +175,35 @@
             </ul>
         </nav>
     </header>
-    <section id="home" class="hero">
-        <div class="hero-content">
-            <h1>40 Anos Movendo o Brasil</h1>
-            <p>Excelência em Transporte e Logística desde 1982</p>
-            <a href="#contato" class="cta-button">Fale Conosco</a>
-        </div>
-    </section>
-    <section class="stats">
-        <div class="stat-card"><div class="stat-number">40+</div><div class="stat-label">Anos de Tradição</div></div>
-        <div class="stat-card"><div class="stat-number">100%</div><div class="stat-label">Frota Frigorífica</div></div>
-        <div class="stat-card"><div class="stat-number">BRF</div><div class="stat-label">Parceiro Exclusivo</div></div>
-        <div class="stat-card"><div class="stat-number">SC</div><div class="stat-label">Concórdia - SC</div></div>
-    </section>
-    <section id="sobre" class="values">
-        <h2 class="section-title">Nossa História</h2>
-        <p style="text-align:center; max-width:700px; margin:0 auto;">Criada em <strong>1982</strong>, a M-Malacarne Transportes e Logística atua com frota frigorífica exclusiva para BRF, com mais de 40 anos de excelência.</p>
-    </section>
-    <section id="valores" class="values" style="background:var(--light);">
-        <h2 class="section-title">Nossos Pilares</h2>
-        <div class="values-grid">
-            <div class="value-card"><div class="value-icon">🎯</div><h3>Visão</h3><p>Excelência em transportes e logística</p></div>
-            <div class="value-card"><div class="value-icon">🚛</div><h3>Missão</h3><p>Soluções logísticas com simplicidade e qualidade</p></div>
-            <div class="value-card"><div class="value-icon">⭐</div><h3>Valores</h3><p>Simplicidade, efetividade e honra ao trabalho</p></div>
-        </div>
-    </section>
-    <section id="infraestrutura" class="gallery">
-        <h2 class="section-title">Nossa Infraestrutura</h2>
-        <div class="gallery-grid">
-            <div class="gallery-item"><img src="IMG-20220924-WA0022 (1).jpg" alt="Frota"></div>
-            <div class="gallery-item"><img src="img87.jpg" alt="Instalações"></div>
-        </div>
-    </section>
-    <section id="calculadora-antt" class="freight-calculator-section">
-        <h2>📊 Calculadora Oficial ANTT</h2>
-        <a href="https://calculadorafrete.antt.gov.br/" target="_blank" class="cta-button">Acessar</a>
-    </section>
-    <section id="vagas" class="jobs">
-        <div class="job-card">
-            <h3>🚛 Motorista de Carreta</h3>
-            <p>Vaga disponível - Contratação imediata</p>
-            <p><strong>Pré-requisitos:</strong> CNH E, experiência em carreta frigorífica, disponibilidade para viagens.</p>
-            <a href="https://wa.me/5549999675448?text=Olá! Tenho interesse na vaga de Motorista de Carreta" class="cta-button" style="margin-top:1rem;">📱 Candidate-se via WhatsApp</a>
-        </div>
-    </section>
-    <section id="contato" class="contact">
-        <h2 class="section-title">Entre em Contato</h2>
-        <div class="contact-grid">
-            <div>
-                <h3>📍 Localização</h3>
-                <p>Rua Domingos Casagrande, 25 - Bairro Arvoredo<br>Concórdia - SC | CEP: 89701-450</p>
-                <h3>📞 Contato</h3>
-                <p>Telefone: (49) 3442-2325<br>WhatsApp: (49) 99967-5448</p>
-                <h3>✉️ E-mail</h3>
-                <p>financeirommalacarne@gmail.com</p>
-            </div>
-            <div>
-                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3535.234!2d-52.027!3d-27.234!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjfCsDE4JzAyLjQiUyA1MsKwMDEnMzcuMiJX!5e0!3m2!1spt-BR!2sbr!4v1234567890" width="100%" height="250" style="border:0;" allowfullscreen loading="lazy"></iframe>
-            </div>
-        </div>
-    </section>
-    <footer>
-        <p>© 2025 M-Malacarne Transporte e Logística Ltda EPP. Todos os direitos reservados.</p>
-    </footer>
+    <section id="home" class="hero"><div class="hero-content"><h1>40 Anos Movendo o Brasil</h1><p>Excelência em Transporte e Logística desde 1982</p><a href="#contato" class="cta-button">Fale Conosco</a></div></section>
+    <section class="stats"><div class="stat-card"><div class="stat-number">40+</div><div class="stat-label">Anos de Tradição</div></div><div class="stat-card"><div class="stat-number">100%</div><div class="stat-label">Frota Frigorífica</div></div><div class="stat-card"><div class="stat-number">BRF</div><div class="stat-label">Parceiro Exclusivo</div></div><div class="stat-card"><div class="stat-number">SC</div><div class="stat-label">Concórdia - SC</div></div></section>
+    <section id="sobre" class="values"><h2 class="section-title">Nossa História</h2><p style="text-align:center; max-width:700px; margin:0 auto;">Criada em <strong>1982</strong>, a M-Malacarne Transportes e Logística atua com frota frigorífica exclusiva para BRF, com mais de 40 anos de excelência.</p></section>
+    <section id="valores" class="values" style="background:var(--light);"><h2 class="section-title">Nossos Pilares</h2><div class="values-grid"><div class="value-card"><div class="value-icon">🎯</div><h3>Visão</h3><p>Excelência em transportes e logística</p></div><div class="value-card"><div class="value-icon">🚛</div><h3>Missão</h3><p>Soluções logísticas com simplicidade e qualidade</p></div><div class="value-card"><div class="value-icon">⭐</div><h3>Valores</h3><p>Simplicidade, efetividade e honra ao trabalho</p></div></div></section>
+    <section id="infraestrutura" class="gallery"><h2 class="section-title">Nossa Infraestrutura</h2><div class="gallery-grid"><div class="gallery-item"><img src="IMG-20220924-WA0022 (1).jpg" alt="Frota"></div><div class="gallery-item"><img src="img87.jpg" alt="Instalações"></div></div></section>
+    <section id="calculadora-antt" class="freight-calculator-section"><h2>📊 Calculadora Oficial ANTT</h2><a href="https://calculadorafrete.antt.gov.br/" target="_blank" class="cta-button">Acessar</a></section>
+    <section id="vagas" class="jobs"><div class="job-card"><h3>🚛 Motorista de Carreta</h3><p>Vaga disponível - Contratação imediata</p><p><strong>Pré-requisitos:</strong> CNH E, experiência em carreta frigorífica, disponibilidade para viagens.</p><a href="https://wa.me/5549999675448?text=Olá! Tenho interesse na vaga de Motorista de Carreta" class="cta-button" style="margin-top:1rem;">📱 Candidate-se via WhatsApp</a></div></section>
+    <section id="contato" class="contact"><h2 class="section-title">Entre em Contato</h2><div class="contact-grid"><div><h3>📍 Localização</h3><p>Rua Domingos Casagrande, 25 - Bairro Arvoredo<br>Concórdia - SC | CEP: 89701-450</p><h3>📞 Contato</h3><p>Telefone: (49) 3442-2325<br>WhatsApp: (49) 99967-5448</p><h3>✉️ E-mail</h3><p>financeirommalacarne@gmail.com</p></div><div><iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3535.234!2d-52.027!3d-27.234!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjfCsDE4JzAyLjQiUyA1MsKwMDEnMzcuMiJX!5e0!3m2!1spt-BR!2sbr!4v1234567890" width="100%" height="250" style="border:0;" allowfullscreen loading="lazy"></iframe></div></div></section>
+    <footer><p>© 2025 M-Malacarne Transporte e Logística Ltda EPP. Todos os direitos reservados.</p></footer>
 </div>
 
 <!-- MODAL DE LOGIN -->
-<div id="loginModal" class="login-overlay">
-    <div class="login-card">
-        <i class="fas fa-lock" style="font-size:2rem; color:var(--accent)"></i>
-        <h2>Acesso Restrito</h2>
-        <input type="text" id="loginUser" class="login-input" placeholder="Usuário">
-        <input type="password" id="loginPass" class="login-input" placeholder="Senha">
-        <button id="doLoginBtn" style="background:var(--accent); border:none; padding:0.8rem; width:100%; border-radius:60px; font-weight:bold; margin-top:1rem;">Entrar</button>
-        <div id="loginError" style="color:red; margin-top:0.5rem;"></div>
-    </div>
-</div>
+<div id="loginModal" class="login-overlay"><div class="login-card"><i class="fas fa-lock" style="font-size:2rem; color:var(--accent)"></i><h2>Acesso Restrito</h2><input type="text" id="loginUser" class="login-input" placeholder="Usuário"><input type="password" id="loginPass" class="login-input" placeholder="Senha"><button id="doLoginBtn" style="background:var(--accent); border:none; padding:0.8rem; width:100%; border-radius:60px; font-weight:bold; margin-top:1rem;">Entrar</button><div id="loginError" style="color:red; margin-top:0.5rem;"></div></div></div>
 
 <!-- ÁREA PRIVADA -->
 <div id="privateArea" class="private-area">
-    <div class="private-header">
-        <h2><i class="fas fa-chart-line"></i> Central de Gestão M-Malacarne</h2>
-        <div>
-            <button id="refreshDataBtn" class="btn-export btn-refresh"><i class="fas fa-sync-alt"></i> Atualizar Dados</button>
-            <button id="logoutPrivateBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sair</button>
-        </div>
-    </div>
-    <div class="tabs">
-        <button class="tab-btn active" data-tab="tabFinanceiro">📊 Financeiro</button>
-        <button class="tab-btn" data-tab="tabFaturamento">🚛 Faturamento</button>
-        <button class="tab-btn" data-tab="tabCalculadora">💰 Calculadora de Salário</button>
-    </div>
+    <div class="private-header"><h2><i class="fas fa-chart-line"></i> Central de Gestão M-Malacarne</h2><div><button id="refreshDataBtn" class="btn-export btn-refresh"><i class="fas fa-sync-alt"></i> Atualizar Dados</button><button id="logoutPrivateBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sair</button></div></div>
+    <div class="tabs"><button class="tab-btn active" data-tab="tabFinanceiro">📊 Financeiro</button><button class="tab-btn" data-tab="tabFaturamento">🚛 Faturamento</button><button class="tab-btn" data-tab="tabCalculadora">💰 Calculadora de Salário</button></div>
     
-    <!-- Financeiro -->
-    <div id="tabFinanceiro" class="tab-content active">
-        <div class="dashboard-card">
-            <h3><i class="fas fa-filter"></i> Filtros</h3>
-            <div>
-                <div class="filter-group"><label>Data Início</label><input type="date" id="finDataInicio"></div>
-                <div class="filter-group"><label>Data Fim</label><input type="date" id="finDataFim"></div>
-                <div class="filter-group"><label>Local</label><input list="finLocalList" id="finLocal" placeholder="Digite o local"><datalist id="finLocalList"></datalist></div>
-                <div class="filter-group"><label>Tipo Conta</label><input list="finTipoList" id="finTipo" placeholder="Digite o tipo"><datalist id="finTipoList"></datalist></div>
-                <button id="finAplicarFiltros" class="btn-export">Aplicar</button>
-                <button id="finExportarCSV" class="btn-export">📎 CSV</button>
-                <button id="finExportarPDF" class="btn-export">📄 PDF</button>
-            </div>
-        </div>
-        <div class="dashboard-card">
-            <h3>📈 Previsão próximos 3 meses</h3>
-            <div class="forecast-card" id="finPrevisao">Calculando...</div>
-        </div>
-        <div class="dashboard-card">
-            <h3>🏆 Ranking por Tipo de Conta (maior → menor)</h3>
-            <div id="finRanking"></div>
-        </div>
-        <div class="dashboard-card">
-            <h3>📄 Documentos Financeiros</h3>
-            <div style="overflow-x:auto"><table class="data-table" id="finTable"><thead><tr><th>Local</th><th>Tipo</th><th>Vencimento</th><th>Documento</th><th>Valor (R$)</th><th>Serviço</th></tr></thead><tbody></tbody>}</div>
-        </div>
-    </div>
+    <div id="tabFinanceiro" class="tab-content active"><div class="dashboard-card"><h3><i class="fas fa-filter"></i> Filtros</h3><div><div class="filter-group"><label>Data Início</label><input type="date" id="finDataInicio"></div><div class="filter-group"><label>Data Fim</label><input type="date" id="finDataFim"></div><div class="filter-group"><label>Local</label><input list="finLocalList" id="finLocal" placeholder="Digite o local"><datalist id="finLocalList"></datalist></div><div class="filter-group"><label>Tipo Conta</label><input list="finTipoList" id="finTipo" placeholder="Digite o tipo"><datalist id="finTipoList"></datalist></div><button id="finAplicarFiltros" class="btn-export">Aplicar</button><button id="finExportarCSV" class="btn-export">📎 CSV</button><button id="finExportarPDF" class="btn-export">📄 PDF</button></div></div><div class="dashboard-card"><h3>📈 Previsão próximos 3 meses</h3><div class="forecast-card" id="finPrevisao">Calculando...</div></div><div class="dashboard-card"><h3>🏆 Ranking por Tipo de Conta (maior → menor)</h3><div id="finRanking"></div></div><div class="dashboard-card"><h3>📄 Documentos Financeiros</h3><div style="overflow-x:auto"><table class="data-table" id="finTable"><thead><tr><th>Local</th><th>Tipo</th><th>Vencimento</th><th>Documento</th><th>Valor (R$)</th><th>Serviço</th></tr></thead><tbody></tbody></table></div></div></div>
     
-    <!-- Faturamento -->
     <div id="tabFaturamento" class="tab-content">
-        <div class="dashboard-card">
-            <h3><i class="fas fa-filter"></i> Filtros com autocomplete</h3>
-            <div>
-                <div class="filter-group"><label>Mês</label><select id="fatMesSelect"><option value="all">Todos</option></select></div>
-                <div class="filter-group"><label>Motorista</label><input list="fatMotoristaList" id="fatMotorista" placeholder="Digite o motorista"><datalist id="fatMotoristaList"></datalist></div>
-                <div class="filter-group"><label>Placa do Cavalo</label><input list="fatPlacaCavaloList" id="fatPlacaCavalo" placeholder="Placa do trator"><datalist id="fatPlacaCavaloList"></datalist></div>
-                <div class="filter-group"><label>Placa da Carreta</label><input list="fatPlacaCarretaList" id="fatPlacaCarreta" placeholder="Placa do reboque"><datalist id="fatPlacaCarretaList"></datalist></div>
-                <div class="filter-group"><label>Embarcadora</label><input list="fatEmbarcadoraList" id="fatEmbarcadora" placeholder="Embarcadora"><datalist id="fatEmbarcadoraList"></datalist></div>
-                <div class="filter-group"><label>Origem</label><input list="fatOrigemList" id="fatOrigem" placeholder="Origem"><datalist id="fatOrigemList"></datalist></div>
-                <div class="filter-group"><label>Destino</label><input list="fatDestinoList" id="fatDestino" placeholder="Destino"><datalist id="fatDestinoList"></datalist></div>
-                <div class="filter-group"><label>Valor Mínimo</label><input type="number" id="fatValorMin" placeholder="R$ mínimo"></div>
-                <button id="fatAplicarFiltros" class="btn-export">Aplicar</button>
-                <button id="fatExportarCSV" class="btn-export">📎 CSV</button>
-                <button id="fatExportarPDF" class="btn-export">📄 PDF</button>
-            </div>
-        </div>
-        <div class="dashboard-card">
-            <h3>🏆 Top 5 Maiores Fretes</h3>
-            <div id="rankMelhoresViagens"></div>
-        </div>
-        <div class="dashboard-card">
-            <h3>📊 Rankings por Valor Total</h3>
-            <div class="ranking-grid">
-                <div class="ranking-box"><h4>Motoristas</h4><div id="rankMotorista"></div></div>
-                <div class="ranking-box"><h4>Placas (Cavalo)</h4><div id="rankPlacaCavalo"></div></div>
-                <div class="ranking-box"><h4>Placas (Carreta)</h4><div id="rankPlacaCarreta"></div></div>
-                <div class="ranking-box"><h4>Embarcadoras</h4><div id="rankEmbarcadora"></div></div>
-            </div>
-        </div>
-        <div class="dashboard-card">
-            <h3>🚛 Tabela de Fretes (clique na placa do cavalo para ver ficha)</h3>
-            <div style="overflow-x:auto"><table class="data-table" id="fatTable"><thead><tr><th>Data</th><th>Placa Cavalo</th><th>Placa Carreta</th><th>Motorista</th><th>Embarcadora</th><th>Origem</th><th>Destino</th><th>Valor (R$)</th></tr></thead><tbody></tbody>}</div>
-            <div id="fichaPlaca" class="ficha-placa" style="display:none;"></div>
-        </div>
+        <div class="dashboard-card"><h3><i class="fas fa-filter"></i> Filtros com autocomplete</h3><div><div class="filter-group"><label>Mês</label><select id="fatMesSelect"><option value="all">Todos</option></select></div><div class="filter-group"><label>Motorista</label><input list="fatMotoristaList" id="fatMotorista" placeholder="Digite o motorista"><datalist id="fatMotoristaList"></datalist></div><div class="filter-group"><label>Placa do Cavalo</label><input list="fatPlacaCavaloList" id="fatPlacaCavalo" placeholder="Placa do trator"><datalist id="fatPlacaCavaloList"></datalist></div><div class="filter-group"><label>Placa da Carreta</label><input list="fatPlacaCarretaList" id="fatPlacaCarreta" placeholder="Placa do reboque"><datalist id="fatPlacaCarretaList"></datalist></div><div class="filter-group"><label>Embarcadora</label><input list="fatEmbarcadoraList" id="fatEmbarcadora" placeholder="Embarcadora"><datalist id="fatEmbarcadoraList"></datalist></div><div class="filter-group"><label>Origem</label><input list="fatOrigemList" id="fatOrigem" placeholder="Origem"><datalist id="fatOrigemList"></datalist></div><div class="filter-group"><label>Destino</label><input list="fatDestinoList" id="fatDestino" placeholder="Destino"><datalist id="fatDestinoList"></datalist></div><div class="filter-group"><label>Valor Mínimo</label><input type="number" id="fatValorMin" placeholder="R$ mínimo"></div><button id="fatAplicarFiltros" class="btn-export">Aplicar</button><button id="fatExportarCSV" class="btn-export">📎 CSV</button><button id="fatExportarPDF" class="btn-export">📄 PDF</button></div></div>
+        <div id="fatDiagnostic" class="diagnostic-box" style="display:none;"></div>
+        <div class="dashboard-card"><h3>🏆 Top 5 Maiores Fretes</h3><div id="rankMelhoresViagens"></div></div><div class="dashboard-card"><h3>📊 Rankings por Valor Total</h3><div class="ranking-grid"><div class="ranking-box"><h4>Motoristas</h4><div id="rankMotorista"></div></div><div class="ranking-box"><h4>Placas (Cavalo)</h4><div id="rankPlacaCavalo"></div></div><div class="ranking-box"><h4>Placas (Carreta)</h4><div id="rankPlacaCarreta"></div></div><div class="ranking-box"><h4>Embarcadoras</h4><div id="rankEmbarcadora"></div></div></div></div>
+        <div class="dashboard-card"><h3>🚛 Tabela de Fretes (clique na placa do cavalo para ver ficha)</h3><div style="overflow-x:auto"><table class="data-table" id="fatTable"><thead><tr><th>Data</th><th>Placa Cavalo</th><th>Placa Carreta</th><th>Motorista</th><th>Embarcadora</th><th>Origem</th><th>Destino</th><th>Valor (R$)</th></tr></thead><tbody></tbody></table></div><div id="fichaPlaca" class="ficha-placa" style="display:none;"></div></div>
     </div>
     
-    <!-- Calculadora de Salário (nova guia) -->
-    <div id="tabCalculadora" class="tab-content">
-        <div class="dashboard-card salary-calc">
-            <h4><i class="fas fa-calculator"></i> Calculadora de Salário do Motorista</h4>
-            <p style="margin-bottom: 1rem;">Os valores abaixo são baseados nos <strong>filtros atuais da aba "Faturamento"</strong> (mês, motorista, placas, etc.).</p>
-            <div id="salaryInfo">Faturamento total do período filtrado: <strong id="totalFreteValor">R$ 0,00</strong></div>
-            <div class="salary-row"><label>% Comissão sobre frete:</label><input type="number" id="comissaoPercent" value="5" step="0.5"> %</div>
-            <div class="salary-row"><label>Despesas do Motorista (R$):</label><input type="number" id="despesasMot" value="0" step="100"></div>
-            <div class="salary-row"><label>Diária (R$):</label><input type="number" id="diaria" value="0" step="50"></div>
-            <div class="salary-row"><label>Bônus (R$):</label><input type="number" id="bonus" value="0" step="100"></div>
-            <div class="salary-row"><label>Vales / Manobra (R$):</label><input type="number" id="vales" value="0" step="100"></div>
-            <div class="salary-row"><label>IR (R$):</label><input type="number" id="ir" value="0" step="50"></div>
-            <div class="salary-row"><label>Multa (R$):</label><input type="number" id="multa" value="0" step="100"></div>
-            <div class="salary-row"><label>Dep. Folha (R$):</label><input type="number" id="depFolha" value="0" step="100"></div>
-            <div class="salary-row"><label><strong>Valor a Receber:</strong></label><span id="valorReceber" class="result-value">R$ 0,00</span></div>
-            <small><i class="fas fa-info-circle"></i> Cálculo: (Frete Total × %Comissão) + Despesas + Diária + Bônus - Vales - IR - Multa - Dep. Folha</small>
-        </div>
-    </div>
+    <div id="tabCalculadora" class="tab-content"><div class="dashboard-card salary-calc"><h4><i class="fas fa-calculator"></i> Calculadora de Salário do Motorista</h4><p style="margin-bottom:1rem;">Baseado nos filtros atuais da aba "Faturamento".</p><div id="salaryInfo">Faturamento total: <strong id="totalFreteValor">R$ 0,00</strong></div><div class="salary-row"><label>% Comissão:</label><input type="number" id="comissaoPercent" value="5" step="0.5"> %</div><div class="salary-row"><label>Despesas (R$):</label><input type="number" id="despesasMot" value="0" step="100"></div><div class="salary-row"><label>Diária (R$):</label><input type="number" id="diaria" value="0" step="50"></div><div class="salary-row"><label>Bônus (R$):</label><input type="number" id="bonus" value="0" step="100"></div><div class="salary-row"><label>Vales/Manobra (R$):</label><input type="number" id="vales" value="0" step="100"></div><div class="salary-row"><label>IR (R$):</label><input type="number" id="ir" value="0" step="50"></div><div class="salary-row"><label>Multa (R$):</label><input type="number" id="multa" value="0" step="100"></div><div class="salary-row"><label>Dep. Folha (R$):</label><input type="number" id="depFolha" value="0" step="100"></div><div class="salary-row"><label><strong>Valor a Receber:</strong></label><span id="valorReceber" class="result-value">R$ 0,00</span></div><small><i class="fas fa-info-circle"></i> Cálculo: (Frete Total × %Comissão) + Despesas + Diária + Bônus - Vales - IR - Multa - Dep. Folha</small></div></div>
 </div>
 
 <script>
@@ -358,7 +213,7 @@
     const URL_FATURAMENTO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2S-LdrEMpvvosLHfFDOucVENw-T8OOaC2td00ySdFnim79Lm7AEooZBL--q9zKA/pub?output=csv";
 
     let financeiroData = [], faturamentoData = [];
-    let currentFiltroFaturamento = { filtered: [] }; // armazena o último resultado filtrado para a calculadora
+    let currentFiltroFaturamento = { filtered: [] };
     const publicSite = document.getElementById('publicSite'), privateArea = document.getElementById('privateArea'), loginModal = document.getElementById('loginModal');
     const privateAccessBtn = document.getElementById('privateAccessBtn'), doLoginBtn = document.getElementById('doLoginBtn'), logoutPrivateBtn = document.getElementById('logoutPrivateBtn');
     const refreshBtn = document.getElementById('refreshDataBtn');
@@ -378,7 +233,6 @@
     function hideLogin() { loginModal.classList.remove('active'); }
     function showPrivate() { publicSite.style.display = 'none'; privateArea.style.display = 'block'; hideLogin(); refreshAllData(); }
     function logout() { publicSite.style.display = 'block'; privateArea.style.display = 'none'; hideLogin(); }
-    
     privateAccessBtn.addEventListener('click', (e) => { e.preventDefault(); showLogin(); });
     doLoginBtn.addEventListener('click', () => { const u = document.getElementById('loginUser').value.trim(), p = document.getElementById('loginPass').value.trim(); if(u===VALID_USER && p===VALID_PASS) showPrivate(); else document.getElementById('loginError').innerText = 'Credenciais inválidas'; });
     logoutPrivateBtn.addEventListener('click', logout);
@@ -392,7 +246,7 @@
     }
     refreshBtn.addEventListener('click', refreshAllData);
 
-    // ========== FINANCEIRO ==========
+    // ========== FINANCEIRO (igual antes) ==========
     async function loadFinanceiroData(skipFilter = false) {
         try {
             const resp = await fetch(URL_FINANCEIRO);
@@ -462,7 +316,7 @@
         filtered.forEach(item => {
             let row = tbody.insertRow();
             let dateStr = item.vencimentoDate ? moment(item.vencimentoDate).format('DD/MM/YYYY') : '---';
-            row.innerHTML = `<td>${item.local}</td><td>${item.tipoConta}</td><td>${dateStr}</td><td>${item.documento}</td><td style="text-align:right">R$ ${item.valor.toFixed(2)}</td></td>${item.servico.substring(0,40)}</td>`;
+            row.innerHTML = `<td>${item.local}</td><td>${item.tipoConta}</td><td>${dateStr}</td><td>${item.documento}</td><td style="text-align:right">R$ ${item.valor.toFixed(2)}</td><td>${item.servico.substring(0,40)}</td>`;
         });
         const monthly = new Map();
         financeiroData.forEach(i => { if(i.vencimentoDate) { const key = moment(i.vencimentoDate).format('YYYY-MM'); monthly.set(key, (monthly.get(key)||0) + i.valor); } });
@@ -490,25 +344,31 @@
     });
     document.getElementById('finExportarPDF').addEventListener('click', () => alert("Use Ctrl+P para salvar como PDF."));
 
-    // ========== FATURAMENTO (com suporte a placas cavalo e carreta) ==========
+    // ========== FATURAMENTO COM DIAGNÓSTICO ==========
     async function loadFaturamentoData(skipFilter = false) {
+        const diagDiv = document.getElementById('fatDiagnostic');
         try {
             const resp = await fetch(URL_FATURAMENTO);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             const text = await resp.text();
             const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+            if (parsed.errors && parsed.errors.length) console.warn(parsed.errors);
             const rows = parsed.data;
-            if(!rows.length) throw new Error("Vazio");
+            if (!rows.length) throw new Error("Planilha vazia (nenhuma linha)");
+            
             const headers = Object.keys(rows[0]);
-            // Mapeamento flexível para colunas
+            // Mapeamento flexível com suporte a "Placa Cavalo" e "Placa Carreta"
             const colData = headers.find(h => /data|emissão|mes/i.test(h)) || headers[0];
             const colMotorista = headers.find(h => /motorista/i.test(h)) || headers[1];
-            const colPlacaCavalo = headers.find(h => /placa.*cavalo|cavalo|trator/i.test(h)) || (headers[2] || headers[0]);
-            const colPlacaCarreta = headers.find(h => /placa.*carreta|carreta|reboque/i.test(h)) || (headers[3] || headers[1]);
+            const colPlacaCavalo = headers.find(h => /cavalo|trator|placa.*cavalo/i.test(h)) || (headers[2] || headers[0]);
+            const colPlacaCarreta = headers.find(h => /carreta|reboque|placa.*carreta/i.test(h)) || (headers[3] || headers[1]);
             const colEmbarcadora = headers.find(h => /embarcadora|cliente/i.test(h)) || headers[4];
             const colOrigem = headers.find(h => /origem|de/i.test(h)) || headers[5];
             const colDestino = headers.find(h => /destino|para/i.test(h)) || headers[6];
             const colValor = headers.find(h => /valor|frete|r\$|total/i.test(h)) || headers[7];
+            
             faturamentoData = [];
+            let linhasValidas = 0;
             for (let row of rows) {
                 let val = parseMoney(row[colValor]);
                 if (val === 0) continue;
@@ -523,17 +383,25 @@
                     destino: row[colDestino] || "",
                     valor: val
                 });
+                linhasValidas++;
             }
-            if (!faturamentoData.length) throw new Error("Sem dados");
+            if (faturamentoData.length === 0) {
+                throw new Error(`Nenhuma linha com valor >0 encontrada. Total de linhas na planilha: ${rows.length}`);
+            }
+            // Se chegou aqui, dados carregados com sucesso
+            diagDiv.style.display = 'none';
             atualizarDatalistsFaturamento();
             if (!skipFilter) aplicarFiltrosFaturamento();
         } catch(e) {
-            console.error(e);
+            console.error("Erro no faturamento:", e);
+            diagDiv.style.display = 'block';
+            diagDiv.innerHTML = `<strong>⚠️ Diagnóstico - Faturamento</strong><br>Erro: ${e.message}<br><br>Verifique se a planilha está pública e com as colunas corretas. 
+            <br><strong>Esperado:</strong> colunas com "Data", "Motorista", "Placa Cavalo/Trator", "Placa Carreta/Reboque", "Embarcadora", "Origem", "Destino", "Valor Frete".
+            <br><br>Link utilizado: <a href="${URL_FATURAMENTO}" target="_blank">Abrir planilha</a>`;
+            // Dados de exemplo para não quebrar o layout
             faturamentoData = [
                 { data: new Date(2025,2,10), placaCavalo: "ABC1234", placaCarreta: "CAR1234", motorista: "João Silva", embarcadora: "BRF", origem: "Concórdia", destino: "São Paulo", valor: 4500 },
                 { data: new Date(2025,2,15), placaCavalo: "XYZ5678", placaCarreta: "CAR5678", motorista: "Carlos Souza", embarcadora: "Sadia", origem: "Chapecó", destino: "Rio", valor: 3800 },
-                { data: new Date(2025,3,5), placaCavalo: "ABC1234", placaCarreta: "CAR1234", motorista: "João Silva", embarcadora: "BRF", origem: "Concórdia", destino: "Curitiba", valor: 2100 },
-                { data: new Date(2025,3,20), placaCavalo: "DEF9012", placaCarreta: "CAR9012", motorista: "Maria Oliveira", embarcadora: "BRF", origem: "Concórdia", destino: "Porto Alegre", valor: 5200 },
             ];
             atualizarDatalistsFaturamento();
             if (!skipFilter) aplicarFiltrosFaturamento();
@@ -625,13 +493,7 @@
         const total = viagens.reduce((s,v)=>s+v.valor,0);
         const fichaDiv = document.getElementById('fichaPlaca');
         fichaDiv.style.display = 'block';
-        fichaDiv.innerHTML = `<h4><i class="fas fa-truck"></i> Ficha do Cavalo: <strong>${placaCavalo}</strong></h4>
-            <p><strong>Total de viagens:</strong> ${viagens.length}</p>
-            <p><strong>Faturamento total:</strong> R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</p>
-            <p><strong>Motorista(s):</strong> ${[...new Set(viagens.map(v=>v.motorista))].join(', ')}</p>
-            <p><strong>Carretas utilizadas:</strong> ${[...new Set(viagens.map(v=>v.placaCarreta))].join(', ')}</p>
-            <p><strong>Principais rotas:</strong> ${viagens.slice(0,3).map(v=>`${v.origem}→${v.destino} (R$ ${v.valor.toFixed(2)})`).join('; ')}</p>
-            <button id="fecharFicha" class="btn-export" style="margin-top:0.5rem;">Fechar</button>`;
+        fichaDiv.innerHTML = `<h4><i class="fas fa-truck"></i> Ficha do Cavalo: <strong>${placaCavalo}</strong></h4><p><strong>Total de viagens:</strong> ${viagens.length}</p><p><strong>Faturamento total:</strong> R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</p><p><strong>Motorista(s):</strong> ${[...new Set(viagens.map(v=>v.motorista))].join(', ')}</p><p><strong>Carretas utilizadas:</strong> ${[...new Set(viagens.map(v=>v.placaCarreta))].join(', ')}</p><p><strong>Principais rotas:</strong> ${viagens.slice(0,3).map(v=>`${v.origem}→${v.destino} (R$ ${v.valor.toFixed(2)})`).join('; ')}</p><button id="fecharFicha" class="btn-export" style="margin-top:0.5rem;">Fechar</button>`;
         document.getElementById('fecharFicha').addEventListener('click', () => fichaDiv.style.display = 'none');
     }
     document.getElementById('fatAplicarFiltros').addEventListener('click', aplicarFiltrosFaturamento);
@@ -671,7 +533,6 @@
     });
     document.getElementById('fatExportarPDF').addEventListener('click', () => alert("Use Ctrl+P para salvar como PDF."));
 
-    // Abas
     const tabs = document.querySelectorAll('.tab-btn'), contents = document.querySelectorAll('.tab-content');
     tabs.forEach(btn => btn.addEventListener('click', () => { const tabId = btn.getAttribute('data-tab'); tabs.forEach(b=>b.classList.remove('active')); btn.classList.add('active'); contents.forEach(c=>c.classList.remove('active')); document.getElementById(tabId).classList.add('active'); }));
 
