@@ -4,14 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>M-Malacarne Transporte & Logística</title>
-    <!-- Font Awesome, Chart.js, PapaParse, Moment, SheetJS (XLSX), html2canvas + jspdf para PDF -->
+    <!-- Font Awesome, Chart.js, PapaParse, Moment, SheetJS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         /* ===== RESET E VARIÁVEIS (MANTIDAS DO ORIGINAL) ===== */
         * {
@@ -21,14 +19,12 @@
         }
         :root {
             --primary: #8B7355;
-            --secondary: #2d2d2d;
             --accent: #d4af37;
             --light: #f8f9fa;
             --dark: #1a1a1a;
             --text: #2d3748;
             --text-light: #718096;
             --premium-dark: #1e2a3a;
-            --success: #38a169;
         }
         body {
             font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -114,9 +110,7 @@
             padding: 0.3rem 1rem;
             border-radius: 40px;
         }
-        .private-btn::after {
-            display: none;
-        }
+        .private-btn::after { display: none; }
         .hero {
             height: 60vh;
             background: linear-gradient(135deg, rgba(30, 42, 58, 0.9) 0%, rgba(26, 32, 44, 0.9) 100%), 
@@ -134,7 +128,6 @@
         .hero-content h1 {
             font-size: 2.2rem;
             margin-bottom: 1rem;
-            animation: fadeInUp 1s ease;
             font-weight: 700;
         }
         .cta-button {
@@ -164,7 +157,6 @@
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.06);
             border: 1px solid rgba(139, 115, 85, 0.1);
-            transition: transform 0.3s;
         }
         .values {
             padding: 3rem 5%;
@@ -206,7 +198,6 @@
             border-radius: 10px;
             overflow: hidden;
             position: relative;
-            cursor: pointer;
         }
         .gallery-item img {
             width: 100%;
@@ -271,10 +262,6 @@
             text-align: center;
             padding: 2rem 5%;
         }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
         .menu-toggle {
             display: none;
             background: none;
@@ -299,7 +286,7 @@
             .contact-grid { grid-template-columns: 1fr; }
         }
 
-        /* ESTILOS DA ÁREA PRIVADA (DASHBOARDS) */
+        /* ESTILOS DA ÁREA PRIVADA (PREMIUM) */
         .private-area {
             display: none;
             background: #f1f5f9;
@@ -356,12 +343,14 @@
             font-size: 0.7rem;
             font-weight: 600;
             text-transform: uppercase;
+            color: var(--text-light);
         }
         .filter-group input, .filter-group select {
             padding: 0.5rem;
             border-radius: 12px;
             border: 1px solid #cbd5e1;
             min-width: 130px;
+            font-size: 0.85rem;
         }
         .btn-export {
             background: var(--primary);
@@ -371,6 +360,7 @@
             border-radius: 30px;
             cursor: pointer;
             margin-left: 0.5rem;
+            font-weight: 600;
         }
         .ranking-grid {
             display: grid;
@@ -382,11 +372,11 @@
             background: #f8fafc;
             border-radius: 20px;
             padding: 1rem;
+            border-left: 4px solid var(--accent);
         }
         .ranking-box h4 {
-            border-left: 4px solid var(--accent);
-            padding-left: 0.5rem;
             margin-bottom: 0.8rem;
+            color: var(--premium-dark);
         }
         .data-table {
             width: 100%;
@@ -398,9 +388,15 @@
             padding: 0.7rem 0.3rem;
             text-align: left;
         }
-        .chart-container {
-            max-height: 300px;
-            margin: 1rem 0;
+        .data-table th {
+            background: #f1f5f9;
+        }
+        .forecast-card {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            color: white;
+            border-radius: 20px;
+            padding: 1rem;
+            text-align: center;
         }
         .logout-btn {
             background: #ef4444;
@@ -409,8 +405,8 @@
             padding: 0.5rem 1.2rem;
             border-radius: 40px;
             cursor: pointer;
+            font-weight: 600;
         }
-        /* Modal login */
         .login-overlay {
             position: fixed;
             top: 0;
@@ -451,7 +447,7 @@
 </head>
 <body>
 
-<!-- SITE PÚBLICO ORIGINAL (COMPLETO) -->
+<!-- SITE PÚBLICO ORIGINAL -->
 <div id="publicSite">
     <div class="whatsapp-float">
         <a href="https://wa.me/5549999675448" target="_blank" style="background:#25D366; color:white; padding:10px 16px; border-radius:50px; text-decoration:none;">📱 WhatsApp</a>
@@ -509,8 +505,8 @@
     <section id="infraestrutura" class="gallery">
         <h2 class="section-title">Nossa Infraestrutura</h2>
         <div class="gallery-grid">
-            <div class="gallery-item"><img src="IMG-20220924-WA0022 (1).jpg" alt="Frota"><div class="gallery-overlay"><h3>Frota Especializada</h3></div></div>
-            <div class="gallery-item"><img src="img87.jpg" alt="Instalações"><div class="gallery-overlay"><h3>Galpão Moderno</h3></div></div>
+            <div class="gallery-item"><img src="IMG-20220924-WA0022 (1).jpg" alt="Frota"></div>
+            <div class="gallery-item"><img src="img87.jpg" alt="Instalações"></div>
         </div>
     </section>
     <section id="precos" class="fuels-section">
@@ -569,13 +565,13 @@
         <button class="tab-btn active" data-tab="tabFinanceiro">📊 Dashboard Financeiro</button>
         <button class="tab-btn" data-tab="tabFaturamento">🚛 Dashboard Faturamento</button>
     </div>
+    
     <!-- Tab Financeiro -->
     <div id="tabFinanceiro" class="tab-content active">
         <div class="dashboard-card">
-            <h3>Filtros</h3>
+            <h3><i class="fas fa-filter"></i> Filtros</h3>
             <div>
-                <div class="filter-group"><label>Vencimento de</label><input type="date" id="finDataInicio"></div>
-                <div class="filter-group"><label>Vencimento até</label><input type="date" id="finDataFim"></div>
+                <div class="filter-group"><label>Mês (vencimento)</label><select id="finMes"><option value="all">Todos os meses</option></select></div>
                 <div class="filter-group"><label>Local</label><select id="finLocal"><option value="all">Todos</option></select></div>
                 <div class="filter-group"><label>Tipo Conta</label><select id="finTipo"><option value="all">Todos</option></select></div>
                 <button id="finAplicarFiltros" class="btn-export">Aplicar</button>
@@ -584,22 +580,27 @@
             </div>
         </div>
         <div class="dashboard-card">
-            <h3>Ranking por Tipo de Conta</h3>
+            <h3><i class="fas fa-chart-line"></i> Evolução Mensal</h3>
+            <canvas id="finChartEvolucao" style="max-height:300px"></canvas>
+        </div>
+        <div class="dashboard-card">
+            <h3><i class="fas fa-chart-simple"></i> Previsão para os próximos 3 meses</h3>
+            <div class="forecast-card" id="finPrevisao">Calculando...</div>
+        </div>
+        <div class="dashboard-card">
+            <h3><i class="fas fa-trophy"></i> Ranking por Tipo de Conta</h3>
             <div id="finRanking"></div>
         </div>
         <div class="dashboard-card">
-            <h3>Gráfico de Previsão (Próximos 3 meses)</h3>
-            <canvas id="finChart" style="max-height:300px"></canvas>
-        </div>
-        <div class="dashboard-card">
-            <h3>Documentos Financeiros</h3>
+            <h3><i class="fas fa-file-invoice"></i> Documentos Financeiros</h3>
             <div style="overflow-x:auto"><table class="data-table" id="finTable"><thead><tr><th>Local</th><th>Tipo</th><th>Vencimento</th><th>Documento</th><th>Valor (R$)</th><th>Serviço</th></tr></thead><tbody></tbody></table></div>
         </div>
     </div>
+    
     <!-- Tab Faturamento -->
     <div id="tabFaturamento" class="tab-content">
         <div class="dashboard-card">
-            <h3>Filtros</h3>
+            <h3><i class="fas fa-filter"></i> Filtros</h3>
             <div>
                 <div class="filter-group"><label>Mês (referência)</label><input type="month" id="fatMes"></div>
                 <div class="filter-group"><label>Placa</label><input type="text" id="fatPlaca" placeholder="Placa"></div>
@@ -613,16 +614,24 @@
             </div>
         </div>
         <div class="dashboard-card">
-            <h3>Rankings</h3>
+            <h3><i class="fas fa-chart-line"></i> Evolução Mensal do Faturamento</h3>
+            <canvas id="fatEvolucaoChart" style="max-height:300px"></canvas>
+        </div>
+        <div class="dashboard-card">
+            <h3><i class="fas fa-chart-bar"></i> Ranking por Embarcadora (Top 5)</h3>
+            <canvas id="fatRankEmbarcadoraChart" style="max-height:250px"></canvas>
+        </div>
+        <div class="dashboard-card">
+            <h3><i class="fas fa-ranking-star"></i> Rankings</h3>
             <div class="ranking-grid">
-                <div class="ranking-box"><h4>🏆 Ranking por Motorista</h4><div id="rankMotorista"></div></div>
-                <div class="ranking-box"><h4>🏆 Ranking por Placa</h4><div id="rankPlaca"></div></div>
-                <div class="ranking-box"><h4>🏆 Ranking por Embarcadora</h4><div id="rankEmbarcadora"></div></div>
-                <div class="ranking-box"><h4>💰 Soma do Faturamento por Placa</h4><div id="rankSomaPlaca"></div></div>
+                <div class="ranking-box"><h4>🏆 Melhores Motoristas</h4><div id="rankMotorista"></div></div>
+                <div class="ranking-box"><h4>🏆 Melhores Placas</h4><div id="rankPlaca"></div></div>
+                <div class="ranking-box"><h4>🏆 Melhores Embarcadoras</h4><div id="rankEmbarcadora"></div></div>
+                <div class="ranking-box"><h4>💰 Faturamento por Placa</h4><div id="rankSomaPlaca"></div></div>
             </div>
         </div>
         <div class="dashboard-card">
-            <h3>Tabela de Fretes</h3>
+            <h3><i class="fas fa-truck"></i> Tabela de Fretes</h3>
             <div style="overflow-x:auto"><table class="data-table" id="fatTable"><thead><tr><th>Data</th><th>Placa</th><th>Motorista</th><th>Embarcadora</th><th>Origem</th><th>Destino</th><th>Valor Frete (R$)</th></tr></thead><tbody></tbody></table></div>
         </div>
     </div>
@@ -633,16 +642,36 @@
     const VALID_USER = "malacarne";
     const VALID_PASS = "mala2325";
 
-    // URLs
+    // URLs das planilhas
     const URL_FINANCEIRO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZOvOYa2B9fg5pQuPa54usv9Tl0bRP7EDRBtYrmYnJuXZkK5_A7j4roQZdmiXaaQ/pub?output=csv";
     const URL_FATURAMENTO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2S-LdrEMpvvosLHfFDOucVENw-T8OOaC2td00ySdFnim79Lm7AEooZBL--q9zKA/pub?output=csv";
 
-    // Globais
+    // Variáveis globais
     let financeiroData = [];
     let faturamentoData = [];
-    let finChart = null;
+    let finEvolucaoChart = null;
+    let fatEvolucaoChart = null;
+    let fatRankChart = null;
 
-    // Elementos
+    // FUNÇÃO ROBUSTA PARA CONVERTER VALOR MONETÁRIO BRASILEIRO
+    function parseMoney(value) {
+        if (value === undefined || value === null) return 0;
+        // Remove tudo exceto dígitos, vírgula, ponto, sinal de menos (para valores negativos)
+        let cleaned = String(value).replace(/[^\d,.-]/g, '');
+        if (cleaned === '') return 0;
+        // Troca vírgula decimal por ponto
+        cleaned = cleaned.replace(',', '.');
+        // Remove pontos de milhar (se houver mais de um ponto)
+        let parts = cleaned.split('.');
+        if (parts.length > 2) {
+            let last = parts.pop();
+            cleaned = parts.join('') + '.' + last;
+        }
+        let num = parseFloat(cleaned);
+        return isNaN(num) ? 0 : num;
+    }
+
+    // Elementos DOM
     const publicSite = document.getElementById('publicSite');
     const privateArea = document.getElementById('privateArea');
     const loginModal = document.getElementById('loginModal');
@@ -650,15 +679,14 @@
     const doLoginBtn = document.getElementById('doLoginBtn');
     const logoutPrivateBtn = document.getElementById('logoutPrivateBtn');
 
-    // Funções auxiliares
     function showLogin() { loginModal.classList.add('active'); }
     function hideLogin() { loginModal.classList.remove('active'); }
     function showPrivate() {
         publicSite.style.display = 'none';
         privateArea.style.display = 'block';
         hideLogin();
-        loadFinanceiroData();
-        loadFaturamentoData();
+        if(financeiroData.length === 0) loadFinanceiroData();
+        if(faturamentoData.length === 0) loadFaturamentoData();
     }
     function logout() {
         publicSite.style.display = 'block';
@@ -678,7 +706,7 @@
     });
     logoutPrivateBtn.addEventListener('click', logout);
 
-    // Carregar Financeiro
+    // ===================== DASHBOARD FINANCEIRO =====================
     async function loadFinanceiroData() {
         try {
             const resp = await fetch(URL_FINANCEIRO);
@@ -688,33 +716,40 @@
             const rows = parsed.data;
             if(!rows.length) throw new Error("Planilha vazia");
             const headers = Object.keys(rows[0]);
+            // Mapeamento flexível
             const colDoc = headers.find(h => /doc|nota|documento/i.test(h)) || headers[0];
             const colVenc = headers.find(h => /venc|data/i.test(h)) || headers[1];
             const colLocal = headers.find(h => /local|cidade/i.test(h)) || headers[2];
             const colTipo = headers.find(h => /tipo|conta|categoria/i.test(h)) || headers[3];
             const colValor = headers.find(h => /valor|r\$|total/i.test(h)) || headers[4];
             const colServ = headers.find(h => /serviço|servico|descrição/i.test(h)) || headers[5];
-            financeiroData = rows.map(row => {
-                let val = parseFloat(String(row[colValor]).replace(/[R$\s]/g,'').replace(',','.'));
-                if(isNaN(val)) val=0;
-                let date = moment(row[colVenc], ['DD/MM/YYYY','YYYY-MM-DD','MM/DD/YYYY'], true);
-                return {
+            
+            financeiroData = [];
+            for (let row of rows) {
+                let val = parseMoney(row[colValor]);
+                if (val === 0) continue; // ignora linhas sem valor
+                let date = moment(row[colVenc], ['DD/MM/YYYY', 'YYYY-MM-DD', 'MM/DD/YYYY'], true);
+                financeiroData.push({
                     documento: row[colDoc] || "ND",
                     vencimentoDate: date.isValid() ? date.toDate() : null,
                     local: row[colLocal] || "Indefinido",
                     tipoConta: row[colTipo] || "Outros",
                     valor: val,
                     servico: row[colServ] || "Sem descrição"
-                };
-            }).filter(d => d.valor !== 0);
+                });
+            }
+            if (financeiroData.length === 0) throw new Error("Nenhum dado válido");
             populateFinFilters();
             applyFinFilters();
         } catch(e) {
             console.error(e);
+            // Dados de exemplo para demonstração
             financeiroData = [
                 { documento:"NF123", vencimentoDate:new Date(2025,2,15), local:"Concórdia-SC", tipoConta:"Combustível", valor:1850, servico:"Abastecimento"},
                 { documento:"NF456", vencimentoDate:new Date(2025,3,10), local:"São Paulo-SP", tipoConta:"Manutenção", valor:3200, servico:"Revisão"},
                 { documento:"Fatura BRF", vencimentoDate:new Date(2025,4,20), local:"Concórdia-SC", tipoConta:"Receita", valor:12500, servico:"Frete"},
+                { documento:"Seguro", vencimentoDate:new Date(2025,5,5), local:"Nacional", tipoConta:"Seguro", valor:2140, servico:"Apólice"},
+                { documento:"Pedágio", vencimentoDate:new Date(2025,2,28), local:"Curitiba-PR", tipoConta:"Pedágio", valor:450, servico:"Eixos"},
             ];
             populateFinFilters();
             applyFinFilters();
@@ -722,31 +757,35 @@
     }
 
     function populateFinFilters() {
+        const meses = [...new Set(financeiroData.map(i => i.vencimentoDate ? moment(i.vencimentoDate).format('YYYY-MM') : null).filter(m => m))];
         const locais = [...new Set(financeiroData.map(i=>i.local))];
         const tipos = [...new Set(financeiroData.map(i=>i.tipoConta))];
+        const mesSelect = document.getElementById('finMes');
         const localSelect = document.getElementById('finLocal');
         const tipoSelect = document.getElementById('finTipo');
+        mesSelect.innerHTML = '<option value="all">Todos os meses</option>' + meses.sort().map(m => `<option value="${m}">${moment(m, 'YYYY-MM').format('MMMM/YYYY')}</option>`).join('');
         localSelect.innerHTML = '<option value="all">Todos</option>' + locais.map(l=>`<option value="${l}">${l}</option>`).join('');
         tipoSelect.innerHTML = '<option value="all">Todos</option>' + tipos.map(t=>`<option value="${t}">${t}</option>`).join('');
     }
 
     function applyFinFilters() {
-        let start = document.getElementById('finDataInicio').value;
-        let end = document.getElementById('finDataFim').value;
-        let local = document.getElementById('finLocal').value;
-        let tipo = document.getElementById('finTipo').value;
+        const mes = document.getElementById('finMes').value;
+        const local = document.getElementById('finLocal').value;
+        const tipo = document.getElementById('finTipo').value;
         let filtered = financeiroData.filter(item => {
-            if(start && item.vencimentoDate && item.vencimentoDate < new Date(start)) return false;
-            if(end && item.vencimentoDate) { let e = new Date(end); e.setHours(23,59,59); if(item.vencimentoDate > e) return false; }
+            if(mes !== 'all' && item.vencimentoDate) {
+                const itemMes = moment(item.vencimentoDate).format('YYYY-MM');
+                if(itemMes !== mes) return false;
+            }
             if(local !== 'all' && item.local !== local) return false;
             if(tipo !== 'all' && item.tipoConta !== tipo) return false;
             return true;
         });
-        // Ranking
+        // Ranking por tipo de conta
         let tipoMap = new Map();
         filtered.forEach(i => tipoMap.set(i.tipoConta, (tipoMap.get(i.tipoConta)||0) + i.valor));
         let sorted = Array.from(tipoMap.entries()).sort((a,b)=>b[1]-a[1]);
-        document.getElementById('finRanking').innerHTML = sorted.map(([t, v]) => `<div><strong>${t}</strong>: R$ ${v.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>`).join('');
+        document.getElementById('finRanking').innerHTML = sorted.map(([t, v]) => `<div style="display:flex; justify-content:space-between; padding:0.3rem 0; border-bottom:1px solid #e2e8f0;"><strong>${t}</strong> <span>R$ ${v.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></div>`).join('');
         // Tabela
         let tbody = document.querySelector('#finTable tbody');
         tbody.innerHTML = '';
@@ -755,24 +794,41 @@
             let dateStr = item.vencimentoDate ? moment(item.vencimentoDate).format('DD/MM/YYYY') : '---';
             row.innerHTML = `<td>${item.local}</td><td>${item.tipoConta}</td><td>${dateStr}</td><td>${item.documento}</td><td style="text-align:right">R$ ${item.valor.toFixed(2)}</td><td>${item.servico.substring(0,40)}</td>`;
         });
-        // Gráfico previsão
-        let monthly = new Map();
-        financeiroData.forEach(i => { if(i.vencimentoDate) { let key = moment(i.vencimentoDate).format('YYYY-MM'); monthly.set(key, (monthly.get(key)||0) + i.valor); } });
-        let months = Array.from(monthly.keys()).sort();
-        let values = months.map(m=>monthly.get(m));
+        // Gráfico de evolução mensal (baseado em todos os dados, não apenas filtrados, para visão geral)
+        const monthly = new Map();
+        financeiroData.forEach(i => {
+            if(i.vencimentoDate) {
+                const key = moment(i.vencimentoDate).format('YYYY-MM');
+                monthly.set(key, (monthly.get(key)||0) + i.valor);
+            }
+        });
+        const monthsSorted = Array.from(monthly.keys()).sort();
+        const values = monthsSorted.map(m => monthly.get(m));
+        if(finEvolucaoChart) finEvolucaoChart.destroy();
+        const ctx = document.getElementById('finChartEvolucao').getContext('2d');
+        finEvolucaoChart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: monthsSorted.map(m => moment(m, 'YYYY-MM').format('MMM/YY')), datasets: [{ label: 'Valor Total (R$)', data: values, backgroundColor: '#8B7355', borderRadius: 8 }] },
+            options: { responsive: true, plugins: { tooltip: { callbacks: { label: (ctx) => `R$ ${ctx.raw.toLocaleString('pt-BR',{minimumFractionDigits:2})}` } } } }
+        });
+        // Previsão: média dos últimos 3 meses
         let last3 = values.slice(-3);
         let avg = last3.length ? last3.reduce((a,b)=>a+b,0)/last3.length : 0;
-        let forecast = [avg, avg, avg];
-        let labels = [...months, 'Previsão +1', 'Previsão +2', 'Previsão +3'];
-        let data = [...values, ...forecast];
-        if(finChart) finChart.destroy();
-        let ctx = document.getElementById('finChart').getContext('2d');
-        finChart = new Chart(ctx, { type:'line', data:{ labels, datasets:[{ label:'Valor Total (R$)', data, borderColor:'#d4af37', fill:true }] } });
+        let previsao = avg * 3;
+        document.getElementById('finPrevisao').innerHTML = `<i class="fas fa-chart-simple"></i> Projeção para os próximos 3 meses: <strong style="font-size:1.5rem;">R$ ${previsao.toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong><br><small>Base média R$ ${avg.toLocaleString('pt-BR',{minimumFractionDigits:2})} / mês</small>`;
     }
 
-    // Exportar Financeiro CSV
+    document.getElementById('finAplicarFiltros').addEventListener('click', applyFinFilters);
     document.getElementById('finExportarCSV').addEventListener('click', () => {
-        let filtered = getFilteredFinanceiro();
+        const mes = document.getElementById('finMes').value;
+        const local = document.getElementById('finLocal').value;
+        const tipo = document.getElementById('finTipo').value;
+        let filtered = financeiroData.filter(item => {
+            if(mes !== 'all' && item.vencimentoDate && moment(item.vencimentoDate).format('YYYY-MM') !== mes) return false;
+            if(local !== 'all' && item.local !== local) return false;
+            if(tipo !== 'all' && item.tipoConta !== tipo) return false;
+            return true;
+        });
         let csvRows = [["Local","Tipo","Vencimento","Documento","Valor","Serviço"]];
         filtered.forEach(i => {
             let date = i.vencimentoDate ? moment(i.vencimentoDate).format('DD/MM/YYYY') : '';
@@ -785,27 +841,9 @@
         link.download = "financeiro.csv";
         link.click();
     });
+    document.getElementById('finExportarPDF').addEventListener('click', () => { alert("Use Ctrl+P para salvar como PDF da página atual."); });
 
-    document.getElementById('finExportarPDF').addEventListener('click', () => {
-        window.print(); // simplificado, mas pode usar html2canvas se necessário
-        alert("Use Ctrl+P para salvar como PDF.");
-    });
-
-    function getFilteredFinanceiro() {
-        let start = document.getElementById('finDataInicio').value;
-        let end = document.getElementById('finDataFim').value;
-        let local = document.getElementById('finLocal').value;
-        let tipo = document.getElementById('finTipo').value;
-        return financeiroData.filter(item => {
-            if(start && item.vencimentoDate && item.vencimentoDate < new Date(start)) return false;
-            if(end && item.vencimentoDate) { let e = new Date(end); e.setHours(23,59,59); if(item.vencimentoDate > e) return false; }
-            if(local !== 'all' && item.local !== local) return false;
-            if(tipo !== 'all' && item.tipoConta !== tipo) return false;
-            return true;
-        });
-    }
-
-    // FATURAMENTO
+    // ===================== DASHBOARD FATURAMENTO =====================
     async function loadFaturamentoData() {
         try {
             const resp = await fetch(URL_FATURAMENTO);
@@ -821,11 +859,12 @@
             const colOrigem = headers.find(h => /origem|de/i.test(h)) || headers[4];
             const colDestino = headers.find(h => /destino|para/i.test(h)) || headers[5];
             const colValor = headers.find(h => /valor|frete|r\$|total/i.test(h)) || headers[6];
-            faturamentoData = rows.map(row => {
-                let val = parseFloat(String(row[colValor]).replace(/[R$\s]/g,'').replace(',','.'));
-                if(isNaN(val)) val=0;
+            faturamentoData = [];
+            for (let row of rows) {
+                let val = parseMoney(row[colValor]);
+                if (val === 0) continue;
                 let data = moment(row[colData], ['DD/MM/YYYY','YYYY-MM-DD','MM/DD/YYYY'], true);
-                return {
+                faturamentoData.push({
                     data: data.isValid() ? data.toDate() : null,
                     placa: (row[colPlaca] || "").toUpperCase(),
                     motorista: row[colMotorista] || "Não informado",
@@ -833,15 +872,17 @@
                     origem: row[colOrigem] || "",
                     destino: row[colDestino] || "",
                     valor: val
-                };
-            }).filter(d => d.valor > 0);
+                });
+            }
+            if (faturamentoData.length === 0) throw new Error("Nenhum dado válido");
             applyFatFilters();
         } catch(e) {
             console.error(e);
             faturamentoData = [
-                { data: new Date(2025,2,10), placa: "ABC1234", motorista: "João", embarcadora: "BRF", origem: "Concórdia", destino: "São Paulo", valor: 4500 },
-                { data: new Date(2025,2,15), placa: "XYZ5678", motorista: "Carlos", embarcadora: "Sadia", origem: "Chapecó", destino: "Rio", valor: 3800 },
-                { data: new Date(2025,3,5), placa: "ABC1234", motorista: "João", embarcadora: "BRF", origem: "Concórdia", destino: "Curitiba", valor: 2100 },
+                { data: new Date(2025,2,10), placa: "ABC1234", motorista: "João Silva", embarcadora: "BRF", origem: "Concórdia", destino: "São Paulo", valor: 4500 },
+                { data: new Date(2025,2,15), placa: "XYZ5678", motorista: "Carlos Souza", embarcadora: "Sadia", origem: "Chapecó", destino: "Rio de Janeiro", valor: 3800 },
+                { data: new Date(2025,3,5), placa: "ABC1234", motorista: "João Silva", embarcadora: "BRF", origem: "Concórdia", destino: "Curitiba", valor: 2100 },
+                { data: new Date(2025,3,20), placa: "DEF9012", motorista: "Maria Oliveira", embarcadora: "BRF", origem: "Concórdia", destino: "Porto Alegre", valor: 5200 },
             ];
             applyFatFilters();
         }
@@ -855,10 +896,7 @@
         let destino = document.getElementById('fatDestino').value.trim().toLowerCase();
         let valorMin = parseFloat(document.getElementById('fatValorMin').value);
         let filtered = faturamentoData.filter(item => {
-            if(mes && item.data) {
-                let itemMes = moment(item.data).format('YYYY-MM');
-                if(itemMes !== mes) return false;
-            }
+            if(mes && item.data && moment(item.data).format('YYYY-MM') !== mes) return false;
             if(placa && !item.placa.includes(placa)) return false;
             if(embarcadora && !item.embarcadora.toLowerCase().includes(embarcadora)) return false;
             if(origem && !item.origem.toLowerCase().includes(origem)) return false;
@@ -874,10 +912,10 @@
             rankEmbarcadora.set(i.embarcadora, (rankEmbarcadora.get(i.embarcadora)||0) + i.valor);
             somaPlaca.set(i.placa, (somaPlaca.get(i.placa)||0) + i.valor);
         });
-        document.getElementById('rankMotorista').innerHTML = Array.from(rankMotorista.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`<div>${k}: R$ ${v.toFixed(2)}</div>`).join('');
-        document.getElementById('rankPlaca').innerHTML = Array.from(rankPlaca.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`<div>${k}: R$ ${v.toFixed(2)}</div>`).join('');
-        document.getElementById('rankEmbarcadora').innerHTML = Array.from(rankEmbarcadora.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`<div>${k}: R$ ${v.toFixed(2)}</div>`).join('');
-        document.getElementById('rankSomaPlaca').innerHTML = Array.from(somaPlaca.entries()).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div>${k}: R$ ${v.toFixed(2)}</div>`).join('');
+        document.getElementById('rankMotorista').innerHTML = Array.from(rankMotorista.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`<div><strong>${k}</strong>: R$ ${v.toFixed(2)}</div>`).join('');
+        document.getElementById('rankPlaca').innerHTML = Array.from(rankPlaca.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`<div><strong>${k}</strong>: R$ ${v.toFixed(2)}</div>`).join('');
+        document.getElementById('rankEmbarcadora').innerHTML = Array.from(rankEmbarcadora.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`<div><strong>${k}</strong>: R$ ${v.toFixed(2)}</div>`).join('');
+        document.getElementById('rankSomaPlaca').innerHTML = Array.from(somaPlaca.entries()).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div><strong>${k}</strong>: R$ ${v.toFixed(2)}</div>`).join('');
         // Tabela
         let tbody = document.querySelector('#fatTable tbody');
         tbody.innerHTML = '';
@@ -886,11 +924,50 @@
             let dataStr = item.data ? moment(item.data).format('DD/MM/YYYY') : '';
             row.innerHTML = `<td>${dataStr}</td><td>${item.placa}</td><td>${item.motorista}</td><td>${item.embarcadora}</td><td>${item.origem}</td><td>${item.destino}</td><td style="text-align:right">R$ ${item.valor.toFixed(2)}</td>`;
         });
+        // Gráfico evolução mensal
+        let monthlyFat = new Map();
+        faturamentoData.forEach(i => {
+            if(i.data) {
+                let key = moment(i.data).format('YYYY-MM');
+                monthlyFat.set(key, (monthlyFat.get(key)||0) + i.valor);
+            }
+        });
+        let monthsFat = Array.from(monthlyFat.keys()).sort();
+        let valuesFat = monthsFat.map(m => monthlyFat.get(m));
+        if(fatEvolucaoChart) fatEvolucaoChart.destroy();
+        const ctxEvol = document.getElementById('fatEvolucaoChart').getContext('2d');
+        fatEvolucaoChart = new Chart(ctxEvol, {
+            type: 'line',
+            data: { labels: monthsFat.map(m => moment(m, 'YYYY-MM').format('MMM/YY')), datasets: [{ label: 'Faturamento (R$)', data: valuesFat, borderColor: '#d4af37', backgroundColor: 'rgba(212,175,55,0.1)', fill: true, tension: 0.3 }] },
+            options: { responsive: true }
+        });
+        // Gráfico ranking embarcadora
+        let embTop = Array.from(rankEmbarcadora.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5);
+        if(fatRankChart) fatRankChart.destroy();
+        const ctxRank = document.getElementById('fatRankEmbarcadoraChart').getContext('2d');
+        fatRankChart = new Chart(ctxRank, {
+            type: 'bar',
+            data: { labels: embTop.map(e=>e[0]), datasets: [{ label: 'Valor Total (R$)', data: embTop.map(e=>e[1]), backgroundColor: '#8B7355' }] },
+            options: { indexAxis: 'y', responsive: true }
+        });
     }
-
     document.getElementById('fatAplicarFiltros').addEventListener('click', applyFatFilters);
     document.getElementById('fatExportarCSV').addEventListener('click', () => {
-        let filtered = getFilteredFaturamento();
+        let mes = document.getElementById('fatMes').value;
+        let placa = document.getElementById('fatPlaca').value.trim().toUpperCase();
+        let embarcadora = document.getElementById('fatEmbarcadora').value.trim().toLowerCase();
+        let origem = document.getElementById('fatOrigem').value.trim().toLowerCase();
+        let destino = document.getElementById('fatDestino').value.trim().toLowerCase();
+        let valorMin = parseFloat(document.getElementById('fatValorMin').value);
+        let filtered = faturamentoData.filter(item => {
+            if(mes && item.data && moment(item.data).format('YYYY-MM') !== mes) return false;
+            if(placa && !item.placa.includes(placa)) return false;
+            if(embarcadora && !item.embarcadora.toLowerCase().includes(embarcadora)) return false;
+            if(origem && !item.origem.toLowerCase().includes(origem)) return false;
+            if(destino && !item.destino.toLowerCase().includes(destino)) return false;
+            if(!isNaN(valorMin) && item.valor < valorMin) return false;
+            return true;
+        });
         let csvRows = [["Data","Placa","Motorista","Embarcadora","Origem","Destino","Valor"]];
         filtered.forEach(i => {
             let dataStr = i.data ? moment(i.data).format('DD/MM/YYYY') : '';
@@ -903,26 +980,9 @@
         link.download = "faturamento.csv";
         link.click();
     });
-    document.getElementById('fatExportarPDF').addEventListener('click', () => { alert("Use Ctrl+P para salvar como PDF."); });
-    function getFilteredFaturamento() {
-        let mes = document.getElementById('fatMes').value;
-        let placa = document.getElementById('fatPlaca').value.trim().toUpperCase();
-        let embarcadora = document.getElementById('fatEmbarcadora').value.trim().toLowerCase();
-        let origem = document.getElementById('fatOrigem').value.trim().toLowerCase();
-        let destino = document.getElementById('fatDestino').value.trim().toLowerCase();
-        let valorMin = parseFloat(document.getElementById('fatValorMin').value);
-        return faturamentoData.filter(item => {
-            if(mes && item.data && moment(item.data).format('YYYY-MM') !== mes) return false;
-            if(placa && !item.placa.includes(placa)) return false;
-            if(embarcadora && !item.embarcadora.toLowerCase().includes(embarcadora)) return false;
-            if(origem && !item.origem.toLowerCase().includes(origem)) return false;
-            if(destino && !item.destino.toLowerCase().includes(destino)) return false;
-            if(!isNaN(valorMin) && item.valor < valorMin) return false;
-            return true;
-        });
-    }
+    document.getElementById('fatExportarPDF').addEventListener('click', () => { alert("Use Ctrl+P para salvar como PDF da página atual."); });
 
-    // Tabs
+    // Abas
     const tabs = document.querySelectorAll('.tab-btn');
     const contents = document.querySelectorAll('.tab-content');
     tabs.forEach(btn => {
@@ -932,12 +992,14 @@
             btn.classList.add('active');
             contents.forEach(c => c.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-            if(tabId === 'tabFinanceiro' && finChart) finChart.update();
+            if(tabId === 'tabFinanceiro' && finEvolucaoChart) finEvolucaoChart.update();
+            if(tabId === 'tabFaturamento' && fatEvolucaoChart) fatEvolucaoChart.update();
         });
     });
 
-    document.getElementById('finAplicarFiltros').addEventListener('click', applyFinFilters);
-    // inicial
+    // Inicialização
+    publicSite.style.display = 'block';
+    privateArea.style.display = 'none';
     loadFinanceiroData();
     loadFaturamentoData();
 </script>
