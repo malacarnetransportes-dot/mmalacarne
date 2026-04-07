@@ -18,6 +18,7 @@
             --text: #2d3748;
             --text-light: #718096;
             --premium-dark: #1e2a3a;
+            --success: #10b981;
         }
         body { font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--text); overflow-x: hidden; line-height: 1.6; }
         header {
@@ -110,8 +111,8 @@
         }
         /* Área privada */
         .private-area { display: none; background: #f1f5f9; min-height: 100vh; padding: 2rem; }
-        .private-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; }
-        .tabs { display: flex; gap: 1rem; border-bottom: 2px solid var(--accent); margin-bottom: 2rem; }
+        .private-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+        .tabs { display: flex; gap: 1rem; border-bottom: 2px solid var(--accent); margin-bottom: 2rem; flex-wrap: wrap; }
         .tab-btn { background: none; border: none; padding: 0.8rem 1.5rem; font-weight: 700; cursor: pointer; font-size: 1rem; border-radius: 30px 30px 0 0; }
         .tab-btn.active { background: var(--accent); color: var(--dark); }
         .tab-content { display: none; }
@@ -121,6 +122,7 @@
         .filter-group label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; color: var(--text-light); }
         .filter-group input, .filter-group select { padding: 0.5rem; border-radius: 12px; border: 1px solid #cbd5e1; min-width: 130px; font-size: 0.85rem; }
         .btn-export { background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 30px; cursor: pointer; margin-left: 0.5rem; font-weight: 600; }
+        .btn-refresh { background: #3b82f6; }
         .ranking-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin: 1rem 0; }
         .ranking-box { background: #f8fafc; border-radius: 20px; padding: 1rem; border-left: 4px solid var(--accent); }
         .data-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
@@ -252,11 +254,15 @@
 <div id="privateArea" class="private-area">
     <div class="private-header">
         <h2><i class="fas fa-chart-line"></i> Central de Gestão M-Malacarne</h2>
-        <button id="logoutPrivateBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sair</button>
+        <div>
+            <button id="refreshDataBtn" class="btn-export btn-refresh"><i class="fas fa-sync-alt"></i> Atualizar Dados</button>
+            <button id="logoutPrivateBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sair</button>
+        </div>
     </div>
     <div class="tabs">
-        <button class="tab-btn active" data-tab="tabFinanceiro">📊 Dashboard Financeiro</button>
-        <button class="tab-btn" data-tab="tabFaturamento">🚛 Dashboard Faturamento</button>
+        <button class="tab-btn active" data-tab="tabFinanceiro">📊 Financeiro</button>
+        <button class="tab-btn" data-tab="tabFaturamento">🚛 Faturamento</button>
+        <button class="tab-btn" data-tab="tabCalculadora">💰 Calculadora de Salário</button>
     </div>
     
     <!-- Financeiro -->
@@ -323,9 +329,14 @@
             <div style="overflow-x:auto"><table class="data-table" id="fatTable"><thead><tr><th>Data</th><th>Placa Cavalo</th><th>Placa Carreta</th><th>Motorista</th><th>Embarcadora</th><th>Origem</th><th>Destino</th><th>Valor (R$)</th></tr></thead><tbody></tbody>}</div>
             <div id="fichaPlaca" class="ficha-placa" style="display:none;"></div>
         </div>
+    </div>
+    
+    <!-- Calculadora de Salário (nova guia) -->
+    <div id="tabCalculadora" class="tab-content">
         <div class="dashboard-card salary-calc">
-            <h4><i class="fas fa-calculator"></i> Calculadora de Salário do Motorista (baseado no filtro atual)</h4>
-            <div id="salaryInfo">Faturamento total do período: <strong id="totalFreteValor">R$ 0,00</strong></div>
+            <h4><i class="fas fa-calculator"></i> Calculadora de Salário do Motorista</h4>
+            <p style="margin-bottom: 1rem;">Os valores abaixo são baseados nos <strong>filtros atuais da aba "Faturamento"</strong> (mês, motorista, placas, etc.).</p>
+            <div id="salaryInfo">Faturamento total do período filtrado: <strong id="totalFreteValor">R$ 0,00</strong></div>
             <div class="salary-row"><label>% Comissão sobre frete:</label><input type="number" id="comissaoPercent" value="5" step="0.5"> %</div>
             <div class="salary-row"><label>Despesas do Motorista (R$):</label><input type="number" id="despesasMot" value="0" step="100"></div>
             <div class="salary-row"><label>Diária (R$):</label><input type="number" id="diaria" value="0" step="50"></div>
@@ -335,7 +346,7 @@
             <div class="salary-row"><label>Multa (R$):</label><input type="number" id="multa" value="0" step="100"></div>
             <div class="salary-row"><label>Dep. Folha (R$):</label><input type="number" id="depFolha" value="0" step="100"></div>
             <div class="salary-row"><label><strong>Valor a Receber:</strong></label><span id="valorReceber" class="result-value">R$ 0,00</span></div>
-            <small><i class="fas fa-info-circle"></i> Cálculo: (Frete × %Comissão) + Despesas + Diária + Bônus - Vales - IR - Multa - Dep. Folha</small>
+            <small><i class="fas fa-info-circle"></i> Cálculo: (Frete Total × %Comissão) + Despesas + Diária + Bônus - Vales - IR - Multa - Dep. Folha</small>
         </div>
     </div>
 </div>
@@ -347,8 +358,10 @@
     const URL_FATURAMENTO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2S-LdrEMpvvosLHfFDOucVENw-T8OOaC2td00ySdFnim79Lm7AEooZBL--q9zKA/pub?output=csv";
 
     let financeiroData = [], faturamentoData = [];
+    let currentFiltroFaturamento = { filtered: [] }; // armazena o último resultado filtrado para a calculadora
     const publicSite = document.getElementById('publicSite'), privateArea = document.getElementById('privateArea'), loginModal = document.getElementById('loginModal');
     const privateAccessBtn = document.getElementById('privateAccessBtn'), doLoginBtn = document.getElementById('doLoginBtn'), logoutPrivateBtn = document.getElementById('logoutPrivateBtn');
+    const refreshBtn = document.getElementById('refreshDataBtn');
 
     function parseMoney(value) {
         if (value === undefined || value === null) return 0;
@@ -363,14 +376,24 @@
 
     function showLogin() { loginModal.classList.add('active'); }
     function hideLogin() { loginModal.classList.remove('active'); }
-    function showPrivate() { publicSite.style.display = 'none'; privateArea.style.display = 'block'; hideLogin(); if(!financeiroData.length) loadFinanceiroData(); if(!faturamentoData.length) loadFaturamentoData(); }
+    function showPrivate() { publicSite.style.display = 'none'; privateArea.style.display = 'block'; hideLogin(); refreshAllData(); }
     function logout() { publicSite.style.display = 'block'; privateArea.style.display = 'none'; hideLogin(); }
+    
     privateAccessBtn.addEventListener('click', (e) => { e.preventDefault(); showLogin(); });
     doLoginBtn.addEventListener('click', () => { const u = document.getElementById('loginUser').value.trim(), p = document.getElementById('loginPass').value.trim(); if(u===VALID_USER && p===VALID_PASS) showPrivate(); else document.getElementById('loginError').innerText = 'Credenciais inválidas'; });
     logoutPrivateBtn.addEventListener('click', logout);
+    
+    async function refreshAllData() {
+        refreshBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Atualizando...';
+        await Promise.all([loadFinanceiroData(true), loadFaturamentoData(true)]);
+        refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar Dados';
+        applyFinFilters();
+        aplicarFiltrosFaturamento();
+    }
+    refreshBtn.addEventListener('click', refreshAllData);
 
     // ========== FINANCEIRO ==========
-    async function loadFinanceiroData() {
+    async function loadFinanceiroData(skipFilter = false) {
         try {
             const resp = await fetch(URL_FINANCEIRO);
             const text = await resp.text();
@@ -400,15 +423,16 @@
             }
             if (!financeiroData.length) throw new Error("Sem dados");
             atualizarDatalistsFinanceiro();
-            applyFinFilters();
+            if (!skipFilter) applyFinFilters();
         } catch(e) {
+            console.error(e);
             financeiroData = [
                 { documento:"NF123", vencimentoDate:new Date(2025,2,15), local:"Concórdia-SC", tipoConta:"Combustível", valor:1850, servico:"Abastecimento"},
                 { documento:"NF456", vencimentoDate:new Date(2025,3,10), local:"São Paulo-SP", tipoConta:"Manutenção", valor:3200, servico:"Revisão"},
                 { documento:"Fatura BRF", vencimentoDate:new Date(2025,4,20), local:"Concórdia-SC", tipoConta:"Receita", valor:12500, servico:"Frete"},
             ];
             atualizarDatalistsFinanceiro();
-            applyFinFilters();
+            if (!skipFilter) applyFinFilters();
         }
     }
     function atualizarDatalistsFinanceiro() {
@@ -438,7 +462,7 @@
         filtered.forEach(item => {
             let row = tbody.insertRow();
             let dateStr = item.vencimentoDate ? moment(item.vencimentoDate).format('DD/MM/YYYY') : '---';
-            row.innerHTML = `<td>${item.local}</td><td>${item.tipoConta}</td><td>${dateStr}</td><td>${item.documento}<td><td style="text-align:right">R$ ${item.valor.toFixed(2)}</td><td>${item.servico.substring(0,40)}</td>`;
+            row.innerHTML = `<td>${item.local}</td><td>${item.tipoConta}</td><td>${dateStr}</td><td>${item.documento}</td><td style="text-align:right">R$ ${item.valor.toFixed(2)}</td></td>${item.servico.substring(0,40)}</td>`;
         });
         const monthly = new Map();
         financeiroData.forEach(i => { if(i.vencimentoDate) { const key = moment(i.vencimentoDate).format('YYYY-MM'); monthly.set(key, (monthly.get(key)||0) + i.valor); } });
@@ -466,8 +490,8 @@
     });
     document.getElementById('finExportarPDF').addEventListener('click', () => alert("Use Ctrl+P para salvar como PDF."));
 
-    // ========== FATURAMENTO ==========
-    async function loadFaturamentoData() {
+    // ========== FATURAMENTO (com suporte a placas cavalo e carreta) ==========
+    async function loadFaturamentoData(skipFilter = false) {
         try {
             const resp = await fetch(URL_FATURAMENTO);
             const text = await resp.text();
@@ -475,11 +499,11 @@
             const rows = parsed.data;
             if(!rows.length) throw new Error("Vazio");
             const headers = Object.keys(rows[0]);
-            // Mapeamento flexível para placas: cavalo (trator) e carreta (reboque)
+            // Mapeamento flexível para colunas
             const colData = headers.find(h => /data|emissão|mes/i.test(h)) || headers[0];
             const colMotorista = headers.find(h => /motorista/i.test(h)) || headers[1];
-            const colPlacaCavalo = headers.find(h => /placa.*cavalo|cavalo|trator/i.test(h)) || headers[2];
-            const colPlacaCarreta = headers.find(h => /placa.*carreta|carreta|reboque/i.test(h)) || headers[3];
+            const colPlacaCavalo = headers.find(h => /placa.*cavalo|cavalo|trator/i.test(h)) || (headers[2] || headers[0]);
+            const colPlacaCarreta = headers.find(h => /placa.*carreta|carreta|reboque/i.test(h)) || (headers[3] || headers[1]);
             const colEmbarcadora = headers.find(h => /embarcadora|cliente/i.test(h)) || headers[4];
             const colOrigem = headers.find(h => /origem|de/i.test(h)) || headers[5];
             const colDestino = headers.find(h => /destino|para/i.test(h)) || headers[6];
@@ -502,9 +526,9 @@
             }
             if (!faturamentoData.length) throw new Error("Sem dados");
             atualizarDatalistsFaturamento();
-            aplicarFiltrosFaturamento();
+            if (!skipFilter) aplicarFiltrosFaturamento();
         } catch(e) {
-            // Dados de exemplo com placas separadas
+            console.error(e);
             faturamentoData = [
                 { data: new Date(2025,2,10), placaCavalo: "ABC1234", placaCarreta: "CAR1234", motorista: "João Silva", embarcadora: "BRF", origem: "Concórdia", destino: "São Paulo", valor: 4500 },
                 { data: new Date(2025,2,15), placaCavalo: "XYZ5678", placaCarreta: "CAR5678", motorista: "Carlos Souza", embarcadora: "Sadia", origem: "Chapecó", destino: "Rio", valor: 3800 },
@@ -512,7 +536,7 @@
                 { data: new Date(2025,3,20), placaCavalo: "DEF9012", placaCarreta: "CAR9012", motorista: "Maria Oliveira", embarcadora: "BRF", origem: "Concórdia", destino: "Porto Alegre", valor: 5200 },
             ];
             atualizarDatalistsFaturamento();
-            aplicarFiltrosFaturamento();
+            if (!skipFilter) aplicarFiltrosFaturamento();
         }
     }
     function atualizarDatalistsFaturamento() {
@@ -565,6 +589,7 @@
             if(!isNaN(valorMin) && item.valor < valorMin) return false;
             return true;
         });
+        currentFiltroFaturamento.filtered = filtered;
         const totalFrete = filtered.reduce((sum, i) => sum + i.valor, 0);
         document.getElementById('totalFreteValor').innerHTML = `R$ ${totalFrete.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
         atualizarCalculoSalario(totalFrete);
@@ -610,14 +635,14 @@
         document.getElementById('fecharFicha').addEventListener('click', () => fichaDiv.style.display = 'none');
     }
     document.getElementById('fatAplicarFiltros').addEventListener('click', aplicarFiltrosFaturamento);
-    document.getElementById('comissaoPercent').addEventListener('input', () => { const total = parseFloat(document.getElementById('totalFreteValor').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarCalculoSalario(total); });
-    document.getElementById('despesasMot').addEventListener('input', () => { const total = parseFloat(document.getElementById('totalFreteValor').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarCalculoSalario(total); });
-    document.getElementById('diaria').addEventListener('input', () => { const total = parseFloat(document.getElementById('totalFreteValor').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarCalculoSalario(total); });
-    document.getElementById('bonus').addEventListener('input', () => { const total = parseFloat(document.getElementById('totalFreteValor').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarCalculoSalario(total); });
-    document.getElementById('vales').addEventListener('input', () => { const total = parseFloat(document.getElementById('totalFreteValor').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarCalculoSalario(total); });
-    document.getElementById('ir').addEventListener('input', () => { const total = parseFloat(document.getElementById('totalFreteValor').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarCalculoSalario(total); });
-    document.getElementById('multa').addEventListener('input', () => { const total = parseFloat(document.getElementById('totalFreteValor').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarCalculoSalario(total); });
-    document.getElementById('depFolha').addEventListener('input', () => { const total = parseFloat(document.getElementById('totalFreteValor').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarCalculoSalario(total); });
+    document.getElementById('comissaoPercent').addEventListener('input', () => { const total = currentFiltroFaturamento.filtered.reduce((s,i)=>s+i.valor,0); atualizarCalculoSalario(total); });
+    document.getElementById('despesasMot').addEventListener('input', () => { const total = currentFiltroFaturamento.filtered.reduce((s,i)=>s+i.valor,0); atualizarCalculoSalario(total); });
+    document.getElementById('diaria').addEventListener('input', () => { const total = currentFiltroFaturamento.filtered.reduce((s,i)=>s+i.valor,0); atualizarCalculoSalario(total); });
+    document.getElementById('bonus').addEventListener('input', () => { const total = currentFiltroFaturamento.filtered.reduce((s,i)=>s+i.valor,0); atualizarCalculoSalario(total); });
+    document.getElementById('vales').addEventListener('input', () => { const total = currentFiltroFaturamento.filtered.reduce((s,i)=>s+i.valor,0); atualizarCalculoSalario(total); });
+    document.getElementById('ir').addEventListener('input', () => { const total = currentFiltroFaturamento.filtered.reduce((s,i)=>s+i.valor,0); atualizarCalculoSalario(total); });
+    document.getElementById('multa').addEventListener('input', () => { const total = currentFiltroFaturamento.filtered.reduce((s,i)=>s+i.valor,0); atualizarCalculoSalario(total); });
+    document.getElementById('depFolha').addEventListener('input', () => { const total = currentFiltroFaturamento.filtered.reduce((s,i)=>s+i.valor,0); atualizarCalculoSalario(total); });
     document.getElementById('fatExportarCSV').addEventListener('click', () => {
         let mes = document.getElementById('fatMesSelect').value;
         let motorista = document.getElementById('fatMotorista').value.trim();
@@ -646,11 +671,13 @@
     });
     document.getElementById('fatExportarPDF').addEventListener('click', () => alert("Use Ctrl+P para salvar como PDF."));
 
+    // Abas
     const tabs = document.querySelectorAll('.tab-btn'), contents = document.querySelectorAll('.tab-content');
     tabs.forEach(btn => btn.addEventListener('click', () => { const tabId = btn.getAttribute('data-tab'); tabs.forEach(b=>b.classList.remove('active')); btn.classList.add('active'); contents.forEach(c=>c.classList.remove('active')); document.getElementById(tabId).classList.add('active'); }));
 
     publicSite.style.display = 'block'; privateArea.style.display = 'none';
-    loadFinanceiroData(); loadFaturamentoData();
+    loadFinanceiroData(true);
+    loadFaturamentoData(true);
 </script>
 </body>
 </html>
