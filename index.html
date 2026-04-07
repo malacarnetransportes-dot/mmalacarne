@@ -11,12 +11,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <style>
-        /* ===== RESET E VARIÁVEIS (MANTIDAS DO ORIGINAL) ===== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
             --primary: #8B7355;
             --accent: #d4af37;
@@ -26,12 +21,7 @@
             --text-light: #718096;
             --premium-dark: #1e2a3a;
         }
-        body {
-            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: var(--text);
-            overflow-x: hidden;
-            line-height: 1.6;
-        }
+        body { font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--text); overflow-x: hidden; line-height: 1.6; }
         header {
             background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(20px);
@@ -43,78 +33,21 @@
             box-shadow: 0 2px 30px rgba(0,0,0,0.08);
             border-bottom: 1px solid rgba(139, 115, 85, 0.1);
         }
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        .logo-img {
-            height: 50px;
-            width: auto;
-        }
-        .logo-text {
-            display: flex;
-            flex-direction: column;
-            line-height: 1.1;
-        }
-        .logo-main {
-            font-size: 1.6rem;
-            font-weight: 800;
-            color: var(--primary);
-            letter-spacing: -0.5px;
-        }
-        .logo-sub {
-            font-size: 0.65rem;
-            font-weight: 500;
-            color: var(--text-light);
-            letter-spacing: 1.2px;
-            text-transform: uppercase;
-        }
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            list-style: none;
-            align-items: center;
-        }
-        .nav-links a {
-            color: var(--text);
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s;
-            font-size: 0.9rem;
-            position: relative;
-        }
-        .nav-links a::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: var(--accent);
-            transition: width 0.3s;
-        }
-        .nav-links a:hover::after {
-            width: 100%;
-        }
-        .private-btn {
-            background: var(--accent);
-            color: var(--dark) !important;
-            padding: 0.3rem 1rem;
-            border-radius: 40px;
-        }
+        nav { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; }
+        .logo { display: flex; align-items: center; gap: 1rem; }
+        .logo-img { height: 50px; width: auto; }
+        .logo-text { display: flex; flex-direction: column; line-height: 1.1; }
+        .logo-main { font-size: 1.6rem; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
+        .logo-sub { font-size: 0.65rem; font-weight: 500; color: var(--text-light); letter-spacing: 1.2px; text-transform: uppercase; }
+        .nav-links { display: flex; gap: 2rem; list-style: none; align-items: center; }
+        .nav-links a { color: var(--text); text-decoration: none; font-weight: 500; transition: all 0.3s; font-size: 0.9rem; position: relative; }
+        .nav-links a::after { content: ''; position: absolute; bottom: -5px; left: 0; width: 0; height: 2px; background: var(--accent); transition: width 0.3s; }
+        .nav-links a:hover::after { width: 100%; }
+        .private-btn { background: var(--accent); color: var(--dark) !important; padding: 0.3rem 1rem; border-radius: 40px; }
         .private-btn::after { display: none; }
         .hero {
             height: 60vh;
-            background: linear-gradient(135deg, rgba(30, 42, 58, 0.9) 0%, rgba(26, 32, 44, 0.9) 100%), 
-                        url('IMG-20220924-WA0022 (1).jpg');
+            background: linear-gradient(135deg, rgba(30, 42, 58, 0.9) 0%, rgba(26, 32, 44, 0.9) 100%), url('IMG-20220924-WA0022 (1).jpg');
             background-size: cover;
             background-position: center;
             display: flex;
@@ -125,11 +58,7 @@
             margin-top: 70px;
             padding: 0 5%;
         }
-        .hero-content h1 {
-            font-size: 2.2rem;
-            margin-bottom: 1rem;
-            font-weight: 700;
-        }
+        .hero-content h1 { font-size: 2.2rem; margin-bottom: 1rem; font-weight: 700; }
         .cta-button {
             background: linear-gradient(135deg, var(--accent) 0%, #b8941f 100%);
             color: var(--dark);
@@ -158,296 +87,60 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.06);
             border: 1px solid rgba(139, 115, 85, 0.1);
         }
-        .values {
-            padding: 3rem 5%;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-        .section-title {
-            text-align: center;
-            font-size: 1.8rem;
-            margin-bottom: 1.5rem;
-            color: var(--premium-dark);
-            font-weight: 700;
-        }
-        .values-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-        }
-        .value-card {
-            background: white;
-            padding: 1.8rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
-            text-align: center;
-        }
-        .gallery {
-            padding: 3rem 5%;
-            background: var(--light);
-        }
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.2rem;
-            max-width: 1000px;
-            margin: 2rem auto 0;
-        }
-        .gallery-item {
-            height: 220px;
-            border-radius: 10px;
-            overflow: hidden;
-            position: relative;
-        }
-        .gallery-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s;
-        }
-        .fuels-section, .freight-calculator-section, .simulator-section, .aistudio-section {
-            padding: 3rem 5%;
-            background: #ffffff;
-            border-top: 1px solid rgba(139,115,85,0.15);
-            border-bottom: 1px solid rgba(139,115,85,0.15);
-        }
-        .stations-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 1.8rem;
-            margin-top: 2rem;
-        }
-        .state-group {
-            background: #fff;
-            border-radius: 16px;
-            border: 1px solid rgba(139,115,85,0.2);
-        }
-        .state-header {
-            background: var(--premium-dark);
-            color: white;
-            padding: 1rem 1.5rem;
-            font-weight: 700;
-        }
-        .jobs {
-            padding: 4rem 5%;
-            background: linear-gradient(135deg, var(--premium-dark) 0%, #2d3748 100%);
-            color: white;
-        }
-        .job-card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 12px;
-            padding: 2rem;
-            color: var(--text);
-        }
-        .contact {
-            padding: 3rem 5%;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-        .contact-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2.5rem;
-            margin-top: 2rem;
-        }
-        .whatsapp-float {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 1000;
-        }
-        footer {
-            background: var(--premium-dark);
-            color: white;
-            text-align: center;
-            padding: 2rem 5%;
-        }
-        .menu-toggle {
-            display: none;
-            background: none;
-            border: none;
-            font-size: 1.2rem;
-            cursor: pointer;
-        }
+        .values { padding: 3rem 5%; max-width: 1000px; margin: 0 auto; }
+        .section-title { text-align: center; font-size: 1.8rem; margin-bottom: 1.5rem; color: var(--premium-dark); font-weight: 700; }
+        .values-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+        .value-card { background: white; padding: 1.8rem; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); text-align: center; }
+        .gallery { padding: 3rem 5%; background: var(--light); }
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.2rem; max-width: 1000px; margin: 2rem auto 0; }
+        .gallery-item { height: 220px; border-radius: 10px; overflow: hidden; position: relative; }
+        .gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+        .freight-calculator-section { padding: 3rem 5%; background: #ffffff; border-top: 1px solid rgba(139,115,85,0.15); border-bottom: 1px solid rgba(139,115,85,0.15); text-align: center; }
+        .jobs { padding: 4rem 5%; background: linear-gradient(135deg, var(--premium-dark) 0%, #2d3748 100%); color: white; }
+        .job-card { background: rgba(255, 255, 255, 0.95); border-radius: 12px; padding: 2rem; color: var(--text); max-width: 800px; margin: 0 auto; text-align: center; }
+        .contact { padding: 3rem 5%; max-width: 1000px; margin: 0 auto; }
+        .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; margin-top: 2rem; }
+        .whatsapp-float { position: fixed; bottom: 20px; right: 20px; z-index: 1000; }
+        footer { background: var(--premium-dark); color: white; text-align: center; padding: 2rem 5%; }
+        .menu-toggle { display: none; background: none; border: none; font-size: 1.2rem; cursor: pointer; }
         @media (max-width: 768px) {
             .hero { height: 50vh; margin-top: 60px; }
-            .nav-links {
-                display: none;
-                position: absolute;
-                top: 100%;
-                left: 0;
-                width: 100%;
-                background: white;
-                flex-direction: column;
-                padding: 1rem;
-            }
+            .nav-links { display: none; position: absolute; top: 100%; left: 0; width: 100%; background: white; flex-direction: column; padding: 1rem; }
             .nav-links.active { display: flex; }
             .menu-toggle { display: block; }
             .contact-grid { grid-template-columns: 1fr; }
         }
-
-        /* ESTILOS DA ÁREA PRIVADA (PREMIUM) */
-        .private-area {
-            display: none;
-            background: #f1f5f9;
-            min-height: 100vh;
-            padding: 2rem;
-        }
-        .private-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
-        .tabs {
-            display: flex;
-            gap: 1rem;
-            border-bottom: 2px solid var(--accent);
-            margin-bottom: 2rem;
-        }
-        .tab-btn {
-            background: none;
-            border: none;
-            padding: 0.8rem 1.5rem;
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: 0.2s;
-            border-radius: 30px 30px 0 0;
-        }
-        .tab-btn.active {
-            background: var(--accent);
-            color: var(--dark);
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        .dashboard-card {
-            background: white;
-            border-radius: 28px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
-        }
-        .filter-group {
-            display: inline-flex;
-            flex-direction: column;
-            margin-right: 1rem;
-            margin-bottom: 1rem;
-        }
-        .filter-group label {
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: var(--text-light);
-        }
-        .filter-group input, .filter-group select {
-            padding: 0.5rem;
-            border-radius: 12px;
-            border: 1px solid #cbd5e1;
-            min-width: 130px;
-            font-size: 0.85rem;
-        }
-        .btn-export {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 30px;
-            cursor: pointer;
-            margin-left: 0.5rem;
-            font-weight: 600;
-        }
-        .ranking-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1rem;
-            margin: 1rem 0;
-        }
-        .ranking-box {
-            background: #f8fafc;
-            border-radius: 20px;
-            padding: 1rem;
-            border-left: 4px solid var(--accent);
-        }
-        .ranking-box h4 {
-            margin-bottom: 0.8rem;
-            color: var(--premium-dark);
-        }
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.8rem;
-        }
-        .data-table th, .data-table td {
-            border-bottom: 1px solid #e2e8f0;
-            padding: 0.7rem 0.3rem;
-            text-align: left;
-        }
-        .data-table th {
-            background: #f1f5f9;
-        }
-        .forecast-card {
-            background: linear-gradient(135deg, #1e293b, #0f172a);
-            color: white;
-            border-radius: 20px;
-            padding: 1rem;
-            text-align: center;
-        }
-        .logout-btn {
-            background: #ef4444;
-            color: white;
-            border: none;
-            padding: 0.5rem 1.2rem;
-            border-radius: 40px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .login-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(8px);
-            z-index: 2000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            visibility: hidden;
-            opacity: 0;
-            transition: 0.2s;
-        }
-        .login-overlay.active {
-            visibility: visible;
-            opacity: 1;
-        }
-        .login-card {
-            background: white;
-            border-radius: 32px;
-            padding: 2rem;
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-            border-top: 6px solid var(--accent);
-        }
-        .login-input {
-            width: 100%;
-            padding: 0.8rem;
-            margin: 0.5rem 0;
-            border-radius: 60px;
-            border: 1px solid #cbd5e1;
-        }
+        /* Estilos área privada */
+        .private-area { display: none; background: #f1f5f9; min-height: 100vh; padding: 2rem; }
+        .private-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; }
+        .tabs { display: flex; gap: 1rem; border-bottom: 2px solid var(--accent); margin-bottom: 2rem; }
+        .tab-btn { background: none; border: none; padding: 0.8rem 1.5rem; font-weight: 700; cursor: pointer; font-size: 1rem; border-radius: 30px 30px 0 0; }
+        .tab-btn.active { background: var(--accent); color: var(--dark); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .dashboard-card { background: white; border-radius: 28px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); }
+        .filter-group { display: inline-flex; flex-direction: column; margin-right: 1rem; margin-bottom: 1rem; }
+        .filter-group label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; color: var(--text-light); }
+        .filter-group input, .filter-group select { padding: 0.5rem; border-radius: 12px; border: 1px solid #cbd5e1; min-width: 130px; font-size: 0.85rem; }
+        .btn-export { background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 30px; cursor: pointer; margin-left: 0.5rem; font-weight: 600; }
+        .ranking-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin: 1rem 0; }
+        .ranking-box { background: #f8fafc; border-radius: 20px; padding: 1rem; border-left: 4px solid var(--accent); }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        .data-table th, .data-table td { border-bottom: 1px solid #e2e8f0; padding: 0.7rem 0.3rem; text-align: left; }
+        .data-table th { background: #f1f5f9; }
+        .forecast-card { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; border-radius: 20px; padding: 1rem; text-align: center; }
+        .logout-btn { background: #ef4444; color: white; border: none; padding: 0.5rem 1.2rem; border-radius: 40px; cursor: pointer; font-weight: 600; }
+        .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 2000; display: flex; align-items: center; justify-content: center; visibility: hidden; opacity: 0; transition: 0.2s; }
+        .login-overlay.active { visibility: visible; opacity: 1; }
+        .login-card { background: white; border-radius: 32px; padding: 2rem; width: 90%; max-width: 400px; text-align: center; border-top: 6px solid var(--accent); }
+        .login-input { width: 100%; padding: 0.8rem; margin: 0.5rem 0; border-radius: 60px; border: 1px solid #cbd5e1; }
+        .ficha-placa { background: #fef9e6; border-radius: 16px; padding: 1rem; margin-top: 1rem; border: 1px solid var(--accent); }
+        .total-soma { font-weight: bold; background: #e2e8f0; padding: 0.5rem; text-align: right; margin-top: 0.5rem; border-radius: 12px; }
     </style>
 </head>
 <body>
 
-<!-- SITE PÚBLICO ORIGINAL -->
+<!-- SITE PÚBLICO ORIGINAL (COM SEÇÕES REMOVIDAS: APP, PREÇOS, SIMULADOR) -->
 <div id="publicSite">
     <div class="whatsapp-float">
         <a href="https://wa.me/5549999675448" target="_blank" style="background:#25D366; color:white; padding:10px 16px; border-radius:50px; text-decoration:none;">📱 WhatsApp</a>
@@ -467,10 +160,7 @@
                 <li><a href="#sobre">Sobre</a></li>
                 <li><a href="#valores">Valores</a></li>
                 <li><a href="#infraestrutura">Infraestrutura</a></li>
-                <li><a href="#precos">Preços Combustível</a></li>
                 <li><a href="#calculadora-antt">Calculadora ANTT</a></li>
-                <li><a href="#simulador">Simulador</a></li>
-                <li><a href="#aistudio">App AI Studio</a></li>
                 <li><a href="#vagas">Vagas</a></li>
                 <li><a href="#contato">Contato</a></li>
                 <li><a href="#" id="privateAccessBtn" class="private-btn">🔒 Acesso Privado</a></li>
@@ -481,7 +171,7 @@
         <div class="hero-content">
             <h1>40 Anos Movendo o Brasil</h1>
             <p>Excelência em Transporte e Logística desde 1982</p>
-            <a href="#simulador" class="cta-button">Simular Rota</a>
+            <a href="#contato" class="cta-button">Fale Conosco</a>
         </div>
     </section>
     <section class="stats">
@@ -509,33 +199,32 @@
             <div class="gallery-item"><img src="img87.jpg" alt="Instalações"></div>
         </div>
     </section>
-    <section id="precos" class="fuels-section">
-        <div style="max-width:1200px; margin:0 auto">
-            <h2 class="section-title">⛽ Preços de Combustíveis</h2>
-            <div class="stations-grid">
-                <div class="state-group"><div class="state-header">📍 Santa Catarina (SC)</div><div class="station-list"><div>Edemar Russi e Cia Ltda - Lontras</div></div></div>
-                <div class="state-group"><div class="state-header">📍 Paraná (PR)</div><div class="station-list"><div>Auto Posto Túlio RBO - Campina Grande do Sul</div></div></div>
-                <div class="state-group"><div class="state-header">📍 São Paulo (SP)</div><div class="station-list"><div>Posto Califórnia - Ourinhos</div></div></div>
-            </div>
-        </div>
-    </section>
     <section id="calculadora-antt" class="freight-calculator-section">
-        <div style="text-align:center"><h2>📊 Calculadora Oficial ANTT</h2><a href="https://calculadorafrete.antt.gov.br/" target="_blank" class="cta-button">Acessar</a></div>
-    </section>
-    <section id="simulador" class="simulator-section">
-        <div style="text-align:center"><h2>📊 Simulador de Rota</h2><p>Funcionalidade no dashboard privado</p></div>
-    </section>
-    <section id="aistudio" class="aistudio-section">
-        <div style="text-align:center"><h2>📱 App AI Studio</h2><iframe src="https://ai.studio.apps/e34350b9-2061-4164-b4b3-cd504629a167" width="100%" height="500" style="border:none"></iframe></div>
+        <h2>📊 Calculadora Oficial ANTT</h2>
+        <a href="https://calculadorafrete.antt.gov.br/" target="_blank" class="cta-button">Acessar</a>
     </section>
     <section id="vagas" class="jobs">
-        <div class="job-card"><h3>Motorista de Carreta</h3><p>Envie currículo pelo WhatsApp</p><a href="https://wa.me/5549999675448" class="cta-button">Candidatar-se</a></div>
+        <div class="job-card">
+            <h3>🚛 Motorista de Carreta</h3>
+            <p>Vaga disponível - Contratação imediata</p>
+            <p><strong>Pré-requisitos:</strong> CNH E, experiência em carreta frigorífica, disponibilidade para viagens.</p>
+            <a href="https://wa.me/5549999675448?text=Olá! Tenho interesse na vaga de Motorista de Carreta" class="cta-button" style="margin-top:1rem;">📱 Candidate-se via WhatsApp</a>
+        </div>
     </section>
     <section id="contato" class="contact">
-        <h2 class="section-title">Contato</h2>
+        <h2 class="section-title">Entre em Contato</h2>
         <div class="contact-grid">
-            <div><h3>📍 Endereço</h3><p>Rua Domingos Casagrande, 25 - Concórdia - SC</p><h3>📞 Telefone</h3><p>(49) 3442-2325</p></div>
-            <div><iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3535.234!2d-52.027!3d-27.234!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjfCsDE4JzAyLjQiUyA1MsKwMDEnMzcuMiJX!5e0!3m2!1spt-BR!2sbr!4v1234567890" width="100%" height="250" style="border:0;"></iframe></div>
+            <div>
+                <h3>📍 Localização</h3>
+                <p>Rua Domingos Casagrande, 25 - Bairro Arvoredo<br>Concórdia - SC | CEP: 89701-450</p>
+                <h3>📞 Contato</h3>
+                <p>Telefone: (49) 3442-2325<br>WhatsApp: (49) 99967-5448</p>
+                <h3>✉️ E-mail</h3>
+                <p>financeirommalacarne@gmail.com</p>
+            </div>
+            <div>
+                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3535.234!2d-52.027!3d-27.234!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjfCsDE4JzAyLjQiUyA1MsKwMDEnMzcuMiJX!5e0!3m2!1spt-BR!2sbr!4v1234567890" width="100%" height="250" style="border:0;" allowfullscreen loading="lazy"></iframe>
+            </div>
         </div>
     </section>
     <footer>
@@ -571,7 +260,8 @@
         <div class="dashboard-card">
             <h3><i class="fas fa-filter"></i> Filtros</h3>
             <div>
-                <div class="filter-group"><label>Mês (vencimento)</label><select id="finMes"><option value="all">Todos os meses</option></select></div>
+                <div class="filter-group"><label>Data Início (vencimento)</label><input type="date" id="finDataInicio"></div>
+                <div class="filter-group"><label>Data Fim (vencimento)</label><input type="date" id="finDataFim"></div>
                 <div class="filter-group"><label>Local</label><select id="finLocal"><option value="all">Todos</option></select></div>
                 <div class="filter-group"><label>Tipo Conta</label><select id="finTipo"><option value="all">Todos</option></select></div>
                 <button id="finAplicarFiltros" class="btn-export">Aplicar</button>
@@ -580,15 +270,11 @@
             </div>
         </div>
         <div class="dashboard-card">
-            <h3><i class="fas fa-chart-line"></i> Evolução Mensal</h3>
-            <canvas id="finChartEvolucao" style="max-height:300px"></canvas>
-        </div>
-        <div class="dashboard-card">
             <h3><i class="fas fa-chart-simple"></i> Previsão para os próximos 3 meses</h3>
             <div class="forecast-card" id="finPrevisao">Calculando...</div>
         </div>
         <div class="dashboard-card">
-            <h3><i class="fas fa-trophy"></i> Ranking por Tipo de Conta</h3>
+            <h3><i class="fas fa-trophy"></i> Ranking por Tipo de Conta (Maior → Menor)</h3>
             <div id="finRanking"></div>
         </div>
         <div class="dashboard-card">
@@ -602,8 +288,9 @@
         <div class="dashboard-card">
             <h3><i class="fas fa-filter"></i> Filtros</h3>
             <div>
-                <div class="filter-group"><label>Mês (referência)</label><input type="month" id="fatMes"></div>
-                <div class="filter-group"><label>Placa</label><input type="text" id="fatPlaca" placeholder="Placa"></div>
+                <div class="filter-group"><label>Mês</label><select id="fatMesSelect"><option value="all">Todos</option></select></div>
+                <div class="filter-group"><label>Motorista</label><select id="fatMotoristaSelect"><option value="all">Todos</option></select></div>
+                <div class="filter-group"><label>Placa</label><input type="text" id="fatPlaca" placeholder="Digite a placa"></div>
                 <div class="filter-group"><label>Embarcadora</label><input type="text" id="fatEmbarcadora" placeholder="Embarcadora"></div>
                 <div class="filter-group"><label>Origem</label><input type="text" id="fatOrigem" placeholder="Origem"></div>
                 <div class="filter-group"><label>Destino</label><input type="text" id="fatDestino" placeholder="Destino"></div>
@@ -614,25 +301,22 @@
             </div>
         </div>
         <div class="dashboard-card">
-            <h3><i class="fas fa-chart-line"></i> Evolução Mensal do Faturamento</h3>
-            <canvas id="fatEvolucaoChart" style="max-height:300px"></canvas>
+            <h3><i class="fas fa-trophy"></i> Ranking das Melhores Viagens (Top 5 maiores fretes)</h3>
+            <div id="rankMelhoresViagens"></div>
         </div>
         <div class="dashboard-card">
-            <h3><i class="fas fa-chart-bar"></i> Ranking por Embarcadora (Top 5)</h3>
-            <canvas id="fatRankEmbarcadoraChart" style="max-height:250px"></canvas>
-        </div>
-        <div class="dashboard-card">
-            <h3><i class="fas fa-ranking-star"></i> Rankings</h3>
+            <h3><i class="fas fa-ranking-star"></i> Rankings por Valor Total</h3>
             <div class="ranking-grid">
-                <div class="ranking-box"><h4>🏆 Melhores Motoristas</h4><div id="rankMotorista"></div></div>
-                <div class="ranking-box"><h4>🏆 Melhores Placas</h4><div id="rankPlaca"></div></div>
-                <div class="ranking-box"><h4>🏆 Melhores Embarcadoras</h4><div id="rankEmbarcadora"></div></div>
+                <div class="ranking-box"><h4>🏆 Motoristas</h4><div id="rankMotorista"></div></div>
+                <div class="ranking-box"><h4>🏆 Placas</h4><div id="rankPlaca"></div></div>
+                <div class="ranking-box"><h4>🏆 Embarcadoras</h4><div id="rankEmbarcadora"></div></div>
                 <div class="ranking-box"><h4>💰 Faturamento por Placa</h4><div id="rankSomaPlaca"></div></div>
             </div>
         </div>
         <div class="dashboard-card">
-            <h3><i class="fas fa-truck"></i> Tabela de Fretes</h3>
+            <h3><i class="fas fa-truck"></i> Tabela de Fretes (clique na placa para ver ficha completa)</h3>
             <div style="overflow-x:auto"><table class="data-table" id="fatTable"><thead><tr><th>Data</th><th>Placa</th><th>Motorista</th><th>Embarcadora</th><th>Origem</th><th>Destino</th><th>Valor Frete (R$)</th></tr></thead><tbody></tbody></table></div>
+            <div id="fichaPlaca" class="ficha-placa" style="display:none;"></div>
         </div>
     </div>
 </div>
@@ -642,26 +326,24 @@
     const VALID_USER = "malacarne";
     const VALID_PASS = "mala2325";
 
-    // URLs das planilhas
     const URL_FINANCEIRO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZOvOYa2B9fg5pQuPa54usv9Tl0bRP7EDRBtYrmYnJuXZkK5_A7j4roQZdmiXaaQ/pub?output=csv";
     const URL_FATURAMENTO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2S-LdrEMpvvosLHfFDOucVENw-T8OOaC2td00ySdFnim79Lm7AEooZBL--q9zKA/pub?output=csv";
 
-    // Variáveis globais
     let financeiroData = [];
     let faturamentoData = [];
-    let finEvolucaoChart = null;
-    let fatEvolucaoChart = null;
-    let fatRankChart = null;
 
-    // FUNÇÃO ROBUSTA PARA CONVERTER VALOR MONETÁRIO BRASILEIRO
+    const publicSite = document.getElementById('publicSite');
+    const privateArea = document.getElementById('privateArea');
+    const loginModal = document.getElementById('loginModal');
+    const privateAccessBtn = document.getElementById('privateAccessBtn');
+    const doLoginBtn = document.getElementById('doLoginBtn');
+    const logoutPrivateBtn = document.getElementById('logoutPrivateBtn');
+
     function parseMoney(value) {
         if (value === undefined || value === null) return 0;
-        // Remove tudo exceto dígitos, vírgula, ponto, sinal de menos (para valores negativos)
         let cleaned = String(value).replace(/[^\d,.-]/g, '');
         if (cleaned === '') return 0;
-        // Troca vírgula decimal por ponto
         cleaned = cleaned.replace(',', '.');
-        // Remove pontos de milhar (se houver mais de um ponto)
         let parts = cleaned.split('.');
         if (parts.length > 2) {
             let last = parts.pop();
@@ -670,14 +352,6 @@
         let num = parseFloat(cleaned);
         return isNaN(num) ? 0 : num;
     }
-
-    // Elementos DOM
-    const publicSite = document.getElementById('publicSite');
-    const privateArea = document.getElementById('privateArea');
-    const loginModal = document.getElementById('loginModal');
-    const privateAccessBtn = document.getElementById('privateAccessBtn');
-    const doLoginBtn = document.getElementById('doLoginBtn');
-    const logoutPrivateBtn = document.getElementById('logoutPrivateBtn');
 
     function showLogin() { loginModal.classList.add('active'); }
     function hideLogin() { loginModal.classList.remove('active'); }
@@ -698,36 +372,30 @@
     doLoginBtn.addEventListener('click', () => {
         const user = document.getElementById('loginUser').value.trim();
         const pass = document.getElementById('loginPass').value.trim();
-        if(user === VALID_USER && pass === VALID_PASS) {
-            showPrivate();
-        } else {
-            document.getElementById('loginError').innerText = 'Credenciais inválidas';
-        }
+        if(user === VALID_USER && pass === VALID_PASS) showPrivate();
+        else document.getElementById('loginError').innerText = 'Credenciais inválidas';
     });
     logoutPrivateBtn.addEventListener('click', logout);
 
-    // ===================== DASHBOARD FINANCEIRO =====================
+    // ========== FINANCEIRO ==========
     async function loadFinanceiroData() {
         try {
             const resp = await fetch(URL_FINANCEIRO);
             const text = await resp.text();
             const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
-            if(parsed.errors.length) console.warn(parsed.errors);
             const rows = parsed.data;
             if(!rows.length) throw new Error("Planilha vazia");
             const headers = Object.keys(rows[0]);
-            // Mapeamento flexível
             const colDoc = headers.find(h => /doc|nota|documento/i.test(h)) || headers[0];
             const colVenc = headers.find(h => /venc|data/i.test(h)) || headers[1];
             const colLocal = headers.find(h => /local|cidade/i.test(h)) || headers[2];
             const colTipo = headers.find(h => /tipo|conta|categoria/i.test(h)) || headers[3];
             const colValor = headers.find(h => /valor|r\$|total/i.test(h)) || headers[4];
             const colServ = headers.find(h => /serviço|servico|descrição/i.test(h)) || headers[5];
-            
             financeiroData = [];
             for (let row of rows) {
                 let val = parseMoney(row[colValor]);
-                if (val === 0) continue; // ignora linhas sem valor
+                if (val === 0) continue;
                 let date = moment(row[colVenc], ['DD/MM/YYYY', 'YYYY-MM-DD', 'MM/DD/YYYY'], true);
                 financeiroData.push({
                     documento: row[colDoc] || "ND",
@@ -743,13 +411,11 @@
             applyFinFilters();
         } catch(e) {
             console.error(e);
-            // Dados de exemplo para demonstração
             financeiroData = [
                 { documento:"NF123", vencimentoDate:new Date(2025,2,15), local:"Concórdia-SC", tipoConta:"Combustível", valor:1850, servico:"Abastecimento"},
                 { documento:"NF456", vencimentoDate:new Date(2025,3,10), local:"São Paulo-SP", tipoConta:"Manutenção", valor:3200, servico:"Revisão"},
                 { documento:"Fatura BRF", vencimentoDate:new Date(2025,4,20), local:"Concórdia-SC", tipoConta:"Receita", valor:12500, servico:"Frete"},
                 { documento:"Seguro", vencimentoDate:new Date(2025,5,5), local:"Nacional", tipoConta:"Seguro", valor:2140, servico:"Apólice"},
-                { documento:"Pedágio", vencimentoDate:new Date(2025,2,28), local:"Curitiba-PR", tipoConta:"Pedágio", valor:450, servico:"Eixos"},
             ];
             populateFinFilters();
             applyFinFilters();
@@ -757,31 +423,25 @@
     }
 
     function populateFinFilters() {
-        const meses = [...new Set(financeiroData.map(i => i.vencimentoDate ? moment(i.vencimentoDate).format('YYYY-MM') : null).filter(m => m))];
         const locais = [...new Set(financeiroData.map(i=>i.local))];
         const tipos = [...new Set(financeiroData.map(i=>i.tipoConta))];
-        const mesSelect = document.getElementById('finMes');
-        const localSelect = document.getElementById('finLocal');
-        const tipoSelect = document.getElementById('finTipo');
-        mesSelect.innerHTML = '<option value="all">Todos os meses</option>' + meses.sort().map(m => `<option value="${m}">${moment(m, 'YYYY-MM').format('MMMM/YYYY')}</option>`).join('');
-        localSelect.innerHTML = '<option value="all">Todos</option>' + locais.map(l=>`<option value="${l}">${l}</option>`).join('');
-        tipoSelect.innerHTML = '<option value="all">Todos</option>' + tipos.map(t=>`<option value="${t}">${t}</option>`).join('');
+        document.getElementById('finLocal').innerHTML = '<option value="all">Todos</option>' + locais.map(l=>`<option value="${l}">${l}</option>`).join('');
+        document.getElementById('finTipo').innerHTML = '<option value="all">Todos</option>' + tipos.map(t=>`<option value="${t}">${t}</option>`).join('');
     }
 
     function applyFinFilters() {
-        const mes = document.getElementById('finMes').value;
+        const dataInicio = document.getElementById('finDataInicio').value;
+        const dataFim = document.getElementById('finDataFim').value;
         const local = document.getElementById('finLocal').value;
         const tipo = document.getElementById('finTipo').value;
         let filtered = financeiroData.filter(item => {
-            if(mes !== 'all' && item.vencimentoDate) {
-                const itemMes = moment(item.vencimentoDate).format('YYYY-MM');
-                if(itemMes !== mes) return false;
-            }
+            if(dataInicio && item.vencimentoDate && item.vencimentoDate < new Date(dataInicio)) return false;
+            if(dataFim && item.vencimentoDate) { let end = new Date(dataFim); end.setHours(23,59,59); if(item.vencimentoDate > end) return false; }
             if(local !== 'all' && item.local !== local) return false;
             if(tipo !== 'all' && item.tipoConta !== tipo) return false;
             return true;
         });
-        // Ranking por tipo de conta
+        // Ranking por tipo de conta (maior para menor)
         let tipoMap = new Map();
         filtered.forEach(i => tipoMap.set(i.tipoConta, (tipoMap.get(i.tipoConta)||0) + i.valor));
         let sorted = Array.from(tipoMap.entries()).sort((a,b)=>b[1]-a[1]);
@@ -794,7 +454,7 @@
             let dateStr = item.vencimentoDate ? moment(item.vencimentoDate).format('DD/MM/YYYY') : '---';
             row.innerHTML = `<td>${item.local}</td><td>${item.tipoConta}</td><td>${dateStr}</td><td>${item.documento}</td><td style="text-align:right">R$ ${item.valor.toFixed(2)}</td><td>${item.servico.substring(0,40)}</td>`;
         });
-        // Gráfico de evolução mensal (baseado em todos os dados, não apenas filtrados, para visão geral)
+        // Previsão próximos 3 meses (usando média dos últimos 3 meses)
         const monthly = new Map();
         financeiroData.forEach(i => {
             if(i.vencimentoDate) {
@@ -802,48 +462,34 @@
                 monthly.set(key, (monthly.get(key)||0) + i.valor);
             }
         });
-        const monthsSorted = Array.from(monthly.keys()).sort();
-        const values = monthsSorted.map(m => monthly.get(m));
-        if(finEvolucaoChart) finEvolucaoChart.destroy();
-        const ctx = document.getElementById('finChartEvolucao').getContext('2d');
-        finEvolucaoChart = new Chart(ctx, {
-            type: 'bar',
-            data: { labels: monthsSorted.map(m => moment(m, 'YYYY-MM').format('MMM/YY')), datasets: [{ label: 'Valor Total (R$)', data: values, backgroundColor: '#8B7355', borderRadius: 8 }] },
-            options: { responsive: true, plugins: { tooltip: { callbacks: { label: (ctx) => `R$ ${ctx.raw.toLocaleString('pt-BR',{minimumFractionDigits:2})}` } } } }
-        });
-        // Previsão: média dos últimos 3 meses
+        let values = Array.from(monthly.values());
         let last3 = values.slice(-3);
         let avg = last3.length ? last3.reduce((a,b)=>a+b,0)/last3.length : 0;
-        let previsao = avg * 3;
-        document.getElementById('finPrevisao').innerHTML = `<i class="fas fa-chart-simple"></i> Projeção para os próximos 3 meses: <strong style="font-size:1.5rem;">R$ ${previsao.toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong><br><small>Base média R$ ${avg.toLocaleString('pt-BR',{minimumFractionDigits:2})} / mês</small>`;
+        let total3 = avg * 3;
+        document.getElementById('finPrevisao').innerHTML = `<i class="fas fa-calendar-alt"></i> Projeção para os próximos 3 meses: <strong style="font-size:1.4rem;">R$ ${total3.toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong><br><small>Média mensal: R$ ${avg.toLocaleString('pt-BR',{minimumFractionDigits:2})}</small>`;
     }
-
     document.getElementById('finAplicarFiltros').addEventListener('click', applyFinFilters);
     document.getElementById('finExportarCSV').addEventListener('click', () => {
-        const mes = document.getElementById('finMes').value;
+        const dataInicio = document.getElementById('finDataInicio').value;
+        const dataFim = document.getElementById('finDataFim').value;
         const local = document.getElementById('finLocal').value;
         const tipo = document.getElementById('finTipo').value;
         let filtered = financeiroData.filter(item => {
-            if(mes !== 'all' && item.vencimentoDate && moment(item.vencimentoDate).format('YYYY-MM') !== mes) return false;
+            if(dataInicio && item.vencimentoDate && item.vencimentoDate < new Date(dataInicio)) return false;
+            if(dataFim && item.vencimentoDate) { let end = new Date(dataFim); end.setHours(23,59,59); if(item.vencimentoDate > end) return false; }
             if(local !== 'all' && item.local !== local) return false;
             if(tipo !== 'all' && item.tipoConta !== tipo) return false;
             return true;
         });
         let csvRows = [["Local","Tipo","Vencimento","Documento","Valor","Serviço"]];
-        filtered.forEach(i => {
-            let date = i.vencimentoDate ? moment(i.vencimentoDate).format('DD/MM/YYYY') : '';
-            csvRows.push([i.local, i.tipoConta, date, i.documento, i.valor, i.servico]);
-        });
+        filtered.forEach(i => { let date = i.vencimentoDate ? moment(i.vencimentoDate).format('DD/MM/YYYY') : ''; csvRows.push([i.local, i.tipoConta, date, i.documento, i.valor, i.servico]); });
         let csv = csvRows.map(r => r.join(",")).join("\n");
         let blob = new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"});
-        let link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "financeiro.csv";
-        link.click();
+        let link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "financeiro.csv"; link.click();
     });
-    document.getElementById('finExportarPDF').addEventListener('click', () => { alert("Use Ctrl+P para salvar como PDF da página atual."); });
+    document.getElementById('finExportarPDF').addEventListener('click', () => alert("Use Ctrl+P para salvar como PDF."));
 
-    // ===================== DASHBOARD FATURAMENTO =====================
+    // ========== FATURAMENTO ==========
     async function loadFaturamentoData() {
         try {
             const resp = await fetch(URL_FATURAMENTO);
@@ -875,29 +521,42 @@
                 });
             }
             if (faturamentoData.length === 0) throw new Error("Nenhum dado válido");
+            populateFatFilters();
             applyFatFilters();
         } catch(e) {
             console.error(e);
             faturamentoData = [
                 { data: new Date(2025,2,10), placa: "ABC1234", motorista: "João Silva", embarcadora: "BRF", origem: "Concórdia", destino: "São Paulo", valor: 4500 },
-                { data: new Date(2025,2,15), placa: "XYZ5678", motorista: "Carlos Souza", embarcadora: "Sadia", origem: "Chapecó", destino: "Rio de Janeiro", valor: 3800 },
+                { data: new Date(2025,2,15), placa: "XYZ5678", motorista: "Carlos Souza", embarcadora: "Sadia", origem: "Chapecó", destino: "Rio", valor: 3800 },
                 { data: new Date(2025,3,5), placa: "ABC1234", motorista: "João Silva", embarcadora: "BRF", origem: "Concórdia", destino: "Curitiba", valor: 2100 },
                 { data: new Date(2025,3,20), placa: "DEF9012", motorista: "Maria Oliveira", embarcadora: "BRF", origem: "Concórdia", destino: "Porto Alegre", valor: 5200 },
             ];
+            populateFatFilters();
             applyFatFilters();
         }
     }
 
+    function populateFatFilters() {
+        const meses = [...new Set(faturamentoData.map(i => i.data ? moment(i.data).format('YYYY-MM') : null).filter(m => m))];
+        const motoristas = [...new Set(faturamentoData.map(i => i.motorista))];
+        const mesSelect = document.getElementById('fatMesSelect');
+        const motoristaSelect = document.getElementById('fatMotoristaSelect');
+        mesSelect.innerHTML = '<option value="all">Todos os meses</option>' + meses.sort().map(m => `<option value="${m}">${moment(m, 'YYYY-MM').format('MMMM/YYYY')}</option>`).join('');
+        motoristaSelect.innerHTML = '<option value="all">Todos os motoristas</option>' + motoristas.map(m => `<option value="${m}">${m}</option>`).join('');
+    }
+
     function applyFatFilters() {
-        let mes = document.getElementById('fatMes').value;
-        let placa = document.getElementById('fatPlaca').value.trim().toUpperCase();
+        let mes = document.getElementById('fatMesSelect').value;
+        let motorista = document.getElementById('fatMotoristaSelect').value;
+        let placaFiltro = document.getElementById('fatPlaca').value.trim().toUpperCase();
         let embarcadora = document.getElementById('fatEmbarcadora').value.trim().toLowerCase();
         let origem = document.getElementById('fatOrigem').value.trim().toLowerCase();
         let destino = document.getElementById('fatDestino').value.trim().toLowerCase();
         let valorMin = parseFloat(document.getElementById('fatValorMin').value);
         let filtered = faturamentoData.filter(item => {
-            if(mes && item.data && moment(item.data).format('YYYY-MM') !== mes) return false;
-            if(placa && !item.placa.includes(placa)) return false;
+            if(mes !== 'all' && item.data && moment(item.data).format('YYYY-MM') !== mes) return false;
+            if(motorista !== 'all' && item.motorista !== motorista) return false;
+            if(placaFiltro && !item.placa.includes(placaFiltro)) return false;
             if(embarcadora && !item.embarcadora.toLowerCase().includes(embarcadora)) return false;
             if(origem && !item.origem.toLowerCase().includes(origem)) return false;
             if(destino && !item.destino.toLowerCase().includes(destino)) return false;
@@ -905,7 +564,7 @@
             return true;
         });
         // Rankings
-        let rankMotorista = new Map(); let rankPlaca = new Map(); let rankEmbarcadora = new Map(); let somaPlaca = new Map();
+        let rankMotorista = new Map(), rankPlaca = new Map(), rankEmbarcadora = new Map(), somaPlaca = new Map();
         filtered.forEach(i => {
             rankMotorista.set(i.motorista, (rankMotorista.get(i.motorista)||0) + i.valor);
             rankPlaca.set(i.placa, (rankPlaca.get(i.placa)||0) + i.valor);
@@ -916,52 +575,57 @@
         document.getElementById('rankPlaca').innerHTML = Array.from(rankPlaca.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`<div><strong>${k}</strong>: R$ ${v.toFixed(2)}</div>`).join('');
         document.getElementById('rankEmbarcadora').innerHTML = Array.from(rankEmbarcadora.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`<div><strong>${k}</strong>: R$ ${v.toFixed(2)}</div>`).join('');
         document.getElementById('rankSomaPlaca').innerHTML = Array.from(somaPlaca.entries()).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div><strong>${k}</strong>: R$ ${v.toFixed(2)}</div>`).join('');
-        // Tabela
+        
+        // Ranking melhores viagens (top 5 maiores fretes)
+        let sortedByValue = [...filtered].sort((a,b)=>b.valor - a.valor).slice(0,5);
+        document.getElementById('rankMelhoresViagens').innerHTML = sortedByValue.map((v,i) => `<div><strong>${i+1}º</strong> ${v.origem} → ${v.destino} | Placa: ${v.placa} | Motorista: ${v.motorista} | <span style="color:var(--accent)">R$ ${v.valor.toFixed(2)}</span></div>`).join('');
+        
+        // Tabela de fretes
         let tbody = document.querySelector('#fatTable tbody');
         tbody.innerHTML = '';
+        let totalGeral = 0;
         filtered.forEach(item => {
             let row = tbody.insertRow();
             let dataStr = item.data ? moment(item.data).format('DD/MM/YYYY') : '';
-            row.innerHTML = `<td>${dataStr}</td><td>${item.placa}</td><td>${item.motorista}</td><td>${item.embarcadora}</td><td>${item.origem}</td><td>${item.destino}</td><td style="text-align:right">R$ ${item.valor.toFixed(2)}</td>`;
+            row.innerHTML = `<td>${dataStr}</td><td style="cursor:pointer; color:var(--primary); font-weight:bold">${item.placa}</td><td>${item.motorista}</td><td>${item.embarcadora}</td><td>${item.origem}</td><td>${item.destino}</td><td style="text-align:right">R$ ${item.valor.toFixed(2)}</td>`;
+            totalGeral += item.valor;
+            // Clique na placa para mostrar ficha
+            row.cells[1].addEventListener('click', () => mostrarFichaPlaca(item.placa));
         });
-        // Gráfico evolução mensal
-        let monthlyFat = new Map();
-        faturamentoData.forEach(i => {
-            if(i.data) {
-                let key = moment(i.data).format('YYYY-MM');
-                monthlyFat.set(key, (monthlyFat.get(key)||0) + i.valor);
-            }
-        });
-        let monthsFat = Array.from(monthlyFat.keys()).sort();
-        let valuesFat = monthsFat.map(m => monthlyFat.get(m));
-        if(fatEvolucaoChart) fatEvolucaoChart.destroy();
-        const ctxEvol = document.getElementById('fatEvolucaoChart').getContext('2d');
-        fatEvolucaoChart = new Chart(ctxEvol, {
-            type: 'line',
-            data: { labels: monthsFat.map(m => moment(m, 'YYYY-MM').format('MMM/YY')), datasets: [{ label: 'Faturamento (R$)', data: valuesFat, borderColor: '#d4af37', backgroundColor: 'rgba(212,175,55,0.1)', fill: true, tension: 0.3 }] },
-            options: { responsive: true }
-        });
-        // Gráfico ranking embarcadora
-        let embTop = Array.from(rankEmbarcadora.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5);
-        if(fatRankChart) fatRankChart.destroy();
-        const ctxRank = document.getElementById('fatRankEmbarcadoraChart').getContext('2d');
-        fatRankChart = new Chart(ctxRank, {
-            type: 'bar',
-            data: { labels: embTop.map(e=>e[0]), datasets: [{ label: 'Valor Total (R$)', data: embTop.map(e=>e[1]), backgroundColor: '#8B7355' }] },
-            options: { indexAxis: 'y', responsive: true }
-        });
+        // Soma total na tabela
+        let tfoot = document.querySelector('#fatTable tfoot');
+        if(!tfoot) { let foot = document.createElement('tfoot'); document.querySelector('#fatTable').appendChild(foot); tfoot = foot; }
+        tfoot.innerHTML = `<tr class="total-soma"><td colspan="6" style="text-align:right"><strong>Total Geral:</strong></td><td style="text-align:right"><strong>R$ ${totalGeral.toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong></td></tr>`;
     }
+
+    function mostrarFichaPlaca(placa) {
+        const viagens = faturamentoData.filter(v => v.placa === placa);
+        if (viagens.length === 0) return;
+        const total = viagens.reduce((s,v)=>s+v.valor,0);
+        const fichaDiv = document.getElementById('fichaPlaca');
+        fichaDiv.style.display = 'block';
+        fichaDiv.innerHTML = `<h4><i class="fas fa-truck"></i> Ficha da Placa: <strong>${placa}</strong></h4>
+            <p><strong>Total de viagens:</strong> ${viagens.length}</p>
+            <p><strong>Faturamento total:</strong> R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</p>
+            <p><strong>Motorista(s):</strong> ${[...new Set(viagens.map(v=>v.motorista))].join(', ')}</p>
+            <p><strong>Principais rotas:</strong> ${viagens.slice(0,3).map(v=>`${v.origem}→${v.destino} (R$ ${v.valor.toFixed(2)})`).join('; ')}</p>
+            <button id="fecharFicha" class="btn-export" style="margin-top:0.5rem;">Fechar</button>`;
+        document.getElementById('fecharFicha').addEventListener('click', () => fichaDiv.style.display = 'none');
+    }
+
     document.getElementById('fatAplicarFiltros').addEventListener('click', applyFatFilters);
     document.getElementById('fatExportarCSV').addEventListener('click', () => {
-        let mes = document.getElementById('fatMes').value;
-        let placa = document.getElementById('fatPlaca').value.trim().toUpperCase();
+        let mes = document.getElementById('fatMesSelect').value;
+        let motorista = document.getElementById('fatMotoristaSelect').value;
+        let placaFiltro = document.getElementById('fatPlaca').value.trim().toUpperCase();
         let embarcadora = document.getElementById('fatEmbarcadora').value.trim().toLowerCase();
         let origem = document.getElementById('fatOrigem').value.trim().toLowerCase();
         let destino = document.getElementById('fatDestino').value.trim().toLowerCase();
         let valorMin = parseFloat(document.getElementById('fatValorMin').value);
         let filtered = faturamentoData.filter(item => {
-            if(mes && item.data && moment(item.data).format('YYYY-MM') !== mes) return false;
-            if(placa && !item.placa.includes(placa)) return false;
+            if(mes !== 'all' && item.data && moment(item.data).format('YYYY-MM') !== mes) return false;
+            if(motorista !== 'all' && item.motorista !== motorista) return false;
+            if(placaFiltro && !item.placa.includes(placaFiltro)) return false;
             if(embarcadora && !item.embarcadora.toLowerCase().includes(embarcadora)) return false;
             if(origem && !item.origem.toLowerCase().includes(origem)) return false;
             if(destino && !item.destino.toLowerCase().includes(destino)) return false;
@@ -969,18 +633,12 @@
             return true;
         });
         let csvRows = [["Data","Placa","Motorista","Embarcadora","Origem","Destino","Valor"]];
-        filtered.forEach(i => {
-            let dataStr = i.data ? moment(i.data).format('DD/MM/YYYY') : '';
-            csvRows.push([dataStr, i.placa, i.motorista, i.embarcadora, i.origem, i.destino, i.valor]);
-        });
+        filtered.forEach(i => { let dataStr = i.data ? moment(i.data).format('DD/MM/YYYY') : ''; csvRows.push([dataStr, i.placa, i.motorista, i.embarcadora, i.origem, i.destino, i.valor]); });
         let csv = csvRows.map(r => r.join(",")).join("\n");
         let blob = new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"});
-        let link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "faturamento.csv";
-        link.click();
+        let link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "faturamento.csv"; link.click();
     });
-    document.getElementById('fatExportarPDF').addEventListener('click', () => { alert("Use Ctrl+P para salvar como PDF da página atual."); });
+    document.getElementById('fatExportarPDF').addEventListener('click', () => alert("Use Ctrl+P para salvar como PDF."));
 
     // Abas
     const tabs = document.querySelectorAll('.tab-btn');
@@ -992,12 +650,9 @@
             btn.classList.add('active');
             contents.forEach(c => c.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-            if(tabId === 'tabFinanceiro' && finEvolucaoChart) finEvolucaoChart.update();
-            if(tabId === 'tabFaturamento' && fatEvolucaoChart) fatEvolucaoChart.update();
         });
     });
 
-    // Inicialização
     publicSite.style.display = 'block';
     privateArea.style.display = 'none';
     loadFinanceiroData();
