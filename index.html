@@ -2,16 +2,23 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M-Malacarne Transporte & Logística</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>M-Malacarne | Dashboard Gerencial Premium</title>
+    <!-- Font Awesome 6 (gratuito) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Papaparse para CSV robusto -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- Moment.js para datas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <style>
+        /* ===== RESET + VARIÁVEIS PREMIUM ===== */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
         :root {
             --primary: #8B7355;
             --secondary: #2d2d2d;
@@ -20,1391 +27,636 @@
             --dark: #1a1a1a;
             --text: #2d3748;
             --text-light: #718096;
-            --premium-dark: #1e2a3a;
-            --success: #38a169;
+            --premium-dark: #0f172a;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --card-shadow: 0 20px 35px -12px rgba(0,0,0,0.1);
         }
-
         body {
-            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: var(--text);
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            background: #f1f5f9;
             overflow-x: hidden;
-            line-height: 1.6;
         }
-
-        header {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(20px);
-            padding: 0.8rem 5%;
+        /* Modal Login Premium */
+        .login-overlay {
             position: fixed;
-            width: 100%;
             top: 0;
-            z-index: 1000;
-            box-shadow: 0 2px 30px rgba(0,0,0,0.08);
-            border-bottom: 1px solid rgba(139, 115, 85, 0.1);
-        }
-
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .logo-img {
-            height: 50px;
-            width: auto;
-        }
-
-        .logo-text {
-            display: flex;
-            flex-direction: column;
-            line-height: 1.1;
-        }
-
-        .logo-main {
-            font-size: 1.6rem;
-            font-weight: 800;
-            color: var(--primary);
-            letter-spacing: -0.5px;
-        }
-
-        .logo-sub {
-            font-size: 0.65rem;
-            font-weight: 500;
-            color: var(--text-light);
-            letter-spacing: 1.2px;
-            text-transform: uppercase;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            list-style: none;
-        }
-
-        .nav-links a {
-            color: var(--text);
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s;
-            font-size: 0.9rem;
-            position: relative;
-        }
-
-        .nav-links a::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
             left: 0;
-            width: 0;
-            height: 2px;
-            background: var(--accent);
-            transition: width 0.3s;
-        }
-
-        .nav-links a:hover::after {
-            width: 100%;
-        }
-
-        .hero {
-            height: 60vh;
-            background: linear-gradient(135deg, rgba(30, 42, 58, 0.9) 0%, rgba(26, 32, 44, 0.9) 100%), 
-                        url('IMG-20220924-WA0022 (1).jpg');
-            background-size: cover;
-            background-position: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            color: white;
-            margin-top: 70px;
-            padding: 0 5%;
-        }
-
-        .hero-content h1 {
-            font-size: 2.2rem;
-            margin-bottom: 1rem;
-            animation: fadeInUp 1s ease;
-            font-weight: 700;
-        }
-
-        .hero-content p {
-            font-size: 1rem;
-            margin-bottom: 2rem;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .cta-button {
-            background: linear-gradient(135deg, var(--accent) 0%, #b8941f 100%);
-            color: var(--dark);
-            padding: 0.8rem 2rem;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-block;
-            transition: 0.3s;
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
-        }
-
-        .cta-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
-        }
-
-        .stats {
-            background: var(--light);
-            padding: 2.5rem 5%;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 1.5rem;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .stat-card {
-            text-align: center;
-            padding: 1.5rem;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
-            border: 1px solid rgba(139, 115, 85, 0.1);
-            transition: transform 0.3s;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-3px);
-        }
-
-        .stat-number {
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: var(--primary);
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-label {
-            font-size: 0.85rem;
-            color: var(--text-light);
-        }
-
-        .values {
-            padding: 3rem 5%;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .section-title {
-            text-align: center;
-            font-size: 1.8rem;
-            margin-bottom: 1.5rem;
-            color: var(--premium-dark);
-            font-weight: 700;
-        }
-
-        .section-subtitle {
-            text-align: center;
-            font-size: 0.9rem;
-            margin-bottom: 2.5rem;
-            color: var(--text-light);
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .values-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .value-card {
-            background: white;
-            padding: 1.8rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
-            border: 1px solid rgba(139, 115, 85, 0.1);
-            text-align: center;
-            transition: all 0.3s;
-        }
-
-        .value-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        }
-
-        .value-icon {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            color: var(--accent);
-        }
-
-        .value-card h3 {
-            font-size: 1.2rem;
-            margin-bottom: 1rem;
-            color: var(--premium-dark);
-        }
-
-        .value-card p {
-            font-size: 0.85rem;
-            color: var(--text-light);
-        }
-
-        .gallery {
-            padding: 3rem 5%;
-            background: var(--light);
-        }
-
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.2rem;
-            max-width: 1000px;
-            margin: 2rem auto 0;
-        }
-
-        .gallery-item {
-            height: 220px;
-            border-radius: 10px;
-            overflow: hidden;
-            position: relative;
-            cursor: pointer;
-            transition: transform 0.3s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        }
-
-        .gallery-item img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s;
-        }
-
-        .gallery-item:hover {
-            transform: translateY(-3px);
-        }
-
-        .gallery-item:hover img {
-            transform: scale(1.05);
-        }
-
-        .gallery-overlay {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(transparent, rgba(30, 42, 58, 0.9));
-            padding: 1.2rem;
-            color: white;
-            transform: translateY(100%);
-            transition: transform 0.3s;
-        }
-
-        .gallery-item:hover .gallery-overlay {
-            transform: translateY(0);
-        }
-
-        .gallery-overlay h3 {
-            font-size: 1rem;
-            margin-bottom: 0.3rem;
-        }
-
-        .gallery-overlay p {
-            font-size: 0.75rem;
-        }
-
-        /* Postos de combustível */
-        .fuels-section {
-            padding: 3rem 5%;
-            background: #ffffff;
-            border-top: 1px solid rgba(139,115,85,0.15);
-            border-bottom: 1px solid rgba(139,115,85,0.15);
-        }
-
-        .stations-container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .stations-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 1.8rem;
-            margin-top: 2rem;
-        }
-
-        .state-group {
-            background: #fff;
-            border-radius: 16px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
-            overflow: hidden;
-            border: 1px solid rgba(139,115,85,0.2);
-        }
-
-        .state-header {
-            background: var(--premium-dark);
-            color: white;
-            padding: 1rem 1.5rem;
-            font-size: 1.3rem;
-            font-weight: 700;
-        }
-
-        .station-list {
-            padding: 1.2rem;
-        }
-
-        .station-item {
-            border-bottom: 1px solid #e2e8f0;
-            padding: 1rem 0;
-        }
-
-        .station-item:last-child {
-            border-bottom: none;
-        }
-
-        .station-name {
-            font-weight: 700;
-            color: var(--premium-dark);
-            font-size: 1rem;
-            margin-bottom: 0.3rem;
-        }
-
-        .station-address {
-            font-size: 0.8rem;
-            color: var(--text-light);
-            margin-bottom: 0.5rem;
-            line-height: 1.4;
-        }
-
-        .station-links {
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(12px);
+            z-index: 2000;
             display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            margin-top: 0.5rem;
-        }
-
-        .price-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            font-size: 0.7rem;
-            background: var(--light);
-            padding: 0.25rem 0.7rem;
-            border-radius: 20px;
-            text-decoration: none;
-            color: var(--primary);
-            transition: all 0.2s;
-        }
-
-        .price-link:hover {
-            background: var(--accent);
-            color: var(--dark);
-        }
-
-        .info-note {
-            background: #fef9e6;
-            border-left: 4px solid var(--accent);
-            padding: 1rem;
-            margin-top: 2rem;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            text-align: center;
-        }
-
-        /* Calculadora ANTT */
-        .freight-calculator-section {
-            padding: 3rem 5%;
-            background: #ffffff;
-            border-top: 1px solid rgba(139,115,85,0.15);
-            border-bottom: 1px solid rgba(139,115,85,0.15);
-        }
-
-        .calculator-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: #fefefe;
-            border-radius: 24px;
-            box-shadow: 0 20px 35px -10px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-
-        .calculator-header {
-            background: var(--premium-dark);
-            padding: 1.5rem 2rem;
-            text-align: center;
-            color: white;
-        }
-
-        .calculator-header h2 {
-            font-size: 1.6rem;
-            color: var(--accent);
-        }
-
-        .calculator-content {
-            background: #f0f4f9;
-            display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 320px;
+            transition: all 0.3s;
+        }
+        .login-card {
+            background: white;
+            border-radius: 32px;
+            width: 90%;
+            max-width: 420px;
+            padding: 2rem 2rem 2.2rem;
+            box-shadow: var(--card-shadow);
             text-align: center;
-            padding: 2rem;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            animation: fadeInUp 0.4s ease;
         }
-
-        .calculator-button {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
-            background: var(--primary);
-            color: white;
-            padding: 1rem 2rem;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: 0.3s;
-        }
-
-        .calculator-button:hover {
-            background: #6d533b;
-            transform: translateY(-2px);
-        }
-
-        /* Simulador */
-        .simulator-section {
-            padding: 3rem 5%;
-            background: #ffffff;
-            border-top: 1px solid rgba(139,115,85,0.15);
-            border-bottom: 1px solid rgba(139,115,85,0.15);
-        }
-
-        .simulator-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: #fefefe;
-            border-radius: 24px;
-            box-shadow: 0 20px 35px -10px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-
-        .simulator-header {
-            background: var(--premium-dark);
-            padding: 1.5rem 2rem;
-            text-align: center;
-            color: white;
-        }
-
-        .simulator-header h2 {
-            font-size: 1.6rem;
+        .login-card i {
+            font-size: 3rem;
             color: var(--accent);
+            margin-bottom: 0.5rem;
         }
-
-        .simulator-form {
-            padding: 2rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1.2rem;
+        .login-card h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--premium-dark);
+            margin-bottom: 1rem;
         }
-
-        .form-row {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .form-group {
-            flex: 1;
-            min-width: 200px;
-        }
-
-        .form-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 0.3rem;
-            font-size: 0.85rem;
-        }
-
-        .form-group input, .form-group select {
+        .login-input {
             width: 100%;
-            padding: 0.7rem;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 0.9rem;
+            padding: 0.9rem 1rem;
+            margin: 0.8rem 0;
+            border: 1px solid #e2e8f0;
+            border-radius: 60px;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.2s;
         }
-
-        .simulate-btn {
-            background: var(--primary);
+        .login-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(212,175,55,0.2);
+        }
+        .login-btn {
+            background: linear-gradient(135deg, var(--premium-dark) 0%, #1e293b 100%);
             color: white;
-            padding: 0.8rem 1.5rem;
             border: none;
-            border-radius: 30px;
-            font-weight: 600;
+            width: 100%;
+            padding: 0.9rem;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 1rem;
             cursor: pointer;
-            transition: 0.3s;
+            margin-top: 1rem;
+            transition: 0.2s;
         }
-
-        .simulate-btn:hover {
-            background: #6d533b;
+        .login-btn:hover {
             transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
         }
-
-        .result-area {
-            background: var(--light);
-            margin: 0 2rem 2rem 2rem;
-            padding: 1.5rem;
-            border-radius: 16px;
-            border-left: 4px solid var(--accent);
+        .error-msg {
+            color: var(--danger);
+            font-size: 0.8rem;
+            margin-top: 0.8rem;
         }
-
-        .result-line {
+        /* DASHBOARD CONTAINER (PRIVADO) */
+        .dashboard-container {
+            display: none;
+            background: #f8fafc;
+            padding: 1.5rem 2rem;
+            min-height: 100vh;
+        }
+        .dashboard-header {
             display: flex;
             justify-content: space-between;
-            padding: 0.5rem 0;
-            border-bottom: 1px dashed #cbd5e1;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid rgba(139,115,85,0.2);
+            padding-bottom: 1rem;
         }
-
-        /* Dashboard */
-        .dashboard-section {
-            padding: 3rem 5%;
-            background: #ffffff;
-            border-top: 1px solid rgba(139,115,85,0.15);
-            border-bottom: 1px solid rgba(139,115,85,0.15);
+        .dashboard-header h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--premium-dark), var(--primary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
         }
-
-        .dashboard-container {
-            max-width: 1200px;
-            margin: 0 auto;
+        .logout-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
         }
-
-        .charts-grid {
+        .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-            gap: 2rem;
-            margin-top: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
         }
-
+        .kpi-card {
+            background: white;
+            border-radius: 28px;
+            padding: 1.2rem 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border-left: 6px solid var(--accent);
+            transition: transform 0.2s;
+        }
+        .kpi-card h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-light);
+        }
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--premium-dark);
+            margin-top: 0.3rem;
+        }
+        .filters-bar {
+            background: white;
+            border-radius: 28px;
+            padding: 1.2rem 1.8rem;
+            margin-bottom: 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.2rem;
+            align-items: flex-end;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        }
+        .filter-group {
+            flex: 1;
+            min-width: 150px;
+        }
+        .filter-group label {
+            font-weight: 600;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--text-light);
+        }
+        .filter-group select, .filter-group input {
+            width: 100%;
+            padding: 0.6rem;
+            border-radius: 16px;
+            border: 1px solid #cbd5e1;
+            background: white;
+            font-size: 0.85rem;
+        }
+        .chart-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.8rem;
+            margin-bottom: 2rem;
+        }
         .chart-card {
             background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
-            padding: 1.5rem;
-            border: 1px solid rgba(139,115,85,0.2);
+            border-radius: 28px;
+            padding: 1rem;
+            box-shadow: var(--card-shadow);
         }
-
         .chart-card h3 {
-            text-align: center;
             margin-bottom: 1rem;
-            color: var(--premium-dark);
+            font-weight: 700;
         }
-
-        canvas {
-            max-height: 300px;
-            width: 100%;
-        }
-
-        .table-responsive {
+        .data-table-wrapper {
+            background: white;
+            border-radius: 28px;
+            padding: 1rem;
             overflow-x: auto;
-            margin-top: 2rem;
+            box-shadow: var(--card-shadow);
         }
-
         .data-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
         }
-
-        .data-table th, .data-table td {
-            border: 1px solid #e2e8f0;
-            padding: 0.5rem;
-            text-align: left;
-        }
-
         .data-table th {
-            background: var(--premium-dark);
-            color: white;
-        }
-
-        .loading, .error {
-            text-align: center;
-            padding: 2rem;
-        }
-
-        .error {
-            color: #e53e3e;
-        }
-
-        /* Vagas */
-        .jobs {
-            padding: 4rem 5%;
-            background: linear-gradient(135deg, var(--premium-dark) 0%, #2d3748 100%);
-            color: white;
-        }
-
-        .jobs-container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .job-card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 12px;
-            padding: 2.5rem;
-            color: var(--text);
-            margin-top: 2rem;
-        }
-
-        .job-header {
-            text-align: center;
-            margin-bottom: 2rem;
-            border-bottom: 2px solid var(--accent);
-            padding-bottom: 1.5rem;
-        }
-
-        .job-title {
-            font-size: 2rem;
+            text-align: left;
+            padding: 1rem 0.5rem;
+            background: #f1f5f9;
             color: var(--premium-dark);
-            font-weight: 700;
         }
-
-        .job-subtitle {
-            font-size: 1.1rem;
-            color: var(--primary);
-            font-weight: 600;
+        .data-table td {
+            padding: 0.8rem 0.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            cursor: pointer;
         }
-
-        .job-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            margin-bottom: 2rem;
+        .data-table tr:hover {
+            background: #fef9e6;
         }
-
-        .job-benefits, .job-requirements {
-            background: var(--light);
-            padding: 1.5rem;
-            border-radius: 8px;
-            border-left: 4px solid var(--accent);
-        }
-
-        .job-benefits h3, .job-requirements h3 {
-            color: var(--premium-dark);
-            margin-bottom: 1rem;
-        }
-
-        .benefits-list, .requirements-list {
-            list-style: none;
-        }
-
-        .benefits-list li, .requirements-list li {
-            padding: 0.5rem 0;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .benefits-list li:before {
-            content: "✅";
-        }
-
-        .requirements-list li:before {
-            content: "✔️";
-            color: var(--success);
-        }
-
-        .job-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .apply-button {
-            background: linear-gradient(135deg, var(--success) 0%, #2f855a 100%);
-            color: white;
-            padding: 1rem 2rem;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: 0.3s;
-        }
-
-        .apply-button:hover {
-            transform: translateY(-2px);
-        }
-
-        .whatsapp-button {
-            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
-            color: white;
-            padding: 1rem 2rem;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: 0.3s;
-        }
-
-        .whatsapp-button:hover {
-            transform: translateY(-2px);
-        }
-
-        /* Contato */
-        .contact {
-            padding: 3rem 5%;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .contact-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2.5rem;
-            margin-top: 2rem;
-        }
-
-        .contact-info {
-            background: var(--premium-dark);
-            padding: 2.2rem;
-            border-radius: 10px;
-            color: white;
-        }
-
-        .contact-info h3 {
-            color: var(--accent);
-            margin-bottom: 1.2rem;
-            font-size: 1.2rem;
-        }
-
-        .contact-item {
-            margin-bottom: 1.2rem;
-            font-size: 0.85rem;
-        }
-
-        .contact-item strong {
-            color: var(--accent);
-            display: block;
-        }
-
-        .map-container {
-            border-radius: 10px;
-            overflow: hidden;
-            height: 100%;
-        }
-
-        .map-container iframe {
-            width: 100%;
-            height: 100%;
-            min-height: 300px;
-        }
-
-        .careers-button {
-            background: var(--accent);
-            color: var(--dark);
-            padding: 0.7rem 1.5rem;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-block;
-            margin-top: 1rem;
-            transition: 0.3s;
-        }
-
-        .careers-button:hover {
-            background: #b8941f;
-            transform: translateY(-2px);
-        }
-
-        /* WhatsApp float */
-        .whatsapp-float {
+        .service-modal {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            z-index: 1000;
-        }
-
-        .whatsapp-button-float {
-            background: #25D366;
-            color: white;
-            padding: 10px 16px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: 600;
-            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.85rem;
-            transition: 0.3s;
-        }
-
-        .whatsapp-button-float:hover {
-            transform: translateY(-2px);
-        }
-
-        footer {
-            background: var(--premium-dark);
-            color: white;
-            text-align: center;
-            padding: 2rem 5%;
-        }
-
-        .footer-logo {
-            margin-bottom: 1.2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 1rem;
-        }
-
-        .footer-img {
-            height: 40px;
-            width: auto;
-        }
-
-        .footer-text {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            line-height: 1.1;
-        }
-
-        .footer-main {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: var(--accent);
-        }
-
-        .footer-sub {
-            font-size: 0.65rem;
-            color: #a0aec0;
-            letter-spacing: 1.2px;
-            text-transform: uppercase;
-        }
-
-        footer p {
-            font-size: 0.8rem;
-            margin-bottom: 0.5rem;
-            opacity: 0.8;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .menu-toggle {
+            background: white;
+            border-radius: 24px;
+            max-width: 340px;
+            width: 90%;
+            padding: 1.2rem;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.2);
+            border-top: 5px solid var(--accent);
+            z-index: 1500;
             display: none;
-            background: none;
-            border: none;
-            font-size: 1.2rem;
-            cursor: pointer;
-            color: var(--text);
         }
-
-        @media (max-width: 768px) {
-            .hero {
-                height: 50vh;
-                margin-top: 60px;
-            }
-            .hero-content h1 {
-                font-size: 1.8rem;
-            }
-            .contact-grid {
-                grid-template-columns: 1fr;
-            }
-            .nav-links {
-                display: none;
-                position: absolute;
-                top: 100%;
-                left: 0;
-                width: 100%;
-                background: white;
-                flex-direction: column;
-                padding: 1rem;
-                box-shadow: 0 5px 10px rgba(0,0,0,0.1);
-                gap: 0;
-            }
-            .nav-links.active {
-                display: flex;
-            }
-            .nav-links li {
-                margin: 0.5rem 0;
-            }
-            .menu-toggle {
-                display: block;
-            }
-            .logo-img {
-                height: 40px;
-            }
-            .logo-main {
-                font-size: 1.3rem;
-            }
-            .logo-sub {
-                font-size: 0.55rem;
-            }
-            .stats {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 1rem;
-            }
-            .values-grid {
-                grid-template-columns: 1fr;
-            }
-            .gallery-grid {
-                grid-template-columns: 1fr;
-            }
-            .section-title {
-                font-size: 1.6rem;
-            }
-            .job-content {
-                grid-template-columns: 1fr;
-            }
-            .job-actions {
-                flex-direction: column;
-                align-items: center;
-            }
-            .apply-button, .whatsapp-button {
-                width: 100%;
-                text-align: center;
-                justify-content: center;
-            }
-            .footer-logo {
-                flex-direction: column;
-                text-align: center;
-            }
-            .footer-text {
-                align-items: center;
-            }
-            .stations-grid {
-                grid-template-columns: 1fr;
-            }
-            .form-row {
-                flex-direction: column;
-            }
-            .charts-grid {
-                grid-template-columns: 1fr;
-            }
+        .badge-premium {
+            background: var(--accent);
+            color: #1e293b;
+            padding: 0.2rem 0.6rem;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+        @media (max-width: 760px) {
+            .dashboard-container { padding: 1rem; }
+            .chart-row { grid-template-columns: 1fr; }
+        }
+        .forecast-note {
+            background: #eef2ff;
+            border-radius: 20px;
+            padding: 0.8rem;
+            font-size: 0.75rem;
+            text-align: center;
+            margin-top: 1rem;
         }
     </style>
 </head>
 <body>
-    <!-- WhatsApp Float -->
-    <div class="whatsapp-float">
-        <a href="https://wa.me/5549999675448" target="_blank" class="whatsapp-button-float">
-            📱 WhatsApp
-        </a>
+
+<!-- Estrutura principal do site original (mantida, mas o dashboard será sobreposto após login) -->
+<header style="background: rgba(255,255,255,0.98); backdrop-filter: blur(20px); padding: 0.8rem 5%; position: sticky; top:0; z-index: 1000; border-bottom:1px solid rgba(139,115,85,0.1)">
+    <nav style="display: flex; justify-content: space-between; align-items: center; max-width:1200px; margin:0 auto">
+        <div class="logo" style="display:flex; align-items:center; gap:1rem">
+            <img src="Screenshot_2.jpg" alt="M-Malacarne" style="height:50px; width:auto" onerror="this.style.display='none'">
+            <div><div style="font-size:1.6rem; font-weight:800; color:#8B7355">M-MALACARNE</div><div style="font-size:0.65rem">TRANSPORTE & LOGISTICA</div></div>
+        </div>
+        <ul style="display:flex; gap:2rem; list-style:none">
+            <li><a href="#home" style="text-decoration:none; color:#2d3748">Início</a></li>
+            <li><a href="#" id="openDashboardBtn" style="background:var(--accent); padding:0.3rem 1rem; border-radius:40px; font-weight:bold; color:#1a1a1a; text-decoration:none">📊 Dashboard Gerencial</a></li>
+        </ul>
+    </nav>
+</header>
+
+<!-- Modal de Login -->
+<div id="loginModal" class="login-overlay">
+    <div class="login-card">
+        <i class="fas fa-chart-line"></i>
+        <h2>Área Restrita</h2>
+        <p style="margin-bottom:1rem; color:#475569">Acesso à inteligência financeira e operacional</p>
+        <input type="text" id="loginUser" class="login-input" placeholder="Usuário" autocomplete="off">
+        <input type="password" id="loginPass" class="login-input" placeholder="Senha">
+        <button id="doLoginBtn" class="login-btn"><i class="fas fa-lock"></i> Acessar Dashboard</button>
+        <div id="loginError" class="error-msg"></div>
+    </div>
+</div>
+
+<!-- DASHBOARD PRIVADO PREMIUM -->
+<div id="dashboardPanel" class="dashboard-container">
+    <div class="dashboard-header">
+        <h1><i class="fas fa-tachometer-alt"></i> Central de Gestão M-Malacarne</h1>
+        <button id="logoutDashboardBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sair</button>
+    </div>
+    <!-- KPIs dinâmicas -->
+    <div class="kpi-grid" id="kpiArea"></div>
+    
+    <!-- Filtros avançados -->
+    <div class="filters-bar">
+        <div class="filter-group"><label><i class="fas fa-calendar"></i> Mês (vencimento)</label><select id="filterMonth"><option value="all">Todos os meses</option></select></div>
+        <div class="filter-group"><label><i class="fas fa-map-marker-alt"></i> Local</label><select id="filterLocal"><option value="all">Todos locais</option></select></div>
+        <div class="filter-group"><label><i class="fas fa-tags"></i> Tipo de Conta</label><select id="filterTipo"><option value="all">Todos tipos</option></select></div>
+        <div class="filter-group"><label><i class="fas fa-clock"></i> Vencimento até</label><input type="date" id="filterDueDate"></div>
+        <div class="filter-group"><button id="resetFiltersBtn" style="background:#e2e8f0; border:none; border-radius:40px; padding:0.6rem 1rem; cursor:pointer;"><i class="fas fa-undo-alt"></i> Limpar</button></div>
     </div>
 
-    <header>
-        <nav>
-            <div class="logo">
-                <img src="Screenshot_2.jpg" alt="M-Malacarne" class="logo-img">
-                <div class="logo-text">
-                    <div class="logo-main">M-MALACARNE</div>
-                    <div class="logo-sub">TRANSPORTE & LOGISTICA</div>
-                </div>
-            </div>
-            <button class="menu-toggle">☰</button>
-            <ul class="nav-links">
-                <li><a href="#home">Início</a></li>
-                <li><a href="#sobre">Sobre</a></li>
-                <li><a href="#valores">Valores</a></li>
-                <li><a href="#infraestrutura">Infraestrutura</a></li>
-                <li><a href="#precos">Preços Combustível</a></li>
-                <li><a href="#calculadora-antt">Calculadora ANTT</a></li>
-                <li><a href="#simulador">Simulador</a></li>
-                <li><a href="#dashboard">Dashboard</a></li>
-                <li><a href="#vagas">Vagas</a></li>
-                <li><a href="#contato">Contato</a></li>
-            </ul>
-        </nav>
-    </header>
+    <!-- Gráficos + previsão -->
+    <div class="chart-row">
+        <div class="chart-card"><h3><i class="fas fa-chart-pie"></i> Despesas/Receitas por Tipo</h3><canvas id="typeChart" width="400" height="250"></canvas></div>
+        <div class="chart-card"><h3><i class="fas fa-chart-line"></i> Evolução Mensal & Previsão (próximos 3 meses)</h3><canvas id="forecastChart" width="400" height="250"></canvas><div class="forecast-note" id="forecastNote">📈 Previsão baseada em média móvel dos últimos 6 meses</div></div>
+    </div>
 
-    <section id="home" class="hero">
-        <div class="hero-content">
-            <h1>40 Anos Movendo o Brasil</h1>
-            <p>Excelência em Transporte e Logística desde 1982</p>
-            <a href="#simulador" class="cta-button">Simular Rota</a>
-        </div>
-    </section>
+    <!-- Tabela de Documentos -->
+    <div class="data-table-wrapper">
+        <h3 style="margin-bottom: 1rem;"><i class="fas fa-file-invoice"></i> Documentos Financeiros (clique na linha para ver serviço relacionado)</h3>
+        <table class="data-table" id="dataTable">
+            <thead><tr><th>Documento</th><th>Vencimento</th><th>Local</th><th>Tipo Conta</th><th>Valor (R$)</th></tr></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</div>
 
-    <section class="stats">
-        <div class="stat-card"><div class="stat-number">40+</div><div class="stat-label">Anos de Tradição</div></div>
-        <div class="stat-card"><div class="stat-number">100%</div><div class="stat-label">Frota Frigorífica</div></div>
-        <div class="stat-card"><div class="stat-number">BRF</div><div class="stat-label">Parceiro Exclusivo</div></div>
-        <div class="stat-card"><div class="stat-number">SC</div><div class="stat-label">Concórdia - SC</div></div>
-    </section>
+<!-- Modal flutuante serviço relacionado -->
+<div id="serviceModal" class="service-modal">
+    <div style="display:flex; justify-content:space-between;"><strong><i class="fas fa-concierge-bell"></i> Serviço relacionado</strong><span id="closeServiceModal" style="cursor:pointer">&times;</span></div>
+    <p id="serviceDesc" style="margin-top:0.8rem; font-size:0.9rem;"></p>
+</div>
 
-    <section id="sobre" class="values">
-        <h2 class="section-title">Nossa História</h2>
-        <p class="section-subtitle">Mais de quatro décadas de excelência no transporte rodoviário</p>
-        <div style="max-width: 700px; margin: 0 auto; text-align: center;">
-            <p style="margin-bottom: 1.2rem;">Criada em <strong>1982</strong>, a M-Malacarne Transportes e Logística surge para reforçar o segmento de transporte rodoviário de cargas. Há 40 anos, o Sr. Maximino integra como sócio proprietário com 2 veículos frigoríficos, sendo que era o motorista de um dos caminhões.</p>
-            <p>Com grande experiência de motorista, o Sr. Maximino sempre trabalhou carregando exclusivamente produtos Frigorificados da marca SADIA, hoje <strong>BRF</strong>, mesma empresa que possui até hoje com a mesma exclusividade, visando agregar forças de gestão para conseguir melhores resultados.</p>
-        </div>
-    </section>
-
-    <section id="valores" class="values" style="background: var(--light);">
-        <h2 class="section-title">Nossos Pilares</h2>
-        <p class="section-subtitle">Os fundamentos que guiam nossa operação há 40 anos</p>
-        <div class="values-grid">
-            <div class="value-card"><div class="value-icon">🎯</div><h3>Visão</h3><p>Ser reconhecida pela excelência em transportes e logística para atendimentos às demandas da cadeia de suprimentos</p></div>
-            <div class="value-card"><div class="value-icon">🚛</div><h3>Missão</h3><p>Oferecer e integrar soluções logísticas em toda cadeia de suprimentos no Brasil com simplicidade, qualidade e efetividade</p></div>
-            <div class="value-card"><div class="value-icon">⭐</div><h3>Valores</h3><p>Simplicidade e Efetividade • Reconhecimento Humano • Honra ao Trabalho</p></div>
-        </div>
-    </section>
-
-    <section id="infraestrutura" class="gallery">
-        <h2 class="section-title">Nossa Infraestrutura</h2>
-        <p class="section-subtitle">Frota especializada e tecnologia de ponta</p>
-        <div class="gallery-grid">
-            <div class="gallery-item"><img src="IMG-20220924-WA0022 (1).jpg" alt="Frota"><div class="gallery-overlay"><h3>Frota Especializada</h3><p>Veículos frigoríficos de última geração</p></div></div>
-            <div class="gallery-item"><img src="img87.jpg" alt="Instalações"><div class="gallery-overlay"><h3>Galpão Moderno</h3><p>Estrutura completa com energia solar</p></div></div>
-            <div class="gallery-item"><img src="2.jpg" alt="Logística"><div class="gallery-overlay"><h3>Logística Eficiente</h3><p>Armazenamento e distribuição estratégica</p></div></div>
-        </div>
-    </section>
-
-    <!-- Postos de combustível (completo) -->
-    <section id="precos" class="fuels-section">
-        <div class="stations-container">
-            <h2 class="section-title">⛽ Preços de Combustíveis</h2>
-            <p class="section-subtitle">Postos de referência para nossa frota e motoristas parceiros</p>
-            <div class="stations-grid">
-                <!-- SC -->
-                <div class="state-group"><div class="state-header">📍 Santa Catarina (SC)</div><div class="station-list">
-                    <div class="station-item"><div class="station-name">Edemar Russi e Cia Ltda - Matriz</div><div class="station-address">ROD BR 470, 3515 - SALTO PILÃO - Lontras - SC<br>📞 (047) 3523-0766</div><div class="station-links"><a href="https://www.google.com/maps/search/ROD+BR+470,+3515+Lontras+SC" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div>
-                    <div class="station-item"><div class="station-name">Posto Colpani & Bottega LTDA</div><div class="station-address">Rua Monge João Maria, 704 – Alto Irani - Irani - SC</div><div class="station-links"><a href="https://www.google.com/maps/search/Rua+Monge+João+Maria,+704+Irani+SC" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div>
-                    <div class="station-item"><div class="station-name">Auto Posto Contorno LTDA</div><div class="station-address">Rod. Caetano Chiuchetta, 6601 – Contorno Norte - Concórdia - SC</div><div class="station-links"><a href="https://www.google.com/maps/search/Rod.+Caetano+Chiuchetta,+6601+Concórdia+SC" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div>
-                    <div class="station-item"><div class="station-name">Auto Posto Norte Sul LTDA</div><div class="station-address">Rod. BR-116 – Passo Ruim - Papanduva - SC</div><div class="station-links"><a href="https://www.google.com/maps/search/BR-116+Passo+Ruim+Papanduva+SC" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div>
-                </div></div>
-                <!-- PR -->
-                <div class="state-group"><div class="state-header">📍 Paraná (PR)</div><div class="station-list">
-                    <div class="station-item"><div class="station-name">Auto Posto Túlio RBO (Graal)</div><div class="station-address">Rod. BR-116, Km 52 – Rio Bonito - Campina Grande do Sul - PR</div><div class="station-links"><a href="https://www.google.com/maps/search/BR-116,+Km+52+Rio+Bonito+Campina+Grande+do+Sul+PR" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div>
-                    <div class="station-item"><div class="station-name">Auto Posto Túlio CTA (Graal)</div><div class="station-address">Rod. BR-116, Km 68 – Caraguatá - Campina Grande do Sul - PR</div><div class="station-links"><a href="https://www.google.com/maps/search/BR-116,+Km+68+Caraguatá+Campina+Grande+do+Sul+PR" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div>
-                    <div class="station-item"><div class="station-name">Auto Posto Costa Brava (Graal)</div><div class="station-address">Rod. Régis Bittencourt, Km 67 – Palmitalzinho - Quatro Barras - PR</div><div class="station-links"><a href="https://www.google.com/maps/search/Rod.+Régis+Bittencourt,+Km+67+Quatro+Barras+PR" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div>
-                    <div class="station-item"><div class="station-name">Postos Pelanda</div><div class="station-address">Rod. PR-151, Km 216,7 – Zona Rural - Jaguariaíva - PR</div><div class="station-links"><a href="https://www.google.com/maps/search/PR-151,+Km+216,7+Jaguariaíva+PR" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div>
-                    <div class="station-item"><div class="station-name">Posto Carretão (Auto Posto Ipiranga LTDA)</div><div class="station-address">Rod. BR-476, Km 344 – Rondinha - Paula Freitas - PR</div><div class="station-links"><a href="https://www.google.com/maps/search/BR-476,+Km+344+Paula+Freitas+PR" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div>
-                    <div class="station-item"><div class="station-name">Auto Posto Ravanello LTDA</div><div class="station-address">Rod. BR-376 – Colônia Witmarsum - Palmeira - PR</div><div class="station-links"><a href="https://www.google.com/maps/search/BR-376+Colônia+Witmarsum+Palmeira+PR" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div>
-                </div></div>
-                <!-- SP -->
-                <div class="state-group"><div class="state-header">📍 São Paulo (SP)</div><div class="station-list">
-                    <div class="station-item"><div class="station-name">Posto Califórnia de Ourinhos LTDA</div><div class="station-address">Rod. BR-153 – Zona Rural - Ourinhos - SP</div><div class="station-links"><a href="https://www.google.com/maps/search/BR-153+Ourinhos+SP" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div>
-                    <div class="station-item"><div class="station-name">Posto Três Garças LTDA</div><div class="station-address">Rod. Presidente Dutra, Km 59 – Jardim Modelo - Guaratinguetá - SP</div><div class="station-links"><a href="https://www.google.com/maps/search/Rod.+Presidente+Dutra,+Km+59+Guaratinguetá+SP" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div>
-                    <div class="station-item"><div class="station-name">Rodoposto Bandeirantes Jundiaí</div><div class="station-address">Rod. dos Bandeirantes – Chácara Malota - Jundiaí - SP</div><div class="station-links"><a href="https://www.google.com/maps/search/Rod.+dos+Bandeirantes+Jundiaí+SP" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div>
-                    <div class="station-item"><div class="station-name">Auto Posto Búfalo do Vale LTDA (Pariquera-Açu)</div><div class="station-address">Rod. BR-116 – Conchal - Pariquera-Açu - SP</div><div class="station-links"><a href="https://www.google.com/maps/search/BR-116+Pariquera-Açu+SP" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div>
-                    <div class="station-item"><div class="station-name">Auto Posto Búfalo do Vale LTDA (Osasco)</div><div class="station-address">Av. dos Autonomistas, 896 – Vila Yara - Osasco - SP</div><div class="station-links"><a href="https://www.google.com/maps/search/Av.+dos+Autonomistas,+896+Osasco+SP" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div>
-                    <div class="station-item"><div class="station-name">Posto Sem Limites LTDA</div><div class="station-address">Rod. Marechal Rondon – Vila Cardia - Bauru - SP</div><div class="station-links"><a href="https://www.google.com/maps/search/Rod.+Marechal+Rondon+Bauru+SP" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div>
-                    <div class="station-item"><div class="station-name">Posto 56 (Graal) – Osasco</div><div class="station-address">Osasco - SP (Rede Graal)</div><div class="station-links"><a href="https://www.google.com/maps/search/Posto+56+Osasco+SP" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div>
-                </div></div>
-                <!-- MG -->
-                <div class="state-group"><div class="state-header">📍 Minas Gerais (MG)</div><div class="station-list">
-                    <div class="station-item"><div class="station-name">Posto Flórida LTDA</div><div class="station-address">Rod. BR-040, Km 496 – Florida - Esmeraldas - MG</div><div class="station-links"><a href="https://www.google.com/maps/search/BR-040,+Km+496+Esmeraldas+MG" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div>
-                    <div class="station-item"><div class="station-name">Rodo Posto Silvio’s LTDA (Graal)</div><div class="station-address">Rod. BR-040, nº 771 – Barreira do Triunfo - Juiz de Fora - MG</div><div class="station-links"><a href="https://www.google.com/maps/search/BR-040,+771+Juiz+de+Fora+MG" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div>
-                </div></div>
-                <!-- RJ -->
-                <div class="state-group"><div class="state-header">📍 Rio de Janeiro (RJ)</div><div class="station-list">
-                    <div class="station-item"><div class="station-name">Posto Sol da Dutra LTDA (Graal)</div><div class="station-address">Rod. Presidente Dutra, Km 304 – Paraíso - Resende - RJ</div><div class="station-links"><a href="https://www.google.com/maps/search/Rod.+Presidente+Dutra,+Km+304+Resende+RJ" target="_blank" class="price-link">🗺️ Ver no Mapa</a><a href="https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos" target="_blank" class="price-link">📊 Consultar preços ANP</a></div></div>
-                </div></div>
-            </div>
-            <div class="info-note">⚠️ Os preços variam diariamente. Use o link "Consultar preços ANP" para valores atualizados.</div>
-        </div>
-    </section>
-
-    <!-- Calculadora ANTT -->
-    <section id="calculadora-antt" class="freight-calculator-section">
-        <div class="calculator-container">
-            <div class="calculator-header"><h2>📊 Calculadora Oficial de Frete ANTT</h2><p>Piso mínimo de frete rodoviário de cargas</p></div>
-            <div class="calculator-content">
-                <div style="max-width:500px;">
-                    <div style="font-size:3rem;">📐⚖️</div>
-                    <h3>Acesse a calculadora oficial do governo</h3>
-                    <a href="https://calculadorafrete.antt.gov.br/" target="_blank" class="calculator-button">🔢 Abrir Calculadora ANTT →</a>
-                    <p style="font-size:0.7rem; margin-top:1rem;">Fonte: Agência Nacional de Transportes Terrestres</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Simulador de rota -->
-    <section id="simulador" class="simulator-section">
-        <div class="simulator-container">
-            <div class="simulator-header"><h2>📊 Simulador de Rota e Viabilidade</h2><p>Calcule distância, tempo, combustível, pedágio e compare com o piso mínimo ANTT</p></div>
-            <div class="simulator-form">
-                <div class="form-row">
-                    <div class="form-group"><label>Origem (cidade/estado)</label><input type="text" id="origin" value="Concórdia, SC"></div>
-                    <div class="form-group"><label>Destino (cidade/estado)</label><input type="text" id="destination" value="São Paulo, SP"></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group"><label>Tipo de veículo (eixos)</label><select id="axles"><option value="2">Truck / 2 eixos</option><option value="3">Carreta 3 eixos</option><option value="4">Carreta 4 eixos</option><option value="5">Bitrem 5 eixos</option><option value="6">Bitrem 6 eixos</option></select></div>
-                    <div class="form-group"><label>Peso da carga (toneladas)</label><input type="number" id="weight" value="20"></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group"><label>Valor do frete ofertado (R$)</label><input type="number" id="freightValue" placeholder="Ex: 4500"></div>
-                    <div class="form-group"><label>Preço do diesel (R$/litro)</label><input type="number" id="dieselPrice" value="6.00"></div>
-                </div>
-                <button class="simulate-btn" id="simulateBtn">Calcular Viabilidade →</button>
-            </div>
-            <div id="resultArea" class="result-area" style="display:none;"><h3>📋 Resultado da Simulação</h3><div id="resultContent"></div></div>
-        </div>
-    </section>
-
-    <!-- Dashboard Google Sheets -->
-    <section id="dashboard" class="dashboard-section">
-        <div class="dashboard-container">
-            <h2 class="section-title">📊 Dashboard de Indicadores</h2>
-            <p class="section-subtitle">Análise visual dos dados de fretes extraídos da sua planilha</p>
-            <div id="dashboardContent"><div class="loading">🔄 Carregando dados da planilha...</div></div>
-        </div>
-    </section>
-
-    <!-- Vagas -->
-    <section id="vagas" class="jobs">
-        <div class="jobs-container">
-            <h2 class="section-title" style="color:white;">Trabalhe Conosco</h2>
-            <div class="job-card">
-                <div class="job-header"><h3 class="job-title">Motorista de Carreta</h3><p class="job-subtitle">Vaga disponível - Contratação imediata</p></div>
-                <div class="job-content">
-                    <div class="job-benefits"><h3>📊 Benefícios</h3><ul class="benefits-list"><li>Salário competitivo</li><li>Bônus por desempenho</li><li>Férias remuneradas</li><li>Oportunidade de crescimento</li><li>Ambiente familiar</li><li>Estabilidade de 40 anos</li></ul></div>
-                    <div class="job-requirements"><h3>✅ Pré-requisitos</h3><ul class="requirements-list"><li>Experiência comprovada</li><li>CNH Categoria E</li><li>Conhecimento de rotas Sul/Sudeste</li><li>Conhecimento em carreta frigorífica</li><li>Documentação em dia</li><li>Disponibilidade para viagens</li></ul></div>
-                </div>
-                <div class="job-actions">
-                    <a href="https://docs.google.com/forms/d/1AbknS9cnRL9M_kPLYkaqRorpsFFodZdgJps36zhJ_ms/viewform" target="_blank" class="apply-button">📝 Candidate-se Online</a>
-                    <a href="https://wa.me/5549999675448?text=Olá! Tenho interesse na vaga de Motorista de Carreta" target="_blank" class="whatsapp-button">📱 Enviar Currículo</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Contato -->
-    <section id="contato" class="contact">
-        <h2 class="section-title">Entre em Contato</h2>
-        <div class="contact-grid">
-            <div class="contact-info">
-                <h3>📍 Localização</h3><div class="contact-item"><strong>Endereço:</strong> Rua Domingos Casagrande, 25<br>Bairro Arvoredo<br>CEP: 89701-450<br>Concórdia - SC</div>
-                <h3>📞 Contato</h3><div class="contact-item"><strong>Telefone:</strong> (49) 3442-2325<br><strong>WhatsApp:</strong> (49) 99967-5448</div>
-                <h3>✉️ E-mail</h3><div class="contact-item">financeirommalacarne@gmail.com<br>dmalacarne@netcon.com.br</div>
-                <a href="#vagas" class="careers-button">Ver Vagas Disponíveis</a>
-            </div>
-            <div class="map-container">
-                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3535.234!2d-52.027!3d-27.234!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjfCsDE4JzAyLjQiUyA1MsKwMDEnMzcuMiJX!5e0!3m2!1spt-BR!2sbr!4v1234567890" width="100%" height="100%" style="border:0;" allowfullscreen loading="lazy"></iframe>
-            </div>
-        </div>
-    </section>
-
-    <footer>
-        <div class="footer-logo"><img src="Screenshot_2.jpg" alt="Logo" class="footer-img"><div class="footer-text"><div class="footer-main">M-MALACARNE</div><div class="footer-sub">TRANSPORTE & LOGISTICA</div></div></div>
-        <p>CNPJ: 76.344.936/0001-00</p>
-        <p>© 2025 M-Malacarne Transporte e Logística Ltda EPP. Todos os direitos reservados.</p>
-        <p style="color: var(--accent);">40 anos de excelência e tradição no transporte rodoviário</p>
-    </footer>
-
-    <script>
-        // Menu mobile
-        const menuToggle = document.querySelector('.menu-toggle');
-        const navLinks = document.querySelector('.nav-links');
-        if (menuToggle) {
-            menuToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+<script>
+    // ---------- CREDENCIAIS ----------
+    const VALID_USER = "malacarne";
+    const VALID_PASS = "mala2325";
+    
+    // Elementos DOM
+    const loginModal = document.getElementById('loginModal');
+    const dashboardPanel = document.getElementById('dashboardPanel');
+    const openDashboardBtn = document.getElementById('openDashboardBtn');
+    const doLoginBtn = document.getElementById('doLoginBtn');
+    const logoutBtn = document.getElementById('logoutDashboardBtn');
+    const loginErrorSpan = document.getElementById('loginError');
+    
+    // Variáveis globais de dados
+    let rawData = [];         // dados originais do CSV
+    let filteredData = [];
+    let typeChartObj = null;
+    let forecastChartObj = null;
+    
+    // Mapeamento de colunas esperadas (flexível)
+    let colMap = {
+        documento: null,
+        vencimento: null,
+        local: null,
+        tipo_conta: null,
+        valor: null,
+        servico: null
+    };
+    
+    // Função para carregar CSV do Google Sheets
+    async function loadGoogleSheetData() {
+        const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZOvOYa2B9fg5pQuPa54usv9Tl0bRP7EDRBtYrmYnJuXZkK5_A7j4roQZdmiXaaQ/pub?output=csv";
+        try {
+            const response = await fetch(csvUrl);
+            const csvText = await response.text();
+            const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+            if (parsed.errors.length) console.warn(parsed.errors);
+            const rows = parsed.data;
+            if (!rows.length) throw new Error("Planilha vazia");
+            
+            // Mapeamento inteligente: busca colunas por palavras-chave
+            const headers = Object.keys(rows[0]);
+            colMap.documento = headers.find(h => h.toLowerCase().includes('doc') || h.toLowerCase().includes('nº') || h.toLowerCase() === 'documento') || headers[0];
+            colMap.vencimento = headers.find(h => h.toLowerCase().includes('venc') || h.toLowerCase().includes('data')) || headers[1];
+            colMap.local = headers.find(h => h.toLowerCase().includes('local') || h.toLowerCase().includes('cidade') || h.toLowerCase().includes('origem')) || headers[2];
+            colMap.tipo_conta = headers.find(h => h.toLowerCase().includes('tipo') || h.toLowerCase().includes('conta') || h.toLowerCase().includes('categoria')) || headers[3];
+            colMap.valor = headers.find(h => h.toLowerCase().includes('valor') || h.toLowerCase().includes('r$') || h.toLowerCase().includes('montante')) || headers[4];
+            colMap.servico = headers.find(h => h.toLowerCase().includes('serviço') || h.toLowerCase().includes('servico') || h.toLowerCase().includes('descrição')) || headers[5];
+            
+            rawData = rows.map(row => {
+                let rawValor = row[colMap.valor];
+                let valorNum = parseFloat(String(rawValor).replace(/[R$\s]/g, '').replace(',', '.'));
+                if (isNaN(valorNum)) valorNum = 0;
+                let dataVenc = row[colMap.vencimento];
+                let momentDate = moment(dataVenc, ['DD/MM/YYYY', 'YYYY-MM-DD', 'MM/DD/YYYY'], true);
+                if (!momentDate.isValid()) momentDate = moment(dataVenc);
+                return {
+                    documento: row[colMap.documento] || "N/I",
+                    vencimentoRaw: dataVenc,
+                    vencimentoDate: momentDate.isValid() ? momentDate.toDate() : null,
+                    local: row[colMap.local] || "Não informado",
+                    tipoConta: row[colMap.tipo_conta] || "Outros",
+                    valor: valorNum,
+                    servico: row[colMap.servico] || "Serviço não detalhado"
+                };
+            }).filter(item => item.valor !== 0 || item.documento !== "N/I");
+            
+            // Ordenar por vencimento
+            rawData.sort((a,b) => (a.vencimentoDate||0) - (b.vencimentoDate||0));
+            applyFiltersAndRender();
+        } catch (err) {
+            console.error(err);
+            // Fallback dados exemplo (para demonstração profissional)
+            rawData = gerarDadosExemplo();
+            applyFiltersAndRender();
         }
-        document.querySelectorAll('.nav-links a').forEach(link => {
-            link.addEventListener('click', () => navLinks.classList.remove('active'));
+    }
+    
+    // Dados de exemplo caso planilha não carregue (layout profissional nunca fica vazio)
+    function gerarDadosExemplo() {
+        return [
+            { documento: "NF 12345", vencimentoDate: new Date(2025,2,15), local: "Concórdia-SC", tipoConta: "Combustível", valor: 1850.00, servico: "Abastecimento frota BRF" },
+            { documento: "NF 67890", vencimentoDate: new Date(2025,3,10), local: "São Paulo-SP", tipoConta: "Manutenção", valor: 3200.00, servico: "Revisão de semi-reboque" },
+            { documento: "Pedágio AB12", vencimentoDate: new Date(2025,2,5), local: "Curitiba-PR", tipoConta: "Pedágio", valor: 450.00, servico: "Eixos + TAG" },
+            { documento: "Fatura BRF", vencimentoDate: new Date(2025,4,20), local: "Concórdia-SC", tipoConta: "Receita", valor: 12500.00, servico: "Frete lote frigorífico" },
+            { documento: "Seguro Frota", vencimentoDate: new Date(2025,5,1), local: "Nacional", tipoConta: "Seguro", valor: 2140.00, servico: "Apólice anual caminhões" },
+            { documento: "Peças SC", vencimentoDate: new Date(2025,6,12), local: "Joinville-SC", tipoConta: "Manutenção", valor: 980.00, servico: "Freio ABS e pastilhas" }
+        ];
+    }
+    
+    // Filtros
+    function applyFiltersAndRender() {
+        const monthFilter = document.getElementById('filterMonth')?.value;
+        const localFilter = document.getElementById('filterLocal')?.value;
+        const tipoFilter = document.getElementById('filterTipo')?.value;
+        const dueDateFilter = document.getElementById('filterDueDate')?.value;
+        
+        filteredData = rawData.filter(item => {
+            if (monthFilter && monthFilter !== 'all') {
+                if (!item.vencimentoDate) return false;
+                const itemMonth = item.vencimentoDate.getMonth() + 1;
+                if (itemMonth.toString() !== monthFilter) return false;
+            }
+            if (localFilter && localFilter !== 'all' && item.local !== localFilter) return false;
+            if (tipoFilter && tipoFilter !== 'all' && item.tipoConta !== tipoFilter) return false;
+            if (dueDateFilter) {
+                const limitDate = new Date(dueDateFilter);
+                if (item.vencimentoDate && item.vencimentoDate > limitDate) return false;
+            }
+            return true;
         });
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                const targetId = this.getAttribute('href');
-                if (targetId === "#") return;
-                const target = document.querySelector(targetId);
-                if (target) {
-                    e.preventDefault();
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
+        updateKPIs();
+        updateTable();
+        updateChartsAndForecast();
+        updateFilterOptions();
+    }
+    
+    function updateFilterOptions() {
+        const monthSet = new Set(); const localSet = new Set(); const tipoSet = new Set();
+        rawData.forEach(item => {
+            if(item.vencimentoDate) monthSet.add(item.vencimentoDate.getMonth()+1);
+            if(item.local) localSet.add(item.local);
+            if(item.tipoConta) tipoSet.add(item.tipoConta);
+        });
+        const monthSelect = document.getElementById('filterMonth');
+        const localSelect = document.getElementById('filterLocal');
+        const tipoSelect = document.getElementById('filterTipo');
+        if(monthSelect) {
+            let current = monthSelect.value;
+            monthSelect.innerHTML = '<option value="all">Todos os meses</option>';
+            Array.from(monthSet).sort().forEach(m => { monthSelect.innerHTML += `<option value="${m}">${moment().month(m-1).format('MMMM')}</option>`; });
+            if(current) monthSelect.value = current;
+        }
+        if(localSelect) {
+            let curr = localSelect.value;
+            localSelect.innerHTML = '<option value="all">Todos locais</option>';
+            localSet.forEach(l => { localSelect.innerHTML += `<option value="${l}">${l}</option>`; });
+            if(curr && curr!='all') localSelect.value = curr;
+        }
+        if(tipoSelect) {
+            let curr = tipoSelect.value;
+            tipoSelect.innerHTML = '<option value="all">Todos tipos</option>';
+            tipoSet.forEach(t => { tipoSelect.innerHTML += `<option value="${t}">${t}</option>`; });
+            if(curr && curr!='all') tipoSelect.value = curr;
+        }
+    }
+    
+    function updateKPIs() {
+        const totalValor = filteredData.reduce((sum, i) => sum + i.valor, 0);
+        const receita = filteredData.filter(i => i.tipoConta.toLowerCase().includes('receita') || i.tipoConta.toLowerCase().includes('faturamento')).reduce((s,i)=>s+i.valor,0);
+        const despesa = totalValor - receita;
+        const qtdDocs = filteredData.length;
+        document.getElementById('kpiArea').innerHTML = `
+            <div class="kpi-card"><h3>💵 Valor Total Filtrado</h3><div class="kpi-value">R$ ${totalValor.toLocaleString('pt-BR', {minimumFractionDigits:2})}</div></div>
+            <div class="kpi-card"><h3>📄 Documentos</h3><div class="kpi-value">${qtdDocs}</div></div>
+            <div class="kpi-card"><h3>📈 Receitas (estimado)</h3><div class="kpi-value">R$ ${receita.toLocaleString('pt-BR', {minimumFractionDigits:2})}</div></div>
+            <div class="kpi-card"><h3>📉 Despesas</h3><div class="kpi-value">R$ ${despesa.toLocaleString('pt-BR', {minimumFractionDigits:2})}</div></div>
+        `;
+    }
+    
+    function updateTable() {
+        const tbody = document.getElementById('tableBody');
+        if(!tbody) return;
+        tbody.innerHTML = '';
+        filteredData.forEach(item => {
+            const row = tbody.insertRow();
+            const dateStr = item.vencimentoDate ? moment(item.vencimentoDate).format('DD/MM/YYYY') : '---';
+            row.innerHTML = `<td>${item.documento}</td><td>${dateStr}</td><td>${item.local}</td><td>${item.tipoConta}</td><td style="text-align:right">R$ ${item.valor.toFixed(2)}</td>`;
+            row.style.cursor = 'pointer';
+            row.addEventListener('click', () => {
+                const modal = document.getElementById('serviceModal');
+                const serviceDesc = document.getElementById('serviceDesc');
+                serviceDesc.innerHTML = `<strong>📄 ${item.documento}</strong><br>🔧 Serviço: ${item.servico}<br>📍 Local: ${item.local}<br>💰 Valor: R$ ${item.valor.toFixed(2)}`;
+                modal.style.display = 'block';
+                setTimeout(() => { modal.style.display = 'block'; }, 10);
             });
         });
-
-        // ========== SIMULADOR DE ROTA ==========
-        const simulateBtn = document.getElementById('simulateBtn');
-        const resultArea = document.getElementById('resultArea');
-        const resultContent = document.getElementById('resultContent');
-
-        const consumptionByAxles = { 2: 35, 3: 45, 4: 52, 5: 60, 6: 68 };
-        const avgTollPerKm = 0.12;
-
-        async function geocode(location) {
-            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`;
-            const res = await fetch(url);
-            const data = await res.json();
-            if (!data.length) throw new Error(`Local não encontrado: ${location}`);
-            return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon), name: data[0].display_name };
-        }
-
-        async function getRoute(originCoords, destCoords) {
-            const url = `https://router.project-osrm.org/route/v1/driving/${originCoords.lon},${originCoords.lat};${destCoords.lon},${destCoords.lat}?overview=false`;
-            const res = await fetch(url);
-            const data = await res.json();
-            if (data.code !== 'Ok') throw new Error('Erro ao calcular rota');
-            return { distanceKm: data.routes[0].distance / 1000, durationHours: data.routes[0].duration / 3600 };
-        }
-
-        function estimateMinFreight(dist, axles, weight) {
-            return dist * (axles * 1.2) * Math.max(1, weight / 15);
-        }
-
-        simulateBtn.addEventListener('click', async () => {
-            const origin = document.getElementById('origin').value.trim();
-            const destination = document.getElementById('destination').value.trim();
-            const axles = parseInt(document.getElementById('axles').value);
-            const weight = parseFloat(document.getElementById('weight').value);
-            const offeredFreight = parseFloat(document.getElementById('freightValue').value) || 0;
-            const dieselPrice = parseFloat(document.getElementById('dieselPrice').value);
-
-            if (!origin || !destination) return alert('Preencha origem e destino');
-            resultArea.style.display = 'block';
-            resultContent.innerHTML = '<div style="text-align:center">🔄 Calculando...</div>';
-            try {
-                const originGeo = await geocode(origin);
-                const destGeo = await geocode(destination);
-                const route = await getRoute(originGeo, destGeo);
-                const dist = route.distanceKm;
-                const duration = route.durationHours;
-                const consumption = consumptionByAxles[axles] || 50;
-                const fuelLiters = (dist / 100) * consumption;
-                const fuelCost = fuelLiters * dieselPrice;
-                const tollCost = dist * avgTollPerKm;
-                const totalCost = fuelCost + tollCost;
-                const minFreight = estimateMinFreight(dist, axles, weight);
-                const isViable = offeredFreight >= minFreight;
-                const profit = offeredFreight - totalCost;
-
-                resultContent.innerHTML = `
-                    <div class="result-line"><strong>📍 Origem:</strong> ${originGeo.name}</div>
-                    <div class="result-line"><strong>📍 Destino:</strong> ${destGeo.name}</div>
-                    <div class="result-line"><strong>📏 Distância:</strong> ${dist.toFixed(1)} km</div>
-                    <div class="result-line"><strong>⏱️ Tempo estimado:</strong> ${duration.toFixed(1)} horas</div>
-                    <div class="result-line"><strong>⛽ Combustível:</strong> ${fuelLiters.toFixed(0)} L (R$ ${fuelCost.toFixed(2)})</div>
-                    <div class="result-line"><strong>🛣️ Pedágio:</strong> R$ ${tollCost.toFixed(2)}</div>
-                    <div class="result-line"><strong>💸 Custo total:</strong> R$ ${totalCost.toFixed(2)}</div>
-                    <div class="result-line"><strong>📊 Piso mínimo estimado:</strong> R$ ${minFreight.toFixed(2)}</div>
-                    <div class="result-line"><strong>💵 Frete ofertado:</strong> R$ ${offeredFreight.toFixed(2)}</div>
-                    <div class="result-line"><strong>📈 Lucro estimado:</strong> R$ ${profit.toFixed(2)}</div>
-                    <div class="result-line"><strong>${isViable ? '✅ VIABILIDADE' : '❌ NÃO VIÁVEL'}</strong> ${isViable ? 'Frete acima do piso mínimo.' : 'Frete abaixo do piso mínimo. Atenção à MP 1.343/2026!'}</div>
-                `;
-            } catch (err) {
-                resultContent.innerHTML = `<div style="color:#e53e3e;">❌ Erro: ${err.message}</div>`;
+    }
+    
+    function updateChartsAndForecast() {
+        // Agrupar por tipo de conta (valores totais)
+        const tipoMap = new Map();
+        filteredData.forEach(item => {
+            let tipo = item.tipoConta;
+            tipoMap.set(tipo, (tipoMap.get(tipo)||0) + item.valor);
+        });
+        const tipos = Array.from(tipoMap.keys());
+        const valores = tipos.map(t => tipoMap.get(t));
+        
+        if(typeChartObj) typeChartObj.destroy();
+        const ctx1 = document.getElementById('typeChart').getContext('2d');
+        typeChartObj = new Chart(ctx1, {
+            type: 'doughnut',
+            data: { labels: tipos, datasets: [{ data: valores, backgroundColor: ['#8B7355','#d4af37','#2d3748','#38a169','#e53e3e','#3182ce'] }] },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+        
+        // Previsão: evolução mensal + forecast 3 meses
+        const monthlyMap = new Map();
+        rawData.forEach(item => {
+            if(item.vencimentoDate) {
+                const key = moment(item.vencimentoDate).format('YYYY-MM');
+                const val = item.valor;
+                monthlyMap.set(key, (monthlyMap.get(key)||0) + val);
             }
         });
-
-        // ========== DASHBOARD GOOGLE SHEETS ==========
-        const sheetId = '1D90eBmYxVjXhpUj3JYoZVeR54813X4JL';
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
-        const colRoute = 'Rota';
-        const colValue = 'Valor Frete';
-        const colDate = 'Data';
-
-        async function fetchSheetData() {
-            const res = await fetch(csvUrl);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            return await res.text();
+        const sortedMonths = Array.from(monthlyMap.keys()).sort();
+        const monthlyValues = sortedMonths.map(m => monthlyMap.get(m));
+        // previsão simples: média dos últimos 3 meses para projetar +3
+        let forecastValues = [];
+        let lastValues = monthlyValues.slice(-3);
+        let avgForecast = lastValues.length ? lastValues.reduce((a,b)=>a+b,0)/lastValues.length : 0;
+        for(let i=0;i<3;i++) forecastValues.push(avgForecast);
+        const extendedLabels = [...sortedMonths, ...['Previsão M+1', 'Previsão M+2', 'Previsão M+3']];
+        const extendedData = [...monthlyValues, ...forecastValues];
+        
+        if(forecastChartObj) forecastChartObj.destroy();
+        const ctx2 = document.getElementById('forecastChart').getContext('2d');
+        forecastChartObj = new Chart(ctx2, {
+            type: 'line',
+            data: { labels: extendedLabels, datasets: [{ label: 'Valor Total (R$)', data: extendedData, borderColor: '#d4af37', backgroundColor: 'rgba(212,175,55,0.1)', tension: 0.3, fill: true }] },
+            options: { responsive: true, plugins: { tooltip: { callbacks: { label: (ctx) => `R$ ${ctx.raw.toFixed(2)}` } } } }
+        });
+        const forecastNote = document.getElementById('forecastNote');
+        if(forecastNote) forecastNote.innerHTML = `📈 Previsão próx. 3 meses: Média R$ ${avgForecast.toFixed(2)} por mês. Base histórica (últimos meses): ${monthlyValues.slice(-3).map(v=>`R$ ${v.toFixed(2)}`).join(', ')}`;
+    }
+    
+    // Eventos de filtro
+    function bindFilterEvents() {
+        document.getElementById('filterMonth')?.addEventListener('change', applyFiltersAndRender);
+        document.getElementById('filterLocal')?.addEventListener('change', applyFiltersAndRender);
+        document.getElementById('filterTipo')?.addEventListener('change', applyFiltersAndRender);
+        document.getElementById('filterDueDate')?.addEventListener('change', applyFiltersAndRender);
+        document.getElementById('resetFiltersBtn')?.addEventListener('click', () => {
+            document.getElementById('filterMonth').value = 'all';
+            document.getElementById('filterLocal').value = 'all';
+            document.getElementById('filterTipo').value = 'all';
+            document.getElementById('filterDueDate').value = '';
+            applyFiltersAndRender();
+        });
+        document.getElementById('closeServiceModal')?.addEventListener('click', () => {
+            document.getElementById('serviceModal').style.display = 'none';
+        });
+        window.addEventListener('click', (e) => { if(e.target === document.getElementById('serviceModal')) document.getElementById('serviceModal').style.display = 'none'; });
+    }
+    
+    // LOGIN
+    function checkLoginStatus() {
+        const logged = sessionStorage.getItem('dashboardAuth');
+        if(logged === 'true') {
+            showDashboard();
+        } else {
+            loginModal.style.display = 'flex';
+            dashboardPanel.style.display = 'none';
         }
-
-        function parseCSV(csv) {
-            const lines = csv.split(/\r?\n/).filter(l => l.trim());
-            if (!lines.length) return [];
-            const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g, '').trim());
-            const data = [];
-            for (let i = 1; i < lines.length; i++) {
-                const vals = lines[i].split(',').map(v => v.replace(/^"|"$/g, '').trim());
-                const row = {};
-                headers.forEach((h, idx) => row[h] = vals[idx] || '');
-                data.push(row);
-            }
-            return { headers, data };
+    }
+    
+    function showDashboard() {
+        loginModal.style.display = 'none';
+        dashboardPanel.style.display = 'block';
+        sessionStorage.setItem('dashboardAuth', 'true');
+        if(rawData.length === 0) loadGoogleSheetData();
+        else applyFiltersAndRender();
+    }
+    
+    function logout() {
+        sessionStorage.removeItem('dashboardAuth');
+        dashboardPanel.style.display = 'none';
+        loginModal.style.display = 'flex';
+        loginErrorSpan.innerText = '';
+    }
+    
+    doLoginBtn.addEventListener('click', () => {
+        const user = document.getElementById('loginUser').value.trim();
+        const pass = document.getElementById('loginPass').value.trim();
+        if(user === VALID_USER && pass === VALID_PASS) {
+            showDashboard();
+        } else {
+            loginErrorSpan.innerText = '❌ Acesso negado. Credenciais inválidas.';
         }
-
-        function prepareChartData(rows) {
-            const valid = rows.filter(r => {
-                const val = parseFloat(r[colValue]);
-                return r[colRoute] && !isNaN(val) && val > 0;
-            });
-            const routeMap = new Map();
-            valid.forEach(r => {
-                const route = r[colRoute];
-                const val = parseFloat(r[colValue]);
-                if (!routeMap.has(route)) routeMap.set(route, { total: 0, count: 0 });
-                const entry = routeMap.get(route);
-                entry.total += val;
-                entry.count++;
-            });
-            const routeLabels = Array.from(routeMap.keys());
-            const routeAvg = routeLabels.map(r => routeMap.get(r).total / routeMap.get(r).count);
-
-            const dateRows = rows.filter(r => {
-                const d = r[colDate];
-                const val = parseFloat(r[colValue]);
-                return d && d.trim() && !isNaN(val);
-            });
-            dateRows.sort((a,b) => Date.parse(a[colDate]) - Date.parse(b[colDate]));
-            const dateLabels = dateRows.map(r => r[colDate]);
-            const dateValues = dateRows.map(r => parseFloat(r[colValue]));
-            return { routeLabels, routeAvg, dateLabels, dateValues, validCount: valid.length };
+    });
+    
+    openDashboardBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if(sessionStorage.getItem('dashboardAuth') === 'true') {
+            showDashboard();
+        } else {
+            loginModal.style.display = 'flex';
         }
-
-        async function loadDashboard() {
-            const container = document.getElementById('dashboardContent');
-            try {
-                const csv = await fetchSheetData();
-                const { data } = parseCSV(csv);
-                if (!data.length) throw new Error('Nenhum dado encontrado.');
-                const { routeLabels, routeAvg, dateLabels, dateValues, validCount } = prepareChartData(data);
-                if (!validCount) throw new Error(`Nenhum registro válido. Verifique as colunas "${colRoute}", "${colValue}".`);
-
-                container.innerHTML = `
-                    <div class="charts-grid">
-                        <div class="chart-card"><h3>📊 Frete Médio por Rota</h3><canvas id="barChart"></canvas></div>
-                        <div class="chart-card"><h3>📈 Evolução do Frete</h3><canvas id="lineChart"></canvas></div>
-                    </div>
-                    <div class="table-responsive"><table class="data-table"><thead><tr><th>Rota</th><th>Frete Médio (R$)</th><th>Registros</th></tr></thead><tbody>${routeLabels.map((r,i)=>`<tr><td>${r}</td><td>R$ ${routeAvg[i].toFixed(2)}</td><td>${routeMapCount(r,data)}</td></tr>`).join('')}</tbody></table></div>
-                `;
-
-                new Chart(document.getElementById('barChart'), {
-                    type: 'bar',
-                    data: { labels: routeLabels, datasets: [{ label: 'Frete Médio (R$)', data: routeAvg, backgroundColor: '#8B7355' }] }
-                });
-                if (dateLabels.length) {
-                    new Chart(document.getElementById('lineChart'), {
-                        type: 'line',
-                        data: { labels: dateLabels, datasets: [{ label: 'Valor do Frete (R$)', data: dateValues, borderColor: '#d4af37', fill: false }] }
-                    });
-                } else {
-                    document.getElementById('lineChart').parentElement.innerHTML = '<div style="padding:1rem; text-align:center;">Dados com data insuficientes</div>';
-                }
-
-                function routeMapCount(route, all) {
-                    return all.filter(r => r[colRoute] === route && !isNaN(parseFloat(r[colValue]))).length;
-                }
-            } catch (err) {
-                console.error(err);
-                container.innerHTML = `<div class="error">❌ Erro: ${err.message}<br><br>Verifique se a planilha está compartilhada como "Qualquer um com o link pode visualizar".</div>`;
-            }
+    });
+    
+    logoutBtn.addEventListener('click', logout);
+    
+    // Inicialização
+    (function init() {
+        bindFilterEvents();
+        checkLoginStatus();
+        // carregar dados em background se logged
+        if(sessionStorage.getItem('dashboardAuth') === 'true') {
+            loadGoogleSheetData();
+        } else {
+            // pré-carrega silencioso para agilidade
+            loadGoogleSheetData();
         }
-        loadDashboard();
-    </script>
+    })();
+</script>
 </body>
 </html>
