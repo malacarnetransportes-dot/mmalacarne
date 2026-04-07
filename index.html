@@ -2,18 +2,18 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>M-Malacarne | Dashboard Gerencial Premium</title>
-    <!-- Font Awesome 6 (gratuito) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M-Malacarne Transporte & Logística</title>
+    <!-- Font Awesome, Chart.js, PapaParse, Moment, SheetJS (XLSX), html2canvas + jspdf para PDF -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <!-- Papaparse para CSV robusto -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <!-- Moment.js para datas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        /* ===== RESET + VARIÁVEIS PREMIUM ===== */
+        /* ===== RESET E VARIÁVEIS (MANTIDAS DO ORIGINAL) ===== */
         * {
             margin: 0;
             padding: 0;
@@ -27,636 +27,919 @@
             --dark: #1a1a1a;
             --text: #2d3748;
             --text-light: #718096;
-            --premium-dark: #0f172a;
-            --success: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --info: #3b82f6;
-            --card-shadow: 0 20px 35px -12px rgba(0,0,0,0.1);
+            --premium-dark: #1e2a3a;
+            --success: #38a169;
         }
         body {
-            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
-            background: #f1f5f9;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text);
             overflow-x: hidden;
+            line-height: 1.6;
         }
-        /* Modal Login Premium */
-        .login-overlay {
+        header {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            padding: 0.8rem 5%;
             position: fixed;
+            width: 100%;
             top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.92);
-            backdrop-filter: blur(12px);
-            z-index: 2000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
+            z-index: 1000;
+            box-shadow: 0 2px 30px rgba(0,0,0,0.08);
+            border-bottom: 1px solid rgba(139, 115, 85, 0.1);
         }
-        .login-card {
-            background: white;
-            border-radius: 32px;
-            width: 90%;
-            max-width: 420px;
-            padding: 2rem 2rem 2.2rem;
-            box-shadow: var(--card-shadow);
-            text-align: center;
-            border: 1px solid rgba(212, 175, 55, 0.3);
-            animation: fadeInUp 0.4s ease;
-        }
-        .login-card i {
-            font-size: 3rem;
-            color: var(--accent);
-            margin-bottom: 0.5rem;
-        }
-        .login-card h2 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--premium-dark);
-            margin-bottom: 1rem;
-        }
-        .login-input {
-            width: 100%;
-            padding: 0.9rem 1rem;
-            margin: 0.8rem 0;
-            border: 1px solid #e2e8f0;
-            border-radius: 60px;
-            font-size: 1rem;
-            outline: none;
-            transition: 0.2s;
-        }
-        .login-input:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(212,175,55,0.2);
-        }
-        .login-btn {
-            background: linear-gradient(135deg, var(--premium-dark) 0%, #1e293b 100%);
-            color: white;
-            border: none;
-            width: 100%;
-            padding: 0.9rem;
-            border-radius: 60px;
-            font-weight: 700;
-            font-size: 1rem;
-            cursor: pointer;
-            margin-top: 1rem;
-            transition: 0.2s;
-        }
-        .login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-        }
-        .error-msg {
-            color: var(--danger);
-            font-size: 0.8rem;
-            margin-top: 0.8rem;
-        }
-        /* DASHBOARD CONTAINER (PRIVADO) */
-        .dashboard-container {
-            display: none;
-            background: #f8fafc;
-            padding: 1.5rem 2rem;
-            min-height: 100vh;
-        }
-        .dashboard-header {
+        nav {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            margin-bottom: 2rem;
-            border-bottom: 2px solid rgba(139,115,85,0.2);
-            padding-bottom: 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
         }
-        .dashboard-header h1 {
-            font-size: 1.8rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--premium-dark), var(--primary));
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-        .logout-btn {
-            background: var(--danger);
-            color: white;
-            border: none;
-            padding: 0.5rem 1.2rem;
-            border-radius: 40px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .kpi-card {
-            background: white;
-            border-radius: 28px;
-            padding: 1.2rem 1.5rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            border-left: 6px solid var(--accent);
-            transition: transform 0.2s;
-        }
-        .kpi-card h3 {
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-light);
-        }
-        .kpi-value {
-            font-size: 2rem;
-            font-weight: 800;
-            color: var(--premium-dark);
-            margin-top: 0.3rem;
-        }
-        .filters-bar {
-            background: white;
-            border-radius: 28px;
-            padding: 1.2rem 1.8rem;
-            margin-bottom: 2rem;
+        .logo {
             display: flex;
-            flex-wrap: wrap;
-            gap: 1.2rem;
-            align-items: flex-end;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+            align-items: center;
+            gap: 1rem;
         }
-        .filter-group {
-            flex: 1;
-            min-width: 150px;
+        .logo-img {
+            height: 50px;
+            width: auto;
         }
-        .filter-group label {
-            font-weight: 600;
-            font-size: 0.7rem;
-            text-transform: uppercase;
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.1;
+        }
+        .logo-main {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+        }
+        .logo-sub {
+            font-size: 0.65rem;
+            font-weight: 500;
             color: var(--text-light);
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
         }
-        .filter-group select, .filter-group input {
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+            align-items: center;
+        }
+        .nav-links a {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+            position: relative;
+        }
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--accent);
+            transition: width 0.3s;
+        }
+        .nav-links a:hover::after {
             width: 100%;
-            padding: 0.6rem;
-            border-radius: 16px;
-            border: 1px solid #cbd5e1;
-            background: white;
-            font-size: 0.85rem;
         }
-        .chart-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 1.8rem;
-            margin-bottom: 2rem;
+        .private-btn {
+            background: var(--accent);
+            color: var(--dark) !important;
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
         }
-        .chart-card {
-            background: white;
-            border-radius: 28px;
-            padding: 1rem;
-            box-shadow: var(--card-shadow);
+        .private-btn::after {
+            display: none;
         }
-        .chart-card h3 {
+        .hero {
+            height: 60vh;
+            background: linear-gradient(135deg, rgba(30, 42, 58, 0.9) 0%, rgba(26, 32, 44, 0.9) 100%), 
+                        url('IMG-20220924-WA0022 (1).jpg');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            margin-top: 70px;
+            padding: 0 5%;
+        }
+        .hero-content h1 {
+            font-size: 2.2rem;
             margin-bottom: 1rem;
+            animation: fadeInUp 1s ease;
             font-weight: 700;
         }
-        .data-table-wrapper {
+        .cta-button {
+            background: linear-gradient(135deg, var(--accent) 0%, #b8941f 100%);
+            color: var(--dark);
+            padding: 0.8rem 2rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: 0.3s;
+        }
+        .stats {
+            background: var(--light);
+            padding: 2.5rem 5%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.5rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            border: 1px solid rgba(139, 115, 85, 0.1);
+            transition: transform 0.3s;
+        }
+        .values {
+            padding: 3rem 5%;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .section-title {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: var(--premium-dark);
+            font-weight: 700;
+        }
+        .values-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        .value-card {
+            background: white;
+            padding: 1.8rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            text-align: center;
+        }
+        .gallery {
+            padding: 3rem 5%;
+            background: var(--light);
+        }
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.2rem;
+            max-width: 1000px;
+            margin: 2rem auto 0;
+        }
+        .gallery-item {
+            height: 220px;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+        }
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+        .fuels-section, .freight-calculator-section, .simulator-section, .aistudio-section {
+            padding: 3rem 5%;
+            background: #ffffff;
+            border-top: 1px solid rgba(139,115,85,0.15);
+            border-bottom: 1px solid rgba(139,115,85,0.15);
+        }
+        .stations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.8rem;
+            margin-top: 2rem;
+        }
+        .state-group {
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid rgba(139,115,85,0.2);
+        }
+        .state-header {
+            background: var(--premium-dark);
+            color: white;
+            padding: 1rem 1.5rem;
+            font-weight: 700;
+        }
+        .jobs {
+            padding: 4rem 5%;
+            background: linear-gradient(135deg, var(--premium-dark) 0%, #2d3748 100%);
+            color: white;
+        }
+        .job-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 2rem;
+            color: var(--text);
+        }
+        .contact {
+            padding: 3rem 5%;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2.5rem;
+            margin-top: 2rem;
+        }
+        .whatsapp-float {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        footer {
+            background: var(--premium-dark);
+            color: white;
+            text-align: center;
+            padding: 2rem 5%;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        @media (max-width: 768px) {
+            .hero { height: 50vh; margin-top: 60px; }
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background: white;
+                flex-direction: column;
+                padding: 1rem;
+            }
+            .nav-links.active { display: flex; }
+            .menu-toggle { display: block; }
+            .contact-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ESTILOS DA ÁREA PRIVADA (DASHBOARDS) */
+        .private-area {
+            display: none;
+            background: #f1f5f9;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .private-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            border-bottom: 2px solid var(--accent);
+            margin-bottom: 2rem;
+        }
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.2s;
+            border-radius: 30px 30px 0 0;
+        }
+        .tab-btn.active {
+            background: var(--accent);
+            color: var(--dark);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .dashboard-card {
             background: white;
             border-radius: 28px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+        }
+        .filter-group {
+            display: inline-flex;
+            flex-direction: column;
+            margin-right: 1rem;
+            margin-bottom: 1rem;
+        }
+        .filter-group label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .filter-group input, .filter-group select {
+            padding: 0.5rem;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            min-width: 130px;
+        }
+        .btn-export {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-left: 0.5rem;
+        }
+        .ranking-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .ranking-box {
+            background: #f8fafc;
+            border-radius: 20px;
             padding: 1rem;
-            overflow-x: auto;
-            box-shadow: var(--card-shadow);
+        }
+        .ranking-box h4 {
+            border-left: 4px solid var(--accent);
+            padding-left: 0.5rem;
+            margin-bottom: 0.8rem;
         }
         .data-table {
             width: 100%;
             border-collapse: collapse;
             font-size: 0.8rem;
         }
-        .data-table th {
-            text-align: left;
-            padding: 1rem 0.5rem;
-            background: #f1f5f9;
-            color: var(--premium-dark);
-        }
-        .data-table td {
-            padding: 0.8rem 0.5rem;
+        .data-table th, .data-table td {
             border-bottom: 1px solid #e2e8f0;
+            padding: 0.7rem 0.3rem;
+            text-align: left;
+        }
+        .chart-container {
+            max-height: 300px;
+            margin: 1rem 0;
+        }
+        .logout-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 40px;
             cursor: pointer;
         }
-        .data-table tr:hover {
-            background: #fef9e6;
-        }
-        .service-modal {
+        /* Modal login */
+        .login-overlay {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.2s;
+        }
+        .login-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        .login-card {
             background: white;
-            border-radius: 24px;
-            max-width: 340px;
+            border-radius: 32px;
+            padding: 2rem;
             width: 90%;
-            padding: 1.2rem;
-            box-shadow: 0 20px 35px rgba(0,0,0,0.2);
-            border-top: 5px solid var(--accent);
-            z-index: 1500;
-            display: none;
-        }
-        .badge-premium {
-            background: var(--accent);
-            color: #1e293b;
-            padding: 0.2rem 0.6rem;
-            border-radius: 40px;
-            font-size: 0.7rem;
-            font-weight: bold;
-        }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px);}
-            to { opacity: 1; transform: translateY(0);}
-        }
-        @media (max-width: 760px) {
-            .dashboard-container { padding: 1rem; }
-            .chart-row { grid-template-columns: 1fr; }
-        }
-        .forecast-note {
-            background: #eef2ff;
-            border-radius: 20px;
-            padding: 0.8rem;
-            font-size: 0.75rem;
+            max-width: 400px;
             text-align: center;
-            margin-top: 1rem;
+            border-top: 6px solid var(--accent);
+        }
+        .login-input {
+            width: 100%;
+            padding: 0.8rem;
+            margin: 0.5rem 0;
+            border-radius: 60px;
+            border: 1px solid #cbd5e1;
         }
     </style>
 </head>
 <body>
 
-<!-- Estrutura principal do site original (mantida, mas o dashboard será sobreposto após login) -->
-<header style="background: rgba(255,255,255,0.98); backdrop-filter: blur(20px); padding: 0.8rem 5%; position: sticky; top:0; z-index: 1000; border-bottom:1px solid rgba(139,115,85,0.1)">
-    <nav style="display: flex; justify-content: space-between; align-items: center; max-width:1200px; margin:0 auto">
-        <div class="logo" style="display:flex; align-items:center; gap:1rem">
-            <img src="Screenshot_2.jpg" alt="M-Malacarne" style="height:50px; width:auto" onerror="this.style.display='none'">
-            <div><div style="font-size:1.6rem; font-weight:800; color:#8B7355">M-MALACARNE</div><div style="font-size:0.65rem">TRANSPORTE & LOGISTICA</div></div>
+<!-- SITE PÚBLICO ORIGINAL (COMPLETO) -->
+<div id="publicSite">
+    <div class="whatsapp-float">
+        <a href="https://wa.me/5549999675448" target="_blank" style="background:#25D366; color:white; padding:10px 16px; border-radius:50px; text-decoration:none;">📱 WhatsApp</a>
+    </div>
+    <header>
+        <nav>
+            <div class="logo">
+                <img src="Screenshot_2.jpg" alt="M-Malacarne" class="logo-img" onerror="this.style.display='none'">
+                <div class="logo-text">
+                    <div class="logo-main">M-MALACARNE</div>
+                    <div class="logo-sub">TRANSPORTE & LOGISTICA</div>
+                </div>
+            </div>
+            <button class="menu-toggle">☰</button>
+            <ul class="nav-links">
+                <li><a href="#home">Início</a></li>
+                <li><a href="#sobre">Sobre</a></li>
+                <li><a href="#valores">Valores</a></li>
+                <li><a href="#infraestrutura">Infraestrutura</a></li>
+                <li><a href="#precos">Preços Combustível</a></li>
+                <li><a href="#calculadora-antt">Calculadora ANTT</a></li>
+                <li><a href="#simulador">Simulador</a></li>
+                <li><a href="#aistudio">App AI Studio</a></li>
+                <li><a href="#vagas">Vagas</a></li>
+                <li><a href="#contato">Contato</a></li>
+                <li><a href="#" id="privateAccessBtn" class="private-btn">🔒 Acesso Privado</a></li>
+            </ul>
+        </nav>
+    </header>
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h1>40 Anos Movendo o Brasil</h1>
+            <p>Excelência em Transporte e Logística desde 1982</p>
+            <a href="#simulador" class="cta-button">Simular Rota</a>
         </div>
-        <ul style="display:flex; gap:2rem; list-style:none">
-            <li><a href="#home" style="text-decoration:none; color:#2d3748">Início</a></li>
-            <li><a href="#" id="openDashboardBtn" style="background:var(--accent); padding:0.3rem 1rem; border-radius:40px; font-weight:bold; color:#1a1a1a; text-decoration:none">📊 Dashboard Gerencial</a></li>
-        </ul>
-    </nav>
-</header>
+    </section>
+    <section class="stats">
+        <div class="stat-card"><div class="stat-number">40+</div><div class="stat-label">Anos de Tradição</div></div>
+        <div class="stat-card"><div class="stat-number">100%</div><div class="stat-label">Frota Frigorífica</div></div>
+        <div class="stat-card"><div class="stat-number">BRF</div><div class="stat-label">Parceiro Exclusivo</div></div>
+        <div class="stat-card"><div class="stat-number">SC</div><div class="stat-label">Concórdia - SC</div></div>
+    </section>
+    <section id="sobre" class="values">
+        <h2 class="section-title">Nossa História</h2>
+        <p style="text-align:center; max-width:700px; margin:0 auto;">Criada em <strong>1982</strong>, a M-Malacarne Transportes e Logística atua com frota frigorífica exclusiva para BRF, com mais de 40 anos de excelência.</p>
+    </section>
+    <section id="valores" class="values" style="background:var(--light);">
+        <h2 class="section-title">Nossos Pilares</h2>
+        <div class="values-grid">
+            <div class="value-card"><div class="value-icon">🎯</div><h3>Visão</h3><p>Excelência em transportes e logística</p></div>
+            <div class="value-card"><div class="value-icon">🚛</div><h3>Missão</h3><p>Soluções logísticas com simplicidade e qualidade</p></div>
+            <div class="value-card"><div class="value-icon">⭐</div><h3>Valores</h3><p>Simplicidade, efetividade e honra ao trabalho</p></div>
+        </div>
+    </section>
+    <section id="infraestrutura" class="gallery">
+        <h2 class="section-title">Nossa Infraestrutura</h2>
+        <div class="gallery-grid">
+            <div class="gallery-item"><img src="IMG-20220924-WA0022 (1).jpg" alt="Frota"><div class="gallery-overlay"><h3>Frota Especializada</h3></div></div>
+            <div class="gallery-item"><img src="img87.jpg" alt="Instalações"><div class="gallery-overlay"><h3>Galpão Moderno</h3></div></div>
+        </div>
+    </section>
+    <section id="precos" class="fuels-section">
+        <div style="max-width:1200px; margin:0 auto">
+            <h2 class="section-title">⛽ Preços de Combustíveis</h2>
+            <div class="stations-grid">
+                <div class="state-group"><div class="state-header">📍 Santa Catarina (SC)</div><div class="station-list"><div>Edemar Russi e Cia Ltda - Lontras</div></div></div>
+                <div class="state-group"><div class="state-header">📍 Paraná (PR)</div><div class="station-list"><div>Auto Posto Túlio RBO - Campina Grande do Sul</div></div></div>
+                <div class="state-group"><div class="state-header">📍 São Paulo (SP)</div><div class="station-list"><div>Posto Califórnia - Ourinhos</div></div></div>
+            </div>
+        </div>
+    </section>
+    <section id="calculadora-antt" class="freight-calculator-section">
+        <div style="text-align:center"><h2>📊 Calculadora Oficial ANTT</h2><a href="https://calculadorafrete.antt.gov.br/" target="_blank" class="cta-button">Acessar</a></div>
+    </section>
+    <section id="simulador" class="simulator-section">
+        <div style="text-align:center"><h2>📊 Simulador de Rota</h2><p>Funcionalidade no dashboard privado</p></div>
+    </section>
+    <section id="aistudio" class="aistudio-section">
+        <div style="text-align:center"><h2>📱 App AI Studio</h2><iframe src="https://ai.studio.apps/e34350b9-2061-4164-b4b3-cd504629a167" width="100%" height="500" style="border:none"></iframe></div>
+    </section>
+    <section id="vagas" class="jobs">
+        <div class="job-card"><h3>Motorista de Carreta</h3><p>Envie currículo pelo WhatsApp</p><a href="https://wa.me/5549999675448" class="cta-button">Candidatar-se</a></div>
+    </section>
+    <section id="contato" class="contact">
+        <h2 class="section-title">Contato</h2>
+        <div class="contact-grid">
+            <div><h3>📍 Endereço</h3><p>Rua Domingos Casagrande, 25 - Concórdia - SC</p><h3>📞 Telefone</h3><p>(49) 3442-2325</p></div>
+            <div><iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3535.234!2d-52.027!3d-27.234!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjfCsDE4JzAyLjQiUyA1MsKwMDEnMzcuMiJX!5e0!3m2!1spt-BR!2sbr!4v1234567890" width="100%" height="250" style="border:0;"></iframe></div>
+        </div>
+    </section>
+    <footer>
+        <p>© 2025 M-Malacarne Transporte e Logística Ltda EPP. Todos os direitos reservados.</p>
+    </footer>
+</div>
 
-<!-- Modal de Login -->
+<!-- MODAL DE LOGIN -->
 <div id="loginModal" class="login-overlay">
     <div class="login-card">
-        <i class="fas fa-chart-line"></i>
-        <h2>Área Restrita</h2>
-        <p style="margin-bottom:1rem; color:#475569">Acesso à inteligência financeira e operacional</p>
-        <input type="text" id="loginUser" class="login-input" placeholder="Usuário" autocomplete="off">
+        <i class="fas fa-lock" style="font-size:2rem; color:var(--accent)"></i>
+        <h2>Acesso Restrito</h2>
+        <input type="text" id="loginUser" class="login-input" placeholder="Usuário">
         <input type="password" id="loginPass" class="login-input" placeholder="Senha">
-        <button id="doLoginBtn" class="login-btn"><i class="fas fa-lock"></i> Acessar Dashboard</button>
-        <div id="loginError" class="error-msg"></div>
+        <button id="doLoginBtn" style="background:var(--accent); border:none; padding:0.8rem; width:100%; border-radius:60px; font-weight:bold; margin-top:1rem;">Entrar</button>
+        <div id="loginError" style="color:red; margin-top:0.5rem;"></div>
     </div>
 </div>
 
-<!-- DASHBOARD PRIVADO PREMIUM -->
-<div id="dashboardPanel" class="dashboard-container">
-    <div class="dashboard-header">
-        <h1><i class="fas fa-tachometer-alt"></i> Central de Gestão M-Malacarne</h1>
-        <button id="logoutDashboardBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sair</button>
+<!-- ÁREA PRIVADA (DASHBOARDS) -->
+<div id="privateArea" class="private-area">
+    <div class="private-header">
+        <h2><i class="fas fa-chart-line"></i> Central de Gestão M-Malacarne</h2>
+        <button id="logoutPrivateBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sair</button>
     </div>
-    <!-- KPIs dinâmicas -->
-    <div class="kpi-grid" id="kpiArea"></div>
-    
-    <!-- Filtros avançados -->
-    <div class="filters-bar">
-        <div class="filter-group"><label><i class="fas fa-calendar"></i> Mês (vencimento)</label><select id="filterMonth"><option value="all">Todos os meses</option></select></div>
-        <div class="filter-group"><label><i class="fas fa-map-marker-alt"></i> Local</label><select id="filterLocal"><option value="all">Todos locais</option></select></div>
-        <div class="filter-group"><label><i class="fas fa-tags"></i> Tipo de Conta</label><select id="filterTipo"><option value="all">Todos tipos</option></select></div>
-        <div class="filter-group"><label><i class="fas fa-clock"></i> Vencimento até</label><input type="date" id="filterDueDate"></div>
-        <div class="filter-group"><button id="resetFiltersBtn" style="background:#e2e8f0; border:none; border-radius:40px; padding:0.6rem 1rem; cursor:pointer;"><i class="fas fa-undo-alt"></i> Limpar</button></div>
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="tabFinanceiro">📊 Dashboard Financeiro</button>
+        <button class="tab-btn" data-tab="tabFaturamento">🚛 Dashboard Faturamento</button>
     </div>
-
-    <!-- Gráficos + previsão -->
-    <div class="chart-row">
-        <div class="chart-card"><h3><i class="fas fa-chart-pie"></i> Despesas/Receitas por Tipo</h3><canvas id="typeChart" width="400" height="250"></canvas></div>
-        <div class="chart-card"><h3><i class="fas fa-chart-line"></i> Evolução Mensal & Previsão (próximos 3 meses)</h3><canvas id="forecastChart" width="400" height="250"></canvas><div class="forecast-note" id="forecastNote">📈 Previsão baseada em média móvel dos últimos 6 meses</div></div>
+    <!-- Tab Financeiro -->
+    <div id="tabFinanceiro" class="tab-content active">
+        <div class="dashboard-card">
+            <h3>Filtros</h3>
+            <div>
+                <div class="filter-group"><label>Vencimento de</label><input type="date" id="finDataInicio"></div>
+                <div class="filter-group"><label>Vencimento até</label><input type="date" id="finDataFim"></div>
+                <div class="filter-group"><label>Local</label><select id="finLocal"><option value="all">Todos</option></select></div>
+                <div class="filter-group"><label>Tipo Conta</label><select id="finTipo"><option value="all">Todos</option></select></div>
+                <button id="finAplicarFiltros" class="btn-export">Aplicar</button>
+                <button id="finExportarCSV" class="btn-export">📎 Exportar CSV</button>
+                <button id="finExportarPDF" class="btn-export">📄 Salvar PDF</button>
+            </div>
+        </div>
+        <div class="dashboard-card">
+            <h3>Ranking por Tipo de Conta</h3>
+            <div id="finRanking"></div>
+        </div>
+        <div class="dashboard-card">
+            <h3>Gráfico de Previsão (Próximos 3 meses)</h3>
+            <canvas id="finChart" style="max-height:300px"></canvas>
+        </div>
+        <div class="dashboard-card">
+            <h3>Documentos Financeiros</h3>
+            <div style="overflow-x:auto"><table class="data-table" id="finTable"><thead><tr><th>Local</th><th>Tipo</th><th>Vencimento</th><th>Documento</th><th>Valor (R$)</th><th>Serviço</th></tr></thead><tbody></tbody></table></div>
+        </div>
     </div>
-
-    <!-- Tabela de Documentos -->
-    <div class="data-table-wrapper">
-        <h3 style="margin-bottom: 1rem;"><i class="fas fa-file-invoice"></i> Documentos Financeiros (clique na linha para ver serviço relacionado)</h3>
-        <table class="data-table" id="dataTable">
-            <thead><tr><th>Documento</th><th>Vencimento</th><th>Local</th><th>Tipo Conta</th><th>Valor (R$)</th></tr></thead>
-            <tbody id="tableBody"></tbody>
-        </table>
+    <!-- Tab Faturamento -->
+    <div id="tabFaturamento" class="tab-content">
+        <div class="dashboard-card">
+            <h3>Filtros</h3>
+            <div>
+                <div class="filter-group"><label>Mês (referência)</label><input type="month" id="fatMes"></div>
+                <div class="filter-group"><label>Placa</label><input type="text" id="fatPlaca" placeholder="Placa"></div>
+                <div class="filter-group"><label>Embarcadora</label><input type="text" id="fatEmbarcadora" placeholder="Embarcadora"></div>
+                <div class="filter-group"><label>Origem</label><input type="text" id="fatOrigem" placeholder="Origem"></div>
+                <div class="filter-group"><label>Destino</label><input type="text" id="fatDestino" placeholder="Destino"></div>
+                <div class="filter-group"><label>Valor Frete (min)</label><input type="number" id="fatValorMin" placeholder="R$ mínimo"></div>
+                <button id="fatAplicarFiltros" class="btn-export">Aplicar</button>
+                <button id="fatExportarCSV" class="btn-export">📎 Exportar CSV</button>
+                <button id="fatExportarPDF" class="btn-export">📄 Salvar PDF</button>
+            </div>
+        </div>
+        <div class="dashboard-card">
+            <h3>Rankings</h3>
+            <div class="ranking-grid">
+                <div class="ranking-box"><h4>🏆 Ranking por Motorista</h4><div id="rankMotorista"></div></div>
+                <div class="ranking-box"><h4>🏆 Ranking por Placa</h4><div id="rankPlaca"></div></div>
+                <div class="ranking-box"><h4>🏆 Ranking por Embarcadora</h4><div id="rankEmbarcadora"></div></div>
+                <div class="ranking-box"><h4>💰 Soma do Faturamento por Placa</h4><div id="rankSomaPlaca"></div></div>
+            </div>
+        </div>
+        <div class="dashboard-card">
+            <h3>Tabela de Fretes</h3>
+            <div style="overflow-x:auto"><table class="data-table" id="fatTable"><thead><tr><th>Data</th><th>Placa</th><th>Motorista</th><th>Embarcadora</th><th>Origem</th><th>Destino</th><th>Valor Frete (R$)</th></tr></thead><tbody></tbody></table></div>
+        </div>
     </div>
-</div>
-
-<!-- Modal flutuante serviço relacionado -->
-<div id="serviceModal" class="service-modal">
-    <div style="display:flex; justify-content:space-between;"><strong><i class="fas fa-concierge-bell"></i> Serviço relacionado</strong><span id="closeServiceModal" style="cursor:pointer">&times;</span></div>
-    <p id="serviceDesc" style="margin-top:0.8rem; font-size:0.9rem;"></p>
 </div>
 
 <script>
-    // ---------- CREDENCIAIS ----------
+    // CREDENCIAIS
     const VALID_USER = "malacarne";
     const VALID_PASS = "mala2325";
-    
-    // Elementos DOM
+
+    // URLs
+    const URL_FINANCEIRO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZOvOYa2B9fg5pQuPa54usv9Tl0bRP7EDRBtYrmYnJuXZkK5_A7j4roQZdmiXaaQ/pub?output=csv";
+    const URL_FATURAMENTO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2S-LdrEMpvvosLHfFDOucVENw-T8OOaC2td00ySdFnim79Lm7AEooZBL--q9zKA/pub?output=csv";
+
+    // Globais
+    let financeiroData = [];
+    let faturamentoData = [];
+    let finChart = null;
+
+    // Elementos
+    const publicSite = document.getElementById('publicSite');
+    const privateArea = document.getElementById('privateArea');
     const loginModal = document.getElementById('loginModal');
-    const dashboardPanel = document.getElementById('dashboardPanel');
-    const openDashboardBtn = document.getElementById('openDashboardBtn');
+    const privateAccessBtn = document.getElementById('privateAccessBtn');
     const doLoginBtn = document.getElementById('doLoginBtn');
-    const logoutBtn = document.getElementById('logoutDashboardBtn');
-    const loginErrorSpan = document.getElementById('loginError');
-    
-    // Variáveis globais de dados
-    let rawData = [];         // dados originais do CSV
-    let filteredData = [];
-    let typeChartObj = null;
-    let forecastChartObj = null;
-    
-    // Mapeamento de colunas esperadas (flexível)
-    let colMap = {
-        documento: null,
-        vencimento: null,
-        local: null,
-        tipo_conta: null,
-        valor: null,
-        servico: null
-    };
-    
-    // Função para carregar CSV do Google Sheets
-    async function loadGoogleSheetData() {
-        const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZOvOYa2B9fg5pQuPa54usv9Tl0bRP7EDRBtYrmYnJuXZkK5_A7j4roQZdmiXaaQ/pub?output=csv";
-        try {
-            const response = await fetch(csvUrl);
-            const csvText = await response.text();
-            const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
-            if (parsed.errors.length) console.warn(parsed.errors);
-            const rows = parsed.data;
-            if (!rows.length) throw new Error("Planilha vazia");
-            
-            // Mapeamento inteligente: busca colunas por palavras-chave
-            const headers = Object.keys(rows[0]);
-            colMap.documento = headers.find(h => h.toLowerCase().includes('doc') || h.toLowerCase().includes('nº') || h.toLowerCase() === 'documento') || headers[0];
-            colMap.vencimento = headers.find(h => h.toLowerCase().includes('venc') || h.toLowerCase().includes('data')) || headers[1];
-            colMap.local = headers.find(h => h.toLowerCase().includes('local') || h.toLowerCase().includes('cidade') || h.toLowerCase().includes('origem')) || headers[2];
-            colMap.tipo_conta = headers.find(h => h.toLowerCase().includes('tipo') || h.toLowerCase().includes('conta') || h.toLowerCase().includes('categoria')) || headers[3];
-            colMap.valor = headers.find(h => h.toLowerCase().includes('valor') || h.toLowerCase().includes('r$') || h.toLowerCase().includes('montante')) || headers[4];
-            colMap.servico = headers.find(h => h.toLowerCase().includes('serviço') || h.toLowerCase().includes('servico') || h.toLowerCase().includes('descrição')) || headers[5];
-            
-            rawData = rows.map(row => {
-                let rawValor = row[colMap.valor];
-                let valorNum = parseFloat(String(rawValor).replace(/[R$\s]/g, '').replace(',', '.'));
-                if (isNaN(valorNum)) valorNum = 0;
-                let dataVenc = row[colMap.vencimento];
-                let momentDate = moment(dataVenc, ['DD/MM/YYYY', 'YYYY-MM-DD', 'MM/DD/YYYY'], true);
-                if (!momentDate.isValid()) momentDate = moment(dataVenc);
-                return {
-                    documento: row[colMap.documento] || "N/I",
-                    vencimentoRaw: dataVenc,
-                    vencimentoDate: momentDate.isValid() ? momentDate.toDate() : null,
-                    local: row[colMap.local] || "Não informado",
-                    tipoConta: row[colMap.tipo_conta] || "Outros",
-                    valor: valorNum,
-                    servico: row[colMap.servico] || "Serviço não detalhado"
-                };
-            }).filter(item => item.valor !== 0 || item.documento !== "N/I");
-            
-            // Ordenar por vencimento
-            rawData.sort((a,b) => (a.vencimentoDate||0) - (b.vencimentoDate||0));
-            applyFiltersAndRender();
-        } catch (err) {
-            console.error(err);
-            // Fallback dados exemplo (para demonstração profissional)
-            rawData = gerarDadosExemplo();
-            applyFiltersAndRender();
-        }
+    const logoutPrivateBtn = document.getElementById('logoutPrivateBtn');
+
+    // Funções auxiliares
+    function showLogin() { loginModal.classList.add('active'); }
+    function hideLogin() { loginModal.classList.remove('active'); }
+    function showPrivate() {
+        publicSite.style.display = 'none';
+        privateArea.style.display = 'block';
+        hideLogin();
+        loadFinanceiroData();
+        loadFaturamentoData();
     }
-    
-    // Dados de exemplo caso planilha não carregue (layout profissional nunca fica vazio)
-    function gerarDadosExemplo() {
-        return [
-            { documento: "NF 12345", vencimentoDate: new Date(2025,2,15), local: "Concórdia-SC", tipoConta: "Combustível", valor: 1850.00, servico: "Abastecimento frota BRF" },
-            { documento: "NF 67890", vencimentoDate: new Date(2025,3,10), local: "São Paulo-SP", tipoConta: "Manutenção", valor: 3200.00, servico: "Revisão de semi-reboque" },
-            { documento: "Pedágio AB12", vencimentoDate: new Date(2025,2,5), local: "Curitiba-PR", tipoConta: "Pedágio", valor: 450.00, servico: "Eixos + TAG" },
-            { documento: "Fatura BRF", vencimentoDate: new Date(2025,4,20), local: "Concórdia-SC", tipoConta: "Receita", valor: 12500.00, servico: "Frete lote frigorífico" },
-            { documento: "Seguro Frota", vencimentoDate: new Date(2025,5,1), local: "Nacional", tipoConta: "Seguro", valor: 2140.00, servico: "Apólice anual caminhões" },
-            { documento: "Peças SC", vencimentoDate: new Date(2025,6,12), local: "Joinville-SC", tipoConta: "Manutenção", valor: 980.00, servico: "Freio ABS e pastilhas" }
-        ];
-    }
-    
-    // Filtros
-    function applyFiltersAndRender() {
-        const monthFilter = document.getElementById('filterMonth')?.value;
-        const localFilter = document.getElementById('filterLocal')?.value;
-        const tipoFilter = document.getElementById('filterTipo')?.value;
-        const dueDateFilter = document.getElementById('filterDueDate')?.value;
-        
-        filteredData = rawData.filter(item => {
-            if (monthFilter && monthFilter !== 'all') {
-                if (!item.vencimentoDate) return false;
-                const itemMonth = item.vencimentoDate.getMonth() + 1;
-                if (itemMonth.toString() !== monthFilter) return false;
-            }
-            if (localFilter && localFilter !== 'all' && item.local !== localFilter) return false;
-            if (tipoFilter && tipoFilter !== 'all' && item.tipoConta !== tipoFilter) return false;
-            if (dueDateFilter) {
-                const limitDate = new Date(dueDateFilter);
-                if (item.vencimentoDate && item.vencimentoDate > limitDate) return false;
-            }
-            return true;
-        });
-        updateKPIs();
-        updateTable();
-        updateChartsAndForecast();
-        updateFilterOptions();
-    }
-    
-    function updateFilterOptions() {
-        const monthSet = new Set(); const localSet = new Set(); const tipoSet = new Set();
-        rawData.forEach(item => {
-            if(item.vencimentoDate) monthSet.add(item.vencimentoDate.getMonth()+1);
-            if(item.local) localSet.add(item.local);
-            if(item.tipoConta) tipoSet.add(item.tipoConta);
-        });
-        const monthSelect = document.getElementById('filterMonth');
-        const localSelect = document.getElementById('filterLocal');
-        const tipoSelect = document.getElementById('filterTipo');
-        if(monthSelect) {
-            let current = monthSelect.value;
-            monthSelect.innerHTML = '<option value="all">Todos os meses</option>';
-            Array.from(monthSet).sort().forEach(m => { monthSelect.innerHTML += `<option value="${m}">${moment().month(m-1).format('MMMM')}</option>`; });
-            if(current) monthSelect.value = current;
-        }
-        if(localSelect) {
-            let curr = localSelect.value;
-            localSelect.innerHTML = '<option value="all">Todos locais</option>';
-            localSet.forEach(l => { localSelect.innerHTML += `<option value="${l}">${l}</option>`; });
-            if(curr && curr!='all') localSelect.value = curr;
-        }
-        if(tipoSelect) {
-            let curr = tipoSelect.value;
-            tipoSelect.innerHTML = '<option value="all">Todos tipos</option>';
-            tipoSet.forEach(t => { tipoSelect.innerHTML += `<option value="${t}">${t}</option>`; });
-            if(curr && curr!='all') tipoSelect.value = curr;
-        }
-    }
-    
-    function updateKPIs() {
-        const totalValor = filteredData.reduce((sum, i) => sum + i.valor, 0);
-        const receita = filteredData.filter(i => i.tipoConta.toLowerCase().includes('receita') || i.tipoConta.toLowerCase().includes('faturamento')).reduce((s,i)=>s+i.valor,0);
-        const despesa = totalValor - receita;
-        const qtdDocs = filteredData.length;
-        document.getElementById('kpiArea').innerHTML = `
-            <div class="kpi-card"><h3>💵 Valor Total Filtrado</h3><div class="kpi-value">R$ ${totalValor.toLocaleString('pt-BR', {minimumFractionDigits:2})}</div></div>
-            <div class="kpi-card"><h3>📄 Documentos</h3><div class="kpi-value">${qtdDocs}</div></div>
-            <div class="kpi-card"><h3>📈 Receitas (estimado)</h3><div class="kpi-value">R$ ${receita.toLocaleString('pt-BR', {minimumFractionDigits:2})}</div></div>
-            <div class="kpi-card"><h3>📉 Despesas</h3><div class="kpi-value">R$ ${despesa.toLocaleString('pt-BR', {minimumFractionDigits:2})}</div></div>
-        `;
-    }
-    
-    function updateTable() {
-        const tbody = document.getElementById('tableBody');
-        if(!tbody) return;
-        tbody.innerHTML = '';
-        filteredData.forEach(item => {
-            const row = tbody.insertRow();
-            const dateStr = item.vencimentoDate ? moment(item.vencimentoDate).format('DD/MM/YYYY') : '---';
-            row.innerHTML = `<td>${item.documento}</td><td>${dateStr}</td><td>${item.local}</td><td>${item.tipoConta}</td><td style="text-align:right">R$ ${item.valor.toFixed(2)}</td>`;
-            row.style.cursor = 'pointer';
-            row.addEventListener('click', () => {
-                const modal = document.getElementById('serviceModal');
-                const serviceDesc = document.getElementById('serviceDesc');
-                serviceDesc.innerHTML = `<strong>📄 ${item.documento}</strong><br>🔧 Serviço: ${item.servico}<br>📍 Local: ${item.local}<br>💰 Valor: R$ ${item.valor.toFixed(2)}`;
-                modal.style.display = 'block';
-                setTimeout(() => { modal.style.display = 'block'; }, 10);
-            });
-        });
-    }
-    
-    function updateChartsAndForecast() {
-        // Agrupar por tipo de conta (valores totais)
-        const tipoMap = new Map();
-        filteredData.forEach(item => {
-            let tipo = item.tipoConta;
-            tipoMap.set(tipo, (tipoMap.get(tipo)||0) + item.valor);
-        });
-        const tipos = Array.from(tipoMap.keys());
-        const valores = tipos.map(t => tipoMap.get(t));
-        
-        if(typeChartObj) typeChartObj.destroy();
-        const ctx1 = document.getElementById('typeChart').getContext('2d');
-        typeChartObj = new Chart(ctx1, {
-            type: 'doughnut',
-            data: { labels: tipos, datasets: [{ data: valores, backgroundColor: ['#8B7355','#d4af37','#2d3748','#38a169','#e53e3e','#3182ce'] }] },
-            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
-        });
-        
-        // Previsão: evolução mensal + forecast 3 meses
-        const monthlyMap = new Map();
-        rawData.forEach(item => {
-            if(item.vencimentoDate) {
-                const key = moment(item.vencimentoDate).format('YYYY-MM');
-                const val = item.valor;
-                monthlyMap.set(key, (monthlyMap.get(key)||0) + val);
-            }
-        });
-        const sortedMonths = Array.from(monthlyMap.keys()).sort();
-        const monthlyValues = sortedMonths.map(m => monthlyMap.get(m));
-        // previsão simples: média dos últimos 3 meses para projetar +3
-        let forecastValues = [];
-        let lastValues = monthlyValues.slice(-3);
-        let avgForecast = lastValues.length ? lastValues.reduce((a,b)=>a+b,0)/lastValues.length : 0;
-        for(let i=0;i<3;i++) forecastValues.push(avgForecast);
-        const extendedLabels = [...sortedMonths, ...['Previsão M+1', 'Previsão M+2', 'Previsão M+3']];
-        const extendedData = [...monthlyValues, ...forecastValues];
-        
-        if(forecastChartObj) forecastChartObj.destroy();
-        const ctx2 = document.getElementById('forecastChart').getContext('2d');
-        forecastChartObj = new Chart(ctx2, {
-            type: 'line',
-            data: { labels: extendedLabels, datasets: [{ label: 'Valor Total (R$)', data: extendedData, borderColor: '#d4af37', backgroundColor: 'rgba(212,175,55,0.1)', tension: 0.3, fill: true }] },
-            options: { responsive: true, plugins: { tooltip: { callbacks: { label: (ctx) => `R$ ${ctx.raw.toFixed(2)}` } } } }
-        });
-        const forecastNote = document.getElementById('forecastNote');
-        if(forecastNote) forecastNote.innerHTML = `📈 Previsão próx. 3 meses: Média R$ ${avgForecast.toFixed(2)} por mês. Base histórica (últimos meses): ${monthlyValues.slice(-3).map(v=>`R$ ${v.toFixed(2)}`).join(', ')}`;
-    }
-    
-    // Eventos de filtro
-    function bindFilterEvents() {
-        document.getElementById('filterMonth')?.addEventListener('change', applyFiltersAndRender);
-        document.getElementById('filterLocal')?.addEventListener('change', applyFiltersAndRender);
-        document.getElementById('filterTipo')?.addEventListener('change', applyFiltersAndRender);
-        document.getElementById('filterDueDate')?.addEventListener('change', applyFiltersAndRender);
-        document.getElementById('resetFiltersBtn')?.addEventListener('click', () => {
-            document.getElementById('filterMonth').value = 'all';
-            document.getElementById('filterLocal').value = 'all';
-            document.getElementById('filterTipo').value = 'all';
-            document.getElementById('filterDueDate').value = '';
-            applyFiltersAndRender();
-        });
-        document.getElementById('closeServiceModal')?.addEventListener('click', () => {
-            document.getElementById('serviceModal').style.display = 'none';
-        });
-        window.addEventListener('click', (e) => { if(e.target === document.getElementById('serviceModal')) document.getElementById('serviceModal').style.display = 'none'; });
-    }
-    
-    // LOGIN
-    function checkLoginStatus() {
-        const logged = sessionStorage.getItem('dashboardAuth');
-        if(logged === 'true') {
-            showDashboard();
-        } else {
-            loginModal.style.display = 'flex';
-            dashboardPanel.style.display = 'none';
-        }
-    }
-    
-    function showDashboard() {
-        loginModal.style.display = 'none';
-        dashboardPanel.style.display = 'block';
-        sessionStorage.setItem('dashboardAuth', 'true');
-        if(rawData.length === 0) loadGoogleSheetData();
-        else applyFiltersAndRender();
-    }
-    
     function logout() {
-        sessionStorage.removeItem('dashboardAuth');
-        dashboardPanel.style.display = 'none';
-        loginModal.style.display = 'flex';
-        loginErrorSpan.innerText = '';
+        publicSite.style.display = 'block';
+        privateArea.style.display = 'none';
+        hideLogin();
     }
-    
+
+    privateAccessBtn.addEventListener('click', (e) => { e.preventDefault(); showLogin(); });
     doLoginBtn.addEventListener('click', () => {
         const user = document.getElementById('loginUser').value.trim();
         const pass = document.getElementById('loginPass').value.trim();
         if(user === VALID_USER && pass === VALID_PASS) {
-            showDashboard();
+            showPrivate();
         } else {
-            loginErrorSpan.innerText = '❌ Acesso negado. Credenciais inválidas.';
+            document.getElementById('loginError').innerText = 'Credenciais inválidas';
         }
     });
-    
-    openDashboardBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        if(sessionStorage.getItem('dashboardAuth') === 'true') {
-            showDashboard();
-        } else {
-            loginModal.style.display = 'flex';
+    logoutPrivateBtn.addEventListener('click', logout);
+
+    // Carregar Financeiro
+    async function loadFinanceiroData() {
+        try {
+            const resp = await fetch(URL_FINANCEIRO);
+            const text = await resp.text();
+            const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+            if(parsed.errors.length) console.warn(parsed.errors);
+            const rows = parsed.data;
+            if(!rows.length) throw new Error("Planilha vazia");
+            const headers = Object.keys(rows[0]);
+            const colDoc = headers.find(h => /doc|nota|documento/i.test(h)) || headers[0];
+            const colVenc = headers.find(h => /venc|data/i.test(h)) || headers[1];
+            const colLocal = headers.find(h => /local|cidade/i.test(h)) || headers[2];
+            const colTipo = headers.find(h => /tipo|conta|categoria/i.test(h)) || headers[3];
+            const colValor = headers.find(h => /valor|r\$|total/i.test(h)) || headers[4];
+            const colServ = headers.find(h => /serviço|servico|descrição/i.test(h)) || headers[5];
+            financeiroData = rows.map(row => {
+                let val = parseFloat(String(row[colValor]).replace(/[R$\s]/g,'').replace(',','.'));
+                if(isNaN(val)) val=0;
+                let date = moment(row[colVenc], ['DD/MM/YYYY','YYYY-MM-DD','MM/DD/YYYY'], true);
+                return {
+                    documento: row[colDoc] || "ND",
+                    vencimentoDate: date.isValid() ? date.toDate() : null,
+                    local: row[colLocal] || "Indefinido",
+                    tipoConta: row[colTipo] || "Outros",
+                    valor: val,
+                    servico: row[colServ] || "Sem descrição"
+                };
+            }).filter(d => d.valor !== 0);
+            populateFinFilters();
+            applyFinFilters();
+        } catch(e) {
+            console.error(e);
+            financeiroData = [
+                { documento:"NF123", vencimentoDate:new Date(2025,2,15), local:"Concórdia-SC", tipoConta:"Combustível", valor:1850, servico:"Abastecimento"},
+                { documento:"NF456", vencimentoDate:new Date(2025,3,10), local:"São Paulo-SP", tipoConta:"Manutenção", valor:3200, servico:"Revisão"},
+                { documento:"Fatura BRF", vencimentoDate:new Date(2025,4,20), local:"Concórdia-SC", tipoConta:"Receita", valor:12500, servico:"Frete"},
+            ];
+            populateFinFilters();
+            applyFinFilters();
         }
+    }
+
+    function populateFinFilters() {
+        const locais = [...new Set(financeiroData.map(i=>i.local))];
+        const tipos = [...new Set(financeiroData.map(i=>i.tipoConta))];
+        const localSelect = document.getElementById('finLocal');
+        const tipoSelect = document.getElementById('finTipo');
+        localSelect.innerHTML = '<option value="all">Todos</option>' + locais.map(l=>`<option value="${l}">${l}</option>`).join('');
+        tipoSelect.innerHTML = '<option value="all">Todos</option>' + tipos.map(t=>`<option value="${t}">${t}</option>`).join('');
+    }
+
+    function applyFinFilters() {
+        let start = document.getElementById('finDataInicio').value;
+        let end = document.getElementById('finDataFim').value;
+        let local = document.getElementById('finLocal').value;
+        let tipo = document.getElementById('finTipo').value;
+        let filtered = financeiroData.filter(item => {
+            if(start && item.vencimentoDate && item.vencimentoDate < new Date(start)) return false;
+            if(end && item.vencimentoDate) { let e = new Date(end); e.setHours(23,59,59); if(item.vencimentoDate > e) return false; }
+            if(local !== 'all' && item.local !== local) return false;
+            if(tipo !== 'all' && item.tipoConta !== tipo) return false;
+            return true;
+        });
+        // Ranking
+        let tipoMap = new Map();
+        filtered.forEach(i => tipoMap.set(i.tipoConta, (tipoMap.get(i.tipoConta)||0) + i.valor));
+        let sorted = Array.from(tipoMap.entries()).sort((a,b)=>b[1]-a[1]);
+        document.getElementById('finRanking').innerHTML = sorted.map(([t, v]) => `<div><strong>${t}</strong>: R$ ${v.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>`).join('');
+        // Tabela
+        let tbody = document.querySelector('#finTable tbody');
+        tbody.innerHTML = '';
+        filtered.forEach(item => {
+            let row = tbody.insertRow();
+            let dateStr = item.vencimentoDate ? moment(item.vencimentoDate).format('DD/MM/YYYY') : '---';
+            row.innerHTML = `<td>${item.local}</td><td>${item.tipoConta}</td><td>${dateStr}</td><td>${item.documento}</td><td style="text-align:right">R$ ${item.valor.toFixed(2)}</td><td>${item.servico.substring(0,40)}</td>`;
+        });
+        // Gráfico previsão
+        let monthly = new Map();
+        financeiroData.forEach(i => { if(i.vencimentoDate) { let key = moment(i.vencimentoDate).format('YYYY-MM'); monthly.set(key, (monthly.get(key)||0) + i.valor); } });
+        let months = Array.from(monthly.keys()).sort();
+        let values = months.map(m=>monthly.get(m));
+        let last3 = values.slice(-3);
+        let avg = last3.length ? last3.reduce((a,b)=>a+b,0)/last3.length : 0;
+        let forecast = [avg, avg, avg];
+        let labels = [...months, 'Previsão +1', 'Previsão +2', 'Previsão +3'];
+        let data = [...values, ...forecast];
+        if(finChart) finChart.destroy();
+        let ctx = document.getElementById('finChart').getContext('2d');
+        finChart = new Chart(ctx, { type:'line', data:{ labels, datasets:[{ label:'Valor Total (R$)', data, borderColor:'#d4af37', fill:true }] } });
+    }
+
+    // Exportar Financeiro CSV
+    document.getElementById('finExportarCSV').addEventListener('click', () => {
+        let filtered = getFilteredFinanceiro();
+        let csvRows = [["Local","Tipo","Vencimento","Documento","Valor","Serviço"]];
+        filtered.forEach(i => {
+            let date = i.vencimentoDate ? moment(i.vencimentoDate).format('DD/MM/YYYY') : '';
+            csvRows.push([i.local, i.tipoConta, date, i.documento, i.valor, i.servico]);
+        });
+        let csv = csvRows.map(r => r.join(",")).join("\n");
+        let blob = new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"});
+        let link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "financeiro.csv";
+        link.click();
     });
-    
-    logoutBtn.addEventListener('click', logout);
-    
-    // Inicialização
-    (function init() {
-        bindFilterEvents();
-        checkLoginStatus();
-        // carregar dados em background se logged
-        if(sessionStorage.getItem('dashboardAuth') === 'true') {
-            loadGoogleSheetData();
-        } else {
-            // pré-carrega silencioso para agilidade
-            loadGoogleSheetData();
+
+    document.getElementById('finExportarPDF').addEventListener('click', () => {
+        window.print(); // simplificado, mas pode usar html2canvas se necessário
+        alert("Use Ctrl+P para salvar como PDF.");
+    });
+
+    function getFilteredFinanceiro() {
+        let start = document.getElementById('finDataInicio').value;
+        let end = document.getElementById('finDataFim').value;
+        let local = document.getElementById('finLocal').value;
+        let tipo = document.getElementById('finTipo').value;
+        return financeiroData.filter(item => {
+            if(start && item.vencimentoDate && item.vencimentoDate < new Date(start)) return false;
+            if(end && item.vencimentoDate) { let e = new Date(end); e.setHours(23,59,59); if(item.vencimentoDate > e) return false; }
+            if(local !== 'all' && item.local !== local) return false;
+            if(tipo !== 'all' && item.tipoConta !== tipo) return false;
+            return true;
+        });
+    }
+
+    // FATURAMENTO
+    async function loadFaturamentoData() {
+        try {
+            const resp = await fetch(URL_FATURAMENTO);
+            const text = await resp.text();
+            const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+            const rows = parsed.data;
+            if(!rows.length) throw new Error("Planilha vazia");
+            const headers = Object.keys(rows[0]);
+            const colData = headers.find(h => /data|emissão|mes/i.test(h)) || headers[0];
+            const colPlaca = headers.find(h => /placa/i.test(h)) || headers[1];
+            const colMotorista = headers.find(h => /motorista/i.test(h)) || headers[2];
+            const colEmbarcadora = headers.find(h => /embarcadora|cliente/i.test(h)) || headers[3];
+            const colOrigem = headers.find(h => /origem|de/i.test(h)) || headers[4];
+            const colDestino = headers.find(h => /destino|para/i.test(h)) || headers[5];
+            const colValor = headers.find(h => /valor|frete|r\$|total/i.test(h)) || headers[6];
+            faturamentoData = rows.map(row => {
+                let val = parseFloat(String(row[colValor]).replace(/[R$\s]/g,'').replace(',','.'));
+                if(isNaN(val)) val=0;
+                let data = moment(row[colData], ['DD/MM/YYYY','YYYY-MM-DD','MM/DD/YYYY'], true);
+                return {
+                    data: data.isValid() ? data.toDate() : null,
+                    placa: (row[colPlaca] || "").toUpperCase(),
+                    motorista: row[colMotorista] || "Não informado",
+                    embarcadora: row[colEmbarcadora] || "Não informado",
+                    origem: row[colOrigem] || "",
+                    destino: row[colDestino] || "",
+                    valor: val
+                };
+            }).filter(d => d.valor > 0);
+            applyFatFilters();
+        } catch(e) {
+            console.error(e);
+            faturamentoData = [
+                { data: new Date(2025,2,10), placa: "ABC1234", motorista: "João", embarcadora: "BRF", origem: "Concórdia", destino: "São Paulo", valor: 4500 },
+                { data: new Date(2025,2,15), placa: "XYZ5678", motorista: "Carlos", embarcadora: "Sadia", origem: "Chapecó", destino: "Rio", valor: 3800 },
+                { data: new Date(2025,3,5), placa: "ABC1234", motorista: "João", embarcadora: "BRF", origem: "Concórdia", destino: "Curitiba", valor: 2100 },
+            ];
+            applyFatFilters();
         }
-    })();
+    }
+
+    function applyFatFilters() {
+        let mes = document.getElementById('fatMes').value;
+        let placa = document.getElementById('fatPlaca').value.trim().toUpperCase();
+        let embarcadora = document.getElementById('fatEmbarcadora').value.trim().toLowerCase();
+        let origem = document.getElementById('fatOrigem').value.trim().toLowerCase();
+        let destino = document.getElementById('fatDestino').value.trim().toLowerCase();
+        let valorMin = parseFloat(document.getElementById('fatValorMin').value);
+        let filtered = faturamentoData.filter(item => {
+            if(mes && item.data) {
+                let itemMes = moment(item.data).format('YYYY-MM');
+                if(itemMes !== mes) return false;
+            }
+            if(placa && !item.placa.includes(placa)) return false;
+            if(embarcadora && !item.embarcadora.toLowerCase().includes(embarcadora)) return false;
+            if(origem && !item.origem.toLowerCase().includes(origem)) return false;
+            if(destino && !item.destino.toLowerCase().includes(destino)) return false;
+            if(!isNaN(valorMin) && item.valor < valorMin) return false;
+            return true;
+        });
+        // Rankings
+        let rankMotorista = new Map(); let rankPlaca = new Map(); let rankEmbarcadora = new Map(); let somaPlaca = new Map();
+        filtered.forEach(i => {
+            rankMotorista.set(i.motorista, (rankMotorista.get(i.motorista)||0) + i.valor);
+            rankPlaca.set(i.placa, (rankPlaca.get(i.placa)||0) + i.valor);
+            rankEmbarcadora.set(i.embarcadora, (rankEmbarcadora.get(i.embarcadora)||0) + i.valor);
+            somaPlaca.set(i.placa, (somaPlaca.get(i.placa)||0) + i.valor);
+        });
+        document.getElementById('rankMotorista').innerHTML = Array.from(rankMotorista.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`<div>${k}: R$ ${v.toFixed(2)}</div>`).join('');
+        document.getElementById('rankPlaca').innerHTML = Array.from(rankPlaca.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`<div>${k}: R$ ${v.toFixed(2)}</div>`).join('');
+        document.getElementById('rankEmbarcadora').innerHTML = Array.from(rankEmbarcadora.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`<div>${k}: R$ ${v.toFixed(2)}</div>`).join('');
+        document.getElementById('rankSomaPlaca').innerHTML = Array.from(somaPlaca.entries()).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div>${k}: R$ ${v.toFixed(2)}</div>`).join('');
+        // Tabela
+        let tbody = document.querySelector('#fatTable tbody');
+        tbody.innerHTML = '';
+        filtered.forEach(item => {
+            let row = tbody.insertRow();
+            let dataStr = item.data ? moment(item.data).format('DD/MM/YYYY') : '';
+            row.innerHTML = `<td>${dataStr}</td><td>${item.placa}</td><td>${item.motorista}</td><td>${item.embarcadora}</td><td>${item.origem}</td><td>${item.destino}</td><td style="text-align:right">R$ ${item.valor.toFixed(2)}</td>`;
+        });
+    }
+
+    document.getElementById('fatAplicarFiltros').addEventListener('click', applyFatFilters);
+    document.getElementById('fatExportarCSV').addEventListener('click', () => {
+        let filtered = getFilteredFaturamento();
+        let csvRows = [["Data","Placa","Motorista","Embarcadora","Origem","Destino","Valor"]];
+        filtered.forEach(i => {
+            let dataStr = i.data ? moment(i.data).format('DD/MM/YYYY') : '';
+            csvRows.push([dataStr, i.placa, i.motorista, i.embarcadora, i.origem, i.destino, i.valor]);
+        });
+        let csv = csvRows.map(r => r.join(",")).join("\n");
+        let blob = new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"});
+        let link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "faturamento.csv";
+        link.click();
+    });
+    document.getElementById('fatExportarPDF').addEventListener('click', () => { alert("Use Ctrl+P para salvar como PDF."); });
+    function getFilteredFaturamento() {
+        let mes = document.getElementById('fatMes').value;
+        let placa = document.getElementById('fatPlaca').value.trim().toUpperCase();
+        let embarcadora = document.getElementById('fatEmbarcadora').value.trim().toLowerCase();
+        let origem = document.getElementById('fatOrigem').value.trim().toLowerCase();
+        let destino = document.getElementById('fatDestino').value.trim().toLowerCase();
+        let valorMin = parseFloat(document.getElementById('fatValorMin').value);
+        return faturamentoData.filter(item => {
+            if(mes && item.data && moment(item.data).format('YYYY-MM') !== mes) return false;
+            if(placa && !item.placa.includes(placa)) return false;
+            if(embarcadora && !item.embarcadora.toLowerCase().includes(embarcadora)) return false;
+            if(origem && !item.origem.toLowerCase().includes(origem)) return false;
+            if(destino && !item.destino.toLowerCase().includes(destino)) return false;
+            if(!isNaN(valorMin) && item.valor < valorMin) return false;
+            return true;
+        });
+    }
+
+    // Tabs
+    const tabs = document.querySelectorAll('.tab-btn');
+    const contents = document.querySelectorAll('.tab-content');
+    tabs.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.getAttribute('data-tab');
+            tabs.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            contents.forEach(c => c.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            if(tabId === 'tabFinanceiro' && finChart) finChart.update();
+        });
+    });
+
+    document.getElementById('finAplicarFiltros').addEventListener('click', applyFinFilters);
+    // inicial
+    loadFinanceiroData();
+    loadFaturamentoData();
 </script>
 </body>
 </html>
