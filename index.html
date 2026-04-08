@@ -131,9 +131,12 @@
         .btn-reset { background: #6c757d; }
         .ranking-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin: 1rem 0; }
         .ranking-box { background: #f8fafc; border-radius: 20px; padding: 1rem; border-left: 4px solid var(--accent); }
-        .data-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-        .data-table th, .data-table td { border-bottom: 1px solid #e2e8f0; padding: 0.7rem 0.3rem; text-align: left; }
-        .data-table th { background: #f1f5f9; font-weight: 600; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .data-table th { background: #f1f5f9; font-weight: 600; padding: 12px 8px; text-align: left; border-bottom: 2px solid #e2e8f0; }
+        .data-table td { padding: 10px 8px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+        .data-table tr:hover td { background-color: #fef9e6; }
+        .data-table tr.vencido td:first-child { border-left: 3px solid var(--danger); }
+        .data-table tr.proximo td:first-child { border-left: 3px solid var(--warning); }
         .forecast-table { width: 100%; margin-top: 1rem; border-collapse: collapse; }
         .forecast-table th, .forecast-table td { padding: 0.5rem; border: 1px solid #e2e8f0; text-align: center; }
         .forecast-card { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; border-radius: 20px; padding: 1rem; }
@@ -165,6 +168,10 @@
         .alert-card .quantidade { font-size: 0.9rem; color: var(--text-light); }
         .two-columns { display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: space-between; }
         .two-columns > div { flex: 1; min-width: 250px; }
+        .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 20px; font-size: 0.7rem; font-weight: 600; }
+        .badge-vencido { background: #fee2e2; color: var(--danger); }
+        .badge-proximo { background: #fef3c7; color: var(--warning); }
+        .badge-normal { background: #e2e8f0; color: #475569; }
     </style>
 </head>
 <body>
@@ -248,7 +255,7 @@
             </div>
         </div>
 
-        <!-- Gráfico + Rankings (Tipo e Local) -->
+        <!-- Gráfico + Rankings (Tipo) -->
         <div class="dashboard-card">
             <h3><i class="fas fa-chart-simple"></i> Estratificação por Tipo de Conta</h3>
             <div class="flex-chart-ranking">
@@ -263,25 +270,36 @@
             <div id="finRankingLocal" style="margin-top: 0.5rem;"></div>
         </div>
 
-        <!-- Tabela de Documentos -->
+        <!-- Tabela de Documentos com visual melhorado -->
         <div class="dashboard-card">
             <h3><i class="fas fa-table-list"></i> Documentos Financeiros</h3>
             <div style="overflow-x:auto">
                 <table class="data-table" id="finTable">
-                    <thead><tr><th>Local</th><th>Tipo</th><th>Vencimento</th><th>Documento</th><th>Valor (R$)</th><th>Serviço</th></tr></thead>
-                    <tbody></tbody>
+                    <thead>
+                        <tr>
+                            <th>Local</th>
+                            <th>Tipo</th>
+                            <th>Vencimento</th>
+                            <th>Documento</th>
+                            <th>Valor (R$)</th>
+                            <th>Serviço</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="6" style="text-align:center;">Carregando dados...</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Previsão (baseada no histórico completo) -->
+        <!-- Previsão -->
         <div class="dashboard-card">
             <h3><i class="fas fa-chart-line"></i> Previsão para os próximos meses (até dezembro)</h3>
             <div class="forecast-card"><table class="forecast-table" id="finPrevisaoTable"><thead><tr><th>Mês</th><th>Previsão (R$)</th></tr></thead><tbody><tr><td colspan="2">Calculando...</td></tr></tbody></table></div>
         </div>
     </div>
     
-    <!-- FATURAMENTO (mantido original com botão limpar) -->
+    <!-- FATURAMENTO -->
     <div id="tabFaturamento" class="tab-content">
         <div class="dashboard-card"><h3><i class="fas fa-filter"></i> Filtros</h3><div>
             <div class="filter-group"><label>Mês</label><select id="fatMesSelect"><option value="all">Todos</option></select></div>
@@ -303,7 +321,7 @@
         <div class="dashboard-card"><h3>🚛 Tabela de Fretes (clique na placa do cavalo para ver ficha)</h3><div style="overflow-x:auto"><table class="data-table" id="fatTable"><thead><tr><th>Data</th><th>Placa Cavalo</th><th>Placa Carreta</th><th>Motorista</th><th>Embarcadora</th><th>Origem</th><th>Destino</th><th>Valor (R$)</th></tr></thead><tbody></tbody></table></div><div id="fichaPlaca" class="ficha-placa" style="display:none;"></div></div>
     </div>
 
-    <!-- BATERIAS (mantido) -->
+    <!-- BATERIAS -->
     <div id="tabBaterias" class="tab-content">
         <div class="dashboard-card"><h3><i class="fas fa-filter"></i> Filtros Baterias</h3><div>
             <div class="filter-group"><label>Data Início (Vencimento)</label><input type="date" id="batDataInicio"></div>
@@ -411,9 +429,8 @@
                 let val = parseMoney(row[colValor]);
                 if (val === 0) continue;
                 // Tentar múltiplos formatos de data
-                let date = moment(row[colVenc], ['DD/MM/YYYY', 'DD/MM/YY', 'YYYY-MM-DD', 'MM/DD/YYYY'], true);
+                let date = moment(row[colVenc], ['DD/MM/YYYY', 'DD/MM/YY', 'YYYY-MM-DD', 'MM/DD/YYYY', 'DD/MM/YYYY HH:mm:ss'], true);
                 if (!date.isValid()) {
-                    // tentar converter string diretamente
                     date = moment(row[colVenc], moment.ISO_8601);
                 }
                 financeiroData.push({
@@ -455,9 +472,18 @@
         const local = document.getElementById('finLocal').value.trim();
         const tipo = document.getElementById('finTipo').value.trim();
         
+        // Filtrar dados
         currentFinanceiroFiltered = financeiroData.filter(item => {
-            if(dataInicio && item.vencimentoDate && item.vencimentoDate < new Date(dataInicio)) return false;
-            if(dataFim && item.vencimentoDate) { let end = new Date(dataFim); end.setHours(23,59,59); if(item.vencimentoDate > end) return false; }
+            if(dataInicio && item.vencimentoDate) {
+                const start = new Date(dataInicio);
+                start.setHours(0,0,0,0);
+                if(item.vencimentoDate < start) return false;
+            }
+            if(dataFim && item.vencimentoDate) {
+                const end = new Date(dataFim);
+                end.setHours(23,59,59,999);
+                if(item.vencimentoDate > end) return false;
+            }
             if(local && !item.local.toLowerCase().includes(local.toLowerCase())) return false;
             if(tipo && !item.tipoConta.toLowerCase().includes(tipo.toLowerCase())) return false;
             return true;
@@ -487,14 +513,44 @@
         let sortedLocal = Array.from(localMap.entries()).sort((a,b)=>b[1]-a[1]);
         document.getElementById('finRankingLocal').innerHTML = sortedLocal.map(([l, v]) => `<div style="display:flex; justify-content:space-between; padding:0.5rem 0; border-bottom:1px solid #e2e8f0;"><strong>${l}</strong> <span>R$ ${v.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></div>`).join('');
 
-        // Tabela de documentos (filtrada)
+        // Tabela de documentos (filtrada) com visual melhorado e datas
         let tbody = document.querySelector('#finTable tbody');
         tbody.innerHTML = '';
+        const hoje = new Date();
+        hoje.setHours(0,0,0,0);
+        const dias7 = new Date(hoje); dias7.setDate(hoje.getDate() + 7);
+        
         currentFinanceiroFiltered.forEach(item => {
             let row = tbody.insertRow();
             let dateStr = item.vencimentoDate ? moment(item.vencimentoDate).format('DD/MM/YYYY') : '---';
-            row.innerHTML = `<td>${item.local}Jsme<td style="color:var(--primary); font-weight:500;">${item.tipoConta}Jsme<td>${dateStr}Jsme<td>${item.documento}Jsme<td style="text-align:right">R$ ${item.valor.toFixed(2)}Jsme<td>${item.servico.substring(0,50)}Jsme`;
+            let statusClass = '';
+            let statusBadge = '';
+            if (item.vencimentoDate) {
+                const venc = new Date(item.vencimentoDate);
+                venc.setHours(0,0,0,0);
+                if (venc < hoje) {
+                    statusClass = 'vencido';
+                    statusBadge = '<span class="badge badge-vencido">Vencida</span>';
+                } else if (venc <= dias7) {
+                    statusClass = 'proximo';
+                    statusBadge = '<span class="badge badge-proximo">Próxima</span>';
+                } else {
+                    statusBadge = '<span class="badge badge-normal">Em dia</span>';
+                }
+            }
+            row.className = statusClass;
+            row.innerHTML = `
+                <td style="font-weight:500;">${item.local}</td>
+                <td>${item.tipoConta}</td>
+                <td>${dateStr} ${statusBadge}</td>
+                <td>${item.documento}</td>
+                <td style="text-align:right; font-weight:600;">R$ ${item.valor.toFixed(2)}</td>
+                <td>${item.servico.substring(0,60)}</td>
+            `;
         });
+        if(currentFinanceiroFiltered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nenhum registro encontrado com os filtros aplicados.</td></tr>';
+        }
 
         // Gráfico Pizza (com dados filtrados)
         if (finChartInstance) finChartInstance.destroy();
@@ -521,7 +577,7 @@
         let forecastRows = '';
         for (let {year, month} of nextMonths) {
             let monthName = moment(`${year}-${month}`, 'YYYY-M').format('MMMM/YYYY');
-            forecastRows += `<tr><td style="background:#1e293b;">${monthName}</td><td style="background:#1e293b;">R$ ${avg.toLocaleString('pt-BR', {minimumFractionDigits:2})}</td></tr>`;
+            forecastRows += `<tr><td style="background:#1e293b;">${monthName}Jsme<td style="background:#1e293b;">R$ ${avg.toLocaleString('pt-BR', {minimumFractionDigits:2})}Jsme</tr>`;
         }
         document.getElementById('finPrevisaoTable').innerHTML = `<thead><tr><th>Mês</th><th>Previsão (R$)</th></tr></thead><tbody>${forecastRows || '<tr><td colspan="2">Nenhum mês restante no ano</td></tr>'}</tbody>`;
     }
@@ -543,7 +599,7 @@
     });
     document.getElementById('finExportarPDF').addEventListener('click', () => alert("Use Ctrl+P para salvar como PDF."));
 
-    // ========== FATURAMENTO (código reduzido, mas funcional) ==========
+    // ========== FATURAMENTO (resumido, mas funcional) ==========
     async function loadFaturamentoData(skipFilter = false) {
         const diagDiv = document.getElementById('fatDiagnostic');
         try {
@@ -708,7 +764,7 @@
     });
     document.getElementById('fatExportarPDF').addEventListener('click', () => alert("Use Ctrl+P para salvar como PDF."));
 
-    // ========== BATERIAS (resumido, mas funcional) ==========
+    // ========== BATERIAS ==========
     async function loadBateriasData(skipFilter = false) {
         try {
             const resp = await fetch(URL_BATERIAS);
@@ -841,9 +897,9 @@
             let html = '<table class="data-table" style="width:100%"><thead><tr><th>Data</th><th>Origem</th><th>Destino</th><th>Valor (R$)</th></tr></thead><tbody>';
             fretes.forEach(f => {
                 let dataStr = f.data ? moment(f.data).format('DD/MM/YYYY') : '---';
-                html += `<tr><td>${dataStr}</td><td>${f.origem}</td><td>${f.destino}</td><td style="text-align:right">R$ ${f.valor.toFixed(2)}</td></tr>`;
+                html += `<tr><td>${dataStr}Jsme<td>${f.origem}Jsme<td>${f.destino}Jsme<td style="text-align:right">R$ ${f.valor.toFixed(2)}Jsme</tr>`;
             });
-            html += '</tbody></table>';
+            html += '</tbody></tr>';
             document.getElementById('calcListaFretes').innerHTML = html;
         }
         atualizarValorReceberCalculadora(total);
