@@ -9,7 +9,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <style>
-        /* (mesmos estilos do código anterior - mantidos por brevidade) */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
             --primary: #8B7355;
@@ -211,9 +210,21 @@
         <button class="tab-btn" data-tab="tabBaterias">🔋 Controle de Baterias</button>
     </div>
     
-    <!-- FINANCEIRO (já funcionando) -->
+    <!-- FINANCEIRO -->
     <div id="tabFinanceiro" class="tab-content active">
-        <div class="dashboard-card"><h3>Filtros</h3><div><div class="filter-group"><label>Mês/Ano</label><select id="finMesSelect"><option value="all">Todos</option></select></div><div class="filter-group"><label>Data Início</label><input type="date" id="finDataInicio"></div><div class="filter-group"><label>Data Fim</label><input type="date" id="finDataFim"></div><div class="filter-group"><label>Local</label><input list="finLocalList" id="finLocal" placeholder="Local"><datalist id="finLocalList"></datalist></div><div class="filter-group"><label>Tipo Conta</label><input list="finTipoList" id="finTipo" placeholder="Tipo"><datalist id="finTipoList"></datalist></div><button id="finAplicarFiltros" class="btn-export">Aplicar</button><button id="finLimparFiltros" class="btn-export btn-clear">Limpar</button><button id="finExportarCSV" class="btn-export">📎 CSV</button></div></div>
+        <div class="dashboard-card">
+            <h3><i class="fas fa-filter"></i> Filtros</h3>
+            <div>
+                <div class="filter-group"><label>Mês/Ano</label><select id="finMesSelect"><option value="all">Todos</option></select></div>
+                <div class="filter-group"><label>Data Início</label><input type="date" id="finDataInicio"></div>
+                <div class="filter-group"><label>Data Fim</label><input type="date" id="finDataFim"></div>
+                <div class="filter-group"><label>Local</label><input list="finLocalList" id="finLocal" placeholder="Local"><datalist id="finLocalList"></datalist></div>
+                <div class="filter-group"><label>Tipo Conta</label><input list="finTipoList" id="finTipo" placeholder="Tipo"><datalist id="finTipoList"></datalist></div>
+                <button id="finAplicarFiltros" class="btn-export">Aplicar</button>
+                <button id="finLimparFiltros" class="btn-export btn-clear">Limpar</button>
+                <button id="finExportarCSV" class="btn-export">📎 CSV</button>
+            </div>
+        </div>
         <div id="finDiagnostic" class="diagnostic-box" style="display:none;"></div>
         <div class="dashboard-card"><h3>Visão Executiva</h3><div id="finResumo" class="resumo-card"></div></div>
         <div class="dashboard-card"><h3>Ranking por Tipo de Conta</h3><canvas id="finRankingChart" style="max-height: 250px;"></canvas><div id="finRankingLista" style="margin-top: 1rem;"></div></div>
@@ -223,7 +234,22 @@
     
     <!-- FATURAMENTO -->
     <div id="tabFaturamento" class="tab-content">
-        <div class="dashboard-card"><h3>Filtros</h3><div><div class="filter-group"><label>Mês</label><select id="fatMesSelect"><option value="all">Todos</option></select></div><div class="filter-group"><label>Motorista</label><input list="fatMotoristaList" id="fatMotorista" placeholder="Motorista"><datalist id="fatMotoristaList"></datalist></div><div class="filter-group"><label>Placa Cavalo</label><input list="fatPlacaCavaloList" id="fatPlacaCavalo" placeholder="Cavalo"><datalist id="fatPlacaCavaloList"></datalist></div><div class="filter-group"><label>Placa Carreta</label><input list="fatPlacaCarretaList" id="fatPlacaCarreta" placeholder="Carreta"><datalist id="fatPlacaCarretaList"></datalist></div><div class="filter-group"><label>Embarcadora</label><input list="fatEmbarcadoraList" id="fatEmbarcadora" placeholder="Embarcadora"><datalist id="fatEmbarcadoraList"></datalist></div><div class="filter-group"><label>Origem</label><input list="fatOrigemList" id="fatOrigem" placeholder="Origem"><datalist id="fatOrigemList"></datalist></div><div class="filter-group"><label>Destino</label><input list="fatDestinoList" id="fatDestino" placeholder="Destino"><datalist id="fatDestinoList"></datalist></div><div class="filter-group"><label>Valor Mínimo</label><input type="number" id="fatValorMin" placeholder="R$ mínimo"></div><button id="fatAplicarFiltros" class="btn-export">Aplicar</button><button id="fatReloadBtn" class="btn-export btn-refresh">Recarregar Planilha</button><button id="fatExportarCSV" class="btn-export">📎 CSV</button></div></div>
+        <div class="dashboard-card">
+            <h3>Filtros</h3>
+            <div>
+                <div class="filter-group"><label>Mês</label><select id="fatMesSelect"><option value="all">Todos</option></select></div>
+                <div class="filter-group"><label>Motorista</label><input list="fatMotoristaList" id="fatMotorista" placeholder="Motorista"><datalist id="fatMotoristaList"></datalist></div>
+                <div class="filter-group"><label>Placa Cavalo</label><input list="fatPlacaCavaloList" id="fatPlacaCavalo" placeholder="Cavalo"><datalist id="fatPlacaCavaloList"></datalist></div>
+                <div class="filter-group"><label>Placa Carreta</label><input list="fatPlacaCarretaList" id="fatPlacaCarreta" placeholder="Carreta"><datalist id="fatPlacaCarretaList"></datalist></div>
+                <div class="filter-group"><label>Embarcadora</label><input list="fatEmbarcadoraList" id="fatEmbarcadora" placeholder="Embarcadora"><datalist id="fatEmbarcadoraList"></datalist></div>
+                <div class="filter-group"><label>Origem</label><input list="fatOrigemList" id="fatOrigem" placeholder="Origem"><datalist id="fatOrigemList"></datalist></div>
+                <div class="filter-group"><label>Destino</label><input list="fatDestinoList" id="fatDestino" placeholder="Destino"><datalist id="fatDestinoList"></datalist></div>
+                <div class="filter-group"><label>Valor Mínimo</label><input type="number" id="fatValorMin" placeholder="R$ mínimo"></div>
+                <button id="fatAplicarFiltros" class="btn-export">Aplicar</button>
+                <button id="fatReloadBtn" class="btn-export btn-refresh">Recarregar</button>
+                <button id="fatExportarCSV" class="btn-export">📎 CSV</button>
+            </div>
+        </div>
         <div id="fatDiagnostic" class="diagnostic-box" style="display:none;"></div>
         <div class="dashboard-card"><h3>Top 5 Maiores Fretes</h3><div id="rankMelhoresViagens"></div></div>
         <div class="dashboard-card"><h3>Rankings</h3><div class="ranking-grid"><div class="ranking-box"><h4>Motoristas</h4><div id="rankMotorista"></div></div><div class="ranking-box"><h4>Placas Cavalo</h4><div id="rankPlacaCavalo"></div></div><div class="ranking-box"><h4>Placas Carreta</h4><div id="rankPlacaCarreta"></div></div><div class="ranking-box"><h4>Embarcadoras</h4><div id="rankEmbarcadora"></div></div></div></div>
@@ -280,7 +306,7 @@
 </div>
 
 <script>
-    // CREDENCIAIS
+    // ==================== CREDENCIAIS ====================
     const VALID_USER = "malacarne";
     const VALID_PASS = "mala2325";
 
@@ -289,7 +315,7 @@
     const URL_FATURAMENTO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2S-LdrEMpvvosLHfFDOucVENw-T8OOaC2td00ySdFnim79Lm7AEooZBL--q9zKA/pub?output=csv";
     const URL_BATERIAS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTCotTJjgS2YX7kj4LwUiz3eGGAbuo98npFM6QaqZhHwawIt_RuG1H14c9sRED70Q/pub?output=csv";
 
-    // Variáveis globais
+    // ==================== VARIÁVEIS GLOBAIS ====================
     let financeiroData = [];
     let faturamentoData = [];
     let bateriasData = [];
@@ -304,7 +330,7 @@
     const logoutPrivateBtn = document.getElementById('logoutPrivateBtn');
     const refreshAllBtn = document.getElementById('refreshAllBtn');
 
-    // Funções auxiliares
+    // ==================== FUNÇÕES AUXILIARES ====================
     function parseMoney(value) {
         if (value === undefined || value === null) return 0;
         let cleaned = String(value).replace(/[^\d,.-]/g, '');
@@ -330,7 +356,7 @@
         return d.isValid() ? d.toDate() : null;
     }
 
-    // Controle de login
+    // ==================== CONTROLE DE LOGIN ====================
     function showLogin() { loginModal.classList.add('active'); }
     function hideLogin() { loginModal.classList.remove('active'); }
     function showPrivate() { publicSite.style.display = 'none'; privateArea.style.display = 'block'; hideLogin(); refreshAllData(); }
@@ -351,7 +377,7 @@
         refreshAllBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar Todos';
     }
 
-    // ========== FINANCEIRO ==========
+    // ==================== FINANCEIRO ====================
     async function loadFinanceiroData() {
         const diagDiv = document.getElementById('finDiagnostic');
         try {
@@ -363,12 +389,15 @@
             const rows = parsed.data;
             if (!rows.length) throw new Error("Planilha vazia");
             const headers = Object.keys(rows[0]);
+            console.log("Financeiro - Colunas detectadas:", headers);
+            
             const colDoc = headers.find(h => /doc|nota|documento/i.test(h)) || headers[0];
             const colVenc = headers.find(h => /venc|data/i.test(h)) || headers[1];
             const colLocal = headers.find(h => /local|cidade/i.test(h)) || headers[2];
             const colTipo = headers.find(h => /tipo|conta|categoria/i.test(h)) || headers[3];
             const colValor = headers.find(h => /valor|r\$|total/i.test(h)) || headers[4];
             const colServ = headers.find(h => /serviço|servico|descrição/i.test(h)) || headers[5];
+            
             financeiroData = [];
             for (let row of rows) {
                 let val = parseMoney(row[colValor]);
@@ -391,16 +420,11 @@
             console.error(e);
             diagDiv.style.display = 'block';
             diagDiv.innerHTML = `<strong>⚠️ Diagnóstico Financeiro</strong><br>Erro: ${e.message}<br><br>
-            <strong>Possíveis causas:</strong><br>
-            - Planilha não publicada como CSV (Arquivo > Compartilhar > Publicar na web)<br>
-            - Colunas com nomes diferentes (esperado: Documento, Data Vencimento, Local, Tipo Conta, Valor, Serviço)<br>
-            - Formato de data inválido (use DD/MM/AAAA ou AAAA-MM-DD)<br>
+            Verifique se a planilha está publicada como CSV.<br>
             <a href="${URL_FINANCEIRO}" target="_blank">🔗 Abrir planilha</a><br>
             <button id="finRetryBtn" class="btn-export" style="margin-top:0.5rem;">Tentar novamente</button>`;
             document.getElementById('finRetryBtn')?.addEventListener('click', () => loadFinanceiroData());
-            financeiroData = [
-                { documento:"Exemplo", vencimentoDate:new Date(), local:"Teste", tipoConta:"Exemplo", valor:100, servico:"Dados de demonstração" }
-            ];
+            financeiroData = [];
             atualizarDatalistsFinanceiro();
             applyFinFilters();
         }
@@ -447,7 +471,7 @@
         finRankingChart = new Chart(ctx, {
             type: 'doughnut',
             data: { labels: sorted.map(s=>s[0]), datasets: [{ data: sorted.map(s=>s[1]), backgroundColor: ['#8B7355','#d4af37','#2d3748','#10b981','#ef4444','#3b82f6'] }] },
-            options: { responsive: true }
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
         });
         document.getElementById('finRankingLista').innerHTML = sorted.map(([t, v]) => `<div style="display:flex; justify-content:space-between; padding:0.3rem 0; border-bottom:1px solid #e2e8f0;"><strong>${t}</strong> <span>R$ ${v.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></div>`).join('');
         let tbody = document.querySelector('#finTable tbody');
@@ -457,21 +481,16 @@
             let dateStr = item.vencimentoDate ? moment(item.vencimentoDate).format('DD/MM/YYYY') : '---';
             row.innerHTML = `<td>${item.local}</td><td>${item.tipoConta}</td><td>${dateStr}</td><td>${item.documento}</td><td style="text-align:right">R$ ${item.valor.toFixed(2)}</td><td>${item.servico.substring(0,40)}</td>`;
         });
-        // Previsão
+        // Previsão: média dos últimos 3 meses, projetada para os meses restantes do ano atual
         const monthly = new Map();
         financeiroData.forEach(i => { if(i.vencimentoDate) { const key = moment(i.vencimentoDate).format('YYYY-MM'); monthly.set(key, (monthly.get(key)||0) + i.valor); } });
         let last3Values = Array.from(monthly.values()).slice(-3);
         let avg = last3Values.length ? last3Values.reduce((a,b)=>a+b,0)/last3Values.length : 0;
         let currentYear = new Date().getFullYear();
-        let nextMonths = [];
-        let currentDate = new Date();
-        for (let i = 1; i <= 12; i++) {
-            let monthDate = new Date(currentYear, i-1, 1);
-            if (monthDate >= currentDate) nextMonths.push({ year: currentYear, month: i });
-        }
+        let currentMonth = new Date().getMonth() + 1;
         let forecastRows = '';
-        for (let {year, month} of nextMonths) {
-            let monthName = moment(`${year}-${month}`, 'YYYY-M').format('MMMM/YYYY');
+        for (let m = currentMonth; m <= 12; m++) {
+            let monthName = moment(`${currentYear}-${m}`, 'YYYY-M').format('MMMM/YYYY');
             forecastRows += `<tr><td>${monthName}</td><td>R$ ${avg.toLocaleString('pt-BR', {minimumFractionDigits:2})}</td></tr>`;
         }
         document.getElementById('finPrevisaoTable').innerHTML = `<thead><tr><th>Mês</th><th>Previsão (R$)</th></tr></thead><tbody>${forecastRows || '<tr><td colspan="2">Nenhum mês restante</td></tr>'}</tbody>`;
@@ -487,15 +506,14 @@
         applyFinFilters();
     });
     document.getElementById('finExportarCSV').addEventListener('click', () => {
-        const filtered = financeiroData; // simplificado
         let csvRows = [["Local","Tipo","Vencimento","Documento","Valor","Serviço"]];
-        filtered.forEach(i => { csvRows.push([i.local, i.tipoConta, i.vencimentoDate ? moment(i.vencimentoDate).format('DD/MM/YYYY') : '', i.documento, i.valor, i.servico]); });
+        financeiroData.forEach(i => { csvRows.push([i.local, i.tipoConta, i.vencimentoDate ? moment(i.vencimentoDate).format('DD/MM/YYYY') : '', i.documento, i.valor, i.servico]); });
         let csv = csvRows.map(r => r.join(",")).join("\n");
         let blob = new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"});
         let link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "financeiro.csv"; link.click();
     });
 
-    // ========== FATURAMENTO ==========
+    // ==================== FATURAMENTO ====================
     async function loadFaturamentoData() {
         const diagDiv = document.getElementById('fatDiagnostic');
         try {
@@ -506,6 +524,8 @@
             const rows = parsed.data;
             if (!rows.length) throw new Error("Planilha vazia");
             const headers = Object.keys(rows[0]);
+            console.log("Faturamento - Colunas detectadas:", headers);
+            
             const colData = headers.find(h => /data|emissão|mes/i.test(h)) || headers[0];
             const colMotorista = headers.find(h => /motorista/i.test(h)) || headers[1];
             const colPlacaCavalo = headers.find(h => /cavalo|trator|placa.*cavalo/i.test(h)) || (headers[2] || headers[0]);
@@ -514,6 +534,7 @@
             const colOrigem = headers.find(h => /origem|de/i.test(h)) || headers[5];
             const colDestino = headers.find(h => /destino|para/i.test(h)) || headers[6];
             const colValor = headers.find(h => /valor|frete|r\$|total/i.test(h)) || headers[7];
+            
             faturamentoData = [];
             for (let row of rows) {
                 let val = parseMoney(row[colValor]);
@@ -540,15 +561,11 @@
             console.error(e);
             diagDiv.style.display = 'block';
             diagDiv.innerHTML = `<strong>⚠️ Diagnóstico Faturamento</strong><br>Erro: ${e.message}<br><br>
-            <strong>Possíveis causas:</strong><br>
-            - Planilha não publicada como CSV<br>
-            - Colunas com nomes diferentes (Data, Motorista, Placa Cavalo, Placa Carreta, Embarcadora, Origem, Destino, Valor)<br>
+            Verifique se a planilha está publicada como CSV e com as colunas: Data, Motorista, Placa Cavalo, Placa Carreta, Embarcadora, Origem, Destino, Valor Frete.<br>
             <a href="${URL_FATURAMENTO}" target="_blank">🔗 Abrir planilha</a><br>
             <button id="fatRetryBtn" class="btn-export" style="margin-top:0.5rem;">Tentar novamente</button>`;
             document.getElementById('fatRetryBtn')?.addEventListener('click', () => loadFaturamentoData());
-            faturamentoData = [
-                { data: new Date(), placaCavalo: "DEMO1", placaCarreta: "DEMO2", motorista: "Exemplo", embarcadora: "Teste", origem: "A", destino: "B", valor: 1000 }
-            ];
+            faturamentoData = [];
             atualizarDatalistsFaturamento();
             aplicarFiltrosFaturamento();
             atualizarSelectMotoristasCalculadora();
@@ -647,7 +664,7 @@
         let link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "faturamento.csv"; link.click();
     });
 
-    // ========== CALCULADORA ==========
+    // ==================== CALCULADORA ====================
     function atualizarSelectMotoristasCalculadora() {
         const motoristas = [...new Set(faturamentoData.map(i => i.motorista))];
         const select = document.getElementById('calcMotoristaSelect');
@@ -695,7 +712,7 @@
     const calcInputs = ['calcComissaoPercent','calcDespesasMot','calcDiaria','calcBonus','calcVales','calcIr','calcMulta','calcDepFolha'];
     calcInputs.forEach(id => document.getElementById(id).addEventListener('input', () => { const total = parseFloat(document.getElementById('calcTotalFrete').innerText.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0; atualizarValorReceberCalculadora(total); }));
 
-    // ========== BATERIAS ==========
+    // ==================== BATERIAS ====================
     async function loadBateriasData() {
         const diagDiv = document.getElementById('bateriaDiagnostic');
         try {
@@ -706,11 +723,14 @@
             const rows = parsed.data;
             if (!rows.length) throw new Error("Planilha vazia");
             const headers = Object.keys(rows[0]);
+            console.log("Baterias - Colunas detectadas:", headers);
+            
             const colVeiculo = headers.find(h => /veiculo|veículo|placa/i.test(h)) || headers[0];
             const colTipo = headers.find(h => /tipo|bateria/i.test(h)) || headers[1];
             const colInstalacao = headers.find(h => /instalação|instalacao|data inst/i.test(h)) || headers[2];
             const colVencimento = headers.find(h => /vencimento|validade|data venc/i.test(h)) || headers[3];
             const colObs = headers.find(h => /obs|observação|notas/i.test(h)) || headers[4];
+            
             bateriasData = [];
             for (let row of rows) {
                 let instalacao = parseDate(row[colInstalacao]);
@@ -730,6 +750,7 @@
             console.error(e);
             diagDiv.style.display = 'block';
             diagDiv.innerHTML = `<strong>⚠️ Diagnóstico Baterias</strong><br>Erro: ${e.message}<br><br>
+            Verifique se a planilha está publicada como CSV e com as colunas: Veículo, Tipo Bateria, Data Instalação, Data Vencimento, Observações.<br>
             <a href="${URL_BATERIAS}" target="_blank">🔗 Abrir planilha</a><br>
             <button id="bateriaRetryBtn" class="btn-export" style="margin-top:0.5rem;">Tentar novamente</button>`;
             document.getElementById('bateriaRetryBtn')?.addEventListener('click', () => loadBateriasData());
@@ -805,7 +826,7 @@
         let link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "baterias.csv"; link.click();
     });
 
-    // Inicialização
+    // ==================== INICIALIZAÇÃO ====================
     const tabs = document.querySelectorAll('.tab-btn');
     const contents = document.querySelectorAll('.tab-content');
     tabs.forEach(btn => btn.addEventListener('click', () => {
