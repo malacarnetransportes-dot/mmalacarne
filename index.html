@@ -135,8 +135,6 @@
         .data-table th { background: #f1f5f9; font-weight: 600; padding: 12px 8px; text-align: left; border-bottom: 2px solid #e2e8f0; }
         .data-table td { padding: 10px 8px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
         .data-table tr:hover td { background-color: #fef9e6; }
-        .data-table tr.vencido td:first-child { border-left: 3px solid var(--danger); }
-        .data-table tr.proximo td:first-child { border-left: 3px solid var(--warning); }
         .forecast-table { width: 100%; margin-top: 1rem; border-collapse: collapse; }
         .forecast-table th, .forecast-table td { padding: 0.5rem; border: 1px solid #e2e8f0; text-align: center; }
         .forecast-card { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; border-radius: 20px; padding: 1rem; }
@@ -163,15 +161,11 @@
         .flex-chart-ranking > div { flex: 1; min-width: 250px; }
         .alert-card { background: #fff5f5; border-left: 6px solid var(--danger); border-radius: 20px; padding: 1rem; margin-bottom: 1rem; }
         .alert-card.warning { background: #fffbeb; border-left-color: var(--warning); }
-        .alert-card h4 { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
-        .alert-card .valor { font-size: 1.4rem; font-weight: 800; }
-        .alert-card .quantidade { font-size: 0.9rem; color: var(--text-light); }
-        .two-columns { display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: space-between; }
-        .two-columns > div { flex: 1; min-width: 250px; }
         .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 20px; font-size: 0.7rem; font-weight: 600; }
         .badge-vencido { background: #fee2e2; color: var(--danger); }
         .badge-proximo { background: #fef3c7; color: var(--warning); }
         .badge-normal { background: #e2e8f0; color: #475569; }
+        .debug-card { background: #f1f5f9; border-left: 4px solid var(--info); margin-bottom: 1rem; }
     </style>
 </head>
 <body>
@@ -229,6 +223,12 @@
     
     <!-- FINANCEIRO - CORRIGIDO -->
     <div id="tabFinanceiro" class="tab-content active">
+        <!-- Card de diagnóstico (opcional) -->
+        <div id="finDebugCard" class="dashboard-card debug-card" style="display: none;">
+            <h3><i class="fas fa-bug"></i> Diagnóstico de Colunas</h3>
+            <div id="finDebugInfo"></div>
+        </div>
+
         <div class="dashboard-card">
             <h3><i class="fas fa-filter"></i> Filtros Personalizados</h3>
             <div>
@@ -299,7 +299,7 @@
         </div>
     </div>
     
-    <!-- FATURAMENTO -->
+    <!-- FATURAMENTO (resumido, mas funcional) -->
     <div id="tabFaturamento" class="tab-content">
         <div class="dashboard-card"><h3><i class="fas fa-filter"></i> Filtros</h3><div>
             <div class="filter-group"><label>Mês</label><select id="fatMesSelect"><option value="all">Todos</option></select></div>
@@ -321,7 +321,7 @@
         <div class="dashboard-card"><h3>🚛 Tabela de Fretes (clique na placa do cavalo para ver ficha)</h3><div style="overflow-x:auto"><table class="data-table" id="fatTable"><thead><tr><th>Data</th><th>Placa Cavalo</th><th>Placa Carreta</th><th>Motorista</th><th>Embarcadora</th><th>Origem</th><th>Destino</th><th>Valor (R$)</th></tr></thead><tbody></tbody></table></div><div id="fichaPlaca" class="ficha-placa" style="display:none;"></div></div>
     </div>
 
-    <!-- BATERIAS -->
+    <!-- BATERIAS (resumido) -->
     <div id="tabBaterias" class="tab-content">
         <div class="dashboard-card"><h3><i class="fas fa-filter"></i> Filtros Baterias</h3><div>
             <div class="filter-group"><label>Data Início (Vencimento)</label><input type="date" id="batDataInicio"></div>
@@ -390,6 +390,16 @@
         return isNaN(num) ? 0 : num;
     }
 
+    // Função para encontrar a melhor coluna baseada em palavras-chave
+    function findColumn(headers, keywords) {
+        const lowerHeaders = headers.map(h => h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+        for (let kw of keywords) {
+            const idx = lowerHeaders.findIndex(h => h.includes(kw.toLowerCase()));
+            if (idx !== -1) return headers[idx];
+        }
+        return headers[0]; // fallback
+    }
+
     function showLogin() { loginModal.classList.add('active'); }
     function hideLogin() { loginModal.classList.remove('active'); }
     function showPrivate() { publicSite.style.display = 'none'; privateArea.style.display = 'block'; hideLogin(); refreshAllData(); }
@@ -416,22 +426,42 @@
             const text = await resp.text();
             const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
             const rows = parsed.data;
-            if(!rows.length) throw new Error("Vazio");
+            if (!rows.length) throw new Error("Planilha vazia");
             const headers = Object.keys(rows[0]);
-            const colDoc = headers.find(h => /doc|nota|documento/i.test(h)) || headers[0];
-            const colVenc = headers.find(h => /venc|data/i.test(h)) || headers[1];
-            const colLocal = headers.find(h => /local|cidade/i.test(h)) || headers[2];
-            const colTipo = headers.find(h => /tipo|conta|categoria/i.test(h)) || headers[3];
-            const colValor = headers.find(h => /valor|r\$|total/i.test(h)) || headers[4];
-            const colServ = headers.find(h => /serviço|servico|descrição/i.test(h)) || headers[5];
+            
+            // Mapeamento inteligente de colunas
+            const colLocal = findColumn(headers, ['local', 'cidade', 'municipio', 'origem']);
+            const colTipo = findColumn(headers, ['tipo', 'categoria', 'conta', 'natureza']);
+            const colVenc = findColumn(headers, ['vencimento', 'data', 'emissao', 'dt']);
+            const colDoc = findColumn(headers, ['documento', 'nota', 'nf', 'fatura', 'doc']);
+            const colValor = findColumn(headers, ['valor', 'total', 'r$', 'vl']);
+            const colServ = findColumn(headers, ['servico', 'serviço', 'descricao', 'descrição', 'historico']);
+            
+            // Exibir diagnóstico (opcional)
+            const debugDiv = document.getElementById('finDebugCard');
+            const debugInfo = document.getElementById('finDebugInfo');
+            if (debugInfo) {
+                debugInfo.innerHTML = `<strong>Colunas encontradas:</strong><br>
+                    Local: ${colLocal}<br>
+                    Tipo: ${colTipo}<br>
+                    Vencimento: ${colVenc}<br>
+                    Documento: ${colDoc}<br>
+                    Valor: ${colValor}<br>
+                    Serviço: ${colServ}<br>
+                    Total de linhas: ${rows.length}`;
+                debugDiv.style.display = 'block';
+                // Esconde após 10 segundos ou pode deixar visível para o usuário
+                setTimeout(() => { debugDiv.style.display = 'none'; }, 10000);
+            }
+            
             financeiroData = [];
             for (let row of rows) {
                 let val = parseMoney(row[colValor]);
                 if (val === 0) continue;
-                // Tentar múltiplos formatos de data
-                let date = moment(row[colVenc], ['DD/MM/YYYY', 'DD/MM/YY', 'YYYY-MM-DD', 'MM/DD/YYYY', 'DD/MM/YYYY HH:mm:ss'], true);
+                let rawDate = row[colVenc];
+                let date = moment(rawDate, ['DD/MM/YYYY', 'DD/MM/YY', 'YYYY-MM-DD', 'MM/DD/YYYY', 'DD/MM/YYYY HH:mm:ss'], true);
                 if (!date.isValid()) {
-                    date = moment(row[colVenc], moment.ISO_8601);
+                    date = moment(rawDate, moment.ISO_8601);
                 }
                 financeiroData.push({
                     documento: row[colDoc] || "ND",
@@ -442,12 +472,12 @@
                     servico: row[colServ] || "Sem descrição"
                 });
             }
-            if (!financeiroData.length) throw new Error("Sem dados");
+            if (!financeiroData.length) throw new Error("Nenhum dado com valor > 0");
             atualizarDatalistsFinanceiro();
             if (!skipFilter) applyFinFilters();
         } catch(e) {
             console.error(e);
-            // Dados mock para demonstração
+            // Dados mock para demonstração (fallback)
             financeiroData = [
                 { documento:"NF123", vencimentoDate:new Date(2025,2,15), local:"Concórdia-SC", tipoConta:"Combustível", valor:1850, servico:"Abastecimento"},
                 { documento:"NF456", vencimentoDate:new Date(2025,3,10), local:"São Paulo-SP", tipoConta:"Manutenção", valor:3200, servico:"Revisão"},
@@ -472,20 +502,17 @@
         const local = document.getElementById('finLocal').value.trim();
         const tipo = document.getElementById('finTipo').value.trim();
         
-        // Filtrar dados
+        // Função para normalizar data (apenas comparar dia)
+        const startDate = dataInicio ? new Date(dataInicio) : null;
+        if (startDate) startDate.setHours(0,0,0,0);
+        const endDate = dataFim ? new Date(dataFim) : null;
+        if (endDate) endDate.setHours(23,59,59,999);
+        
         currentFinanceiroFiltered = financeiroData.filter(item => {
-            if(dataInicio && item.vencimentoDate) {
-                const start = new Date(dataInicio);
-                start.setHours(0,0,0,0);
-                if(item.vencimentoDate < start) return false;
-            }
-            if(dataFim && item.vencimentoDate) {
-                const end = new Date(dataFim);
-                end.setHours(23,59,59,999);
-                if(item.vencimentoDate > end) return false;
-            }
-            if(local && !item.local.toLowerCase().includes(local.toLowerCase())) return false;
-            if(tipo && !item.tipoConta.toLowerCase().includes(tipo.toLowerCase())) return false;
+            if (startDate && item.vencimentoDate && item.vencimentoDate < startDate) return false;
+            if (endDate && item.vencimentoDate && item.vencimentoDate > endDate) return false;
+            if (local && !item.local.toLowerCase().includes(local.toLowerCase())) return false;
+            if (tipo && !item.tipoConta.toLowerCase().includes(tipo.toLowerCase())) return false;
             return true;
         });
 
@@ -501,44 +528,35 @@
         document.getElementById('consMaior').innerHTML = `R$ ${maior.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
         document.getElementById('consMenor').innerHTML = `R$ ${menor.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
 
-        // Ranking por Tipo (filtrado)
+        // Ranking por Tipo
         let tipoMap = new Map();
         currentFinanceiroFiltered.forEach(i => tipoMap.set(i.tipoConta, (tipoMap.get(i.tipoConta)||0) + i.valor));
         let sortedTipo = Array.from(tipoMap.entries()).sort((a,b)=>b[1]-a[1]);
         document.getElementById('finRankingTipo').innerHTML = sortedTipo.map(([t, v]) => `<div style="display:flex; justify-content:space-between; padding:0.5rem 0; border-bottom:1px solid #e2e8f0;"><strong>${t}</strong> <span>R$ ${v.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></div>`).join('');
 
-        // Ranking por Local (filtrado)
+        // Ranking por Local
         let localMap = new Map();
         currentFinanceiroFiltered.forEach(i => localMap.set(i.local, (localMap.get(i.local)||0) + i.valor));
         let sortedLocal = Array.from(localMap.entries()).sort((a,b)=>b[1]-a[1]);
         document.getElementById('finRankingLocal').innerHTML = sortedLocal.map(([l, v]) => `<div style="display:flex; justify-content:space-between; padding:0.5rem 0; border-bottom:1px solid #e2e8f0;"><strong>${l}</strong> <span>R$ ${v.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></div>`).join('');
 
-        // Tabela de documentos (filtrada) com visual melhorado e datas
+        // Tabela de documentos
         let tbody = document.querySelector('#finTable tbody');
         tbody.innerHTML = '';
-        const hoje = new Date();
-        hoje.setHours(0,0,0,0);
+        const hoje = new Date(); hoje.setHours(0,0,0,0);
         const dias7 = new Date(hoje); dias7.setDate(hoje.getDate() + 7);
         
         currentFinanceiroFiltered.forEach(item => {
             let row = tbody.insertRow();
             let dateStr = item.vencimentoDate ? moment(item.vencimentoDate).format('DD/MM/YYYY') : '---';
-            let statusClass = '';
             let statusBadge = '';
             if (item.vencimentoDate) {
                 const venc = new Date(item.vencimentoDate);
                 venc.setHours(0,0,0,0);
-                if (venc < hoje) {
-                    statusClass = 'vencido';
-                    statusBadge = '<span class="badge badge-vencido">Vencida</span>';
-                } else if (venc <= dias7) {
-                    statusClass = 'proximo';
-                    statusBadge = '<span class="badge badge-proximo">Próxima</span>';
-                } else {
-                    statusBadge = '<span class="badge badge-normal">Em dia</span>';
-                }
+                if (venc < hoje) statusBadge = '<span class="badge badge-vencido">Vencida</span>';
+                else if (venc <= dias7) statusBadge = '<span class="badge badge-proximo">Próxima</span>';
+                else statusBadge = '<span class="badge badge-normal">Em dia</span>';
             }
-            row.className = statusClass;
             row.innerHTML = `
                 <td style="font-weight:500;">${item.local}</td>
                 <td>${item.tipoConta}</td>
@@ -552,7 +570,7 @@
             tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nenhum registro encontrado com os filtros aplicados.</td></tr>';
         }
 
-        // Gráfico Pizza (com dados filtrados)
+        // Gráfico Pizza
         if (finChartInstance) finChartInstance.destroy();
         const ctx = document.getElementById('finChart').getContext('2d');
         finChartInstance = new Chart(ctx, {
@@ -561,7 +579,7 @@
             options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: (ctx) => `${ctx.label}: R$ ${ctx.raw.toLocaleString('pt-BR',{minimumFractionDigits:2})}` } } } }
         });
 
-        // Previsão (baseada no histórico completo, não filtrado)
+        // Previsão (baseada no histórico completo)
         const monthly = new Map();
         financeiroData.forEach(i => { if(i.vencimentoDate) { const key = moment(i.vencimentoDate).format('YYYY-MM'); monthly.set(key, (monthly.get(key)||0) + i.valor); } });
         let monthsWithData = Array.from(monthly.keys()).sort();
@@ -577,7 +595,7 @@
         let forecastRows = '';
         for (let {year, month} of nextMonths) {
             let monthName = moment(`${year}-${month}`, 'YYYY-M').format('MMMM/YYYY');
-            forecastRows += `<tr><td style="background:#1e293b;">${monthName}Jsme<td style="background:#1e293b;">R$ ${avg.toLocaleString('pt-BR', {minimumFractionDigits:2})}Jsme</tr>`;
+            forecastRows += `<tr><td style="background:#1e293b;">${monthName}</td><td style="background:#1e293b;">R$ ${avg.toLocaleString('pt-BR', {minimumFractionDigits:2})}</td></tr>`;
         }
         document.getElementById('finPrevisaoTable').innerHTML = `<thead><tr><th>Mês</th><th>Previsão (R$)</th></tr></thead><tbody>${forecastRows || '<tr><td colspan="2">Nenhum mês restante no ano</td></tr>'}</tbody>`;
     }
@@ -610,14 +628,14 @@
             const rows = parsed.data;
             if (!rows.length) throw new Error("Planilha vazia");
             const headers = Object.keys(rows[0]);
-            const colData = headers.find(h => /data|emissão|mes/i.test(h)) || headers[0];
-            const colMotorista = headers.find(h => /motorista/i.test(h)) || headers[1];
-            const colPlacaCavalo = headers.find(h => /cavalo|trator|placa.*cavalo/i.test(h)) || (headers[2] || headers[0]);
-            const colPlacaCarreta = headers.find(h => /carreta|reboque|placa.*carreta/i.test(h)) || (headers[3] || headers[1]);
-            const colEmbarcadora = headers.find(h => /embarcadora|cliente/i.test(h)) || headers[4];
-            const colOrigem = headers.find(h => /origem|de/i.test(h)) || headers[5];
-            const colDestino = headers.find(h => /destino|para/i.test(h)) || headers[6];
-            const colValor = headers.find(h => /valor|frete|r\$|total/i.test(h)) || headers[7];
+            const colData = findColumn(headers, ['data', 'emissao', 'mes']);
+            const colMotorista = findColumn(headers, ['motorista', 'condutor']);
+            const colPlacaCavalo = findColumn(headers, ['cavalo', 'trator', 'placa cavalo', 'placa_cavalo']);
+            const colPlacaCarreta = findColumn(headers, ['carreta', 'reboque', 'placa carreta', 'placa_carreta']);
+            const colEmbarcadora = findColumn(headers, ['embarcadora', 'cliente']);
+            const colOrigem = findColumn(headers, ['origem', 'de']);
+            const colDestino = findColumn(headers, ['destino', 'para']);
+            const colValor = findColumn(headers, ['valor', 'frete', 'total']);
             faturamentoData = [];
             for (let row of rows) {
                 let val = parseMoney(row[colValor]);
@@ -708,7 +726,7 @@
         filtered.forEach(item => {
             let row = tbody.insertRow();
             let dataStr = item.data ? moment(item.data).format('DD/MM/YYYY') : '';
-            row.innerHTML = `<td>${dataStr}Jsme<td style="cursor:pointer; color:var(--primary); font-weight:bold">${item.placaCavalo}Jsme<td>${item.placaCarreta}Jsme<td>${item.motorista}Jsme<td>${item.embarcadora}Jsme<td>${item.origem}Jsme<td>${item.destino}Jsme<td style="text-align:right">R$ ${item.valor.toFixed(2)}Jsme`;
+            row.innerHTML = `<td>${dataStr}</td><td style="cursor:pointer; color:var(--primary); font-weight:bold">${item.placaCavalo}</td><td>${item.placaCarreta}</td><td>${item.motorista}</td><td>${item.embarcadora}</td><td>${item.origem}</td><td>${item.destino}</td><td style="text-align:right">R$ ${item.valor.toFixed(2)}</td>`;
             row.cells[1].addEventListener('click', () => mostrarFichaPlaca(item.placaCavalo));
         });
         let tfoot = document.querySelector('#fatTable tfoot');
@@ -774,13 +792,13 @@
             const rows = parsed.data;
             if (!rows.length) throw new Error("Planilha de baterias vazia");
             const headers = Object.keys(rows[0]);
-            const colData = headers.find(h => /vencimento|data|emissão/i.test(h)) || headers[0];
-            const colTipo = headers.find(h => /tipo|categoria|item/i.test(h)) || (headers[1] || "Tipo");
-            const colFornecedor = headers.find(h => /fornecedor|nome|credor/i.test(h)) || (headers[2] || "Fornecedor");
-            const colQuant = headers.find(h => /quant|qtd|quantidade/i.test(h)) || (headers[3] || "Quantidade");
-            const colValorUnit = headers.find(h => /unit|preço.*unit|valor unit/i.test(h)) || (headers[4] || "Valor Unitário");
-            const colValorTotal = headers.find(h => /total|valor total/i.test(h)) || (headers[5] || "Valor Total");
-            const colObs = headers.find(h => /obs|observação|descrição/i.test(h)) || (headers[6] || "Observação");
+            const colData = findColumn(headers, ['vencimento', 'data', 'emissao']);
+            const colTipo = findColumn(headers, ['tipo', 'categoria', 'item']);
+            const colFornecedor = findColumn(headers, ['fornecedor', 'nome', 'credor']);
+            const colQuant = findColumn(headers, ['quant', 'qtd', 'quantidade']);
+            const colValorUnit = findColumn(headers, ['unit', 'preço unit', 'valor unit']);
+            const colValorTotal = findColumn(headers, ['total', 'valor total']);
+            const colObs = findColumn(headers, ['obs', 'observacao', 'descricao']);
             bateriasData = [];
             for (let row of rows) {
                 let data = moment(row[colData], ['DD/MM/YYYY','YYYY-MM-DD','MM/DD/YYYY'], true);
@@ -840,7 +858,7 @@
         filtered.forEach(item => {
             const row = tbody.insertRow();
             const dataStr = item.vencimento ? moment(item.vencimento).format('DD/MM/YYYY') : '';
-            row.innerHTML = `<td>${dataStr}Jsme<td>${item.tipo}Jsme<td>${item.fornecedor}Jsme<td>${item.quantidade}Jsme<td>R$ ${item.valorUnitario.toFixed(2)}Jsme<td style="text-align:right">R$ ${item.valorTotal.toFixed(2)}Jsme<td>${item.obs.substring(0,50)}Jsme`;
+            row.innerHTML = `<td>${dataStr}</td><td>${item.tipo}</td><td>${item.fornecedor}</td><td>${item.quantidade}</td><td>R$ ${item.valorUnitario.toFixed(2)}</td><td style="text-align:right">R$ ${item.valorTotal.toFixed(2)}</td><td>${item.obs.substring(0,50)}</td>`;
         });
         if(filtered.length === 0) tbody.innerHTML = '<tr><td colspan="7">Nenhum registro encontrado.</td></tr>';
     }
@@ -897,9 +915,9 @@
             let html = '<table class="data-table" style="width:100%"><thead><tr><th>Data</th><th>Origem</th><th>Destino</th><th>Valor (R$)</th></tr></thead><tbody>';
             fretes.forEach(f => {
                 let dataStr = f.data ? moment(f.data).format('DD/MM/YYYY') : '---';
-                html += `<tr><td>${dataStr}Jsme<td>${f.origem}Jsme<td>${f.destino}Jsme<td style="text-align:right">R$ ${f.valor.toFixed(2)}Jsme</tr>`;
+                html += `<tr><td>${dataStr}</td><td>${f.origem}</td><td>${f.destino}</td><td style="text-align:right">R$ ${f.valor.toFixed(2)}</td></tr>`;
             });
-            html += '</tbody></tr>';
+            html += '</tbody></table>';
             document.getElementById('calcListaFretes').innerHTML = html;
         }
         atualizarValorReceberCalculadora(total);
