@@ -9,9 +9,20 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <style>
-        /* (mantenha todo o seu estilo atual - omitido por brevidade, mas será incluído na resposta final) */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root { --primary: #8B7355; --accent: #d4af37; --light: #f8f9fa; --dark: #1a1a1a; --text: #2d3748; --text-light: #718096; --premium-dark: #1e2a3a; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --info: #3b82f6; }
+        :root {
+            --primary: #8B7355;
+            --accent: #d4af37;
+            --light: #f8f9fa;
+            --dark: #1a1a1a;
+            --text: #2d3748;
+            --text-light: #718096;
+            --premium-dark: #1e2a3a;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+        }
         body { font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--text); overflow-x: hidden; line-height: 1.6; background: #f1f5f9; }
         header { background: rgba(255,255,255,0.98); backdrop-filter: blur(20px); padding: 0.8rem 5%; position: fixed; width: 100%; top: 0; z-index: 1000; box-shadow: 0 2px 30px rgba(0,0,0,0.08); border-bottom: 1px solid rgba(139,115,85,0.1); }
         nav { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; }
@@ -23,7 +34,6 @@
         .nav-links { display: flex; gap: 2rem; list-style: none; align-items: center; }
         .nav-links a { color: var(--text); text-decoration: none; font-weight: 500; transition: all 0.3s; font-size: 0.9rem; position: relative; }
         .nav-links a::after { content: ''; position: absolute; bottom: -5px; left: 0; width: 0; height: 2px; background: var(--accent); transition: width 0.3s; }
-        .nav-links a:hover::after { width: 100%; }
         .private-btn { background: var(--accent); color: var(--dark) !important; padding: 0.3rem 1rem; border-radius: 40px; }
         .private-btn::after { display: none; }
         .hero { height: 60vh; background: linear-gradient(135deg, rgba(30,42,58,0.9) 0%, rgba(26,32,44,0.9) 100%), url('IMG-20220924-WA0022 (1).jpg'); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; text-align: center; color: white; margin-top: 70px; padding: 0 5%; }
@@ -152,24 +162,28 @@
         <div class="dashboard-card"><h3><i class="fas fa-chart-pie"></i> Distribuição por Tipo e por Local</h3><div class="flex-chart-ranking"><div class="chart-container"><canvas id="finChartTipo" width="400" height="400"></canvas><p style="text-align:center">Por Tipo</p></div><div class="chart-container"><canvas id="finChartLocal" width="400" height="400"></canvas><p style="text-align:center">Por Local</p></div></div></div>
         <div class="dashboard-card"><h3>📍 Ranking por Local</h3><div id="finRankingLocal"></div></div>
         <div class="dashboard-card"><h3>📋 Documentos (clique no serviço para ver detalhe)</h3><div style="overflow-x:auto"><table class="data-table" id="finTable"><thead><tr><th>Local</th><th>Tipo</th><th>Vencimento</th><th>Documento</th><th>Valor (R$)</th><th>Serviço</th></tr></thead><tbody><tr><td colspan="6">Carregando...</td></tr></tbody></table></div></div>
-        <div class="dashboard-card"><h3><i class="fas fa-chart-line"></i> 🔮 Previsão para próximos períodos (a cada 5 dias) - baseada nos dados filtrados</h3><div class="forecast-card"><table class="forecast-table" id="finPrevisaoTable"><thead><tr><th>Período (5 dias)</th><th>Previsão (R$)</th></tr></thead><tbody><tr><td colspan="2">Aplicar filtros para gerar previsão</td></tr></tbody></table></div></div>
+        <div class="dashboard-card"><h3><i class="fas fa-chart-line"></i> 🔮 Previsão para próximos períodos (dias fixos 05,10,15,20,25,30 de cada mês)</h3><div class="forecast-card"><table class="forecast-table" id="finPrevisaoTable"><thead><tr><th>Período</th><th>Previsão (R$)</th></tr></thead><tbody><tr><td colspan="2">Aplicar filtros para gerar previsão</td></tr></tbody></table></div></div>
     </div>
     
     <div id="tabFaturamento" class="tab-content"><div class="dashboard-card"><h3>Filtros</h3><div><div class="filter-group"><label>Mês</label><select id="fatMesSelect"><option value="all">Todos</option></select></div><div class="filter-group"><label>Motorista</label><input list="fatMotoristaList" id="fatMotorista"><datalist id="fatMotoristaList"></datalist></div><div class="filter-group"><label>Placa Cavalo</label><input list="fatPlacaCavaloList" id="fatPlacaCavalo"><datalist id="fatPlacaCavaloList"></datalist></div><div class="filter-group"><label>Placa Carreta</label><input list="fatPlacaCarretaList" id="fatPlacaCarreta"><datalist id="fatPlacaCarretaList"></datalist></div><div class="filter-group"><label>Embarcadora</label><input list="fatEmbarcadoraList" id="fatEmbarcadora"><datalist id="fatEmbarcadoraList"></datalist></div><div class="filter-group"><label>Valor Mínimo</label><input type="number" id="fatValorMin"></div><button id="fatAplicarFiltros" class="btn-export">Aplicar</button><button id="fatResetFiltros" class="btn-export btn-reset">Limpar</button></div></div><div id="fatDiagnostic" class="diagnostic-box" style="display:none;"></div><div class="dashboard-card"><h3>🏆 Top 5 Maiores Fretes</h3><div id="rankMelhoresViagens"></div></div><div class="dashboard-card"><div class="ranking-grid"><div class="ranking-box"><h4>Motoristas</h4><div id="rankMotorista"></div></div><div class="ranking-box"><h4>Placas Cavalo</h4><div id="rankPlacaCavalo"></div></div><div class="ranking-box"><h4>Placas Carreta</h4><div id="rankPlacaCarreta"></div></div><div class="ranking-box"><h4>Embarcadoras</h4><div id="rankEmbarcadora"></div></div></div></div><div class="dashboard-card"><h3>🚛 Tabela de Fretes</h3><div style="overflow-x:auto"><table class="data-table" id="fatTable"><thead><tr><th>Data</th><th>Placa Cavalo</th><th>Placa Carreta</th><th>Motorista</th><th>Embarcadora</th><th>Origem</th><th>Destino</th><th>Valor (R$)</th></tr></thead><tbody></tbody></table></div><div id="fichaPlaca" class="ficha-placa" style="display:none;"></div></div></div>
 
-    <!-- BATERIAS CORRIGIDO: Alertas focados em DATA, não em valor monetário -->
+    <!-- BATERIAS CORRIGIDO -->
     <div id="tabBaterias" class="tab-content">
         <div id="batDebugCard" class="dashboard-card debug-card" style="display: none;"><h3>🔍 Diagnóstico Baterias</h3><div id="batDebugInfo"></div></div>
         <div class="dashboard-card"><h3>Filtros</h3><div><div class="filter-group"><label>Vencimento Início</label><input type="date" id="batDataInicio"></div><div class="filter-group"><label>Vencimento Fim</label><input type="date" id="batDataFim"></div><div class="filter-group"><label>Fornecedor/Tipo</label><input type="text" id="batPesquisa" placeholder="Digite..."></div><button id="batAplicarFiltros" class="btn-export">Aplicar</button><button id="batResetFiltros" class="btn-export btn-reset">Limpar</button><button id="batExportarCSV" class="btn-export">CSV</button></div></div>
         
-        <!-- Cards de alerta: agora sem valores monetários, apenas datas e contagem -->
         <div class="dashboard-card"><h3><i class="fas fa-exclamation-triangle"></i> Alertas de Vencimento (baseado em DATA)</h3><div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
             <div class="alert-card"><h4><i class="fas fa-calendar-times"></i> Contas Vencidas</h4><div class="quantidade" id="qtdVencidas" style="font-size:1.8rem; font-weight:800;">0</div><div>registro(s)</div><div style="margin-top:8px;"><strong>Data mais antiga vencida:</strong> <span id="dataVencidaMaisAntiga">---</span></div></div>
             <div class="alert-card warning"><h4><i class="fas fa-clock"></i> Próximos 7 dias</h4><div class="quantidade" id="qtdProximas" style="font-size:1.8rem; font-weight:800;">0</div><div>registro(s)</div><div style="margin-top:8px;"><strong>Data mais próxima:</strong> <span id="dataProximaMaisProxima">---</span></div></div>
         </div></div>
         
+        <!-- Ranking de fornecedores por valor em contas vencidas (corrigido) -->
         <div class="dashboard-card"><h3>🏆 Ranking Fornecedores (Maior valor em contas vencidas)</h3><div id="batRankingVencidas">Carregando...</div></div>
-        <div class="dashboard-card"><h3>📊 Registros de Baterias (com vencimento e valores)</h3><div style="overflow-x:auto"><table class="data-table" id="batTable"><thead><tr><th>Vencimento</th><th>Tipo</th><th>Fornecedor</th><th>Quantidade</th><th>Valor Unitário</th><th>Valor Total (R$)</th><th>Observação</th></tr></thead><tbody><tr><td colspan="7">Carregando...</td></tr></tbody></table></div></div>
+        
+        <!-- NOVO: Ranking de fornecedores por vencimento mais próximo (melhores por vencimento) -->
+        <div class="dashboard-card"><h3>🏆 Ranking Fornecedores – Vencimento mais próximo (ordem crescente)</h3><div id="batRankingProximas">Carregando...</div></div>
+        
+        <div class="dashboard-card"><h3>📊 Registros de Baterias</h3><div style="overflow-x:auto"><table class="data-table" id="batTable"><thead><tr><th>Vencimento</th><th>Tipo</th><th>Fornecedor</th><th>Quantidade</th><th>Valor Unitário</th><th>Valor Total (R$)</th><th>Observação</th></tr></thead><tbody><tr><td colspan="7">Carregando...</td></tr></tbody></table></div></div>
     </div>
 
     <div id="tabCalculadora" class="tab-content"><div class="dashboard-card salary-calc"><h4>Calculadora Salário Motorista</h4><div class="filter-group"><label>Motorista</label><select id="calcMotoristaSelect"><option>Carregando...</option></select></div><div class="filter-group"><label>Mês/Ano</label><input type="month" id="calcPeriodo"></div><button id="calcAplicarFiltros" class="btn-export">Calcular</button><div id="calcResultado"><p><strong>Faturamento total:</strong> <span id="calcTotalFrete">R$ 0,00</span></p><div id="calcListaFretes"></div></div><hr><div class="salary-row"><label>% Comissão:</label><input type="number" id="calcComissaoPercent" value="5" step="0.5"> %</div><div class="salary-row"><label>Despesas (R$):</label><input type="number" id="calcDespesasMot" value="0"></div><div class="salary-row"><label>Diária:</label><input type="number" id="calcDiaria" value="0"></div><div class="salary-row"><label>Bônus:</label><input type="number" id="calcBonus" value="0"></div><div class="salary-row"><label>Vales:</label><input type="number" id="calcVales" value="0"></div><div class="salary-row"><label>IR / Multa / DepFolha:</label><input type="number" id="calcIr" value="0"><input type="number" id="calcMulta" value="0"><input type="number" id="calcDepFolha" value="0"></div><div class="salary-row"><label><strong>Valor a Receber:</strong></label><span id="calcValorReceber" class="result-value">R$ 0,00</span></div></div></div>
@@ -255,28 +269,48 @@
         });
         document.querySelectorAll('.servico-detalhe').forEach(el=>{ el.addEventListener('click',()=>{ document.getElementById('servicoDetalheTexto').innerText=el.getAttribute('data-servico'); document.getElementById('servicoModal').classList.add('active'); }); });
         
+        // PREVISÃO COM DIAS FIXOS: 05,10,15,20,25,30 de cada mês
+        // Calcular média diária com base nos dados filtrados (últimos 3 meses)
         const monthlySum=new Map();
         currentFinanceiroFiltered.forEach(i=>{ if(i.vencimentoDate){ const key=moment(i.vencimentoDate).format('YYYY-MM'); monthlySum.set(key,(monthlySum.get(key)||0)+i.valor); } });
         let monthsWithData=Array.from(monthlySum.keys()).sort();
         let last3Months=monthsWithData.slice(-3);
         let avgMonthly=0;
         if(last3Months.length){ let sumLast3=last3Months.reduce((acc,m)=>acc+monthlySum.get(m),0); avgMonthly=sumLast3/last3Months.length; }
-        let avgDaily=avgMonthly/30;
-        let startDateProj=new Date(); startDateProj.setHours(0,0,0,0);
-        let endDateProj=new Date(); endDateProj.setFullYear(startDateProj.getFullYear(), 11, 31);
-        let forecastRows='';
-        let currentPeriodStart=new Date(startDateProj);
-        while(currentPeriodStart <= endDateProj){
-            let periodEnd=new Date(currentPeriodStart); periodEnd.setDate(periodEnd.getDate()+4);
-            if(periodEnd > endDateProj) periodEnd=endDateProj;
-            let daysInPeriod=Math.floor((periodEnd-currentPeriodStart)/(1000*3600*24))+1;
-            let projectedValue=avgDaily*daysInPeriod;
-            let periodLabel=`${moment(currentPeriodStart).format('DD/MM')} a ${moment(periodEnd).format('DD/MM')}`;
-            forecastRows+=`<tr><td>${periodLabel}</td><td>R$ ${projectedValue.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td></tr>`;
-            currentPeriodStart.setDate(currentPeriodStart.getDate()+5);
+        let avgDaily = avgMonthly / 30;
+        
+        // Gerar períodos fixos para os próximos meses (até dezembro)
+        let today = new Date(); today.setHours(0,0,0,0);
+        let currentYear = today.getFullYear();
+        let currentMonth = today.getMonth();
+        let forecastRows = '';
+        
+        for (let m = currentMonth; m <= 11; m++) { // até dezembro
+            let year = currentYear;
+            if (m >= 12) { year++; m = 0; }
+            let monthDate = new Date(year, m, 1);
+            if (monthDate < today && m === currentMonth) continue; // pula meses anteriores
+            let lastDay = new Date(year, m+1, 0).getDate();
+            let periods = [
+                { start: 1, end: 5, label: "01-05" },
+                { start: 6, end: 10, label: "06-10" },
+                { start: 11, end: 15, label: "11-15" },
+                { start: 16, end: 20, label: "16-20" },
+                { start: 21, end: 25, label: "21-25" },
+                { start: 26, end: lastDay, label: `26-${lastDay}` }
+            ];
+            for (let p of periods) {
+                let start = new Date(year, m, p.start);
+                let end = new Date(year, m, p.end);
+                if (end < today) continue; // já passou
+                let daysCount = Math.floor((end - start)/(1000*3600*24)) + 1;
+                let projected = avgDaily * daysCount;
+                let monthName = moment(monthDate).format('MMM/YYYY');
+                forecastRows += `<tr><td>${monthName} (${p.label})</td><td>R$ ${projected.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td></tr>`;
+            }
         }
         if(avgMonthly===0) forecastRows='<tr><td colspan="2">Sem dados históricos para projeção</td></tr>';
-        document.getElementById('finPrevisaoTable').innerHTML=`<thead><tr><th>Período (5 dias)</th><th>Previsão (R$)</th></tr></thead><tbody>${forecastRows}</tbody>`;
+        document.getElementById('finPrevisaoTable').innerHTML=`<thead><tr><th>Período</th><th>Previsão (R$)</th></tr></thead><tbody>${forecastRows}</tbody>`;
     }
     document.getElementById('finAplicarFiltros').addEventListener('click',applyFinFilters);
     document.getElementById('finResetFiltros').addEventListener('click',()=>{ document.getElementById('finDataInicio').value=''; document.getElementById('finDataFim').value=''; document.getElementById('finLocal').value=''; document.getElementById('finTipo').value=''; applyFinFilters(); });
@@ -289,7 +323,7 @@
     function aplicarFiltrosFaturamento(){ let mes=document.getElementById('fatMesSelect').value, motorista=document.getElementById('fatMotorista').value.trim(), placaCavalo=document.getElementById('fatPlacaCavalo').value.trim().toUpperCase(), placaCarreta=document.getElementById('fatPlacaCarreta').value.trim().toUpperCase(), embarcadora=document.getElementById('fatEmbarcadora').value.trim().toLowerCase(), valorMin=parseFloat(document.getElementById('fatValorMin').value); let filtered=faturamentoData.filter(i=>{ if(mes!=='all'&&i.data&&moment(i.data).format('YYYY-MM')!==mes)return false; if(motorista&&!i.motorista.toLowerCase().includes(motorista.toLowerCase()))return false; if(placaCavalo&&!i.placaCavalo.includes(placaCavalo))return false; if(placaCarreta&&!i.placaCarreta.includes(placaCarreta))return false; if(embarcadora&&!i.embarcadora.toLowerCase().includes(embarcadora))return false; if(!isNaN(valorMin)&&i.valor<valorMin)return false; return true; }); let mapMotor=new Map(), mapCavalo=new Map(), mapCarreta=new Map(), mapEmb=new Map(); filtered.forEach(i=>{ mapMotor.set(i.motorista,(mapMotor.get(i.motorista)||0)+i.valor); mapCavalo.set(i.placaCavalo,(mapCavalo.get(i.placaCavalo)||0)+i.valor); mapCarreta.set(i.placaCarreta,(mapCarreta.get(i.placaCarreta)||0)+i.valor); mapEmb.set(i.embarcadora,(mapEmb.get(i.embarcadora)||0)+i.valor); }); document.getElementById('rankMotorista').innerHTML=Array.from(mapMotor.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`<div>${k}: R$ ${v.toFixed(2)}</div>`).join(''); document.getElementById('rankPlacaCavalo').innerHTML=Array.from(mapCavalo.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`<div>${k}: R$ ${v.toFixed(2)}</div>`).join(''); document.getElementById('rankPlacaCarreta').innerHTML=Array.from(mapCarreta.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`<div>${k}: R$ ${v.toFixed(2)}</div>`).join(''); document.getElementById('rankEmbarcadora').innerHTML=Array.from(mapEmb.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`<div>${k}: R$ ${v.toFixed(2)}</div>`).join(''); let top5=filtered.sort((a,b)=>b.valor-a.valor).slice(0,5); document.getElementById('rankMelhoresViagens').innerHTML=top5.map(v=>`<div>${v.origem}→${v.destino} | ${v.placaCavalo} | R$ ${v.valor.toFixed(2)}</div>`).join(''); let tbody=document.querySelector('#fatTable tbody'); tbody.innerHTML=''; filtered.forEach(i=>{ let row=tbody.insertRow(); row.innerHTML=`<td>${i.data?moment(i.data).format('DD/MM/YYYY'):''}</td><td style="cursor:pointer;color:var(--primary)">${i.placaCavalo}</td><td>${i.placaCarreta}</td><td>${i.motorista}</td><td>${i.embarcadora}</td><td>${i.origem}</td><td>${i.destino}</td><td style="text-align:right">R$ ${i.valor.toFixed(2)}</td>`; row.cells[1].addEventListener('click',()=>{ let viagens=faturamentoData.filter(v=>v.placaCavalo===i.placaCavalo); let total=viagens.reduce((s,v)=>s+v.valor,0); let fichaDiv=document.getElementById('fichaPlaca'); fichaDiv.style.display='block'; fichaDiv.innerHTML=`<h4>Ficha Cavalo ${i.placaCavalo}</h4><p>Viagens: ${viagens.length} | Total: R$ ${total.toFixed(2)}<br>Motoristas: ${[...new Set(viagens.map(v=>v.motorista))].join(', ')}</p><button id="fecharFicha">Fechar</button>`; document.getElementById('fecharFicha').onclick=()=>fichaDiv.style.display='none'; }); }); let totalGeral=filtered.reduce((s,i)=>s+i.valor,0); if(!document.querySelector('#fatTable tfoot')){ let foot=document.createElement('tfoot'); document.querySelector('#fatTable').appendChild(foot); } document.querySelector('#fatTable tfoot').innerHTML=`<tr><td colspan="7"><strong>Total Geral</strong></td><td style="text-align:right"><strong>R$ ${totalGeral.toFixed(2)}</strong></td></tr>`; }
     document.getElementById('fatAplicarFiltros').addEventListener('click',aplicarFiltrosFaturamento); document.getElementById('fatResetFiltros').addEventListener('click',()=>{ document.getElementById('fatMesSelect').value='all'; document.getElementById('fatMotorista').value=''; document.getElementById('fatPlacaCavalo').value=''; document.getElementById('fatPlacaCarreta').value=''; document.getElementById('fatEmbarcadora').value=''; document.getElementById('fatValorMin').value=''; aplicarFiltrosFaturamento(); });
 
-    // ========== BATERIAS COM ALERTA FOCADO EM DATA ==========
+    // ========== BATERIAS CORRIGIDO ==========
     async function loadBateriasData(skipFilter=false){
         try{
             const resp=await fetch(URL_BATERIAS); const text=await resp.text(); const parsed=Papa.parse(text,{header:true,skipEmptyLines:true}); const rows=parsed.data;
@@ -321,43 +355,42 @@
         const hoje=new Date(); hoje.setHours(0,0,0,0); const dias7=new Date(hoje); dias7.setDate(hoje.getDate()+7);
         const vencidas=filtered.filter(i=>i.vencimento < hoje);
         const proximas=filtered.filter(i=>i.vencimento >= hoje && i.vencimento <= dias7);
+        const aVencerFuturo = filtered.filter(i=>i.vencimento > hoje);
         
-        // Atualizar cards apenas com informações de DATA
+        // Cards de alerta (datas)
         document.getElementById('qtdVencidas').innerText=vencidas.length;
         document.getElementById('qtdProximas').innerText=proximas.length;
-        
-        // Data mais antiga vencida
         if(vencidas.length){
             let datasVencidas=vencidas.map(i=>i.vencimento).sort((a,b)=>a-b);
-            let maisAntiga=moment(datasVencidas[0]).format('DD/MM/YYYY');
-            document.getElementById('dataVencidaMaisAntiga').innerText=maisAntiga;
-        } else {
-            document.getElementById('dataVencidaMaisAntiga').innerText='---';
-        }
-        // Data mais próxima a vencer (próximas)
+            document.getElementById('dataVencidaMaisAntiga').innerText=moment(datasVencidas[0]).format('DD/MM/YYYY');
+        } else { document.getElementById('dataVencidaMaisAntiga').innerText='---'; }
         if(proximas.length){
             let datasProximas=proximas.map(i=>i.vencimento).sort((a,b)=>a-b);
-            let maisProxima=moment(datasProximas[0]).format('DD/MM/YYYY');
-            document.getElementById('dataProximaMaisProxima').innerText=maisProxima;
-        } else {
-            document.getElementById('dataProximaMaisProxima').innerText='---';
-        }
+            document.getElementById('dataProximaMaisProxima').innerText=moment(datasProximas[0]).format('DD/MM/YYYY');
+        } else { document.getElementById('dataProximaMaisProxima').innerText='---'; }
         
-        // POPUP de alerta: agora lista as DATAS (sem valores)
+        // Popup se houver próximas
         if(proximas.length>0){
-            let listaDatas = proximas.map(i => moment(i.vencimento).format('DD/MM/YYYY')).slice(0,5).join(', ');
-            let msg = `⚠️ ATENÇÃO: Existem ${proximas.length} conta(s) de bateria vencendo nos próximos 7 dias!\n`;
-            msg += `Datas: ${listaDatas}${proximas.length>5 ? '...' : ''}\n`;
-            msg += `Verifique a aba Baterias para mais detalhes.`;
-            alert(msg);
+            let listaDatas = proximas.map(i=>moment(i.vencimento).format('DD/MM/YYYY')).slice(0,5).join(', ');
+            alert(`⚠️ ATENÇÃO: ${proximas.length} conta(s) de bateria vence(m) nos próximos 7 dias!\nDatas: ${listaDatas}${proximas.length>5 ? '...' : ''}`);
         }
         
-        // Ranking de fornecedores por valor em contas vencidas (mantido para gestão financeira)
-        let fornecedorMap=new Map(); vencidas.forEach(i=>fornecedorMap.set(i.fornecedor,(fornecedorMap.get(i.fornecedor)||0)+i.valorTotal));
-        let sortedRank=Array.from(fornecedorMap.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5);
-        document.getElementById('batRankingVencidas').innerHTML=sortedRank.length?sortedRank.map(([f,v])=>`<div><strong>${f}</strong> R$ ${v.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>`).join(''):'<div>Nenhuma conta vencida</div>';
+        // Ranking de fornecedores por valor em contas vencidas (corrigido)
+        let mapFornecedorValor=new Map();
+        vencidas.forEach(i=>mapFornecedorValor.set(i.fornecedor, (mapFornecedorValor.get(i.fornecedor)||0) + i.valorTotal));
+        let sortedValor = Array.from(mapFornecedorValor.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5);
+        document.getElementById('batRankingVencidas').innerHTML = sortedValor.length ? sortedValor.map(([f,v])=>`<div><strong>${f}</strong> R$ ${v.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>`).join('') : '<div>Nenhuma conta vencida</div>';
         
-        // Tabela de registros (mantém valores)
+        // NOVO: Ranking de fornecedores por vencimento mais próximo (melhores por vencimento futuro)
+        let mapFornecedorProx = new Map(); // armazena a data mais próxima por fornecedor (apenas contas a vencer > hoje)
+        aVencerFuturo.forEach(i => {
+            let current = mapFornecedorProx.get(i.fornecedor);
+            if (!current || i.vencimento < current) mapFornecedorProx.set(i.fornecedor, i.vencimento);
+        });
+        let sortedProx = Array.from(mapFornecedorProx.entries()).sort((a,b)=>a[1]-b[1]).slice(0,5);
+        document.getElementById('batRankingProximas').innerHTML = sortedProx.length ? sortedProx.map(([f,data])=>`<div><strong>${f}</strong> – vence em ${moment(data).format('DD/MM/YYYY')}</div>`).join('') : '<div>Nenhuma conta a vencer futuramente</div>';
+        
+        // Tabela de registros
         let tbody=document.querySelector('#batTable tbody'); tbody.innerHTML='';
         filtered.forEach(item=>{ let row=tbody.insertRow(); row.innerHTML=`<td>${moment(item.vencimento).format('DD/MM/YYYY')}</td><td>${item.tipo}</td><td>${item.fornecedor}</td><td>${item.quantidade}</td><td>R$ ${item.valorUnitario.toFixed(2)}</td><td style="text-align:right">R$ ${item.valorTotal.toFixed(2)}</td><td>${item.obs.substring(0,50)}</td>`; });
         if(filtered.length===0) tbody.innerHTML='<tr><td colspan="7">Nenhum registro encontrado</td></tr>';
