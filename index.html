@@ -167,21 +167,29 @@
     
     <div id="tabFaturamento" class="tab-content"><div class="dashboard-card"><h3>Filtros</h3><div><div class="filter-group"><label>Mês</label><select id="fatMesSelect"><option value="all">Todos</option></select></div><div class="filter-group"><label>Motorista</label><input list="fatMotoristaList" id="fatMotorista"><datalist id="fatMotoristaList"></datalist></div><div class="filter-group"><label>Placa Cavalo</label><input list="fatPlacaCavaloList" id="fatPlacaCavalo"><datalist id="fatPlacaCavaloList"></datalist></div><div class="filter-group"><label>Placa Carreta</label><input list="fatPlacaCarretaList" id="fatPlacaCarreta"><datalist id="fatPlacaCarretaList"></datalist></div><div class="filter-group"><label>Embarcadora</label><input list="fatEmbarcadoraList" id="fatEmbarcadora"><datalist id="fatEmbarcadoraList"></datalist></div><div class="filter-group"><label>Valor Mínimo</label><input type="number" id="fatValorMin"></div><button id="fatAplicarFiltros" class="btn-export">Aplicar</button><button id="fatResetFiltros" class="btn-export btn-reset">Limpar</button></div></div><div id="fatDiagnostic" class="diagnostic-box" style="display:none;"></div><div class="dashboard-card"><h3>🏆 Top 5 Maiores Fretes</h3><div id="rankMelhoresViagens"></div></div><div class="dashboard-card"><div class="ranking-grid"><div class="ranking-box"><h4>Motoristas</h4><div id="rankMotorista"></div></div><div class="ranking-box"><h4>Placas Cavalo</h4><div id="rankPlacaCavalo"></div></div><div class="ranking-box"><h4>Placas Carreta</h4><div id="rankPlacaCarreta"></div></div><div class="ranking-box"><h4>Embarcadoras</h4><div id="rankEmbarcadora"></div></div></div></div><div class="dashboard-card"><h3>🚛 Tabela de Fretes</h3><div style="overflow-x:auto"><table class="data-table" id="fatTable"><thead><tr><th>Data</th><th>Placa Cavalo</th><th>Placa Carreta</th><th>Motorista</th><th>Embarcadora</th><th>Origem</th><th>Destino</th><th>Valor (R$)</th></tr></thead><tbody></tbody></table></div><div id="fichaPlaca" class="ficha-placa" style="display:none;"></div></div></div>
 
-    <!-- BATERIAS CORRIGIDO -->
+    <!-- BATERIAS CORRIGIDO: sem dependência de valores monetários -->
     <div id="tabBaterias" class="tab-content">
         <div id="batDebugCard" class="dashboard-card debug-card" style="display: none;"><h3>🔍 Diagnóstico Baterias</h3><div id="batDebugInfo"></div></div>
-        <div class="dashboard-card"><h3>Filtros</h3><div><div class="filter-group"><label>Vencimento Início</label><input type="date" id="batDataInicio"></div><div class="filter-group"><label>Vencimento Fim</label><input type="date" id="batDataFim"></div><div class="filter-group"><label>Fornecedor/Tipo</label><input type="text" id="batPesquisa" placeholder="Digite..."></div><button id="batAplicarFiltros" class="btn-export">Aplicar</button><button id="batResetFiltros" class="btn-export btn-reset">Limpar</button><button id="batExportarCSV" class="btn-export">CSV</button></div></div>
+        <div class="dashboard-card"><h3>Filtros</h3><div>
+            <div class="filter-group"><label>Período Vencimento</label><input type="date" id="batDataInicio"> até <input type="date" id="batDataFim"></div>
+            <div class="filter-group"><label>Fornecedor</label><select id="batFornecedorSelect"><option value="">Todos</option></select></div>
+            <div class="filter-group"><label>Tipo</label><input list="batTipoList" id="batTipo" placeholder="Digite o tipo"><datalist id="batTipoList"></datalist></div>
+            <div class="filter-group"><label>Texto livre</label><input type="text" id="batPesquisa" placeholder="Obs / Fornecedor / Tipo"></div>
+            <button id="batAplicarFiltros" class="btn-export">Aplicar</button>
+            <button id="batResetFiltros" class="btn-export btn-reset">Limpar</button>
+            <button id="batExportarCSV" class="btn-export">CSV</button>
+        </div></div>
         
         <div class="dashboard-card"><h3><i class="fas fa-exclamation-triangle"></i> Alertas de Vencimento (baseado em DATA)</h3><div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
             <div class="alert-card"><h4><i class="fas fa-calendar-times"></i> Contas Vencidas</h4><div class="quantidade" id="qtdVencidas" style="font-size:1.8rem; font-weight:800;">0</div><div>registro(s)</div><div style="margin-top:8px;"><strong>Data mais antiga vencida:</strong> <span id="dataVencidaMaisAntiga">---</span></div></div>
             <div class="alert-card warning"><h4><i class="fas fa-clock"></i> Próximos 7 dias</h4><div class="quantidade" id="qtdProximas" style="font-size:1.8rem; font-weight:800;">0</div><div>registro(s)</div><div style="margin-top:8px;"><strong>Data mais próxima:</strong> <span id="dataProximaMaisProxima">---</span></div></div>
         </div></div>
         
-        <!-- Ranking de fornecedores por valor em contas vencidas (corrigido) -->
-        <div class="dashboard-card"><h3>🏆 Ranking Fornecedores (Maior valor em contas vencidas)</h3><div id="batRankingVencidas">Carregando...</div></div>
+        <!-- RANKING CORRIGIDO: sem valores, baseado em quantidade de contas vencidas -->
+        <div class="dashboard-card"><h3>🏆 Fornecedores com mais contas vencidas</h3><div id="batRankingVencidas">Carregando...</div></div>
         
-        <!-- NOVO: Ranking de fornecedores por vencimento mais próximo (melhores por vencimento) -->
-        <div class="dashboard-card"><h3>🏆 Ranking Fornecedores – Vencimento mais próximo (ordem crescente)</h3><div id="batRankingProximas">Carregando...</div></div>
+        <!-- Ranking por vencimento mais próximo (mantido) -->
+        <div class="dashboard-card"><h3>🏆 Fornecedores – Vencimento mais próximo (ordem crescente)</h3><div id="batRankingProximas">Carregando...</div></div>
         
         <div class="dashboard-card"><h3>📊 Registros de Baterias</h3><div style="overflow-x:auto"><table class="data-table" id="batTable"><thead><tr><th>Vencimento</th><th>Tipo</th><th>Fornecedor</th><th>Quantidade</th><th>Valor Unitário</th><th>Valor Total (R$)</th><th>Observação</th></tr></thead><tbody><tr><td colspan="7">Carregando...</td></tr></tbody></table></div></div>
     </div>
@@ -210,7 +218,7 @@
     async function refreshAllData(){ await Promise.all([loadFinanceiroData(true), loadFaturamentoData(true), loadBateriasData(true)]); applyFinFilters(); aplicarFiltrosFaturamento(); aplicarFiltrosBaterias(); atualizarSelectMotoristasCalculadora(); }
     document.getElementById('refreshDataBtn').addEventListener('click',refreshAllData);
 
-    // ========== FINANCEIRO ==========
+    // ========== FINANCEIRO (sem alterações, mantido) ==========
     async function loadFinanceiroData(skipFilter=false){
         try{
             const resp=await fetch(URL_FINANCEIRO); const text=await resp.text(); const parsed=Papa.parse(text,{header:true,skipEmptyLines:true}); const rows=parsed.data;
@@ -269,8 +277,6 @@
         });
         document.querySelectorAll('.servico-detalhe').forEach(el=>{ el.addEventListener('click',()=>{ document.getElementById('servicoDetalheTexto').innerText=el.getAttribute('data-servico'); document.getElementById('servicoModal').classList.add('active'); }); });
         
-        // PREVISÃO COM DIAS FIXOS: 05,10,15,20,25,30 de cada mês
-        // Calcular média diária com base nos dados filtrados (últimos 3 meses)
         const monthlySum=new Map();
         currentFinanceiroFiltered.forEach(i=>{ if(i.vencimentoDate){ const key=moment(i.vencimentoDate).format('YYYY-MM'); monthlySum.set(key,(monthlySum.get(key)||0)+i.valor); } });
         let monthsWithData=Array.from(monthlySum.keys()).sort();
@@ -278,18 +284,14 @@
         let avgMonthly=0;
         if(last3Months.length){ let sumLast3=last3Months.reduce((acc,m)=>acc+monthlySum.get(m),0); avgMonthly=sumLast3/last3Months.length; }
         let avgDaily = avgMonthly / 30;
-        
-        // Gerar períodos fixos para os próximos meses (até dezembro)
         let today = new Date(); today.setHours(0,0,0,0);
         let currentYear = today.getFullYear();
         let currentMonth = today.getMonth();
         let forecastRows = '';
-        
-        for (let m = currentMonth; m <= 11; m++) { // até dezembro
+        for (let m = currentMonth; m <= 11; m++) { 
             let year = currentYear;
-            if (m >= 12) { year++; m = 0; }
             let monthDate = new Date(year, m, 1);
-            if (monthDate < today && m === currentMonth) continue; // pula meses anteriores
+            if (monthDate < today && m === currentMonth) continue;
             let lastDay = new Date(year, m+1, 0).getDate();
             let periods = [
                 { start: 1, end: 5, label: "01-05" },
@@ -302,7 +304,7 @@
             for (let p of periods) {
                 let start = new Date(year, m, p.start);
                 let end = new Date(year, m, p.end);
-                if (end < today) continue; // já passou
+                if (end < today) continue;
                 let daysCount = Math.floor((end - start)/(1000*3600*24)) + 1;
                 let projected = avgDaily * daysCount;
                 let monthName = moment(monthDate).format('MMM/YYYY');
@@ -317,38 +319,90 @@
     document.getElementById('finExportarCSV').addEventListener('click',()=>{ let csv=[["Local","Tipo","Vencimento","Documento","Valor","Serviço"]]; currentFinanceiroFiltered.forEach(i=>{ csv.push([i.local,i.tipoConta,i.vencimentoDate?moment(i.vencimentoDate).format('DD/MM/YYYY'):'',i.documento,i.valor,i.servico]); }); let blob=new Blob(["\uFEFF"+csv.map(r=>r.join(",")).join("\n")],{type:"text/csv"}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download="financeiro.csv"; a.click(); });
     document.getElementById('finExportarPDF').addEventListener('click',()=>alert("Use Ctrl+P"));
 
-    // ========== FATURAMENTO ==========
+    // ========== FATURAMENTO (mantido) ==========
     async function loadFaturamentoData(skipFilter=false){ try{ let resp=await fetch(URL_FATURAMENTO); let text=await resp.text(); let parsed=Papa.parse(text,{header:true}); let rows=parsed.data; if(!rows.length)throw new Error(); let headers=Object.keys(rows[0]); let colData=findColumn(headers,['data','emissao']), colMotorista=findColumn(headers,['motorista','condutor']), colPlacaCavalo=findColumn(headers,['cavalo','trator','placa cavalo']), colPlacaCarreta=findColumn(headers,['carreta','reboque']), colEmbarcadora=findColumn(headers,['embarcadora','cliente']), colOrigem=findColumn(headers,['origem','de']), colDestino=findColumn(headers,['destino','para']), colValor=findColumn(headers,['valor','frete']); faturamentoData=[]; for(let row of rows){ let val=parseMoney(row[colValor]); if(val===0)continue; let data=moment(row[colData],['DD/MM/YYYY','YYYY-MM-DD'],true); faturamentoData.push({ data:data.isValid()?data.toDate():null, placaCavalo:(row[colPlacaCavalo]||"").toUpperCase(), placaCarreta:(row[colPlacaCarreta]||"").toUpperCase(), motorista:row[colMotorista]||"N/I", embarcadora:row[colEmbarcadora]||"N/I", origem:row[colOrigem]||"", destino:row[colDestino]||"", valor:val }); } atualizarDatalistsFaturamento(); if(!skipFilter)aplicarFiltrosFaturamento(); atualizarSelectMotoristasCalculadora(); }catch(e){ console.error(e); faturamentoData=[{ data:new Date(2025,2,10), placaCavalo:"ABC1234", placaCarreta:"CAR123", motorista:"João", embarcadora:"BRF", origem:"Concórdia", destino:"SP", valor:4500 }]; atualizarDatalistsFaturamento(); if(!skipFilter)aplicarFiltrosFaturamento(); atualizarSelectMotoristasCalculadora(); } }
     function atualizarDatalistsFaturamento(){ let motoristas=[...new Set(faturamentoData.map(i=>i.motorista))]; let placasCavalo=[...new Set(faturamentoData.map(i=>i.placaCavalo))]; let placasCarreta=[...new Set(faturamentoData.map(i=>i.placaCarreta))]; let embarcadoras=[...new Set(faturamentoData.map(i=>i.embarcadora))]; document.getElementById('fatMotoristaList').innerHTML=motoristas.map(m=>`<option value="${m}">`).join(''); document.getElementById('fatPlacaCavaloList').innerHTML=placasCavalo.map(p=>`<option value="${p}">`).join(''); document.getElementById('fatPlacaCarretaList').innerHTML=placasCarreta.map(p=>`<option value="${p}">`).join(''); document.getElementById('fatEmbarcadoraList').innerHTML=embarcadoras.map(e=>`<option value="${e}">`).join(''); let meses=[...new Set(faturamentoData.map(i=>i.data?moment(i.data).format('YYYY-MM'):null).filter(m=>m))]; let sel=document.getElementById('fatMesSelect'); sel.innerHTML='<option value="all">Todos</option>'+meses.sort().map(m=>`<option value="${m}">${moment(m,'YYYY-MM').format('MMMM/YYYY')}</option>`).join(''); }
     function aplicarFiltrosFaturamento(){ let mes=document.getElementById('fatMesSelect').value, motorista=document.getElementById('fatMotorista').value.trim(), placaCavalo=document.getElementById('fatPlacaCavalo').value.trim().toUpperCase(), placaCarreta=document.getElementById('fatPlacaCarreta').value.trim().toUpperCase(), embarcadora=document.getElementById('fatEmbarcadora').value.trim().toLowerCase(), valorMin=parseFloat(document.getElementById('fatValorMin').value); let filtered=faturamentoData.filter(i=>{ if(mes!=='all'&&i.data&&moment(i.data).format('YYYY-MM')!==mes)return false; if(motorista&&!i.motorista.toLowerCase().includes(motorista.toLowerCase()))return false; if(placaCavalo&&!i.placaCavalo.includes(placaCavalo))return false; if(placaCarreta&&!i.placaCarreta.includes(placaCarreta))return false; if(embarcadora&&!i.embarcadora.toLowerCase().includes(embarcadora))return false; if(!isNaN(valorMin)&&i.valor<valorMin)return false; return true; }); let mapMotor=new Map(), mapCavalo=new Map(), mapCarreta=new Map(), mapEmb=new Map(); filtered.forEach(i=>{ mapMotor.set(i.motorista,(mapMotor.get(i.motorista)||0)+i.valor); mapCavalo.set(i.placaCavalo,(mapCavalo.get(i.placaCavalo)||0)+i.valor); mapCarreta.set(i.placaCarreta,(mapCarreta.get(i.placaCarreta)||0)+i.valor); mapEmb.set(i.embarcadora,(mapEmb.get(i.embarcadora)||0)+i.valor); }); document.getElementById('rankMotorista').innerHTML=Array.from(mapMotor.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`<div>${k}: R$ ${v.toFixed(2)}</div>`).join(''); document.getElementById('rankPlacaCavalo').innerHTML=Array.from(mapCavalo.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`<div>${k}: R$ ${v.toFixed(2)}</div>`).join(''); document.getElementById('rankPlacaCarreta').innerHTML=Array.from(mapCarreta.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`<div>${k}: R$ ${v.toFixed(2)}</div>`).join(''); document.getElementById('rankEmbarcadora').innerHTML=Array.from(mapEmb.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`<div>${k}: R$ ${v.toFixed(2)}</div>`).join(''); let top5=filtered.sort((a,b)=>b.valor-a.valor).slice(0,5); document.getElementById('rankMelhoresViagens').innerHTML=top5.map(v=>`<div>${v.origem}→${v.destino} | ${v.placaCavalo} | R$ ${v.valor.toFixed(2)}</div>`).join(''); let tbody=document.querySelector('#fatTable tbody'); tbody.innerHTML=''; filtered.forEach(i=>{ let row=tbody.insertRow(); row.innerHTML=`<td>${i.data?moment(i.data).format('DD/MM/YYYY'):''}</td><td style="cursor:pointer;color:var(--primary)">${i.placaCavalo}</td><td>${i.placaCarreta}</td><td>${i.motorista}</td><td>${i.embarcadora}</td><td>${i.origem}</td><td>${i.destino}</td><td style="text-align:right">R$ ${i.valor.toFixed(2)}</td>`; row.cells[1].addEventListener('click',()=>{ let viagens=faturamentoData.filter(v=>v.placaCavalo===i.placaCavalo); let total=viagens.reduce((s,v)=>s+v.valor,0); let fichaDiv=document.getElementById('fichaPlaca'); fichaDiv.style.display='block'; fichaDiv.innerHTML=`<h4>Ficha Cavalo ${i.placaCavalo}</h4><p>Viagens: ${viagens.length} | Total: R$ ${total.toFixed(2)}<br>Motoristas: ${[...new Set(viagens.map(v=>v.motorista))].join(', ')}</p><button id="fecharFicha">Fechar</button>`; document.getElementById('fecharFicha').onclick=()=>fichaDiv.style.display='none'; }); }); let totalGeral=filtered.reduce((s,i)=>s+i.valor,0); if(!document.querySelector('#fatTable tfoot')){ let foot=document.createElement('tfoot'); document.querySelector('#fatTable').appendChild(foot); } document.querySelector('#fatTable tfoot').innerHTML=`<tr><td colspan="7"><strong>Total Geral</strong></td><td style="text-align:right"><strong>R$ ${totalGeral.toFixed(2)}</strong></td></tr>`; }
     document.getElementById('fatAplicarFiltros').addEventListener('click',aplicarFiltrosFaturamento); document.getElementById('fatResetFiltros').addEventListener('click',()=>{ document.getElementById('fatMesSelect').value='all'; document.getElementById('fatMotorista').value=''; document.getElementById('fatPlacaCavalo').value=''; document.getElementById('fatPlacaCarreta').value=''; document.getElementById('fatEmbarcadora').value=''; document.getElementById('fatValorMin').value=''; aplicarFiltrosFaturamento(); });
 
-    // ========== BATERIAS CORRIGIDO ==========
+    // ========== BATERIAS CORRIGIDO: SEM VALORES MONETÁRIOS ==========
     async function loadBateriasData(skipFilter=false){
         try{
             const resp=await fetch(URL_BATERIAS); const text=await resp.text(); const parsed=Papa.parse(text,{header:true,skipEmptyLines:true}); const rows=parsed.data;
-            if(!rows.length)throw new Error("Vazia");
+            if(!rows.length)throw new Error("Planilha vazia");
             const headers=Object.keys(rows[0]);
-            const colVenc=findColumn(headers,['vencimento','data','emissao']); const colTipo=findColumn(headers,['tipo','categoria','item']); const colFornecedor=findColumn(headers,['fornecedor','nome','credor']); const colQuant=findColumn(headers,['quant','qtd','quantidade']); const colValorUnit=findColumn(headers,['unit','preço unit','valor unit']); const colValorTotal=findColumn(headers,['total','valor total']); const colObs=findColumn(headers,['obs','observacao','descricao']);
-            document.getElementById('batDebugInfo').innerHTML=`<strong>Colunas Baterias:</strong><br>Vencimento: ${colVenc}<br>Tipo: ${colTipo}<br>Fornecedor: ${colFornecedor}<br>Quant: ${colQuant}<br>Valor Unit: ${colValorUnit}<br>Valor Total: ${colValorTotal}<br>Linhas: ${rows.length}`;
-            document.getElementById('batDebugCard').style.display='block'; setTimeout(()=>document.getElementById('batDebugCard').style.display='none',8000);
+            const colVenc=findColumn(headers,['vencimento','data','emissao','data vencimento']);
+            const colTipo=findColumn(headers,['tipo','categoria','item','descricao']);
+            const colFornecedor=findColumn(headers,['fornecedor','nome','credor','fornecedor nome']);
+            const colQuant=findColumn(headers,['quant','qtd','quantidade','amount']);
+            const colValorUnit=findColumn(headers,['unit','preço unit','valor unit','unitario']);
+            const colValorTotal=findColumn(headers,['total','valor total','valor','valor_total']);
+            const colObs=findColumn(headers,['obs','observacao','descricao','notas']);
+            
+            let debugMsg = `<strong>Colunas detectadas:</strong><br>
+                Vencimento: ${colVenc}<br>
+                Tipo: ${colTipo}<br>
+                Fornecedor: ${colFornecedor}<br>
+                Quantidade: ${colQuant}<br>
+                Valor Unitário: ${colValorUnit}<br>
+                Valor Total: ${colValorTotal}<br>
+                Observação: ${colObs}<br>
+                Total de linhas: ${rows.length}`;
+            document.getElementById('batDebugInfo').innerHTML=debugMsg;
+            document.getElementById('batDebugCard').style.display='block';
+            setTimeout(()=>document.getElementById('batDebugCard').style.display='none',10000);
+            
             bateriasData=[];
             for(let row of rows){
-                let venc=moment(row[colVenc],['DD/MM/YYYY','YYYY-MM-DD','MM/DD/YYYY'],true); if(!venc.isValid()) continue;
-                let quantidade=parseFloat(row[colQuant])||1; let valorUnit=parseMoney(row[colValorUnit]); let valorTotal=parseMoney(row[colValorTotal]);
-                if(valorTotal===0 && valorUnit!==0) valorTotal=quantidade*valorUnit;
-                if(valorTotal===0) continue;
-                bateriasData.push({ vencimento:venc.toDate(), tipo:row[colTipo]||"N/I", fornecedor:row[colFornecedor]||"N/I", quantidade, valorUnitario:valorUnit, valorTotal, obs:row[colObs]||"" });
+                let venc=moment(row[colVenc],['DD/MM/YYYY','YYYY-MM-DD','MM/DD/YYYY'],true);
+                if(!venc.isValid()) continue;
+                let quantidade = parseFloat(row[colQuant]) || 1;
+                let valorUnit = parseMoney(row[colValorUnit]);
+                let valorTotal = parseMoney(row[colValorTotal]);
+                if(valorTotal===0 && valorUnit!==0) valorTotal = quantidade * valorUnit;
+                // Se ainda for zero, não tem problema – usaremos zero para os rankings monetários (mas não será usado)
+                bateriasData.push({
+                    vencimento: venc.toDate(),
+                    tipo: row[colTipo] || "Não informado",
+                    fornecedor: row[colFornecedor] || "Não informado",
+                    quantidade: quantidade,
+                    valorUnitario: valorUnit,
+                    valorTotal: valorTotal,
+                    obs: row[colObs] || ""
+                });
             }
-            if(bateriasData.length===0) throw new Error("Nenhum valor total >0");
+            if(bateriasData.length===0) throw new Error("Nenhuma linha com data válida");
+            // Preencher selects e datalists
+            const fornecedores = [...new Set(bateriasData.map(i=>i.fornecedor))].sort();
+            const tipos = [...new Set(bateriasData.map(i=>i.tipo))].sort();
+            const selectFornecedor = document.getElementById('batFornecedorSelect');
+            selectFornecedor.innerHTML = '<option value="">Todos</option>' + fornecedores.map(f => `<option value="${f}">${f}</option>`).join('');
+            const datalistTipo = document.getElementById('batTipoList');
+            datalistTipo.innerHTML = tipos.map(t => `<option value="${t}">`).join('');
             if(!skipFilter) aplicarFiltrosBaterias();
-        }catch(e){ console.error(e); bateriasData=[{ vencimento:new Date(2025,0,15), tipo:"Bateria Caminhão", fornecedor:"Acumuladores XYZ", quantidade:4, valorUnitario:850, valorTotal:3400, obs:"Exemplo"},{ vencimento:new Date(2024,11,10), tipo:"Pesada", fornecedor:"Baterias Sul", quantidade:2, valorUnitario:1200, valorTotal:2400, obs:"Vencida"}]; if(!skipFilter) aplicarFiltrosBaterias(); }
+        }catch(e){ 
+            console.error(e); 
+            bateriasData=[{ vencimento:new Date(2025,0,15), tipo:"Exemplo", fornecedor:"Fornecedor A", quantidade:1, valorUnitario:0, valorTotal:0, obs:"Sem valores"},{ vencimento:new Date(2024,11,10), tipo:"Exemplo Vencido", fornecedor:"Fornecedor B", quantidade:2, valorUnitario:0, valorTotal:0, obs:"Apenas data"}]; 
+            const fornecedores = [...new Set(bateriasData.map(i=>i.fornecedor))].sort();
+            const tipos = [...new Set(bateriasData.map(i=>i.tipo))].sort();
+            const selectFornecedor = document.getElementById('batFornecedorSelect');
+            selectFornecedor.innerHTML = '<option value="">Todos</option>' + fornecedores.map(f => `<option value="${f}">${f}</option>`).join('');
+            const datalistTipo = document.getElementById('batTipoList');
+            datalistTipo.innerHTML = tipos.map(t => `<option value="${t}">`).join('');
+            if(!skipFilter) aplicarFiltrosBaterias(); 
+        }
     }
+    
     function aplicarFiltrosBaterias(){
-        const dataInicio=document.getElementById('batDataInicio').value, dataFim=document.getElementById('batDataFim').value, pesquisa=document.getElementById('batPesquisa').value.trim().toLowerCase();
+        const dataInicio=document.getElementById('batDataInicio').value, dataFim=document.getElementById('batDataFim').value;
+        const fornecedor = document.getElementById('batFornecedorSelect').value;
+        const tipo = document.getElementById('batTipo').value.trim().toLowerCase();
+        const pesquisa = document.getElementById('batPesquisa').value.trim().toLowerCase();
         let filtered=bateriasData.filter(item=>{
             if(dataInicio && item.vencimento < new Date(dataInicio)) return false;
             if(dataFim){ let end=new Date(dataFim); end.setHours(23,59,59); if(item.vencimento > end) return false; }
+            if(fornecedor && item.fornecedor !== fornecedor) return false;
+            if(tipo && !item.tipo.toLowerCase().includes(tipo)) return false;
             if(pesquisa && !`${item.tipo} ${item.fornecedor} ${item.obs}`.toLowerCase().includes(pesquisa)) return false;
             return true;
         });
@@ -357,7 +411,6 @@
         const proximas=filtered.filter(i=>i.vencimento >= hoje && i.vencimento <= dias7);
         const aVencerFuturo = filtered.filter(i=>i.vencimento > hoje);
         
-        // Cards de alerta (datas)
         document.getElementById('qtdVencidas').innerText=vencidas.length;
         document.getElementById('qtdProximas').innerText=proximas.length;
         if(vencidas.length){
@@ -369,35 +422,50 @@
             document.getElementById('dataProximaMaisProxima').innerText=moment(datasProximas[0]).format('DD/MM/YYYY');
         } else { document.getElementById('dataProximaMaisProxima').innerText='---'; }
         
-        // Popup se houver próximas
         if(proximas.length>0){
             let listaDatas = proximas.map(i=>moment(i.vencimento).format('DD/MM/YYYY')).slice(0,5).join(', ');
             alert(`⚠️ ATENÇÃO: ${proximas.length} conta(s) de bateria vence(m) nos próximos 7 dias!\nDatas: ${listaDatas}${proximas.length>5 ? '...' : ''}`);
         }
         
-        // Ranking de fornecedores por valor em contas vencidas (corrigido)
-        let mapFornecedorValor=new Map();
-        vencidas.forEach(i=>mapFornecedorValor.set(i.fornecedor, (mapFornecedorValor.get(i.fornecedor)||0) + i.valorTotal));
-        let sortedValor = Array.from(mapFornecedorValor.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5);
-        document.getElementById('batRankingVencidas').innerHTML = sortedValor.length ? sortedValor.map(([f,v])=>`<div><strong>${f}</strong> R$ ${v.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>`).join('') : '<div>Nenhuma conta vencida</div>';
+        // RANKING: FORNECEDORES COM MAIS CONTAS VENCIDAS (baseado em quantidade, não em valor)
+        let mapFornecedorCount = new Map();
+        vencidas.forEach(i=>mapFornecedorCount.set(i.fornecedor, (mapFornecedorCount.get(i.fornecedor)||0) + 1));
+        let sortedCount = Array.from(mapFornecedorCount.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5);
+        document.getElementById('batRankingVencidas').innerHTML = sortedCount.length ? 
+            sortedCount.map(([f, count])=>`<div><strong>${f}</strong> – ${count} conta(s) vencida(s)</div>`).join('') : 
+            '<div>Nenhuma conta vencida</div>';
         
-        // NOVO: Ranking de fornecedores por vencimento mais próximo (melhores por vencimento futuro)
-        let mapFornecedorProx = new Map(); // armazena a data mais próxima por fornecedor (apenas contas a vencer > hoje)
+        // Ranking de vencimento mais próximo (baseado em data)
+        let mapFornecedorProx = new Map();
         aVencerFuturo.forEach(i => {
             let current = mapFornecedorProx.get(i.fornecedor);
             if (!current || i.vencimento < current) mapFornecedorProx.set(i.fornecedor, i.vencimento);
         });
         let sortedProx = Array.from(mapFornecedorProx.entries()).sort((a,b)=>a[1]-b[1]).slice(0,5);
-        document.getElementById('batRankingProximas').innerHTML = sortedProx.length ? sortedProx.map(([f,data])=>`<div><strong>${f}</strong> – vence em ${moment(data).format('DD/MM/YYYY')}</div>`).join('') : '<div>Nenhuma conta a vencer futuramente</div>';
+        document.getElementById('batRankingProximas').innerHTML = sortedProx.length ? 
+            sortedProx.map(([f, data])=>`<div><strong>${f}</strong> – vence em ${moment(data).format('DD/MM/YYYY')}</div>`).join('') : 
+            '<div>Nenhuma conta a vencer futuramente</div>';
         
-        // Tabela de registros
+        // Tabela de registros (mostrando valores, mesmo que zero)
         let tbody=document.querySelector('#batTable tbody'); tbody.innerHTML='';
-        filtered.forEach(item=>{ let row=tbody.insertRow(); row.innerHTML=`<td>${moment(item.vencimento).format('DD/MM/YYYY')}</td><td>${item.tipo}</td><td>${item.fornecedor}</td><td>${item.quantidade}</td><td>R$ ${item.valorUnitario.toFixed(2)}</td><td style="text-align:right">R$ ${item.valorTotal.toFixed(2)}</td><td>${item.obs.substring(0,50)}</td>`; });
+        filtered.forEach(item=>{ 
+            let valorUnitStr = item.valorUnitario ? `R$ ${item.valorUnitario.toFixed(2)}` : '---';
+            let valorTotalStr = item.valorTotal ? `R$ ${item.valorTotal.toFixed(2)}` : '---';
+            let row=tbody.insertRow(); 
+            row.innerHTML=`<td>${moment(item.vencimento).format('DD/MM/YYYY')}</td><td>${item.tipo}</td><td>${item.fornecedor}</td><td>${item.quantidade}</td><td>${valorUnitStr}</td><td style="text-align:right">${valorTotalStr}</td><td>${item.obs.substring(0,50)}</td>`; 
+        });
         if(filtered.length===0) tbody.innerHTML='<tr><td colspan="7">Nenhum registro encontrado</td></tr>';
     }
     document.getElementById('batAplicarFiltros').addEventListener('click',aplicarFiltrosBaterias);
-    document.getElementById('batResetFiltros').addEventListener('click',()=>{ document.getElementById('batDataInicio').value=''; document.getElementById('batDataFim').value=''; document.getElementById('batPesquisa').value=''; aplicarFiltrosBaterias(); });
-    document.getElementById('batExportarCSV').addEventListener('click',()=>{ let csv=[["Vencimento","Tipo","Fornecedor","Quantidade","ValorUnit","ValorTotal","Obs"]]; bateriasData.forEach(i=>{ csv.push([moment(i.vencimento).format('DD/MM/YYYY'),i.tipo,i.fornecedor,i.quantidade,i.valorUnitario,i.valorTotal,i.obs]); }); let blob=new Blob(["\uFEFF"+csv.map(r=>r.join(",")).join("\n")],{type:"text/csv"}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download="baterias.csv"; a.click(); });
+    document.getElementById('batResetFiltros').addEventListener('click',()=>{ document.getElementById('batDataInicio').value=''; document.getElementById('batDataFim').value=''; document.getElementById('batFornecedorSelect').value=''; document.getElementById('batTipo').value=''; document.getElementById('batPesquisa').value=''; aplicarFiltrosBaterias(); });
+    document.getElementById('batExportarCSV').addEventListener('click',()=>{ 
+        let csv=[["Vencimento","Tipo","Fornecedor","Quantidade","ValorUnit","ValorTotal","Obs"]]; 
+        bateriasData.forEach(i=>{ 
+            csv.push([moment(i.vencimento).format('DD/MM/YYYY'),i.tipo,i.fornecedor,i.quantidade,i.valorUnitario,i.valorTotal,i.obs]); 
+        }); 
+        let blob=new Blob(["\uFEFF"+csv.map(r=>r.join(",")).join("\n")],{type:"text/csv"}); 
+        let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download="baterias.csv"; a.click(); 
+    });
 
     // ========== CALCULADORA ==========
     function atualizarSelectMotoristasCalculadora(){ let motoristas=[...new Set(faturamentoData.map(i=>i.motorista))]; let sel=document.getElementById('calcMotoristaSelect'); sel.innerHTML='<option value="">Selecione</option>'+motoristas.map(m=>`<option value="${m}">${m}</option>`).join(''); }
