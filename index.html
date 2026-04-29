@@ -128,6 +128,7 @@
         .ranking-numerado li { counter-increment: rank; margin-bottom: 0.5rem; padding: 0.5rem; background: #f8fafc; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
         .ranking-numerado li::before { content: counter(rank) "º"; font-weight: bold; background: var(--accent); color: var(--dark); padding: 0.2rem 0.6rem; border-radius: 20px; margin-right: 0.8rem; }
         .chart-selector { margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center; }
+        #liveClock { font-size: 0.85rem; background: rgba(0,0,0,0.05); padding: 0.3rem 1rem; border-radius: 40px; display: inline-flex; align-items: center; gap: 0.5rem; }
     </style>
 </head>
 <body>
@@ -150,7 +151,7 @@
 <div id="loginModal" class="login-overlay"><div class="login-card"><i class="fas fa-lock" style="font-size:2rem; color:var(--accent)"></i><h2>Acesso Restrito</h2><input type="text" id="loginUser" class="login-input" placeholder="Usuário"><input type="password" id="loginPass" class="login-input" placeholder="Senha"><button id="doLoginBtn" style="background:var(--accent); border:none; padding:0.8rem; width:100%; border-radius:60px; font-weight:bold; margin-top:1rem;">Entrar</button><div id="loginError" style="color:red; margin-top:0.5rem;"></div></div></div>
 
 <div id="privateArea" class="private-area">
-    <div class="private-header"><h2><i class="fas fa-chart-line"></i> Central M-Malacarne</h2><div><button id="refreshDataBtn" class="btn-export btn-refresh"><i class="fas fa-sync-alt"></i> Atualizar</button><button id="logoutPrivateBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sair</button></div></div>
+    <div class="private-header"><h2><i class="fas fa-chart-line"></i> Central M-Malacarne</h2><div id="liveClock"><i class="far fa-clock"></i> Carregando...</div><div><button id="refreshDataBtn" class="btn-export btn-refresh"><i class="fas fa-sync-alt"></i> Atualizar</button><button id="logoutPrivateBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sair</button></div></div>
     <div class="tabs"><button class="tab-btn active" data-tab="tabFinanceiro">📊 Financeiro</button><button class="tab-btn" data-tab="tabFaturamento">🚛 Faturamento</button><button class="tab-btn" data-tab="tabBaterias">🔋 Baterias</button><button class="tab-btn" data-tab="tabCalculadora">💰 Calculadora</button></div>
     
     <!-- FINANCEIRO -->
@@ -226,7 +227,7 @@
         <div class="dashboard-card"><h3>⚠️ Baterias com vencimento em até 3 meses</h3><div id="listaVencimento3Meses"></div></div>
         <div class="dashboard-card"><h3>🏆 Modelos com mais baterias</h3><div id="rankFornecedores"></div></div>
         <div class="dashboard-card"><h3>📈 Melhores por período venda→vencimento</h3><div id="rankMelhoresPorTempo"></div></div>
-        <div class="dashboard-card"><h3>📋 Todas as baterias</h3><div style="overflow-x:auto"><table class="data-table" id="batTable"><thead><tr><th>PLACA</th><th>MODELO</th><th>DATA VENDA</th><th>VENCIMENTO</th><th>NÚMERO</th><th>NOTA</th><th>ORDEM</th><th>GARANTIA</th><th>OBS</th><th>LOCAL</th></tr></thead><tbody><tr><td colspan="10">Carregando...</td></tr></tbody></table></div></div>
+        <div class="dashboard-card"><h3>📋 Todas as baterias</h3><div style="overflow-x:auto"><table class="data-table" id="batTable"><thead><tr><th>PLACA</th><th>MODELO</th><th>DATA VENDA</th><th>VENCIMENTO</th><th>NÚMERO</th><th>NOTA</th><th>ORDEM</th><th>GARANTIA</th><th>OBS</th><th>LOCAL</th></tr></thead><tbody><tr><td colspan="10">Carregando...</td>�</tbody></table></div></div>
     </div>
 
     <div id="tabCalculadora" class="tab-content"><div class="dashboard-card salary-calc"><h4>Calculadora Salário Motorista</h4><div class="filter-group"><label>Motorista</label><select id="calcMotoristaSelect"><option>Carregando...</option></select></div><div class="filter-group"><label>Mês/Ano</label><input type="month" id="calcPeriodo"></div><button id="calcAplicarFiltros" class="btn-export">Calcular</button><div id="calcResultado"><p><strong>Faturamento total:</strong> <span id="calcTotalFrete">R$ 0,00</span></p><div id="calcListaFretes"></div></div><hr><div class="salary-row"><label>% Comissão:</label><input type="number" id="calcComissaoPercent" value="5" step="0.5"> %</div><div class="salary-row"><label>Despesas:</label><input type="number" id="calcDespesasMot" value="0"></div><div class="salary-row"><label>Diária:</label><input type="number" id="calcDiaria" value="0"></div><div class="salary-row"><label>Bônus:</label><input type="number" id="calcBonus" value="0"></div><div class="salary-row"><label>Vales:</label><input type="number" id="calcVales" value="0"></div><div class="salary-row"><label>IR/Multa/DepFolha:</label><input type="number" id="calcIr" value="0"><input type="number" id="calcMulta" value="0"><input type="number" id="calcDepFolha" value="0"></div><div class="salary-row"><label><strong>Valor a Receber:</strong></label><span id="calcValorReceber" class="result-value">R$ 0,00</span></div></div></div>
@@ -249,10 +250,38 @@
     // LOGIN
     const publicSite=document.getElementById('publicSite'), privateArea=document.getElementById('privateArea'), loginModal=document.getElementById('loginModal');
     document.getElementById('privateAccessBtn').addEventListener('click',(e)=>{e.preventDefault(); loginModal.classList.add('active');});
-    document.getElementById('doLoginBtn').addEventListener('click',()=>{ let u=document.getElementById('loginUser').value.trim(), p=document.getElementById('loginPass').value.trim(); if(u===VALID_USER && p===VALID_PASS){ publicSite.style.display='none'; privateArea.style.display='block'; loginModal.classList.remove('active'); refreshAllData(); } else document.getElementById('loginError').innerText='Credenciais inválidas'; });
+    document.getElementById('doLoginBtn').addEventListener('click', async () => {
+        let u=document.getElementById('loginUser').value.trim(), p=document.getElementById('loginPass').value.trim();
+        if(u===VALID_USER && p===VALID_PASS){
+            publicSite.style.display='none';
+            privateArea.style.display='block';
+            loginModal.classList.remove('active');
+            await refreshAllData();
+            // Forçar renderização completa da aba ativa (Financeiro)
+            if(financeiroData.length) {
+                applyFinFilters();
+                gerarPrevisaoGlobal();
+            }
+            if(faturamentoData.length) aplicarFiltrosFaturamento();
+            if(bateriasData.length) aplicarFiltrosBaterias();
+            // Atualizar relógio
+            updateDateTime();
+        } else document.getElementById('loginError').innerText='Credenciais inválidas';
+    });
     document.getElementById('logoutPrivateBtn').addEventListener('click',()=>{ publicSite.style.display='block'; privateArea.style.display='none'; loginModal.classList.remove('active'); });
-    async function refreshAllData(){ await Promise.all([loadFinanceiroData(true), loadFaturamentoData(true), loadBateriasData(true)]); atualizarSelectMotoristasCalculadora(); }
+    async function refreshAllData(){ await Promise.all([loadFinanceiroData(true), loadFaturamentoData(true), loadBateriasData(true)]); atualizarSelectMotoristasCalculadora(); gerarPrevisaoGlobal(); }
     document.getElementById('refreshDataBtn').addEventListener('click',refreshAllData);
+
+    // ========== RELÓGIO AO VIVO ==========
+    function updateDateTime() {
+        const now = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+        const formatted = now.toLocaleDateString('pt-BR', options);
+        const clockDiv = document.getElementById('liveClock');
+        if (clockDiv) clockDiv.innerHTML = `<i class="far fa-clock"></i> ${formatted}`;
+    }
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
 
     // ========== FINANCEIRO ==========
     let colMapping = { data: null, valor: null, local: null, tipo: null };
@@ -298,7 +327,6 @@
     }
     function carregarDadosFinanceiro(rows, mapping, skipFilter){
         let debugMsg = `<strong>Mapeamento:</strong><br>Data: ${mapping.data}<br>Valor: ${mapping.valor}<br>Local: ${mapping.local||'ignorado'}<br>Tipo: ${mapping.tipo||'ignorado'}<br>Total linhas: ${rows.length}`;
-        let sampleHtml = '<strong>Amostra (primeiras 5):</strong><br>';
         financeiroData = [];
         for(let row of rows){
             let rawDate = row[mapping.data];
@@ -320,12 +348,13 @@
         }
         debugMsg += `<br>Registros válidos: ${financeiroData.length}`;
         document.getElementById('finDebugInfo').innerHTML = debugMsg;
-        document.getElementById('finSampleRows').innerHTML = sampleHtml;
+        document.getElementById('finSampleRows').innerHTML = '';
         document.getElementById('finDebugCard').style.display = 'block';
         setTimeout(()=>document.getElementById('finDebugCard').style.display='none',12000);
         if(!financeiroData.length) alert("Nenhum registro válido encontrado!");
         atualizarDatalistsFinanceiro();
         if(!skipFilter) applyFinFilters();
+        gerarPrevisaoGlobal(); // sempre atualiza previsão com dados totais
     }
     function atualizarDatalistsFinanceiro(){
         document.getElementById('finLocalList').innerHTML = [...new Set(financeiroData.map(i=>i.local))].map(l=>`<option value="${l}">`).join('');
@@ -347,15 +376,12 @@
     }
     document.getElementById('chartTypeSelect').addEventListener('change', () => atualizarGraficoTipo());
     
-    // FUNÇÃO DE FILTRO CORRIGIDA (DATAS INCLUSIVAS E PREVISÃO BASEADA NO FILTRO)
     function applyFinFilters(){
-        // Captura valores dos filtros
         const dataInicioStr = document.getElementById('finDataInicio').value;
         const dataFimStr = document.getElementById('finDataFim').value;
         const local = document.getElementById('finLocal').value.trim();
         const tipo = document.getElementById('finTipo').value.trim();
 
-        // Converte datas usando moment com timezone local e garante inclusividade
         const startMoment = dataInicioStr ? moment(dataInicioStr).startOf('day') : null;
         const endMoment = dataFimStr ? moment(dataFimStr).endOf('day') : null;
 
@@ -368,7 +394,6 @@
             return true;
         });
 
-        // Totais e resumo
         const total = currentFinanceiroFiltered.reduce((s,i)=>s+i.valor,0);
         const qtd = currentFinanceiroFiltered.length;
         const media = qtd ? total/qtd : 0;
@@ -381,7 +406,6 @@
         document.getElementById('consMaior').innerHTML = `R$ ${maior.toLocaleString('pt-BR',{minFractionDigits:2})}`;
         document.getElementById('consMenor').innerHTML = `R$ ${menor.toLocaleString('pt-BR',{minFractionDigits:2})}`;
 
-        // Rankings
         const tipoMap = new Map();
         const localMap = new Map();
         currentFinanceiroFiltered.forEach(i => {
@@ -395,7 +419,6 @@
 
         atualizarGraficoTipo();
 
-        // Tabela de documentos
         const tbody = document.querySelector('#finTable tbody');
         tbody.innerHTML = '';
         const hoje = new Date(); hoje.setHours(0,0,0,0);
@@ -420,89 +443,77 @@
             `;
         });
         document.querySelectorAll('.servico-detalhe').forEach(el=>el.addEventListener('click',()=>{ document.getElementById('servicoDetalheTexto').innerText=el.getAttribute('data-servico'); document.getElementById('servicoModal').classList.add('active'); }));
+    }
 
-        // ========== PREVISÃO CORRIGIDA ==========
-        // 1. Calcular média diária com base nos dados filtrados (últimos meses disponíveis)
+    // PREVISÃO GLOBAL (baseada na data atual, independente dos filtros)
+    function gerarPrevisaoGlobal() {
+        if (!financeiroData.length) {
+            document.querySelector('#finPrevisaoTable tbody').innerHTML = '<tr><td colspan="2">Aguardando dados financeiros...</td></tr>';
+            return;
+        }
         const monthlySum = new Map();
-        currentFinanceiroFiltered.forEach(i => {
-            if(i.vencimentoDate){
+        financeiroData.forEach(i => {
+            if (i.vencimentoDate) {
                 const key = moment(i.vencimentoDate).format('YYYY-MM');
-                monthlySum.set(key, (monthlySum.get(key)||0) + i.valor);
+                monthlySum.set(key, (monthlySum.get(key) || 0) + i.valor);
             }
         });
         const monthsWithData = Array.from(monthlySum.keys()).sort();
         const last3Months = monthsWithData.slice(-3);
         let avgMonthly = 0;
-        if(last3Months.length) {
-            const sumLast3 = last3Months.reduce((acc,m) => acc + monthlySum.get(m), 0);
+        if (last3Months.length) {
+            const sumLast3 = last3Months.reduce((acc, m) => acc + monthlySum.get(m), 0);
             avgMonthly = sumLast3 / last3Months.length;
         }
         const avgDaily = avgMonthly / 30;
 
-        // 2. Definir data-base para início da previsão:
-        //    - Se houver dados filtrados, pega a maior data (vencimento) e soma 1 dia
-        //    - Caso contrário, usa hoje
-        let maxDateInData = null;
-        if(currentFinanceiroFiltered.length) {
-            maxDateInData = currentFinanceiroFiltered.reduce((max, item) => item.vencimentoDate > max ? item.vencimentoDate : max, new Date(0));
-        }
-        let startForecastDate = maxDateInData ? moment(maxDateInData).add(1, 'day') : moment();
-        // Se a data-base for anterior a hoje, ajusta para hoje (não projetar passado)
-        if(startForecastDate.isBefore(moment(), 'day')) startForecastDate = moment().startOf('day');
-
+        let startForecastDate = moment().add(1, 'day').startOf('day');
         const forecastRows = [];
-        // Gerar no máximo 3 meses (ou 6 períodos)
         let currentDate = startForecastDate.clone();
         let periodsGenerated = 0;
-        const maxPeriods = 12; // até 12 períodos (ex: 2 meses completos)
+        const maxPeriods = 12;
 
-        while(periodsGenerated < maxPeriods) {
+        while (periodsGenerated < maxPeriods) {
             const year = currentDate.year();
             const month = currentDate.month();
-            const lastDayOfMonth = moment({year, month}).endOf('month').date();
+            const lastDayOfMonth = moment({ year, month }).endOf('month').date();
             const periodsDef = [
-                { start:1, end:5, label:"01-05" },
-                { start:6, end:10, label:"06-10" },
-                { start:11, end:15, label:"11-15" },
-                { start:16, end:20, label:"16-20" },
-                { start:21, end:25, label:"21-25" },
-                { start:26, end:lastDayOfMonth, label:`26-${lastDayOfMonth}` }
+                { start: 1, end: 5, label: "01-05" },
+                { start: 6, end: 10, label: "06-10" },
+                { start: 11, end: 15, label: "11-15" },
+                { start: 16, end: 20, label: "16-20" },
+                { start: 21, end: 25, label: "21-25" },
+                { start: 26, end: lastDayOfMonth, label: `26-${lastDayOfMonth}` }
             ];
             let addedAny = false;
-            for(let p of periodsDef) {
-                const periodStart = moment({year, month, date: p.start});
-                const periodEnd = moment({year, month, date: p.end}).endOf('day');
-                // só adiciona se o período começar depois da data base
-                if(periodStart.isSameOrAfter(startForecastDate, 'day')) {
-                    const daysCount = periodEnd.diff(periodStart, 'days') + 1;
+            for (let p of periodsDef) {
+                const periodStart = moment({ year, month, date: p.start });
+                if (periodStart.isSameOrAfter(startForecastDate, 'day')) {
+                    const daysCount = moment({ year, month, date: p.end }).endOf('day').diff(periodStart, 'days') + 1;
                     const projected = avgDaily * daysCount;
-                    const monthName = moment({year, month}).format('MMM/YYYY');
-                    forecastRows.push(`<tr><td>${monthName} (${p.label})</td><td>R$ ${projected.toLocaleString('pt-BR',{minFractionDigits:2})}</td></tr>`);
+                    const monthName = moment({ year, month }).format('MMM/YYYY');
+                    forecastRows.push(`<tr><td>${monthName} (${p.label})</td><td>R$ ${projected.toLocaleString('pt-BR', { minFractionDigits: 2 })}</td></tr>`);
                     periodsGenerated++;
                     addedAny = true;
-                    if(periodsGenerated >= maxPeriods) break;
+                    if (periodsGenerated >= maxPeriods) break;
                 }
             }
-            if(!addedAny && startForecastDate.month() === month && startForecastDate.year() === year) {
-                // se nenhum período foi adicionado porque a data-base está dentro de um período,
-                // avança para o próximo mês para não travar
-                currentDate.add(1, 'month');
-            } else {
-                currentDate.add(1, 'month');
-            }
-            if(currentDate.isAfter(moment().add(6, 'months'))) break; // segurança
+            if (!addedAny) currentDate.add(1, 'month');
+            else currentDate.add(1, 'month');
+            if (currentDate.isAfter(moment().add(6, 'months'))) break;
         }
 
         const forecastTbody = document.querySelector('#finPrevisaoTable tbody');
-        if(avgMonthly === 0 || currentFinanceiroFiltered.length === 0) {
+        if (avgMonthly === 0 || financeiroData.length === 0) {
             forecastTbody.innerHTML = '<tr><td colspan="2">Sem dados históricos suficientes para projeção</td></tr>';
-        } else if(forecastRows.length === 0) {
-            forecastTbody.innerHTML = '<tr><td colspan="2">Nenhum período futuro a projetar (filtro abrange datas muito futuras?)</td></tr>';
+        } else if (forecastRows.length === 0) {
+            forecastTbody.innerHTML = '<tr><td colspan="2">Nenhum período futuro a projetar</td></tr>';
         } else {
             forecastTbody.innerHTML = forecastRows.join('');
         }
     }
 
+    // Auto atualização dos filtros (mas previsão NÃO é afetada)
     document.getElementById('finAplicarFiltros').addEventListener('click', applyFinFilters);
     document.getElementById('finResetFiltros').addEventListener('click',()=>{
         document.getElementById('finDataInicio').value='';
@@ -518,7 +529,7 @@
     });
     document.getElementById('finExportarPDF').addEventListener('click',()=>alert("Use Ctrl+P"));
 
-    // ========== FATURAMENTO ==========
+    // ========== FATURAMENTO (resumido) ==========
     async function loadFaturamentoData(skipFilter=false){
         try{
             const resp=await fetch(URL_FATURAMENTO); const text=await resp.text(); const parsed=Papa.parse(text,{header:true}); const rows=parsed.data; if(!rows.length) throw new Error();
