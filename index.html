@@ -194,7 +194,7 @@
         <div class="dashboard-card"><h3><i class="fas fa-chart-line"></i> 🔮 Previsão para próximos períodos (dias 01-05,06-10,11-15,16-20,21-25,26-30/31)</h3><div class="forecast-card"><table class="forecast-table" id="finPrevisaoTable"><thead><tr><th>Período</th><th>Previsão (R$)</th></tr></thead><tbody><tr><td colspan="2">Aguarde carregamento...</td></tr></tbody></table></div></div>
     </div>
     
-    <!-- FATURAMENTO (íntegro, como antes) -->
+    <!-- FATURAMENTO -->
     <div id="tabFaturamento" class="tab-content">
         <div class="dashboard-card"><h3>Filtros</h3><div>
             <div class="filter-group"><label>Mês</label><select id="fatMesSelect"><option value="all">Todos</option></select></div>
@@ -211,7 +211,7 @@
         <div class="dashboard-card"><h3>🚛 Tabela de Fretes (clique na placa do cavalo)</h3><div style="overflow-x:auto"><table class="data-table" id="fatTable"><thead><tr><th>Data</th><th>Placa Cavalo</th><th>Placa Carreta</th><th>Motorista</th><th>Embarcadora</th><th>Origem</th><th>Destino</th><th>Valor (R$)</th></tr></thead><tbody></tbody></table></div><div id="fichaPlaca" class="ficha-placa" style="display:none;"></div></div>
     </div>
 
-    <!-- BATERIAS (íntegra) -->
+    <!-- BATERIAS -->
     <div id="tabBaterias" class="tab-content">
         <div id="batDebugCard" class="dashboard-card debug-card" style="display: none;"><h3>🔍 Diagnóstico Baterias</h3><div id="batDebugInfo"></div></div>
         <div class="dashboard-card"><h3>Filtros</h3><div>
@@ -347,39 +347,59 @@
     }
     document.getElementById('chartTypeSelect').addEventListener('change', () => atualizarGraficoTipo());
     
+    // FUNÇÃO DE FILTRO CORRIGIDA (DATAS INCLUSIVAS E PREVISÃO BASEADA NO FILTRO)
     function applyFinFilters(){
-        const dataInicio = document.getElementById('finDataInicio').value, dataFim = document.getElementById('finDataFim').value;
-        const local = document.getElementById('finLocal').value.trim(), tipo = document.getElementById('finTipo').value.trim();
-        const startDate = dataInicio ? new Date(dataInicio) : null; if(startDate) startDate.setHours(0,0,0,0);
-        const endDate = dataFim ? new Date(dataFim) : null; if(endDate) endDate.setHours(23,59,59,999);
+        // Captura valores dos filtros
+        const dataInicioStr = document.getElementById('finDataInicio').value;
+        const dataFimStr = document.getElementById('finDataFim').value;
+        const local = document.getElementById('finLocal').value.trim();
+        const tipo = document.getElementById('finTipo').value.trim();
+
+        // Converte datas usando moment com timezone local e garante inclusividade
+        const startMoment = dataInicioStr ? moment(dataInicioStr).startOf('day') : null;
+        const endMoment = dataFimStr ? moment(dataFimStr).endOf('day') : null;
+
         currentFinanceiroFiltered = financeiroData.filter(item => {
-            if(startDate && item.vencimentoDate < startDate) return false;
-            if(endDate && item.vencimentoDate > endDate) return false;
+            const itemMoment = moment(item.vencimentoDate);
+            if(startMoment && itemMoment.isBefore(startMoment)) return false;
+            if(endMoment && itemMoment.isAfter(endMoment)) return false;
             if(local && !item.local.toLowerCase().includes(local.toLowerCase())) return false;
             if(tipo && !item.tipoConta.toLowerCase().includes(tipo.toLowerCase())) return false;
             return true;
         });
-        const total = currentFinanceiroFiltered.reduce((s,i)=>s+i.valor,0), qtd = currentFinanceiroFiltered.length;
-        const media = qtd ? total/qtd : 0, maior = qtd ? Math.max(...currentFinanceiroFiltered.map(i=>i.valor)) : 0, menor = qtd ? Math.min(...currentFinanceiroFiltered.map(i=>i.valor)) : 0;
+
+        // Totais e resumo
+        const total = currentFinanceiroFiltered.reduce((s,i)=>s+i.valor,0);
+        const qtd = currentFinanceiroFiltered.length;
+        const media = qtd ? total/qtd : 0;
+        const maior = qtd ? Math.max(...currentFinanceiroFiltered.map(i=>i.valor)) : 0;
+        const menor = qtd ? Math.min(...currentFinanceiroFiltered.map(i=>i.valor)) : 0;
+
         document.getElementById('consTotal').innerHTML = `R$ ${total.toLocaleString('pt-BR',{minFractionDigits:2})}`;
         document.getElementById('consMedia').innerHTML = `R$ ${media.toLocaleString('pt-BR',{minFractionDigits:2})}`;
         document.getElementById('consQuantidade').innerText = qtd;
         document.getElementById('consMaior').innerHTML = `R$ ${maior.toLocaleString('pt-BR',{minFractionDigits:2})}`;
         document.getElementById('consMenor').innerHTML = `R$ ${menor.toLocaleString('pt-BR',{minFractionDigits:2})}`;
-        
-        // Rankings ordenados
-        let tipoMap = new Map(); currentFinanceiroFiltered.forEach(i=>tipoMap.set(i.tipoConta, (tipoMap.get(i.tipoConta)||0)+i.valor));
-        let sortedTipo = Array.from(tipoMap.entries()).sort((a,b)=>b[1]-a[1]);
+
+        // Rankings
+        const tipoMap = new Map();
+        const localMap = new Map();
+        currentFinanceiroFiltered.forEach(i => {
+            tipoMap.set(i.tipoConta, (tipoMap.get(i.tipoConta)||0) + i.valor);
+            localMap.set(i.local, (localMap.get(i.local)||0) + i.valor);
+        });
+        const sortedTipo = Array.from(tipoMap.entries()).sort((a,b)=>b[1]-a[1]);
+        const sortedLocal = Array.from(localMap.entries()).sort((a,b)=>b[1]-a[1]);
         document.getElementById('finRankingTipo').innerHTML = sortedTipo.map(([t,v]) => `<li><strong>${t}</strong> <span>R$ ${v.toLocaleString('pt-BR',{minFractionDigits:2})}</span></li>`).join('');
-        let localMap = new Map(); currentFinanceiroFiltered.forEach(i=>localMap.set(i.local, (localMap.get(i.local)||0)+i.valor));
-        let sortedLocal = Array.from(localMap.entries()).sort((a,b)=>b[1]-a[1]);
         document.getElementById('finRankingLocal').innerHTML = sortedLocal.map(([l,v]) => `<li><strong>${l}</strong> <span>R$ ${v.toLocaleString('pt-BR',{minFractionDigits:2})}</span></li>`).join('');
-        
+
         atualizarGraficoTipo();
-        
-        // Tabela
-        let tbody = document.querySelector('#finTable tbody'); tbody.innerHTML = '';
-        const hoje = new Date(); hoje.setHours(0,0,0,0); const dias7 = new Date(hoje); dias7.setDate(hoje.getDate()+7);
+
+        // Tabela de documentos
+        const tbody = document.querySelector('#finTable tbody');
+        tbody.innerHTML = '';
+        const hoje = new Date(); hoje.setHours(0,0,0,0);
+        const dias7 = new Date(hoje); dias7.setDate(hoje.getDate()+7);
         currentFinanceiroFiltered.forEach(item => {
             let dateStr = item.vencimentoDate ? moment(item.vencimentoDate).format('DD/MM/YYYY') : '---';
             let status = '';
@@ -389,55 +409,116 @@
                 else if(v <= dias7) status = '<span class="badge badge-proximo">Próx</span>';
                 else status = '<span class="badge badge-normal">Em dia</span>';
             }
-            tbody.innerHTML += `<tr><td>${item.local}</td><td>${item.tipoConta}</td><td>${dateStr} ${status}</td><td>${item.documento}</td><td style="text-align:right">R$ ${item.valor.toFixed(2)}</td><td class="servico-detalhe" data-servico="${item.servico.replace(/"/g, '&quot;')}">${item.servico.substring(0,60)}</td></tr>`;
+            const row = tbody.insertRow();
+            row.innerHTML = `
+                <td>${item.local}</td>
+                <td>${item.tipoConta}</td>
+                <td>${dateStr} ${status}</td>
+                <td>${item.documento}</td>
+                <td style="text-align:right">R$ ${item.valor.toFixed(2)}</td>
+                <td class="servico-detalhe" data-servico="${item.servico.replace(/"/g, '&quot;')}">${item.servico.substring(0,60)}</td>
+            `;
         });
         document.querySelectorAll('.servico-detalhe').forEach(el=>el.addEventListener('click',()=>{ document.getElementById('servicoDetalheTexto').innerText=el.getAttribute('data-servico'); document.getElementById('servicoModal').classList.add('active'); }));
-        
-        // Previsão com dias fixos (últimos 3 meses filtrados)
+
+        // ========== PREVISÃO CORRIGIDA ==========
+        // 1. Calcular média diária com base nos dados filtrados (últimos meses disponíveis)
         const monthlySum = new Map();
-        currentFinanceiroFiltered.forEach(i=>{ if(i.vencimentoDate){ const key=moment(i.vencimentoDate).format('YYYY-MM'); monthlySum.set(key, (monthlySum.get(key)||0)+i.valor); } });
-        let monthsWithData = Array.from(monthlySum.keys()).sort();
-        let last3Months = monthsWithData.slice(-3);
-        let avgMonthly = 0;
-        if(last3Months.length){ let sumLast3 = last3Months.reduce((acc,m)=>acc+monthlySum.get(m),0); avgMonthly = sumLast3/last3Months.length; }
-        let avgDaily = avgMonthly / 30;
-        let today = new Date(); today.setHours(0,0,0,0);
-        let currentYear = today.getFullYear(), currentMonth = today.getMonth();
-        let forecastRows = '';
-        for(let m = currentMonth; m <= 11; m++){
-            let year = currentYear, monthDate = new Date(year, m, 1);
-            if(monthDate < today && m === currentMonth) continue;
-            let lastDay = new Date(year, m+1, 0).getDate();
-            let periods = [
-                { start:1, end:5, label:"01-05" }, { start:6, end:10, label:"06-10" },
-                { start:11, end:15, label:"11-15" }, { start:16, end:20, label:"16-20" },
-                { start:21, end:25, label:"21-25" }, { start:26, end:lastDay, label:`26-${lastDay}` }
-            ];
-            for(let p of periods){
-                let start = new Date(year, m, p.start), end = new Date(year, m, p.end);
-                if(end < today) continue;
-                let daysCount = Math.floor((end - start)/(1000*3600*24)) + 1;
-                let projected = avgDaily * daysCount;
-                let monthName = moment(monthDate).format('MMM/YYYY');
-                forecastRows += `<tr><td>${monthName} (${p.label})</td><td>R$ ${projected.toLocaleString('pt-BR',{minFractionDigits:2})}</td></tr>`;
+        currentFinanceiroFiltered.forEach(i => {
+            if(i.vencimentoDate){
+                const key = moment(i.vencimentoDate).format('YYYY-MM');
+                monthlySum.set(key, (monthlySum.get(key)||0) + i.valor);
             }
+        });
+        const monthsWithData = Array.from(monthlySum.keys()).sort();
+        const last3Months = monthsWithData.slice(-3);
+        let avgMonthly = 0;
+        if(last3Months.length) {
+            const sumLast3 = last3Months.reduce((acc,m) => acc + monthlySum.get(m), 0);
+            avgMonthly = sumLast3 / last3Months.length;
         }
-        if(avgMonthly===0 || currentFinanceiroFiltered.length===0) forecastRows='<tr><td colspan="2">Sem dados históricos para projeção</td></tr>';
-        document.getElementById('finPrevisaoTable').innerHTML = `<thead><tr><th>Período</th><th>Previsão (R$)</th></tr></thead><tbody>${forecastRows}</tbody>`;
+        const avgDaily = avgMonthly / 30;
+
+        // 2. Definir data-base para início da previsão:
+        //    - Se houver dados filtrados, pega a maior data (vencimento) e soma 1 dia
+        //    - Caso contrário, usa hoje
+        let maxDateInData = null;
+        if(currentFinanceiroFiltered.length) {
+            maxDateInData = currentFinanceiroFiltered.reduce((max, item) => item.vencimentoDate > max ? item.vencimentoDate : max, new Date(0));
+        }
+        let startForecastDate = maxDateInData ? moment(maxDateInData).add(1, 'day') : moment();
+        // Se a data-base for anterior a hoje, ajusta para hoje (não projetar passado)
+        if(startForecastDate.isBefore(moment(), 'day')) startForecastDate = moment().startOf('day');
+
+        const forecastRows = [];
+        // Gerar no máximo 3 meses (ou 6 períodos)
+        let currentDate = startForecastDate.clone();
+        let periodsGenerated = 0;
+        const maxPeriods = 12; // até 12 períodos (ex: 2 meses completos)
+
+        while(periodsGenerated < maxPeriods) {
+            const year = currentDate.year();
+            const month = currentDate.month();
+            const lastDayOfMonth = moment({year, month}).endOf('month').date();
+            const periodsDef = [
+                { start:1, end:5, label:"01-05" },
+                { start:6, end:10, label:"06-10" },
+                { start:11, end:15, label:"11-15" },
+                { start:16, end:20, label:"16-20" },
+                { start:21, end:25, label:"21-25" },
+                { start:26, end:lastDayOfMonth, label:`26-${lastDayOfMonth}` }
+            ];
+            let addedAny = false;
+            for(let p of periodsDef) {
+                const periodStart = moment({year, month, date: p.start});
+                const periodEnd = moment({year, month, date: p.end}).endOf('day');
+                // só adiciona se o período começar depois da data base
+                if(periodStart.isSameOrAfter(startForecastDate, 'day')) {
+                    const daysCount = periodEnd.diff(periodStart, 'days') + 1;
+                    const projected = avgDaily * daysCount;
+                    const monthName = moment({year, month}).format('MMM/YYYY');
+                    forecastRows.push(`<tr><td>${monthName} (${p.label})</td><td>R$ ${projected.toLocaleString('pt-BR',{minFractionDigits:2})}</td></tr>`);
+                    periodsGenerated++;
+                    addedAny = true;
+                    if(periodsGenerated >= maxPeriods) break;
+                }
+            }
+            if(!addedAny && startForecastDate.month() === month && startForecastDate.year() === year) {
+                // se nenhum período foi adicionado porque a data-base está dentro de um período,
+                // avança para o próximo mês para não travar
+                currentDate.add(1, 'month');
+            } else {
+                currentDate.add(1, 'month');
+            }
+            if(currentDate.isAfter(moment().add(6, 'months'))) break; // segurança
+        }
+
+        const forecastTbody = document.querySelector('#finPrevisaoTable tbody');
+        if(avgMonthly === 0 || currentFinanceiroFiltered.length === 0) {
+            forecastTbody.innerHTML = '<tr><td colspan="2">Sem dados históricos suficientes para projeção</td></tr>';
+        } else if(forecastRows.length === 0) {
+            forecastTbody.innerHTML = '<tr><td colspan="2">Nenhum período futuro a projetar (filtro abrange datas muito futuras?)</td></tr>';
+        } else {
+            forecastTbody.innerHTML = forecastRows.join('');
+        }
     }
+
     document.getElementById('finAplicarFiltros').addEventListener('click', applyFinFilters);
     document.getElementById('finResetFiltros').addEventListener('click',()=>{
-        document.getElementById('finDataInicio').value=''; document.getElementById('finDataFim').value='';
-        document.getElementById('finLocal').value=''; document.getElementById('finTipo').value='';
+        document.getElementById('finDataInicio').value='';
+        document.getElementById('finDataFim').value='';
+        document.getElementById('finLocal').value='';
+        document.getElementById('finTipo').value='';
         applyFinFilters();
     });
     document.getElementById('finExportarCSV').addEventListener('click',()=>{
-        let csv=[["Local","Tipo","Vencimento","Documento","Valor","Serviço"]]; currentFinanceiroFiltered.forEach(i=>{ csv.push([i.local, i.tipoConta, i.vencimentoDate?moment(i.vencimentoDate).format('DD/MM/YYYY'):'', i.documento, i.valor, i.servico]); });
+        let csv=[["Local","Tipo","Vencimento","Documento","Valor","Serviço"]];
+        currentFinanceiroFiltered.forEach(i=>{ csv.push([i.local, i.tipoConta, i.vencimentoDate?moment(i.vencimentoDate).format('DD/MM/YYYY'):'', i.documento, i.valor, i.servico]); });
         let blob=new Blob(["\uFEFF"+csv.map(r=>r.join(",")).join("\n")],{type:"text/csv"}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download="financeiro.csv"; a.click();
     });
     document.getElementById('finExportarPDF').addEventListener('click',()=>alert("Use Ctrl+P"));
 
-    // ========== FATURAMENTO (resumido mas completo) ==========
+    // ========== FATURAMENTO ==========
     async function loadFaturamentoData(skipFilter=false){
         try{
             const resp=await fetch(URL_FATURAMENTO); const text=await resp.text(); const parsed=Papa.parse(text,{header:true}); const rows=parsed.data; if(!rows.length) throw new Error();
@@ -481,7 +562,7 @@
     document.getElementById('fatExportarCSV').addEventListener('click',()=>{ let filtered=faturamentoData; let csv=[["Data","Placa Cavalo","Placa Carreta","Motorista","Embarcadora","Origem","Destino","Valor"]]; filtered.forEach(i=>{ csv.push([i.data?moment(i.data).format('DD/MM/YYYY'):'', i.placaCavalo, i.placaCarreta, i.motorista, i.embarcadora, i.origem, i.destino, i.valor]); }); let blob=new Blob(["\uFEFF"+csv.map(r=>r.join(",")).join("\n")],{type:"text/csv"}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download="faturamento.csv"; a.click(); });
     document.getElementById('fatExportarPDF').addEventListener('click',()=>alert("Use Ctrl+P"));
 
-    // ========== BATERIAS (íntegra) ==========
+    // ========== BATERIAS ==========
     async function loadBateriasData(skipFilter=false){
         try{
             const resp=await fetch(URL_BATERIAS); const text=await resp.text(); const parsed=Papa.parse(text,{header:true,skipEmptyLines:true}); const rows=parsed.data;
