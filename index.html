@@ -151,7 +151,7 @@
     <div class="private-header"><h2><i class="fas fa-chart-line"></i> Central M-Malacarne</h2><div><span class="config-urls" id="openUrlConfig"><i class="fas fa-cog"></i> ⚙️ Configurar URLs</span><button id="refreshDataBtn" class="btn-export btn-refresh"><i class="fas fa-sync-alt"></i> Atualizar</button><button id="logoutPrivateBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sair</button></div></div>
     <div class="tabs"><button class="tab-btn active" data-tab="tabFinanceiro">📊 Financeiro</button><button class="tab-btn" data-tab="tabFaturamento">🚛 Faturamento</button><button class="tab-btn" data-tab="tabBaterias">🔋 Baterias</button><button class="tab-btn" data-tab="tabCalculadora">💰 Calculadora</button></div>
     
-    <!-- FINANCEIRO (mesma estrutura) -->
+    <!-- FINANCEIRO -->
     <div id="tabFinanceiro" class="tab-content active">
         <div class="dashboard-card"><h3><i class="fas fa-filter"></i> Filtros Financeiro</h3><div>
             <div class="filter-group"><label>Vencimento Início</label><input type="date" id="finDataInicio"></div>
@@ -171,7 +171,7 @@
         <div class="dashboard-card"><h3>🔮 Previsão para próximos períodos</h3><div class="forecast-card"><table class="forecast-table" id="finPrevisaoTable"><thead><tr><th>Período</th><th>Previsão (R$)</th></tr></thead><tbody><tr><td colspan="2">Aguarde carregamento...</td></tr></tbody></table></div></div>
     </div>
     
-    <!-- FATURAMENTO com botão de importação de arquivos e mapeamento -->
+    <!-- FATURAMENTO -->
     <div id="tabFaturamento" class="tab-content">
         <div id="fatMappingContainer"></div>
         <div class="dashboard-card"><h3>Filtros e Ferramentas</h3><div>
@@ -213,46 +213,36 @@
 
 <script>
     // ========== CREDENCIAIS ==========
-    const VALID_USER = "malacarne", VALID_PASS = "mala2325";
-    
-    // Helper: converte link do Google Sheets edit para CSV público
-    function ensureGoogleCsvUrl(url) {
-        if (!url) return url;
-        const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    const VALID_USER = "malacarne";
+    const VALID_PASS = "mala2325";
+
+    // Convertendo link do Google Sheets para CSV público
+    function googleSheetToCsv(url) {
+        if (!url) return "";
+        const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
         if (match) {
             const sheetId = match[1];
-            // Se já está no formato pub?output=csv, retorna a mesma
-            if (url.includes('pub?output=csv')) return url;
-            // Converte para o formato de exportação CSV
+            if (url.includes("pub?output=csv")) return url;
             return `https://docs.google.com/spreadsheets/d/${sheetId}/pub?output=csv`;
         }
         return url;
     }
-    
+
+    // URLs padrão: já apontando para a planilha de fretes que você publicou
     let URL_FINANCEIRO = localStorage.getItem("urlFinanceiro") || "";
-    let URL_FATURAMENTO = localStorage.getItem("urlFaturamento") || "";
+    let URL_FATURAMENTO = localStorage.getItem("urlFaturamento") || "https://docs.google.com/spreadsheets/d/e/2PACX-1vTunjiD78zhcQPRQ31V3O2BvioHvV_zXBOXp_J2Vlw84LxxF6gZf-eGUuxeX5L0YHCCB9JGbS4ytu7A/pub?output=csv";
     let URL_BATERIAS = localStorage.getItem("urlBaterias") || "";
-    
-    // Aplica a conversão e salva
-    function normalizeAndSaveUrls() {
-        URL_FINANCEIRO = ensureGoogleCsvUrl(document.getElementById('urlFinanceiro').value);
-        URL_FATURAMENTO = ensureGoogleCsvUrl(document.getElementById('urlFaturamento').value);
-        URL_BATERIAS = ensureGoogleCsvUrl(document.getElementById('urlBaterias').value);
-        localStorage.setItem("urlFinanceiro", URL_FINANCEIRO);
-        localStorage.setItem("urlFaturamento", URL_FATURAMENTO);
-        localStorage.setItem("urlBaterias", URL_BATERIAS);
-    }
-    
-    // Variáveis globais
+
+    // ========== FUNÇÕES AUXILIARES ==========
+    function parseMoney(v) { if(v===undefined||v===null) return 0; let cleaned=String(v).replace(/[^\d,.-]/g,''); if(cleaned==='') return 0; cleaned=cleaned.replace(',','.'); let parts=cleaned.split('.'); if(parts.length>2){let last=parts.pop(); cleaned=parts.join('')+'.'+last;} let num=parseFloat(cleaned); return isNaN(num)?0:num; }
+    function findColumn(headers, keywords){ let lower=headers.map(h=>h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')); for(let kw of keywords){ let idx=lower.findIndex(h=>h.includes(kw.toLowerCase())); if(idx!==-1) return headers[idx]; } return null; }
+
+    // ========== DADOS GLOBAIS ==========
     let financeiroData = [], faturamentoData = [], bateriasData = [];
     let currentFinanceiroFiltered = [];
     let tipoChart = null;
-    
-    // Funções auxiliares
-    function parseMoney(v) { if(v===undefined||v===null) return 0; let cleaned=String(v).replace(/[^\d,.-]/g,''); if(cleaned==='') return 0; cleaned=cleaned.replace(',','.'); let parts=cleaned.split('.'); if(parts.length>2){let last=parts.pop(); cleaned=parts.join('')+'.'+last;} let num=parseFloat(cleaned); return isNaN(num)?0:num; }
-    function findColumn(headers, keywords){ let lower=headers.map(h=>h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')); for(let kw of keywords){ let idx=lower.findIndex(h=>h.includes(kw.toLowerCase())); if(idx!==-1) return headers[idx]; } return null; }
-    
-    // ========== FINANCEIRO (simplificado, mas com mapeamento caso necessário) ==========
+
+    // ========== FINANCEIRO ==========
     async function loadFinanceiroData(skipFilter=false){
         if(!URL_FINANCEIRO) { financeiroData=[]; if(!skipFilter) applyFinFilters(); return; }
         try{
@@ -267,7 +257,7 @@
             let colLocal = findColumn(headers, ['local','cidade','municipio','localidade','origem']);
             let colTipo = findColumn(headers, ['tipo','categoria','conta','natureza','classificacao']);
             if(!colData || !colValor){
-                alert("Financeiro: não foi possível identificar as colunas de DATA e VALOR. Verifique se a planilha está publicada e contém essas informações.");
+                console.warn("Financeiro: colunas não identificadas");
                 financeiroData = [];
             } else {
                 financeiroData = [];
@@ -294,19 +284,149 @@
             if(!skipFilter) applyFinFilters();
         } catch(e){ console.error(e); financeiroData = []; if(!skipFilter) applyFinFilters(); }
     }
+
     function atualizarDatalistsFinanceiro(){
         document.getElementById('finLocalList').innerHTML = [...new Set(financeiroData.map(i=>i.local))].map(l=>`<option value="${l}">`).join('');
         document.getElementById('finTipoList').innerHTML = [...new Set(financeiroData.map(i=>i.tipoConta))].map(t=>`<option value="${t}">`).join('');
     }
-    function applyFinFilters(){ /* mesma lógica do código original, omitida por brevidade mas idêntica */ }
-    // (aqui viriam todas as funções de financeiro, gráfico, previsão, etc - mantemos o funcionamento já existente)
-    // Para não repetir 500 linhas, vou manter as funções originais do usuário, apenas garantindo que loadFinanceiroData seja chamada.
-    // Como o código original já tinha tudo, vou reaproveitar a lógica dele e apenas sobrescrever as URLs corretamente.
-    
-    // ========== FATURAMENTO COM MAPEAMENTO MANUAL E IMPORTAÇÃO ==========
-    let pendingFatRows = null, pendingFatHeaders = null;
-    let fatColMapping = { data: null, motorista: null, cavalo: null, carreta: null, embarcadora: null, origem: null, destino: null, valor: null };
-    
+
+    function applyFinFilters(){
+        const dataInicioStr = document.getElementById('finDataInicio').value;
+        const dataFimStr = document.getElementById('finDataFim').value;
+        const local = document.getElementById('finLocal').value.trim();
+        const tipo = document.getElementById('finTipo').value.trim();
+        const startMoment = dataInicioStr ? moment(dataInicioStr).startOf('day') : null;
+        const endMoment = dataFimStr ? moment(dataFimStr).endOf('day') : null;
+        currentFinanceiroFiltered = financeiroData.filter(item => {
+            const itemMoment = moment(item.vencimentoDate);
+            if(startMoment && itemMoment.isBefore(startMoment)) return false;
+            if(endMoment && itemMoment.isAfter(endMoment)) return false;
+            if(local && !item.local.toLowerCase().includes(local.toLowerCase())) return false;
+            if(tipo && !item.tipoConta.toLowerCase().includes(tipo.toLowerCase())) return false;
+            return true;
+        });
+        const total = currentFinanceiroFiltered.reduce((s,i)=>s+i.valor,0);
+        const qtd = currentFinanceiroFiltered.length;
+        const media = qtd ? total/qtd : 0;
+        const maior = qtd ? Math.max(...currentFinanceiroFiltered.map(i=>i.valor)) : 0;
+        const menor = qtd ? Math.min(...currentFinanceiroFiltered.map(i=>i.valor)) : 0;
+        document.getElementById('consTotal').innerHTML = `R$ ${total.toLocaleString('pt-BR',{minFractionDigits:2})}`;
+        document.getElementById('consMedia').innerHTML = `R$ ${media.toLocaleString('pt-BR',{minFractionDigits:2})}`;
+        document.getElementById('consQuantidade').innerText = qtd;
+        document.getElementById('consMaior').innerHTML = `R$ ${maior.toLocaleString('pt-BR',{minFractionDigits:2})}`;
+        document.getElementById('consMenor').innerHTML = `R$ ${menor.toLocaleString('pt-BR',{minFractionDigits:2})}`;
+        
+        const tipoMap = new Map();
+        const localMap = new Map();
+        currentFinanceiroFiltered.forEach(i => {
+            tipoMap.set(i.tipoConta, (tipoMap.get(i.tipoConta)||0) + i.valor);
+            localMap.set(i.local, (localMap.get(i.local)||0) + i.valor);
+        });
+        const sortedTipo = Array.from(tipoMap.entries()).sort((a,b)=>b[1]-a[1]);
+        const sortedLocal = Array.from(localMap.entries()).sort((a,b)=>b[1]-a[1]);
+        document.getElementById('finRankingTipo').innerHTML = sortedTipo.map(([t,v]) => `<li><strong>${t}</strong> <span>R$ ${v.toLocaleString('pt-BR',{minFractionDigits:2})}</span></li>`).join('');
+        document.getElementById('finRankingLocal').innerHTML = sortedLocal.map(([l,v]) => `<li><strong>${l}</strong> <span>R$ ${v.toLocaleString('pt-BR',{minFractionDigits:2})}</span></li>`).join('');
+        
+        if(tipoChart) tipoChart.destroy();
+        const chartType = document.getElementById('chartTypeSelect').value;
+        tipoChart = new Chart(document.getElementById('tipoChart'), {
+            type: chartType,
+            data: { labels: Array.from(tipoMap.keys()), datasets: [{ label: 'Valor (R$)', data: Array.from(tipoMap.values()), backgroundColor: ['#8B7355','#d4af37','#3b82f6','#10b981','#ef4444','#f59e0b'], borderColor: '#1e2a3a', borderWidth: 1 }] },
+            options: { responsive: true, maintainAspectRatio: true, plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.label}: R$ ${ctx.raw.toLocaleString('pt-BR',{minFractionDigits:2})}` } } } }
+        });
+        
+        const tbody = document.querySelector('#finTable tbody');
+        tbody.innerHTML = '';
+        const hoje = new Date(); hoje.setHours(0,0,0,0);
+        const dias7 = new Date(hoje); dias7.setDate(hoje.getDate()+7);
+        currentFinanceiroFiltered.forEach(item => {
+            let dateStr = item.vencimentoDate ? moment(item.vencimentoDate).format('DD/MM/YYYY') : '---';
+            let status = '';
+            if(item.vencimentoDate){
+                let v = new Date(item.vencimentoDate); v.setHours(0,0,0,0);
+                if(v < hoje) status = '<span class="badge badge-vencido">Vencida</span>';
+                else if(v <= dias7) status = '<span class="badge badge-proximo">Próx</span>';
+                else status = '<span class="badge badge-normal">Em dia</span>';
+            }
+            const row = tbody.insertRow();
+            row.innerHTML = `
+                <td>${item.local}</td>
+                <td>${item.tipoConta}</td>
+                <td>${dateStr} ${status}</td>
+                <td>${item.documento}</td>
+                <td style="text-align:right">R$ ${item.valor.toFixed(2)}</td>
+                <td class="servico-detalhe" data-servico="${item.servico.replace(/"/g, '&quot;')}">${item.servico.substring(0,60)}</td>
+            `;
+        });
+        document.querySelectorAll('.servico-detalhe').forEach(el=>el.addEventListener('click',()=>{ document.getElementById('servicoDetalheTexto').innerText=el.getAttribute('data-servico'); document.getElementById('servicoModal').classList.add('active'); }));
+        
+        // previsão simples
+        const monthlySum = new Map();
+        currentFinanceiroFiltered.forEach(i => { if(i.vencimentoDate){ const key = moment(i.vencimentoDate).format('YYYY-MM'); monthlySum.set(key, (monthlySum.get(key)||0) + i.valor); } });
+        const monthsWithData = Array.from(monthlySum.keys()).sort();
+        const last3Months = monthsWithData.slice(-3);
+        let avgMonthly = 0;
+        if(last3Months.length) { const sumLast3 = last3Months.reduce((acc,m) => acc + monthlySum.get(m), 0); avgMonthly = sumLast3 / last3Months.length; }
+        const avgDaily = avgMonthly / 30;
+        let maxDateInData = null;
+        if(currentFinanceiroFiltered.length) maxDateInData = currentFinanceiroFiltered.reduce((max, item) => item.vencimentoDate > max ? item.vencimentoDate : max, new Date(0));
+        let startForecastDate = maxDateInData ? moment(maxDateInData).add(1, 'day') : moment();
+        if(startForecastDate.isBefore(moment(), 'day')) startForecastDate = moment().startOf('day');
+        const forecastRows = [];
+        let currentDate = startForecastDate.clone();
+        let periodsGenerated = 0;
+        const maxPeriods = 12;
+        while(periodsGenerated < maxPeriods) {
+            const year = currentDate.year();
+            const month = currentDate.month();
+            const lastDayOfMonth = moment({year, month}).endOf('month').date();
+            const periodsDef = [
+                { start:1, end:5, label:"01-05" },
+                { start:6, end:10, label:"06-10" },
+                { start:11, end:15, label:"11-15" },
+                { start:16, end:20, label:"16-20" },
+                { start:21, end:25, label:"21-25" },
+                { start:26, end:lastDayOfMonth, label:`26-${lastDayOfMonth}` }
+            ];
+            let addedAny = false;
+            for(let p of periodsDef) {
+                const periodStart = moment({year, month, date: p.start});
+                if(periodStart.isSameOrAfter(startForecastDate, 'day')) {
+                    const daysCount = (moment({year, month, date: p.end}).endOf('day').diff(periodStart, 'days')) + 1;
+                    const projected = avgDaily * daysCount;
+                    const monthName = moment({year, month}).format('MMM/YYYY');
+                    forecastRows.push(`<tr><td>${monthName} (${p.label})</td><td>R$ ${projected.toLocaleString('pt-BR',{minFractionDigits:2})}</td></tr>`);
+                    periodsGenerated++;
+                    addedAny = true;
+                    if(periodsGenerated >= maxPeriods) break;
+                }
+            }
+            if(!addedAny && startForecastDate.month() === month && startForecastDate.year() === year) currentDate.add(1, 'month');
+            else currentDate.add(1, 'month');
+            if(currentDate.isAfter(moment().add(6, 'months'))) break;
+        }
+        const forecastTbody = document.querySelector('#finPrevisaoTable tbody');
+        if(avgMonthly === 0 || currentFinanceiroFiltered.length === 0) forecastTbody.innerHTML = '<tr><td colspan="2">Sem dados históricos suficientes para projeção</td></tr>';
+        else if(forecastRows.length === 0) forecastTbody.innerHTML = '<tr><td colspan="2">Nenhum período futuro a projetar</td></tr>';
+        else forecastTbody.innerHTML = forecastRows.join('');
+    }
+    document.getElementById('finAplicarFiltros').addEventListener('click', applyFinFilters);
+    document.getElementById('finResetFiltros').addEventListener('click',()=>{
+        document.getElementById('finDataInicio').value='';
+        document.getElementById('finDataFim').value='';
+        document.getElementById('finLocal').value='';
+        document.getElementById('finTipo').value='';
+        applyFinFilters();
+    });
+    document.getElementById('finExportarCSV').addEventListener('click',()=>{
+        let csv=[["Local","Tipo","Vencimento","Documento","Valor","Serviço"]];
+        currentFinanceiroFiltered.forEach(i=>{ csv.push([i.local, i.tipoConta, i.vencimentoDate?moment(i.vencimentoDate).format('DD/MM/YYYY'):'', i.documento, i.valor, i.servico]); });
+        let blob=new Blob(["\uFEFF"+csv.map(r=>r.join(",")).join("\n")],{type:"text/csv"}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download="financeiro.csv"; a.click();
+    });
+    document.getElementById('finExportarPDF').addEventListener('click',()=>alert("Use Ctrl+P"));
+    document.getElementById('chartTypeSelect').addEventListener('change', () => applyFinFilters());
+
+    // ========== FATURAMENTO ==========
     async function loadFaturamentoData(skipFilter=false){
         if(!URL_FATURAMENTO) { faturamentoData = []; if(!skipFilter) aplicarFiltrosFaturamento(); atualizarSelectMotoristasCalculadora(); return; }
         try {
@@ -314,28 +434,27 @@
             const text = await resp.text();
             const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
             const rows = parsed.data;
-            if (!rows.length) throw new Error("Planilha vazia");
+            if(!rows.length) throw new Error("Planilha vazia");
             const headers = Object.keys(rows[0]);
-            pendingFatHeaders = headers;
-            fatColMapping.data = findColumn(headers, ['data', 'emissao', 'data emissao', 'dt_viagem']);
-            fatColMapping.motorista = findColumn(headers, ['motorista', 'condutor', 'nome motorista']);
-            fatColMapping.cavalo = findColumn(headers, ['cavalo', 'placa cavalo', 'trator', 'cavalo placa']);
-            fatColMapping.carreta = findColumn(headers, ['carreta', 'reboque', 'placa carreta', 'carreta placa']);
-            fatColMapping.embarcadora = findColumn(headers, ['embarcadora', 'cliente', 'contratante']);
-            fatColMapping.origem = findColumn(headers, ['origem', 'de', 'cidade origem']);
-            fatColMapping.destino = findColumn(headers, ['destino', 'para', 'cidade destino']);
-            fatColMapping.valor = findColumn(headers, ['valor', 'frete', 'vl_frete', 'total', 'vl_frete']);
+            const colData = findColumn(headers, ['data', 'emissao', 'data emissao', 'dt_viagem']);
+            const colMotorista = findColumn(headers, ['motorista', 'condutor', 'nome motorista']);
+            const colCavalo = findColumn(headers, ['cavalo', 'placa cavalo', 'trator', 'cavalo placa']);
+            const colCarreta = findColumn(headers, ['carreta', 'reboque', 'placa carreta', 'carreta placa']);
+            const colEmbarcadora = findColumn(headers, ['embarcadora', 'cliente', 'contratante']);
+            const colOrigem = findColumn(headers, ['origem', 'de', 'cidade origem']);
+            const colDestino = findColumn(headers, ['destino', 'para', 'cidade destino']);
+            const colValor = findColumn(headers, ['valor', 'frete', 'vl_frete', 'total', 'vl_frete']);
             
-            if (!fatColMapping.motorista || !fatColMapping.cavalo || !fatColMapping.valor) {
-                pendingFatRows = rows;
-                exibirMappingFaturamento(headers);
+            if(!colMotorista || !colCavalo || !colValor){
+                console.warn("Faturamento: colunas não identificadas, tente mapeamento manual");
+                exibirMappingFaturamento(headers, rows);
                 return;
             }
-            processarFaturamentoRows(rows, fatColMapping, skipFilter);
-        } catch(e) { console.error(e); faturamentoData = []; if(!skipFilter) aplicarFiltrosFaturamento(); atualizarSelectMotoristasCalculadora(); }
+            processarFaturamentoRows(rows, { data: colData, motorista: colMotorista, cavalo: colCavalo, carreta: colCarreta, embarcadora: colEmbarcadora, origem: colOrigem, destino: colDestino, valor: colValor }, skipFilter);
+        } catch(e){ console.error(e); faturamentoData = []; if(!skipFilter) aplicarFiltrosFaturamento(); atualizarSelectMotoristasCalculadora(); }
     }
-    
-    function exibirMappingFaturamento(headers) {
+
+    function exibirMappingFaturamento(headers, rows) {
         const container = document.getElementById('fatMappingContainer');
         container.innerHTML = `
             <div class="dashboard-card debug-card">
@@ -353,24 +472,25 @@
             </div>
         `;
         document.getElementById('btnConfirmFatMapping').onclick = () => {
-            fatColMapping.data = document.getElementById('mapFatData').value || null;
-            fatColMapping.motorista = document.getElementById('mapFatMotorista').value;
-            fatColMapping.cavalo = document.getElementById('mapFatCavalo').value;
-            fatColMapping.carreta = document.getElementById('mapFatCarreta').value || null;
-            fatColMapping.embarcadora = document.getElementById('mapFatEmbarcadora').value;
-            fatColMapping.origem = document.getElementById('mapFatOrigem').value || null;
-            fatColMapping.destino = document.getElementById('mapFatDestino').value || null;
-            fatColMapping.valor = document.getElementById('mapFatValor').value;
-            if (!fatColMapping.motorista || !fatColMapping.cavalo || !fatColMapping.valor) {
+            const mapping = {
+                data: document.getElementById('mapFatData').value || null,
+                motorista: document.getElementById('mapFatMotorista').value,
+                cavalo: document.getElementById('mapFatCavalo').value,
+                carreta: document.getElementById('mapFatCarreta').value || null,
+                embarcadora: document.getElementById('mapFatEmbarcadora').value,
+                origem: document.getElementById('mapFatOrigem').value || null,
+                destino: document.getElementById('mapFatDestino').value || null,
+                valor: document.getElementById('mapFatValor').value
+            };
+            if(!mapping.motorista || !mapping.cavalo || !mapping.valor){
                 alert("Selecione pelo menos Motorista, Placa Cavalo e Valor");
                 return;
             }
             container.innerHTML = '';
-            processarFaturamentoRows(pendingFatRows, fatColMapping, false);
-            pendingFatRows = null;
+            processarFaturamentoRows(rows, mapping, false);
         };
     }
-    
+
     function processarFaturamentoRows(rows, mapping, skipFilter) {
         faturamentoData = [];
         for (let row of rows) {
@@ -393,9 +513,12 @@
         if (!skipFilter) aplicarFiltrosFaturamento();
         atualizarSelectMotoristasCalculadora();
     }
-    
+
     function atualizarDatalistsFaturamento(){
-        let motoristas=[...new Set(faturamentoData.map(i=>i.motorista))]; let placasCavalo=[...new Set(faturamentoData.map(i=>i.placaCavalo))]; let placasCarreta=[...new Set(faturamentoData.map(i=>i.placaCarreta))]; let embarcadoras=[...new Set(faturamentoData.map(i=>i.embarcadora))];
+        let motoristas=[...new Set(faturamentoData.map(i=>i.motorista))];
+        let placasCavalo=[...new Set(faturamentoData.map(i=>i.placaCavalo))];
+        let placasCarreta=[...new Set(faturamentoData.map(i=>i.placaCarreta))];
+        let embarcadoras=[...new Set(faturamentoData.map(i=>i.embarcadora))];
         document.getElementById('fatMotoristaList').innerHTML=motoristas.map(m=>`<option value="${m}">`).join('');
         document.getElementById('fatPlacaCavaloList').innerHTML=placasCavalo.map(p=>`<option value="${p}">`).join('');
         document.getElementById('fatPlacaCarretaList').innerHTML=placasCarreta.map(p=>`<option value="${p}">`).join('');
@@ -403,7 +526,7 @@
         let meses=[...new Set(faturamentoData.map(i=>i.data?moment(i.data).format('YYYY-MM'):null).filter(m=>m))];
         let sel=document.getElementById('fatMesSelect'); sel.innerHTML='<option value="all">Todos</option>'+meses.sort().map(m=>`<option value="${m}">${moment(m,'YYYY-MM').format('MMMM/YYYY')}</option>`).join('');
     }
-    
+
     function aplicarFiltrosFaturamento(){
         let mes=document.getElementById('fatMesSelect').value, motorista=document.getElementById('fatMotorista').value.trim(), placaCavalo=document.getElementById('fatPlacaCavalo').value.trim().toUpperCase(), placaCarreta=document.getElementById('fatPlacaCarreta').value.trim().toUpperCase(), embarcadora=document.getElementById('fatEmbarcadora').value.trim().toLowerCase(), valorMin=parseFloat(document.getElementById('fatValorMin').value);
         let filtered=faturamentoData.filter(i=>{ if(mes!=='all'&&i.data&&moment(i.data).format('YYYY-MM')!==mes)return false; if(motorista&&!i.motorista.toLowerCase().includes(motorista.toLowerCase()))return false; if(placaCavalo&&!i.placaCavalo.includes(placaCavalo))return false; if(placaCarreta&&!i.placaCarreta.includes(placaCarreta))return false; if(embarcadora&&!i.embarcadora.toLowerCase().includes(embarcadora))return false; if(!isNaN(valorMin)&&i.valor<valorMin)return false; return true; });
@@ -419,6 +542,22 @@
         filtered.forEach(i=>{ let row=tbody.insertRow(); row.innerHTML=`<td>${i.data?moment(i.data).format('DD/MM/YYYY'):''}</td><td style="cursor:pointer;color:var(--primary)">${i.placaCavalo}</td><td>${i.placaCarreta}</td><td>${i.motorista}</td><td>${i.embarcadora}</td><td>${i.origem}</td><td>${i.destino}</td><td style="text-align:right">R$ ${i.valor.toFixed(2)}</td>`; row.cells[1].addEventListener('click',()=>{ let viagens=faturamentoData.filter(v=>v.placaCavalo===i.placaCavalo); let total=viagens.reduce((s,v)=>s+v.valor,0); let fichaDiv=document.getElementById('fichaPlaca'); fichaDiv.style.display='block'; fichaDiv.innerHTML=`<h4>Ficha Cavalo ${i.placaCavalo}</h4><p>Viagens: ${viagens.length} | Total: R$ ${total.toFixed(2)}<br>Motoristas: ${[...new Set(viagens.map(v=>v.motorista))].join(', ')}</p><button id="fecharFicha">Fechar</button>`; document.getElementById('fecharFicha').onclick=()=>fichaDiv.style.display='none'; }); });
         let totalGeral=filtered.reduce((s,i)=>s+i.valor,0); let foot=document.querySelector('#fatTable tfoot'); if(!foot){ foot=document.createElement('tfoot'); document.querySelector('#fatTable').appendChild(foot); } foot.innerHTML=`<tr class="total-soma"><td colspan="7"><strong>Total Geral</strong></td><td style="text-align:right"><strong>R$ ${totalGeral.toFixed(2)}</strong></td></tr>`;
     }
+    document.getElementById('fatAplicarFiltros').addEventListener('click',aplicarFiltrosFaturamento);
+    document.getElementById('fatResetFiltros').addEventListener('click',()=>{
+        document.getElementById('fatMesSelect').value='all';
+        document.getElementById('fatMotorista').value='';
+        document.getElementById('fatPlacaCavalo').value='';
+        document.getElementById('fatPlacaCarreta').value='';
+        document.getElementById('fatEmbarcadora').value='';
+        document.getElementById('fatValorMin').value='';
+        aplicarFiltrosFaturamento();
+    });
+    document.getElementById('fatExportarCSV').addEventListener('click',()=>{
+        let csv=[["Data","Placa Cavalo","Placa Carreta","Motorista","Embarcadora","Origem","Destino","Valor"]];
+        faturamentoData.forEach(i=>{ csv.push([i.data?moment(i.data).format('DD/MM/YYYY'):'', i.placaCavalo, i.placaCarreta, i.motorista, i.embarcadora, i.origem, i.destino, i.valor]); });
+        let blob=new Blob(["\uFEFF"+csv.map(r=>r.join(",")).join("\n")],{type:"text/csv"}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download="faturamento.csv"; a.click();
+    });
+    document.getElementById('fatExportarPDF').addEventListener('click',()=>alert("Use Ctrl+P"));
     
     // Importação manual de CTe
     document.getElementById('importarCTeBtn').addEventListener('click', () => document.getElementById('fileCteInput').click());
@@ -461,16 +600,17 @@
         }
         if (newRows.length === 0) { alert('Nenhum dado reconhecido.'); return; }
         newRows.forEach(row => { let dm = moment(row.data, ['DD/MM/YYYY','YYYY-MM-DD'], true); row.data = dm.isValid() ? dm.toDate() : null; });
-        const confirmar = confirm(`${newRows.length} registro(s) encontrado(s). OK para SUBSTITUIR, Cancelar para ADICIONAR.`);
+        const confirmar = confirm(`${newRows.length} registro(s) encontrado(s). OK para SUBSTITUIR todos os dados de faturamento, Cancelar para ADICIONAR aos existentes.`);
         if (confirmar) faturamentoData = newRows;
         else faturamentoData.push(...newRows);
         atualizarDatalistsFaturamento();
         aplicarFiltrosFaturamento();
+        atualizarSelectMotoristasCalculadora();
         alert(`${newRows.length} registros importados.`);
         document.getElementById('fileCteInput').value = '';
     });
-    
-    // ========== BATERIAS (resumido mas funcional) ==========
+
+    // ========== BATERIAS ==========
     async function loadBateriasData(skipFilter=false){
         if(!URL_BATERIAS) { bateriasData=[]; if(!skipFilter) aplicarFiltrosBaterias(); return; }
         try{
@@ -490,6 +630,7 @@
             if(!skipFilter) aplicarFiltrosBaterias();
         } catch(e){ console.error(e); bateriasData=[]; aplicarFiltrosBaterias(); }
     }
+
     function aplicarFiltrosBaterias(){
         const placa=document.getElementById('batPlaca').value.trim().toUpperCase(), modelo=document.getElementById('batModelo').value.trim(), vencInicio=document.getElementById('batVencInicio').value, vencFim=document.getElementById('batVencFim').value, local=document.getElementById('batLocal').value.trim();
         let filtered=bateriasData.filter(item=>{ if(placa&&!item.placa.toUpperCase().includes(placa)) return false; if(modelo&&!item.modelo.includes(modelo)) return false; if(local&&!item.local.includes(local)) return false; if(vencInicio&&item.vencimento<new Date(vencInicio)) return false; if(vencFim){ let end=new Date(vencFim); end.setHours(23,59,59); if(item.vencimento>end) return false; } return true; });
@@ -509,15 +650,15 @@
     document.getElementById('batAplicarFiltros').addEventListener('click',aplicarFiltrosBaterias);
     document.getElementById('batResetFiltros').addEventListener('click',()=>{ document.getElementById('batPlaca').value=''; document.getElementById('batModelo').value=''; document.getElementById('batVencInicio').value=''; document.getElementById('batVencFim').value=''; document.getElementById('batLocal').value=''; aplicarFiltrosBaterias(); });
     document.getElementById('batExportarCSV').addEventListener('click',()=>{ let csv=[["PLACA","MODELO","DATA VENDA","VENCIMENTO","NUMERO","NOTA","ORDEM","GARANTIA","OBS","LOCAL"]]; bateriasData.forEach(b=>{ csv.push([b.placa,b.modelo,b.dataVenda?moment(b.dataVenda).format('DD/MM/YYYY'):'',moment(b.vencimento).format('DD/MM/YYYY'),b.numero,b.nota,b.ordem,b.garantia,b.obs,b.local]); }); let blob=new Blob(["\uFEFF"+csv.map(r=>r.join(",")).join("\n")],{type:"text/csv"}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download="baterias.csv"; a.click(); });
-    
+
     // ========== CALCULADORA ==========
     function atualizarSelectMotoristasCalculadora(){ let motoristas=[...new Set(faturamentoData.map(i=>i.motorista))]; let sel=document.getElementById('calcMotoristaSelect'); sel.innerHTML='<option value="">Selecione</option>'+motoristas.map(m=>`<option value="${m}">${m}</option>`).join(''); }
-    function calcularSalario(){ let motorista=document.getElementById('calcMotoristaSelect').value, periodo=document.getElementById('calcPeriodo').value; if(!motorista){ document.getElementById('calcTotalFrete').innerHTML='R$ 0,00'; document.getElementById('calcListaFretes').innerHTML=''; atualizarReceber(0); return; } let fretes=faturamentoData.filter(f=>f.motorista===motorista); if(periodo){ let [ano,mes]=periodo.split('-'); fretes=fretes.filter(f=>f.data&&f.data.getFullYear()==ano&&f.data.getMonth()+1==mes); } let total=fretes.reduce((s,f)=>s+f.valor,0); document.getElementById('calcTotalFrete').innerHTML=`R$ ${total.toLocaleString('pt-BR',{minFractionDigits:2})}`; if(fretes.length) document.getElementById('calcListaFretes').innerHTML=`<table class="data-table"><thead><tr><th>Data</th><th>Rota</th><th>Valor</th></tr></thead><tbody>${fretes.map(f=>`<tr><td>${moment(f.data).format('DD/MM/YY')}</td><td>${f.origem}→${f.destino}</td><td>R$ ${f.valor.toFixed(2)}</td></tr>`).join('')}</tbody></table>`; else document.getElementById('calcListaFretes').innerHTML='<small>Nenhum frete</small>'; atualizarReceber(total); }
+    function calcularSalario(){ let motorista=document.getElementById('calcMotoristaSelect').value, periodo=document.getElementById('calcPeriodo').value; if(!motorista){ document.getElementById('calcResultado').innerHTML='<p><strong>Faturamento total:</strong> R$ 0,00</p><div id="calcListaFretes"></div>'; atualizarReceber(0); return; } let fretes=faturamentoData.filter(f=>f.motorista===motorista); if(periodo){ let [ano,mes]=periodo.split('-'); fretes=fretes.filter(f=>f.data&&f.data.getFullYear()==ano&&f.data.getMonth()+1==mes); } let total=fretes.reduce((s,f)=>s+f.valor,0); document.getElementById('calcResultado').innerHTML=`<p><strong>Faturamento total:</strong> <span id="calcTotalFrete">R$ ${total.toLocaleString('pt-BR',{minFractionDigits:2})}</span></p><div id="calcListaFretes">${fretes.length? `<table class="data-table"><thead><tr><th>Data</th><th>Rota</th><th>Valor</th></tr></thead><tbody>${fretes.map(f=>`<tr><td>${moment(f.data).format('DD/MM/YY')}</td><td>${f.origem}→${f.destino}</td><td>R$ ${f.valor.toFixed(2)}</td></tr>`).join('')}</tbody></table>` : '<small>Nenhum frete</small>'}</div>`; atualizarReceber(total); }
     function atualizarReceber(totalFrete){ let comissao=parseFloat(document.getElementById('calcComissaoPercent').value)||0; let despesas=parseFloat(document.getElementById('calcDespesasMot').value)||0; let diaria=parseFloat(document.getElementById('calcDiaria').value)||0; let bonus=parseFloat(document.getElementById('calcBonus').value)||0; let vales=parseFloat(document.getElementById('calcVales').value)||0; let ir=parseFloat(document.getElementById('calcIr').value)||0; let multa=parseFloat(document.getElementById('calcMulta').value)||0; let dep=parseFloat(document.getElementById('calcDepFolha').value)||0; let valor=(totalFrete*(comissao/100))+despesas+diaria+bonus-vales-ir-multa-dep; document.getElementById('calcValorReceber').innerHTML=`R$ ${valor.toLocaleString('pt-BR',{minFractionDigits:2})}`; }
     document.getElementById('calcAplicarFiltros').addEventListener('click',calcularSalario);
-    ['calcComissaoPercent','calcDespesasMot','calcDiaria','calcBonus','calcVales','calcIr','calcMulta','calcDepFolha'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{ let total=parseFloat(document.getElementById('calcTotalFrete').innerText.replace(/[^0-9,-]/g,'').replace(',','.'))||0; atualizarReceber(total); }));
-    
-    // ========== ABAS E RECARREGAMENTO ==========
+    ['calcComissaoPercent','calcDespesasMot','calcDiaria','calcBonus','calcVales','calcIr','calcMulta','calcDepFolha'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{ let total=parseFloat(document.getElementById('calcTotalFrete')?.innerText.replace(/[^0-9,-]/g,'').replace(',','.'))||0; atualizarReceber(total); }));
+
+    // ========== LOGIN E CONFIGURAÇÕES ==========
     async function refreshAllData(){
         await Promise.all([loadFinanceiroData(true), loadFaturamentoData(true), loadBateriasData(true)]);
         atualizarSelectMotoristasCalculadora();
@@ -525,11 +666,11 @@
     document.getElementById('refreshDataBtn').addEventListener('click',refreshAllData);
     document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>{ let tabId=btn.getAttribute('data-tab'); document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active')); document.getElementById(tabId).classList.add('active'); if(tabId==='tabBaterias' && bateriasData.length===0) loadBateriasData(true); else if(tabId==='tabBaterias') aplicarFiltrosBaterias(); }));
     
-    // LOGIN E CONFIGURAÇÃO DE URL
     const publicSite=document.getElementById('publicSite'), privateArea=document.getElementById('privateArea'), loginModal=document.getElementById('loginModal');
     document.getElementById('privateAccessBtn').addEventListener('click',(e)=>{ e.preventDefault(); loginModal.classList.add('active');});
     document.getElementById('doLoginBtn').addEventListener('click',()=>{ let u=document.getElementById('loginUser').value.trim(), p=document.getElementById('loginPass').value.trim(); if(u===VALID_USER && p===VALID_PASS){ publicSite.style.display='none'; privateArea.style.display='block'; loginModal.classList.remove('active'); refreshAllData(); } else document.getElementById('loginError').innerText='Credenciais inválidas'; });
     document.getElementById('logoutPrivateBtn').addEventListener('click',()=>{ publicSite.style.display='block'; privateArea.style.display='none'; loginModal.classList.remove('active'); });
+    
     document.getElementById('openUrlConfig').onclick = () => {
         document.getElementById('urlFinanceiro').value = URL_FINANCEIRO;
         document.getElementById('urlFaturamento').value = URL_FATURAMENTO;
@@ -537,7 +678,12 @@
         document.getElementById('urlConfigModal').classList.add('active');
     };
     document.getElementById('saveUrlsBtn').onclick = () => {
-        normalizeAndSaveUrls();
+        URL_FINANCEIRO = googleSheetToCsv(document.getElementById('urlFinanceiro').value);
+        URL_FATURAMENTO = googleSheetToCsv(document.getElementById('urlFaturamento').value);
+        URL_BATERIAS = googleSheetToCsv(document.getElementById('urlBaterias').value);
+        localStorage.setItem("urlFinanceiro", URL_FINANCEIRO);
+        localStorage.setItem("urlFaturamento", URL_FATURAMENTO);
+        localStorage.setItem("urlBaterias", URL_BATERIAS);
         document.getElementById('urlConfigModal').classList.remove('active');
         refreshAllData();
     };
@@ -545,10 +691,9 @@
     
     // Inicialização
     (function init() {
-        if(URL_FINANCEIRO) loadFinanceiroData(true);
-        if(URL_FATURAMENTO) loadFaturamentoData(true);
-        if(URL_BATERIAS) loadBateriasData(true);
-        // Preenche os campos de URL nos modais com os valores atuais (convertidos para exibição amigável)
+        loadFinanceiroData(true);
+        loadFaturamentoData(true);
+        loadBateriasData(true);
         document.getElementById('urlFinanceiro').value = URL_FINANCEIRO;
         document.getElementById('urlFaturamento').value = URL_FATURAMENTO;
         document.getElementById('urlBaterias').value = URL_BATERIAS;
