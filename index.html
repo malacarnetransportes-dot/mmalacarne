@@ -109,28 +109,35 @@
         .consolidado-card .valor { font-size: 1.6rem; font-weight: 800; color: var(--premium-dark); }
         .chart-container { max-width: 100%; margin: 1rem auto; }
         .flex-chart-ranking { display: flex; flex-wrap: wrap; gap: 2rem; align-items: flex-start; justify-content: space-between; }
+        .flex-chart-ranking > div { flex: 1; min-width: 250px; }
+        .alert-card { background: #fff5f5; border-left: 6px solid var(--danger); border-radius: 20px; padding: 1rem; margin-bottom: 1rem; }
+        .alert-card.warning { background: #fffbeb; border-left-color: var(--warning); }
         .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 20px; font-size: 0.7rem; font-weight: 600; }
         .badge-vencido { background: #fee2e2; color: var(--danger); }
         .badge-proximo { background: #fef3c7; color: var(--warning); }
         .badge-normal { background: #e2e8f0; color: #475569; }
+        .debug-card { background: #f1f5f9; border-left: 4px solid var(--info); margin-bottom: 1rem; overflow-x: auto; }
         .modal-popup { position: fixed; top: 20%; left: 50%; transform: translate(-50%, -20%); background: white; padding: 1.5rem; border-radius: 24px; box-shadow: 0 20px 35px rgba(0,0,0,0.3); z-index: 3000; max-width: 90%; width: 400px; display: none; border-top: 6px solid var(--accent); }
         .modal-popup.active { display: block; }
-        .url-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; z-index: 4000; padding: 2rem; border-radius: 32px; width: 90%; max-width: 500px; display: none; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
-        .url-modal.active { display: block; }
-        .url-modal input { width: 100%; margin: 0.5rem 0; padding: 0.6rem; border-radius: 40px; border: 1px solid #ccc; }
+        .modal-popup button { margin-top: 1rem; background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 30px; cursor: pointer; }
+        .servico-detalhe { cursor: pointer; text-decoration: underline; color: var(--primary); }
+        .bateria-alerta { background: #fef9e6; border-left: 4px solid var(--warning); padding: 0.5rem; margin-bottom: 0.5rem; border-radius: 8px; }
+        .coluna-config { margin-top: 1rem; padding: 0.5rem; background: #f1f5f9; border-radius: 12px; font-size: 0.8rem; }
+        .coluna-config select { margin-left: 0.5rem; padding: 0.2rem; border-radius: 6px; margin-bottom: 0.5rem; }
         .ranking-numerado { counter-reset: rank; list-style: none; padding: 0; }
         .ranking-numerado li { counter-increment: rank; margin-bottom: 0.5rem; padding: 0.5rem; background: #f8fafc; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
         .ranking-numerado li::before { content: counter(rank) "º"; font-weight: bold; background: var(--accent); color: var(--dark); padding: 0.2rem 0.6rem; border-radius: 20px; margin-right: 0.8rem; }
+        .chart-selector { margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center; }
+        .config-urls { background: var(--light); border-radius: 20px; padding: 0.5rem 1rem; display: inline-flex; gap: 0.5rem; align-items: center; cursor: pointer; }
+        .url-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; z-index: 4000; padding: 2rem; border-radius: 32px; width: 90%; max-width: 500px; display: none; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        .url-modal.active { display: block; }
+        .url-modal input { width: 100%; margin: 0.5rem 0; padding: 0.6rem; border-radius: 40px; border: 1px solid #ccc; }
     </style>
 </head>
 <body>
 
 <div id="servicoModal" class="modal-popup"><h3>Detalhe do Serviço</h3><p id="servicoDetalheTexto"></p><button onclick="document.getElementById('servicoModal').classList.remove('active')">Fechar</button></div>
-<div id="urlConfigModal" class="url-modal"><h3>⚙️ Configurar URLs das Planilhas</h3><p style="font-size:0.8rem; color:var(--text-light)">⚠️ A planilha deve estar <strong>Publicada na web</strong> (Arquivo > Compartilhar > Publicar na web > CSV).<br>Você pode colar o link de edição (<code>/edit</code>) – o sistema tentará converter automaticamente.</p>
-<label>💰 Financeiro (CSV):</label><input type="text" id="urlFinanceiro" placeholder="https://docs.google.com/spreadsheets/d/.../edit ou pub?output=csv">
-<label>🚛 Faturamento (CSV):</label><input type="text" id="urlFaturamento" placeholder="https://docs.google.com/spreadsheets/d/.../edit ou pub?output=csv">
-<label>🔋 Baterias (CSV):</label><input type="text" id="urlBaterias" placeholder="https://docs.google.com/spreadsheets/d/.../edit ou pub?output=csv">
-<br><br><button id="saveUrlsBtn" class="btn-export">Salvar e Recarregar</button><button id="closeUrlModalBtn" class="btn-export btn-reset">Fechar</button></div>
+<div id="urlConfigModal" class="url-modal"><h3>⚙️ Configurar URLs das Planilhas</h3><label>💰 Financeiro (CSV):</label><input type="text" id="urlFinanceiro" placeholder="https://.../pub?output=csv"><label>🚛 Faturamento (CSV):</label><input type="text" id="urlFaturamento" placeholder="https://.../pub?output=csv"><label>🔋 Baterias (CSV):</label><input type="text" id="urlBaterias" placeholder="https://.../pub?output=csv"><br><br><button id="saveUrlsBtn" class="btn-export">Salvar e Recarregar</button><button id="closeUrlModalBtn" class="btn-export btn-reset">Fechar</button></div>
 
 <div id="publicSite">
     <div class="whatsapp-float"><a href="https://wa.me/5549999675448" target="_blank" style="background:#25D366; color:white; padding:10px 16px; border-radius:50px; text-decoration:none;">📱 WhatsApp</a></div>
@@ -153,6 +160,19 @@
     
     <!-- FINANCEIRO -->
     <div id="tabFinanceiro" class="tab-content active">
+        <div id="finDebugCard" class="dashboard-card debug-card" style="display: none;">
+            <h3><i class="fas fa-bug"></i> Mapeamento de Colunas</h3>
+            <div id="finDebugInfo"></div>
+            <div id="finSampleRows"></div>
+            <div class="coluna-config" id="manualMappingDiv" style="display: none;">
+                <p><strong>⚠️ Não foi possível detectar automaticamente. Selecione as colunas manualmente:</strong></p>
+                <label>Coluna de DATA (vencimento): <select id="manualColData"></select></label><br>
+                <label>Coluna de VALOR (R$): <select id="manualColValor"></select></label><br>
+                <label>Coluna de LOCAL (opcional): <select id="manualColLocal"><option value="">-- ignorar --</option></select></label><br>
+                <label>Coluna de TIPO (opcional): <select id="manualColTipo"><option value="">-- ignorar --</option></select></label><br>
+                <button id="applyManualMapping" class="btn-export">Aplicar e Carregar Dados</button>
+            </div>
+        </div>
         <div class="dashboard-card"><h3><i class="fas fa-filter"></i> Filtros Financeiro</h3><div>
             <div class="filter-group"><label>Vencimento Início</label><input type="date" id="finDataInicio"></div>
             <div class="filter-group"><label>Vencimento Fim</label><input type="date" id="finDataFim"></div>
@@ -163,18 +183,18 @@
             <button id="finExportarCSV" class="btn-export">CSV</button>
             <button id="finExportarPDF" class="btn-export">PDF</button>
         </div></div>
-        <div class="dashboard-card"><h3>📈 Resumo Financeiro</h3><div class="consolidado-grid"><div class="consolidado-card"><h4>Total Geral</h4><div class="valor" id="consTotal">R$ 0,00</div></div><div class="consolidado-card"><h4>Média</h4><div class="valor" id="consMedia">R$ 0,00</div></div><div class="consolidado-card"><h4>Quantidade</h4><div class="valor" id="consQuantidade">0</div></div><div class="consolidado-card"><h4>Maior Valor</h4><div class="valor" id="consMaior">R$ 0,00</div></div><div class="consolidado-card"><h4>Menor Valor</h4><div class="valor" id="consMenor">R$ 0,00</div></div></div></div>
-        <div class="dashboard-card"><h3>📊 Soma por Tipo de Conta</h3><div class="chart-selector"><label>Tipo de gráfico: </label><select id="chartTypeSelect"><option value="bar">Barras</option><option value="pie">Pizza</option></select></div><div class="chart-container"><canvas id="tipoChart" width="800" height="400" style="max-width:100%; height:auto;"></canvas></div></div>
-        <div class="dashboard-card"><h3>🏆 Ranking por Tipo</h3><ul id="finRankingTipo" class="ranking-numerado"></ul></div>
-        <div class="dashboard-card"><h3>🏆 Ranking por Local</h3><ul id="finRankingLocal" class="ranking-numerado"></ul></div>
-        <div class="dashboard-card"><h3>📋 Documentos (clique no serviço para detalhe)</h3><div style="overflow-x:auto"><table class="data-table" id="finTable"><thead><tr><th>Local</th><th>Tipo</th><th>Vencimento</th><th>Documento</th><th>Valor (R$)</th><th>Serviço</th></tr></thead><tbody><tr><td colspan="6">Carregando...</td></tr></tbody></table></div></div>
-        <div class="dashboard-card"><h3>🔮 Previsão para próximos períodos</h3><div class="forecast-card"><table class="forecast-table" id="finPrevisaoTable"><thead><tr><th>Período</th><th>Previsão (R$)</th></tr></thead><tbody><tr><td colspan="2">Aguarde carregamento...</td></tr></tbody></table></div></div>
+        <div class="dashboard-card"><h3>📈 Resumo Financeiro (filtrado)</h3><div class="consolidado-grid"><div class="consolidado-card"><h4>Total Geral</h4><div class="valor" id="consTotal">R$ 0,00</div></div><div class="consolidado-card"><h4>Média</h4><div class="valor" id="consMedia">R$ 0,00</div></div><div class="consolidado-card"><h4>Quantidade</h4><div class="valor" id="consQuantidade">0</div></div><div class="consolidado-card"><h4>Maior Valor</h4><div class="valor" id="consMaior">R$ 0,00</div></div><div class="consolidado-card"><h4>Menor Valor</h4><div class="valor" id="consMenor">R$ 0,00</div></div></div></div>
+        <div class="dashboard-card"><h3><i class="fas fa-chart-bar"></i> 📊 Soma por Tipo de Conta</h3><div class="chart-selector"><label>Tipo de gráfico: </label><select id="chartTypeSelect"><option value="bar">📊 Barras</option><option value="pie">🥧 Pizza</option></select></div><div class="chart-container"><canvas id="tipoChart" width="800" height="400" style="max-width:100%; height:auto;"></canvas></div></div>
+        <div class="dashboard-card"><h3><i class="fas fa-trophy"></i> 🏆 Ranking por Tipo (maior valor)</h3><ul id="finRankingTipo" class="ranking-numerado"></ul></div>
+        <div class="dashboard-card"><h3><i class="fas fa-city"></i> 🏆 Ranking por Local (maior valor)</h3><ul id="finRankingLocal" class="ranking-numerado"></ul></div>
+        <div class="dashboard-card"><h3>📋 Documentos (clique no serviço para ver detalhe)</h3><div style="overflow-x:auto"><table class="data-table" id="finTable"><thead><tr><th>Local</th><th>Tipo</th><th>Vencimento</th><th>Documento</th><th>Valor (R$)</th><th>Serviço</th></tr></thead><tbody><tr><td colspan="6">Carregando...</td></tr></tbody></table></div></div>
+        <div class="dashboard-card"><h3><i class="fas fa-chart-line"></i> 🔮 Previsão para próximos períodos</h3><div class="forecast-card"><table class="forecast-table" id="finPrevisaoTable"><thead><tr><th>Período</th><th>Previsão (R$)</th></tr></thead><tbody><tr><td colspan="2">Aguarde carregamento...</td></tr></tbody></table></div></div>
     </div>
     
-    <!-- FATURAMENTO -->
+    <!-- FATURAMENTO com mapeamento manual -->
     <div id="tabFaturamento" class="tab-content">
         <div id="fatMappingContainer"></div>
-        <div class="dashboard-card"><h3>Filtros e Ferramentas</h3><div>
+        <div class="dashboard-card"><h3>Filtros</h3><div>
             <div class="filter-group"><label>Mês</label><select id="fatMesSelect"><option value="all">Todos</option></select></div>
             <div class="filter-group"><label>Motorista</label><input list="fatMotoristaList" id="fatMotorista"><datalist id="fatMotoristaList"></datalist></div>
             <div class="filter-group"><label>Placa Cavalo</label><input list="fatPlacaCavaloList" id="fatPlacaCavalo"><datalist id="fatPlacaCavaloList"></datalist></div>
@@ -183,8 +203,6 @@
             <div class="filter-group"><label>Valor Mínimo</label><input type="number" id="fatValorMin"></div>
             <button id="fatAplicarFiltros" class="btn-export">Aplicar</button><button id="fatResetFiltros" class="btn-export btn-reset">Limpar</button>
             <button id="fatExportarCSV" class="btn-export">CSV</button><button id="fatExportarPDF" class="btn-export">PDF</button>
-            <button id="importarCTeBtn" class="btn-export" style="background:#4caf50;">📎 Importar CTe/XML</button>
-            <input type="file" id="fileCteInput" accept=".csv, .xml, .txt" style="display:none" />
         </div></div>
         <div class="dashboard-card"><h3>🏆 Top 5 Maiores Fretes</h3><div id="rankMelhoresViagens"></div></div>
         <div class="dashboard-card"><div class="ranking-grid"><div class="ranking-box"><h4>Motoristas</h4><div id="rankMotorista"></div></div><div class="ranking-box"><h4>Placas Cavalo</h4><div id="rankPlacaCavalo"></div></div><div class="ranking-box"><h4>Placas Carreta</h4><div id="rankPlacaCarreta"></div></div><div class="ranking-box"><h4>Embarcadoras</h4><div id="rankEmbarcadora"></div></div></div></div>
@@ -193,7 +211,8 @@
 
     <!-- BATERIAS -->
     <div id="tabBaterias" class="tab-content">
-        <div class="dashboard-card"><h3>Filtros Baterias</h3><div>
+        <div id="batDebugCard" class="dashboard-card debug-card" style="display: none;"><h3>🔍 Diagnóstico Baterias</h3><div id="batDebugInfo"></div></div>
+        <div class="dashboard-card"><h3>Filtros</h3><div>
             <div class="filter-group"><label>PLACA</label><input type="text" id="batPlaca"></div>
             <div class="filter-group"><label>MODELO</label><input list="batModeloList" id="batModelo"><datalist id="batModeloList"></datalist></div>
             <div class="filter-group"><label>Vencimento Início</label><input type="date" id="batVencInicio"></div>
@@ -213,38 +232,49 @@
 
 <script>
     // ========== CREDENCIAIS ==========
-    const VALID_USER = "malacarne";
-    const VALID_PASS = "mala2325";
+    const VALID_USER = "malacarne", VALID_PASS = "mala2325";
+    let URL_FINANCEIRO = localStorage.getItem("urlFinanceiro") || "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZOvOYa2B9fg5pQuPa54usv9Tl0bRP7EDRBtYrmYnJuXZkK5_A7j4roQZdmiXaaQ/pub?output=csv";
+    let URL_FATURAMENTO = localStorage.getItem("urlFaturamento") || "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2S-LdrEMpvvosLHfFDOucVENw-T8OOaC2td00ySdFnim79Lm7AEooZBL--q9zKA/pub?output=csv";
+    let URL_BATERIAS = localStorage.getItem("urlBaterias") || "https://docs.google.com/spreadsheets/d/e/2PACX-1vTCotTJjgS2YX7kj4LwUiz3eGGAbuo98npFM6QaqZhHwawIt_RuG1H14c9sRED70Q/pub?output=csv";
 
-    // Convertendo link do Google Sheets para CSV público
-    function googleSheetToCsv(url) {
-        if (!url) return "";
-        const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
-        if (match) {
-            const sheetId = match[1];
-            if (url.includes("pub?output=csv")) return url;
-            return `https://docs.google.com/spreadsheets/d/${sheetId}/pub?output=csv`;
-        }
-        return url;
-    }
-
-    // URLs padrão: já apontando para a planilha de fretes que você publicou
-    let URL_FINANCEIRO = localStorage.getItem("urlFinanceiro") || "";
-    let URL_FATURAMENTO = localStorage.getItem("urlFaturamento") || "https://docs.google.com/spreadsheets/d/e/2PACX-1vTunjiD78zhcQPRQ31V3O2BvioHvV_zXBOXp_J2Vlw84LxxF6gZf-eGUuxeX5L0YHCCB9JGbS4ytu7A/pub?output=csv";
-    let URL_BATERIAS = localStorage.getItem("urlBaterias") || "";
-
-    // ========== FUNÇÕES AUXILIARES ==========
-    function parseMoney(v) { if(v===undefined||v===null) return 0; let cleaned=String(v).replace(/[^\d,.-]/g,''); if(cleaned==='') return 0; cleaned=cleaned.replace(',','.'); let parts=cleaned.split('.'); if(parts.length>2){let last=parts.pop(); cleaned=parts.join('')+'.'+last;} let num=parseFloat(cleaned); return isNaN(num)?0:num; }
-    function findColumn(headers, keywords){ let lower=headers.map(h=>h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')); for(let kw of keywords){ let idx=lower.findIndex(h=>h.includes(kw.toLowerCase())); if(idx!==-1) return headers[idx]; } return null; }
-
-    // ========== DADOS GLOBAIS ==========
     let financeiroData = [], faturamentoData = [], bateriasData = [];
     let currentFinanceiroFiltered = [];
     let tipoChart = null;
+    let pendingFatRows = null, pendingFatHeaders = null;
 
-    // ========== FINANCEIRO ==========
+    function parseMoney(v) { if(v===undefined||v===null) return 0; let cleaned=String(v).replace(/[^\d,.-]/g,''); if(cleaned==='') return 0; cleaned=cleaned.replace(',','.'); let parts=cleaned.split('.'); if(parts.length>2){let last=parts.pop(); cleaned=parts.join('')+'.'+last;} let num=parseFloat(cleaned); return isNaN(num)?0:num; }
+    function findColumn(headers, keywords){ let lower=headers.map(h=>h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')); for(let kw of keywords){ let idx=lower.findIndex(h=>h.includes(kw.toLowerCase())); if(idx!==-1) return headers[idx]; } return null; }
+
+    // URLs
+    document.getElementById('openUrlConfig').onclick = () => {
+        document.getElementById('urlFinanceiro').value = URL_FINANCEIRO;
+        document.getElementById('urlFaturamento').value = URL_FATURAMENTO;
+        document.getElementById('urlBaterias').value = URL_BATERIAS;
+        document.getElementById('urlConfigModal').classList.add('active');
+    };
+    document.getElementById('saveUrlsBtn').onclick = () => {
+        URL_FINANCEIRO = document.getElementById('urlFinanceiro').value;
+        URL_FATURAMENTO = document.getElementById('urlFaturamento').value;
+        URL_BATERIAS = document.getElementById('urlBaterias').value;
+        localStorage.setItem("urlFinanceiro", URL_FINANCEIRO);
+        localStorage.setItem("urlFaturamento", URL_FATURAMENTO);
+        localStorage.setItem("urlBaterias", URL_BATERIAS);
+        document.getElementById('urlConfigModal').classList.remove('active');
+        refreshAllData();
+    };
+    document.getElementById('closeUrlModalBtn').onclick = () => document.getElementById('urlConfigModal').classList.remove('active');
+
+    // LOGIN
+    const publicSite=document.getElementById('publicSite'), privateArea=document.getElementById('privateArea'), loginModal=document.getElementById('loginModal');
+    document.getElementById('privateAccessBtn').addEventListener('click',(e)=>{e.preventDefault(); loginModal.classList.add('active');});
+    document.getElementById('doLoginBtn').addEventListener('click',()=>{ let u=document.getElementById('loginUser').value.trim(), p=document.getElementById('loginPass').value.trim(); if(u===VALID_USER && p===VALID_PASS){ publicSite.style.display='none'; privateArea.style.display='block'; loginModal.classList.remove('active'); refreshAllData(); } else document.getElementById('loginError').innerText='Credenciais inválidas'; });
+    document.getElementById('logoutPrivateBtn').addEventListener('click',()=>{ publicSite.style.display='block'; privateArea.style.display='none'; loginModal.classList.remove('active'); });
+    async function refreshAllData(){ await Promise.all([loadFinanceiroData(true), loadFaturamentoData(true), loadBateriasData(true)]); atualizarSelectMotoristasCalculadora(); }
+    document.getElementById('refreshDataBtn').addEventListener('click',refreshAllData);
+
+    // ========== FINANCEIRO (igual ao original, com mapeamento manual) ==========
+    let colMapping = { data: null, valor: null, local: null, tipo: null };
     async function loadFinanceiroData(skipFilter=false){
-        if(!URL_FINANCEIRO) { financeiroData=[]; if(!skipFilter) applyFinFilters(); return; }
         try{
             const resp = await fetch(URL_FINANCEIRO);
             const text = await resp.text();
@@ -252,44 +282,81 @@
             const rows = parsed.data;
             if(!rows.length) throw new Error("Planilha vazia");
             const headers = Object.keys(rows[0]);
-            let colData = findColumn(headers, ['vencimento','data','emissao','dt_venc','due date','venc','data vencimento']);
-            let colValor = findColumn(headers, ['valor','total','r$','vl','vlr','amount','value']);
-            let colLocal = findColumn(headers, ['local','cidade','municipio','localidade','origem']);
-            let colTipo = findColumn(headers, ['tipo','categoria','conta','natureza','classificacao']);
-            if(!colData || !colValor){
-                console.warn("Financeiro: colunas não identificadas");
-                financeiroData = [];
+            colMapping.data = findColumn(headers, ['vencimento','data','emissao','dt_venc','due date','venc','data vencimento']);
+            colMapping.valor = findColumn(headers, ['valor','total','r$','vl','vlr','amount','value']);
+            colMapping.local = findColumn(headers, ['local','cidade','municipio','localidade','origem']);
+            colMapping.tipo = findColumn(headers, ['tipo','categoria','conta','natureza','classificacao']);
+            const manualDiv = document.getElementById('manualMappingDiv');
+            if(!colMapping.data || !colMapping.valor){
+                manualDiv.style.display = 'block';
+                const selectData = document.getElementById('manualColData');
+                const selectValor = document.getElementById('manualColValor');
+                const selectLocal = document.getElementById('manualColLocal');
+                const selectTipo = document.getElementById('manualColTipo');
+                selectData.innerHTML = '<option value="">Selecione</option>' + headers.map(h=>`<option value="${h}">${h}</option>`).join('');
+                selectValor.innerHTML = '<option value="">Selecione</option>' + headers.map(h=>`<option value="${h}">${h}</option>`).join('');
+                selectLocal.innerHTML = '<option value="">-- ignorar --</option>' + headers.map(h=>`<option value="${h}">${h}</option>`).join('');
+                selectTipo.innerHTML = '<option value="">-- ignorar --</option>' + headers.map(h=>`<option value="${h}">${h}</option>`).join('');
+                document.getElementById('applyManualMapping').onclick = () => {
+                    colMapping.data = selectData.value;
+                    colMapping.valor = selectValor.value;
+                    colMapping.local = selectLocal.value || null;
+                    colMapping.tipo = selectTipo.value || null;
+                    if(colMapping.data && colMapping.valor){
+                        manualDiv.style.display = 'none';
+                        carregarDadosFinanceiro(rows, colMapping, skipFilter);
+                    } else alert("Selecione DATA e VALOR");
+                };
+                return;
             } else {
-                financeiroData = [];
-                for(let row of rows){
-                    let rawDate = row[colData];
-                    let date = moment(rawDate, ['DD/MM/YYYY','DD/MM/YY','YYYY-MM-DD','MM/DD/YYYY'], true);
-                    if(!date.isValid()) date = moment(rawDate);
-                    if(!date.isValid()) continue;
-                    let val = parseMoney(row[colValor]);
-                    if(val === 0) continue;
-                    let local = colLocal ? (row[colLocal] || "Geral") : "Geral";
-                    let tipo = colTipo ? (row[colTipo] || "Outros") : "Despesas";
-                    financeiroData.push({
-                        documento: "NF",
-                        vencimentoDate: date.toDate(),
-                        local: local,
-                        tipoConta: tipo,
-                        valor: val,
-                        servico: row[colTipo] || "Sem descrição"
-                    });
-                }
+                manualDiv.style.display = 'none';
+                carregarDadosFinanceiro(rows, colMapping, skipFilter);
             }
-            atualizarDatalistsFinanceiro();
-            if(!skipFilter) applyFinFilters();
         } catch(e){ console.error(e); financeiroData = []; if(!skipFilter) applyFinFilters(); }
     }
-
+    function carregarDadosFinanceiro(rows, mapping, skipFilter){
+        financeiroData = [];
+        for(let row of rows){
+            let rawDate = row[mapping.data];
+            let date = moment(rawDate, ['DD/MM/YYYY','DD/MM/YY','YYYY-MM-DD','MM/DD/YYYY','DD/MM/YYYY HH:mm:ss'], true);
+            if(!date.isValid()) date = moment(rawDate);
+            if(!date.isValid()) continue;
+            let val = parseMoney(row[mapping.valor]);
+            if(val === 0) continue;
+            let local = mapping.local ? (row[mapping.local] || "Indefinido") : "Geral";
+            let tipo = mapping.tipo ? (row[mapping.tipo] || "Outros") : "Despesas";
+            financeiroData.push({
+                documento: "NF",
+                vencimentoDate: date.toDate(),
+                local: local,
+                tipoConta: tipo,
+                valor: val,
+                servico: row[mapping.tipo] || "Sem descrição"
+            });
+        }
+        atualizarDatalistsFinanceiro();
+        if(!skipFilter) applyFinFilters();
+    }
     function atualizarDatalistsFinanceiro(){
         document.getElementById('finLocalList').innerHTML = [...new Set(financeiroData.map(i=>i.local))].map(l=>`<option value="${l}">`).join('');
         document.getElementById('finTipoList').innerHTML = [...new Set(financeiroData.map(i=>i.tipoConta))].map(t=>`<option value="${t}">`).join('');
     }
-
+    function atualizarGraficoTipo(){
+        if(!currentFinanceiroFiltered.length) return;
+        const tipoMap = new Map();
+        currentFinanceiroFiltered.forEach(i => tipoMap.set(i.tipoConta, (tipoMap.get(i.tipoConta)||0) + i.valor));
+        const labels = Array.from(tipoMap.keys());
+        const valores = Array.from(tipoMap.values());
+        if(tipoChart) tipoChart.destroy();
+        const chartType = document.getElementById('chartTypeSelect').value;
+        tipoChart = new Chart(document.getElementById('tipoChart'), {
+            type: chartType,
+            data: { labels, datasets: [{ label: 'Valor (R$)', data: valores, backgroundColor: ['#8B7355','#d4af37','#3b82f6','#10b981','#ef4444','#f59e0b'], borderColor: '#1e2a3a', borderWidth: 1 }] },
+            options: { responsive: true, maintainAspectRatio: true, plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.label}: R$ ${ctx.raw.toLocaleString('pt-BR',{minFractionDigits:2})}` } } } }
+        });
+    }
+    document.getElementById('chartTypeSelect').addEventListener('change', () => atualizarGraficoTipo());
+    
     function applyFinFilters(){
         const dataInicioStr = document.getElementById('finDataInicio').value;
         const dataFimStr = document.getElementById('finDataFim').value;
@@ -315,7 +382,6 @@
         document.getElementById('consQuantidade').innerText = qtd;
         document.getElementById('consMaior').innerHTML = `R$ ${maior.toLocaleString('pt-BR',{minFractionDigits:2})}`;
         document.getElementById('consMenor').innerHTML = `R$ ${menor.toLocaleString('pt-BR',{minFractionDigits:2})}`;
-        
         const tipoMap = new Map();
         const localMap = new Map();
         currentFinanceiroFiltered.forEach(i => {
@@ -326,15 +392,7 @@
         const sortedLocal = Array.from(localMap.entries()).sort((a,b)=>b[1]-a[1]);
         document.getElementById('finRankingTipo').innerHTML = sortedTipo.map(([t,v]) => `<li><strong>${t}</strong> <span>R$ ${v.toLocaleString('pt-BR',{minFractionDigits:2})}</span></li>`).join('');
         document.getElementById('finRankingLocal').innerHTML = sortedLocal.map(([l,v]) => `<li><strong>${l}</strong> <span>R$ ${v.toLocaleString('pt-BR',{minFractionDigits:2})}</span></li>`).join('');
-        
-        if(tipoChart) tipoChart.destroy();
-        const chartType = document.getElementById('chartTypeSelect').value;
-        tipoChart = new Chart(document.getElementById('tipoChart'), {
-            type: chartType,
-            data: { labels: Array.from(tipoMap.keys()), datasets: [{ label: 'Valor (R$)', data: Array.from(tipoMap.values()), backgroundColor: ['#8B7355','#d4af37','#3b82f6','#10b981','#ef4444','#f59e0b'], borderColor: '#1e2a3a', borderWidth: 1 }] },
-            options: { responsive: true, maintainAspectRatio: true, plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.label}: R$ ${ctx.raw.toLocaleString('pt-BR',{minFractionDigits:2})}` } } } }
-        });
-        
+        atualizarGraficoTipo();
         const tbody = document.querySelector('#finTable tbody');
         tbody.innerHTML = '';
         const hoje = new Date(); hoje.setHours(0,0,0,0);
@@ -359,17 +417,26 @@
             `;
         });
         document.querySelectorAll('.servico-detalhe').forEach(el=>el.addEventListener('click',()=>{ document.getElementById('servicoDetalheTexto').innerText=el.getAttribute('data-servico'); document.getElementById('servicoModal').classList.add('active'); }));
-        
         // previsão simples
         const monthlySum = new Map();
-        currentFinanceiroFiltered.forEach(i => { if(i.vencimentoDate){ const key = moment(i.vencimentoDate).format('YYYY-MM'); monthlySum.set(key, (monthlySum.get(key)||0) + i.valor); } });
+        currentFinanceiroFiltered.forEach(i => {
+            if(i.vencimentoDate){
+                const key = moment(i.vencimentoDate).format('YYYY-MM');
+                monthlySum.set(key, (monthlySum.get(key)||0) + i.valor);
+            }
+        });
         const monthsWithData = Array.from(monthlySum.keys()).sort();
         const last3Months = monthsWithData.slice(-3);
         let avgMonthly = 0;
-        if(last3Months.length) { const sumLast3 = last3Months.reduce((acc,m) => acc + monthlySum.get(m), 0); avgMonthly = sumLast3 / last3Months.length; }
+        if(last3Months.length) {
+            const sumLast3 = last3Months.reduce((acc,m) => acc + monthlySum.get(m), 0);
+            avgMonthly = sumLast3 / last3Months.length;
+        }
         const avgDaily = avgMonthly / 30;
         let maxDateInData = null;
-        if(currentFinanceiroFiltered.length) maxDateInData = currentFinanceiroFiltered.reduce((max, item) => item.vencimentoDate > max ? item.vencimentoDate : max, new Date(0));
+        if(currentFinanceiroFiltered.length) {
+            maxDateInData = currentFinanceiroFiltered.reduce((max, item) => item.vencimentoDate > max ? item.vencimentoDate : max, new Date(0));
+        }
         let startForecastDate = maxDateInData ? moment(maxDateInData).add(1, 'day') : moment();
         if(startForecastDate.isBefore(moment(), 'day')) startForecastDate = moment().startOf('day');
         const forecastRows = [];
@@ -401,14 +468,21 @@
                     if(periodsGenerated >= maxPeriods) break;
                 }
             }
-            if(!addedAny && startForecastDate.month() === month && startForecastDate.year() === year) currentDate.add(1, 'month');
-            else currentDate.add(1, 'month');
+            if(!addedAny && startForecastDate.month() === month && startForecastDate.year() === year) {
+                currentDate.add(1, 'month');
+            } else {
+                currentDate.add(1, 'month');
+            }
             if(currentDate.isAfter(moment().add(6, 'months'))) break;
         }
         const forecastTbody = document.querySelector('#finPrevisaoTable tbody');
-        if(avgMonthly === 0 || currentFinanceiroFiltered.length === 0) forecastTbody.innerHTML = '<tr><td colspan="2">Sem dados históricos suficientes para projeção</td></tr>';
-        else if(forecastRows.length === 0) forecastTbody.innerHTML = '<tr><td colspan="2">Nenhum período futuro a projetar</td></tr>';
-        else forecastTbody.innerHTML = forecastRows.join('');
+        if(avgMonthly === 0 || currentFinanceiroFiltered.length === 0) {
+            forecastTbody.innerHTML = '<tr><td colspan="2">Sem dados históricos suficientes para projeção</td></tr>';
+        } else if(forecastRows.length === 0) {
+            forecastTbody.innerHTML = '<tr><td colspan="2">Nenhum período futuro a projetar</td></tr>';
+        } else {
+            forecastTbody.innerHTML = forecastRows.join('');
+        }
     }
     document.getElementById('finAplicarFiltros').addEventListener('click', applyFinFilters);
     document.getElementById('finResetFiltros').addEventListener('click',()=>{
@@ -424,37 +498,36 @@
         let blob=new Blob(["\uFEFF"+csv.map(r=>r.join(",")).join("\n")],{type:"text/csv"}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download="financeiro.csv"; a.click();
     });
     document.getElementById('finExportarPDF').addEventListener('click',()=>alert("Use Ctrl+P"));
-    document.getElementById('chartTypeSelect').addEventListener('change', () => applyFinFilters());
 
-    // ========== FATURAMENTO ==========
+    // ========== FATURAMENTO COM MAPEAMENTO MANUAL ==========
+    let fatColMapping = { data: null, motorista: null, cavalo: null, carreta: null, embarcadora: null, origem: null, destino: null, valor: null };
     async function loadFaturamentoData(skipFilter=false){
-        if(!URL_FATURAMENTO) { faturamentoData = []; if(!skipFilter) aplicarFiltrosFaturamento(); atualizarSelectMotoristasCalculadora(); return; }
         try {
             const resp = await fetch(URL_FATURAMENTO);
             const text = await resp.text();
             const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
             const rows = parsed.data;
-            if(!rows.length) throw new Error("Planilha vazia");
+            if (!rows.length) throw new Error("Planilha vazia");
             const headers = Object.keys(rows[0]);
-            const colData = findColumn(headers, ['data', 'emissao', 'data emissao', 'dt_viagem']);
-            const colMotorista = findColumn(headers, ['motorista', 'condutor', 'nome motorista']);
-            const colCavalo = findColumn(headers, ['cavalo', 'placa cavalo', 'trator', 'cavalo placa']);
-            const colCarreta = findColumn(headers, ['carreta', 'reboque', 'placa carreta', 'carreta placa']);
-            const colEmbarcadora = findColumn(headers, ['embarcadora', 'cliente', 'contratante']);
-            const colOrigem = findColumn(headers, ['origem', 'de', 'cidade origem']);
-            const colDestino = findColumn(headers, ['destino', 'para', 'cidade destino']);
-            const colValor = findColumn(headers, ['valor', 'frete', 'vl_frete', 'total', 'vl_frete']);
-            
-            if(!colMotorista || !colCavalo || !colValor){
-                console.warn("Faturamento: colunas não identificadas, tente mapeamento manual");
-                exibirMappingFaturamento(headers, rows);
+            pendingFatHeaders = headers;
+            // tentativa automática
+            fatColMapping.data = findColumn(headers, ['data', 'emissao', 'data emissao', 'dt_viagem']);
+            fatColMapping.motorista = findColumn(headers, ['motorista', 'condutor', 'nome motorista']);
+            fatColMapping.cavalo = findColumn(headers, ['cavalo', 'placa cavalo', 'trator', 'cavalo placa']);
+            fatColMapping.carreta = findColumn(headers, ['carreta', 'reboque', 'placa carreta']);
+            fatColMapping.embarcadora = findColumn(headers, ['embarcadora', 'cliente', 'contratante']);
+            fatColMapping.origem = findColumn(headers, ['origem', 'de', 'cidade origem']);
+            fatColMapping.destino = findColumn(headers, ['destino', 'para', 'cidade destino']);
+            fatColMapping.valor = findColumn(headers, ['valor', 'frete', 'vl_frete', 'total']);
+            if (!fatColMapping.motorista || !fatColMapping.cavalo || !fatColMapping.valor) {
+                pendingFatRows = rows;
+                exibirMappingFaturamento(headers);
                 return;
             }
-            processarFaturamentoRows(rows, { data: colData, motorista: colMotorista, cavalo: colCavalo, carreta: colCarreta, embarcadora: colEmbarcadora, origem: colOrigem, destino: colDestino, valor: colValor }, skipFilter);
-        } catch(e){ console.error(e); faturamentoData = []; if(!skipFilter) aplicarFiltrosFaturamento(); atualizarSelectMotoristasCalculadora(); }
+            processarFaturamentoRows(rows, fatColMapping, skipFilter);
+        } catch(e) { console.error(e); faturamentoData = []; if(!skipFilter) aplicarFiltrosFaturamento(); atualizarSelectMotoristasCalculadora(); }
     }
-
-    function exibirMappingFaturamento(headers, rows) {
+    function exibirMappingFaturamento(headers) {
         const container = document.getElementById('fatMappingContainer');
         container.innerHTML = `
             <div class="dashboard-card debug-card">
@@ -472,25 +545,23 @@
             </div>
         `;
         document.getElementById('btnConfirmFatMapping').onclick = () => {
-            const mapping = {
-                data: document.getElementById('mapFatData').value || null,
-                motorista: document.getElementById('mapFatMotorista').value,
-                cavalo: document.getElementById('mapFatCavalo').value,
-                carreta: document.getElementById('mapFatCarreta').value || null,
-                embarcadora: document.getElementById('mapFatEmbarcadora').value,
-                origem: document.getElementById('mapFatOrigem').value || null,
-                destino: document.getElementById('mapFatDestino').value || null,
-                valor: document.getElementById('mapFatValor').value
-            };
-            if(!mapping.motorista || !mapping.cavalo || !mapping.valor){
+            fatColMapping.data = document.getElementById('mapFatData').value || null;
+            fatColMapping.motorista = document.getElementById('mapFatMotorista').value;
+            fatColMapping.cavalo = document.getElementById('mapFatCavalo').value;
+            fatColMapping.carreta = document.getElementById('mapFatCarreta').value || null;
+            fatColMapping.embarcadora = document.getElementById('mapFatEmbarcadora').value;
+            fatColMapping.origem = document.getElementById('mapFatOrigem').value || null;
+            fatColMapping.destino = document.getElementById('mapFatDestino').value || null;
+            fatColMapping.valor = document.getElementById('mapFatValor').value;
+            if (!fatColMapping.motorista || !fatColMapping.cavalo || !fatColMapping.valor) {
                 alert("Selecione pelo menos Motorista, Placa Cavalo e Valor");
                 return;
             }
             container.innerHTML = '';
-            processarFaturamentoRows(rows, mapping, false);
+            processarFaturamentoRows(pendingFatRows, fatColMapping, false);
+            pendingFatRows = null;
         };
     }
-
     function processarFaturamentoRows(rows, mapping, skipFilter) {
         faturamentoData = [];
         for (let row of rows) {
@@ -513,12 +584,8 @@
         if (!skipFilter) aplicarFiltrosFaturamento();
         atualizarSelectMotoristasCalculadora();
     }
-
     function atualizarDatalistsFaturamento(){
-        let motoristas=[...new Set(faturamentoData.map(i=>i.motorista))];
-        let placasCavalo=[...new Set(faturamentoData.map(i=>i.placaCavalo))];
-        let placasCarreta=[...new Set(faturamentoData.map(i=>i.placaCarreta))];
-        let embarcadoras=[...new Set(faturamentoData.map(i=>i.embarcadora))];
+        let motoristas=[...new Set(faturamentoData.map(i=>i.motorista))]; let placasCavalo=[...new Set(faturamentoData.map(i=>i.placaCavalo))]; let placasCarreta=[...new Set(faturamentoData.map(i=>i.placaCarreta))]; let embarcadoras=[...new Set(faturamentoData.map(i=>i.embarcadora))];
         document.getElementById('fatMotoristaList').innerHTML=motoristas.map(m=>`<option value="${m}">`).join('');
         document.getElementById('fatPlacaCavaloList').innerHTML=placasCavalo.map(p=>`<option value="${p}">`).join('');
         document.getElementById('fatPlacaCarretaList').innerHTML=placasCarreta.map(p=>`<option value="${p}">`).join('');
@@ -526,7 +593,6 @@
         let meses=[...new Set(faturamentoData.map(i=>i.data?moment(i.data).format('YYYY-MM'):null).filter(m=>m))];
         let sel=document.getElementById('fatMesSelect'); sel.innerHTML='<option value="all">Todos</option>'+meses.sort().map(m=>`<option value="${m}">${moment(m,'YYYY-MM').format('MMMM/YYYY')}</option>`).join('');
     }
-
     function aplicarFiltrosFaturamento(){
         let mes=document.getElementById('fatMesSelect').value, motorista=document.getElementById('fatMotorista').value.trim(), placaCavalo=document.getElementById('fatPlacaCavalo').value.trim().toUpperCase(), placaCarreta=document.getElementById('fatPlacaCarreta').value.trim().toUpperCase(), embarcadora=document.getElementById('fatEmbarcadora').value.trim().toLowerCase(), valorMin=parseFloat(document.getElementById('fatValorMin').value);
         let filtered=faturamentoData.filter(i=>{ if(mes!=='all'&&i.data&&moment(i.data).format('YYYY-MM')!==mes)return false; if(motorista&&!i.motorista.toLowerCase().includes(motorista.toLowerCase()))return false; if(placaCavalo&&!i.placaCavalo.includes(placaCavalo))return false; if(placaCarreta&&!i.placaCarreta.includes(placaCarreta))return false; if(embarcadora&&!i.embarcadora.toLowerCase().includes(embarcadora))return false; if(!isNaN(valorMin)&&i.valor<valorMin)return false; return true; });
@@ -540,79 +606,15 @@
         document.getElementById('rankMelhoresViagens').innerHTML=top5.map(v=>`<div>${v.origem}→${v.destino} | ${v.placaCavalo} | R$ ${v.valor.toFixed(2)}</div>`).join('');
         let tbody=document.querySelector('#fatTable tbody'); tbody.innerHTML='';
         filtered.forEach(i=>{ let row=tbody.insertRow(); row.innerHTML=`<td>${i.data?moment(i.data).format('DD/MM/YYYY'):''}</td><td style="cursor:pointer;color:var(--primary)">${i.placaCavalo}</td><td>${i.placaCarreta}</td><td>${i.motorista}</td><td>${i.embarcadora}</td><td>${i.origem}</td><td>${i.destino}</td><td style="text-align:right">R$ ${i.valor.toFixed(2)}</td>`; row.cells[1].addEventListener('click',()=>{ let viagens=faturamentoData.filter(v=>v.placaCavalo===i.placaCavalo); let total=viagens.reduce((s,v)=>s+v.valor,0); let fichaDiv=document.getElementById('fichaPlaca'); fichaDiv.style.display='block'; fichaDiv.innerHTML=`<h4>Ficha Cavalo ${i.placaCavalo}</h4><p>Viagens: ${viagens.length} | Total: R$ ${total.toFixed(2)}<br>Motoristas: ${[...new Set(viagens.map(v=>v.motorista))].join(', ')}</p><button id="fecharFicha">Fechar</button>`; document.getElementById('fecharFicha').onclick=()=>fichaDiv.style.display='none'; }); });
-        let totalGeral=filtered.reduce((s,i)=>s+i.valor,0); let foot=document.querySelector('#fatTable tfoot'); if(!foot){ foot=document.createElement('tfoot'); document.querySelector('#fatTable').appendChild(foot); } foot.innerHTML=`<tr class="total-soma"><td colspan="7"><strong>Total Geral</strong></td><td style="text-align:right"><strong>R$ ${totalGeral.toFixed(2)}</strong></td></tr>`;
+        let totalGeral=filtered.reduce((s,i)=>s+i.valor,0); if(!document.querySelector('#fatTable tfoot')){ let foot=document.createElement('tfoot'); document.querySelector('#fatTable').appendChild(foot); } document.querySelector('#fatTable tfoot').innerHTML=`<tr class="total-soma"><td colspan="7"><strong>Total Geral</strong></td><td style="text-align:right"><strong>R$ ${totalGeral.toFixed(2)}</strong></td></tr>`;
     }
     document.getElementById('fatAplicarFiltros').addEventListener('click',aplicarFiltrosFaturamento);
-    document.getElementById('fatResetFiltros').addEventListener('click',()=>{
-        document.getElementById('fatMesSelect').value='all';
-        document.getElementById('fatMotorista').value='';
-        document.getElementById('fatPlacaCavalo').value='';
-        document.getElementById('fatPlacaCarreta').value='';
-        document.getElementById('fatEmbarcadora').value='';
-        document.getElementById('fatValorMin').value='';
-        aplicarFiltrosFaturamento();
-    });
-    document.getElementById('fatExportarCSV').addEventListener('click',()=>{
-        let csv=[["Data","Placa Cavalo","Placa Carreta","Motorista","Embarcadora","Origem","Destino","Valor"]];
-        faturamentoData.forEach(i=>{ csv.push([i.data?moment(i.data).format('DD/MM/YYYY'):'', i.placaCavalo, i.placaCarreta, i.motorista, i.embarcadora, i.origem, i.destino, i.valor]); });
-        let blob=new Blob(["\uFEFF"+csv.map(r=>r.join(",")).join("\n")],{type:"text/csv"}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download="faturamento.csv"; a.click();
-    });
+    document.getElementById('fatResetFiltros').addEventListener('click',()=>{ document.getElementById('fatMesSelect').value='all'; document.getElementById('fatMotorista').value=''; document.getElementById('fatPlacaCavalo').value=''; document.getElementById('fatPlacaCarreta').value=''; document.getElementById('fatEmbarcadora').value=''; document.getElementById('fatValorMin').value=''; aplicarFiltrosFaturamento(); });
+    document.getElementById('fatExportarCSV').addEventListener('click',()=>{ let csv=[["Data","Placa Cavalo","Placa Carreta","Motorista","Embarcadora","Origem","Destino","Valor"]]; faturamentoData.forEach(i=>{ csv.push([i.data?moment(i.data).format('DD/MM/YYYY'):'', i.placaCavalo, i.placaCarreta, i.motorista, i.embarcadora, i.origem, i.destino, i.valor]); }); let blob=new Blob(["\uFEFF"+csv.map(r=>r.join(",")).join("\n")],{type:"text/csv"}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download="faturamento.csv"; a.click(); });
     document.getElementById('fatExportarPDF').addEventListener('click',()=>alert("Use Ctrl+P"));
-    
-    // Importação manual de CTe
-    document.getElementById('importarCTeBtn').addEventListener('click', () => document.getElementById('fileCteInput').click());
-    document.getElementById('fileCteInput').addEventListener('change', async (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-        const extension = file.name.split('.').pop().toLowerCase();
-        let newRows = [];
-        if (extension === 'csv') {
-            const text = await file.text();
-            const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
-            newRows = parsed.data.map(row => ({
-                data: row['Data'] || row['data'] || row['Emissão'] || '',
-                placaCavalo: (row['Placa Cavalo'] || row['placa cavalo'] || row['CAVALO'] || '').toUpperCase(),
-                placaCarreta: (row['Placa Carreta'] || row['placa carreta'] || row['CARRETA'] || '').toUpperCase(),
-                motorista: row['Motorista'] || row['Condutor'] || '',
-                embarcadora: row['Embarcadora'] || row['Cliente'] || '',
-                origem: row['Origem'] || row['Cidade Origem'] || '',
-                destino: row['Destino'] || row['Cidade Destino'] || '',
-                valor: parseMoney(row['Valor'] || row['Frete'] || row['Vl. Frete'])
-            }));
-        } else if (extension === 'xml') {
-            const text = await file.text();
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(text, 'text/xml');
-            const valor = xmlDoc.querySelector('vTPrest')?.textContent || '0';
-            const dataEmissao = xmlDoc.querySelector('dhEmi')?.textContent.substring(0,10) || '';
-            const placaCavalo = xmlDoc.querySelector('placa')?.textContent || '';
-            const nomeMotorista = xmlDoc.querySelector('xNome')?.textContent || '';
-            newRows.push({
-                data: dataEmissao,
-                placaCavalo: placaCavalo.toUpperCase(),
-                placaCarreta: '',
-                motorista: nomeMotorista,
-                embarcadora: '',
-                origem: '',
-                destino: '',
-                valor: parseMoney(valor)
-            });
-        }
-        if (newRows.length === 0) { alert('Nenhum dado reconhecido.'); return; }
-        newRows.forEach(row => { let dm = moment(row.data, ['DD/MM/YYYY','YYYY-MM-DD'], true); row.data = dm.isValid() ? dm.toDate() : null; });
-        const confirmar = confirm(`${newRows.length} registro(s) encontrado(s). OK para SUBSTITUIR todos os dados de faturamento, Cancelar para ADICIONAR aos existentes.`);
-        if (confirmar) faturamentoData = newRows;
-        else faturamentoData.push(...newRows);
-        atualizarDatalistsFaturamento();
-        aplicarFiltrosFaturamento();
-        atualizarSelectMotoristasCalculadora();
-        alert(`${newRows.length} registros importados.`);
-        document.getElementById('fileCteInput').value = '';
-    });
 
     // ========== BATERIAS ==========
     async function loadBateriasData(skipFilter=false){
-        if(!URL_BATERIAS) { bateriasData=[]; if(!skipFilter) aplicarFiltrosBaterias(); return; }
         try{
             const resp=await fetch(URL_BATERIAS); const text=await resp.text(); const parsed=Papa.parse(text,{header:true,skipEmptyLines:true}); const rows=parsed.data;
             if(!rows.length) throw new Error("Planilha vazia");
@@ -630,7 +632,6 @@
             if(!skipFilter) aplicarFiltrosBaterias();
         } catch(e){ console.error(e); bateriasData=[]; aplicarFiltrosBaterias(); }
     }
-
     function aplicarFiltrosBaterias(){
         const placa=document.getElementById('batPlaca').value.trim().toUpperCase(), modelo=document.getElementById('batModelo').value.trim(), vencInicio=document.getElementById('batVencInicio').value, vencFim=document.getElementById('batVencFim').value, local=document.getElementById('batLocal').value.trim();
         let filtered=bateriasData.filter(item=>{ if(placa&&!item.placa.toUpperCase().includes(placa)) return false; if(modelo&&!item.modelo.includes(modelo)) return false; if(local&&!item.local.includes(local)) return false; if(vencInicio&&item.vencimento<new Date(vencInicio)) return false; if(vencFim){ let end=new Date(vencFim); end.setHours(23,59,59); if(item.vencimento>end) return false; } return true; });
@@ -653,51 +654,14 @@
 
     // ========== CALCULADORA ==========
     function atualizarSelectMotoristasCalculadora(){ let motoristas=[...new Set(faturamentoData.map(i=>i.motorista))]; let sel=document.getElementById('calcMotoristaSelect'); sel.innerHTML='<option value="">Selecione</option>'+motoristas.map(m=>`<option value="${m}">${m}</option>`).join(''); }
-    function calcularSalario(){ let motorista=document.getElementById('calcMotoristaSelect').value, periodo=document.getElementById('calcPeriodo').value; if(!motorista){ document.getElementById('calcResultado').innerHTML='<p><strong>Faturamento total:</strong> R$ 0,00</p><div id="calcListaFretes"></div>'; atualizarReceber(0); return; } let fretes=faturamentoData.filter(f=>f.motorista===motorista); if(periodo){ let [ano,mes]=periodo.split('-'); fretes=fretes.filter(f=>f.data&&f.data.getFullYear()==ano&&f.data.getMonth()+1==mes); } let total=fretes.reduce((s,f)=>s+f.valor,0); document.getElementById('calcResultado').innerHTML=`<p><strong>Faturamento total:</strong> <span id="calcTotalFrete">R$ ${total.toLocaleString('pt-BR',{minFractionDigits:2})}</span></p><div id="calcListaFretes">${fretes.length? `<table class="data-table"><thead><tr><th>Data</th><th>Rota</th><th>Valor</th></tr></thead><tbody>${fretes.map(f=>`<tr><td>${moment(f.data).format('DD/MM/YY')}</td><td>${f.origem}→${f.destino}</td><td>R$ ${f.valor.toFixed(2)}</td></tr>`).join('')}</tbody></table>` : '<small>Nenhum frete</small>'}</div>`; atualizarReceber(total); }
+    function calcularSalario(){ let motorista=document.getElementById('calcMotoristaSelect').value, periodo=document.getElementById('calcPeriodo').value; if(!motorista){ document.getElementById('calcTotalFrete').innerHTML='R$ 0,00'; document.getElementById('calcListaFretes').innerHTML=''; atualizarReceber(0); return; } let fretes=faturamentoData.filter(f=>f.motorista===motorista); if(periodo){ let [ano,mes]=periodo.split('-'); fretes=fretes.filter(f=>f.data&&f.data.getFullYear()==ano&&f.data.getMonth()+1==mes); } let total=fretes.reduce((s,f)=>s+f.valor,0); document.getElementById('calcTotalFrete').innerHTML=`R$ ${total.toLocaleString('pt-BR',{minFractionDigits:2})}`; if(fretes.length) document.getElementById('calcListaFretes').innerHTML=`<table class="data-table"><thead><tr><th>Data</th><th>Rota</th><th>Valor</th></tr></thead><tbody>${fretes.map(f=>`<tr><td>${moment(f.data).format('DD/MM/YY')}</td><td>${f.origem}→${f.destino}</td><td>R$ ${f.valor.toFixed(2)}</td></tr>`).join('')}</tbody></table>`; else document.getElementById('calcListaFretes').innerHTML='<small>Nenhum frete</small>'; atualizarReceber(total); }
     function atualizarReceber(totalFrete){ let comissao=parseFloat(document.getElementById('calcComissaoPercent').value)||0; let despesas=parseFloat(document.getElementById('calcDespesasMot').value)||0; let diaria=parseFloat(document.getElementById('calcDiaria').value)||0; let bonus=parseFloat(document.getElementById('calcBonus').value)||0; let vales=parseFloat(document.getElementById('calcVales').value)||0; let ir=parseFloat(document.getElementById('calcIr').value)||0; let multa=parseFloat(document.getElementById('calcMulta').value)||0; let dep=parseFloat(document.getElementById('calcDepFolha').value)||0; let valor=(totalFrete*(comissao/100))+despesas+diaria+bonus-vales-ir-multa-dep; document.getElementById('calcValorReceber').innerHTML=`R$ ${valor.toLocaleString('pt-BR',{minFractionDigits:2})}`; }
     document.getElementById('calcAplicarFiltros').addEventListener('click',calcularSalario);
-    ['calcComissaoPercent','calcDespesasMot','calcDiaria','calcBonus','calcVales','calcIr','calcMulta','calcDepFolha'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{ let total=parseFloat(document.getElementById('calcTotalFrete')?.innerText.replace(/[^0-9,-]/g,'').replace(',','.'))||0; atualizarReceber(total); }));
-
-    // ========== LOGIN E CONFIGURAÇÕES ==========
-    async function refreshAllData(){
-        await Promise.all([loadFinanceiroData(true), loadFaturamentoData(true), loadBateriasData(true)]);
-        atualizarSelectMotoristasCalculadora();
-    }
-    document.getElementById('refreshDataBtn').addEventListener('click',refreshAllData);
+    ['calcComissaoPercent','calcDespesasMot','calcDiaria','calcBonus','calcVales','calcIr','calcMulta','calcDepFolha'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{ let total=parseFloat(document.getElementById('calcTotalFrete').innerText.replace(/[^0-9,-]/g,'').replace(',','.'))||0; atualizarReceber(total); }));
+    
+    // Inicialização das abas
     document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>{ let tabId=btn.getAttribute('data-tab'); document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active')); document.getElementById(tabId).classList.add('active'); if(tabId==='tabBaterias' && bateriasData.length===0) loadBateriasData(true); else if(tabId==='tabBaterias') aplicarFiltrosBaterias(); }));
-    
-    const publicSite=document.getElementById('publicSite'), privateArea=document.getElementById('privateArea'), loginModal=document.getElementById('loginModal');
-    document.getElementById('privateAccessBtn').addEventListener('click',(e)=>{ e.preventDefault(); loginModal.classList.add('active');});
-    document.getElementById('doLoginBtn').addEventListener('click',()=>{ let u=document.getElementById('loginUser').value.trim(), p=document.getElementById('loginPass').value.trim(); if(u===VALID_USER && p===VALID_PASS){ publicSite.style.display='none'; privateArea.style.display='block'; loginModal.classList.remove('active'); refreshAllData(); } else document.getElementById('loginError').innerText='Credenciais inválidas'; });
-    document.getElementById('logoutPrivateBtn').addEventListener('click',()=>{ publicSite.style.display='block'; privateArea.style.display='none'; loginModal.classList.remove('active'); });
-    
-    document.getElementById('openUrlConfig').onclick = () => {
-        document.getElementById('urlFinanceiro').value = URL_FINANCEIRO;
-        document.getElementById('urlFaturamento').value = URL_FATURAMENTO;
-        document.getElementById('urlBaterias').value = URL_BATERIAS;
-        document.getElementById('urlConfigModal').classList.add('active');
-    };
-    document.getElementById('saveUrlsBtn').onclick = () => {
-        URL_FINANCEIRO = googleSheetToCsv(document.getElementById('urlFinanceiro').value);
-        URL_FATURAMENTO = googleSheetToCsv(document.getElementById('urlFaturamento').value);
-        URL_BATERIAS = googleSheetToCsv(document.getElementById('urlBaterias').value);
-        localStorage.setItem("urlFinanceiro", URL_FINANCEIRO);
-        localStorage.setItem("urlFaturamento", URL_FATURAMENTO);
-        localStorage.setItem("urlBaterias", URL_BATERIAS);
-        document.getElementById('urlConfigModal').classList.remove('active');
-        refreshAllData();
-    };
-    document.getElementById('closeUrlModalBtn').onclick = () => document.getElementById('urlConfigModal').classList.remove('active');
-    
-    // Inicialização
-    (function init() {
-        loadFinanceiroData(true);
-        loadFaturamentoData(true);
-        loadBateriasData(true);
-        document.getElementById('urlFinanceiro').value = URL_FINANCEIRO;
-        document.getElementById('urlFaturamento').value = URL_FATURAMENTO;
-        document.getElementById('urlBaterias').value = URL_BATERIAS;
-    })();
+    loadFinanceiroData(true); loadFaturamentoData(true); loadBateriasData(true);
 </script>
 </body>
 </html>
