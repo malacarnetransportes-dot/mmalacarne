@@ -212,7 +212,7 @@
         <div class="dashboard-card"><h3>🚛 Tabela de Fretes (clique na placa do cavalo)</h3><div style="overflow-x:auto"><table class="data-table" id="fatTable"><thead><tr><th>Data</th><th>Placa Cavalo</th><th>Placa Carreta</th><th>Motorista</th><th>Embarcadora</th><th>Origem</th><th>Destino</th><th>Valor (R$)</th></tr></thead><tbody></tbody>}</div><div id="fichaPlaca" class="ficha-placa" style="display:none;"></div></div>
     </div>
 
-    <!-- BATERIAS com mapeamento manual -->
+    <!-- BATERIAS com mapeamento exato para as colunas -->
     <div id="tabBaterias" class="tab-content">
         <div id="batMappingContainer"></div>
         <div class="dashboard-card"><h3>Filtros</h3><div>
@@ -282,7 +282,6 @@
         try {
             await Promise.all([loadFinanceiroData(true), loadFaturamentoData(true), loadBateriasData(true)]);
             if (forceReapplyFilters) {
-                // Reaplica os filtros atuais em cada aba, se os dados existirem
                 if (financeiroData.length) applyFinFilters();
                 if (faturamentoData.length) aplicarFiltrosFaturamento();
                 if (bateriasData.length) aplicarFiltrosBaterias();
@@ -434,7 +433,7 @@
             }
             const row = tbody.insertRow();
             row.innerHTML = `
-                <td>${item.local}</td>
+                <tr>${item.local}</td>
                 <td>${item.tipoConta}</td>
                 <td>${dateStr} ${status}</td>
                 <td>${item.documento}</td>
@@ -639,45 +638,100 @@
     document.getElementById('fatExportarCSV').addEventListener('click',()=>{ let csv=[["Data","Placa Cavalo","Placa Carreta","Motorista","Embarcadora","Origem","Destino","Valor"]]; faturamentoData.forEach(i=>{ csv.push([i.data?moment(i.data).format('DD/MM/YYYY'):'', i.placaCavalo, i.placaCarreta, i.motorista, i.embarcadora, i.origem, i.destino, i.valor]); }); let blob=new Blob(["\uFEFF"+csv.map(r=>r.join(",")).join("\n")],{type:"text/csv"}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download="faturamento.csv"; a.click(); });
     document.getElementById('fatExportarPDF').addEventListener('click',()=>alert("Use Ctrl+P"));
 
-    // ========== BATERIAS com mapeamento manual ==========
-    let batColMapping = { placa: null, modelo: null, dataVenda: null, vencimento: null, numero: null, nota: null, ordem: null, garantia: null, obs: null, local: null };
-    async function loadBateriasData(skipFilter=false){
-        try{
+    // ========== BATERIAS com mapeamento exato para suas colunas ==========
+    async function loadBateriasData(skipFilter = false) {
+        try {
             const resp = await fetch(URL_BATERIAS);
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status} - URL inválida ou não publicada como CSV`);
             const text = await resp.text();
             const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
             const rows = parsed.data;
             if (!rows.length) throw new Error("Planilha vazia");
-            const headers = Object.keys(rows[0]);
-            pendingBatHeaders = headers;
-            // Detecção automática
-            batColMapping.placa = findColumn(headers, ['PLACA','placa','Placa']);
-            batColMapping.modelo = findColumn(headers, ['MODELO BATERIA','modelo','bateria','Modelo']);
-            batColMapping.dataVenda = findColumn(headers, ['DATA DA VENDA','data venda','Data Venda','venda']);
-            batColMapping.vencimento = findColumn(headers, ['VENCIMENTO','vencimento','Validade','validade']);
-            batColMapping.numero = findColumn(headers, ['NUMERO','número','numero']);
-            batColMapping.nota = findColumn(headers, ['NOTA','nota','Nota']);
-            batColMapping.ordem = findColumn(headers, ['ORDEM','ordem']);
-            batColMapping.garantia = findColumn(headers, ['GARANTIA','garantia']);
-            batColMapping.obs = findColumn(headers, ['OBSERVAÇÃO','obs','Observação']);
-            batColMapping.local = findColumn(headers, ['LOCAL','local','Local']);
 
-            if (!batColMapping.placa || !batColMapping.modelo || !batColMapping.vencimento) {
-                // Mostra mapeamento manual
+            const headers = Object.keys(rows[0]);
+            console.log("Cabeçalhos encontrados em Baterias:", headers);
+
+            // Mapeamento exato baseado nos cabeçalhos informados (case insensitive)
+            const colPlaca = headers.find(h => h.toUpperCase() === "PLACA") ||
+                             headers.find(h => h.toLowerCase().includes("placa"));
+            const colModelo = headers.find(h => h.toUpperCase() === "MODELO BATERIA") ||
+                              headers.find(h => h.toLowerCase().includes("modelo"));
+            const colDataVenda = headers.find(h => h.toUpperCase() === "DATA DA VENDA") ||
+                                 headers.find(h => h.toLowerCase().includes("data venda"));
+            const colVencimento = headers.find(h => h.toUpperCase() === "VENCIMENTO") ||
+                                  headers.find(h => h.toLowerCase().includes("vencimento"));
+            const colNumero = headers.find(h => h.toUpperCase() === "NUMERO") ||
+                              headers.find(h => h.toLowerCase().includes("numero"));
+            const colNota = headers.find(h => h.toUpperCase() === "NOTA") ||
+                            headers.find(h => h.toLowerCase().includes("nota"));
+            const colOrdem = headers.find(h => h.toUpperCase() === "ORDEM") ||
+                             headers.find(h => h.toLowerCase().includes("ordem"));
+            const colGarantia = headers.find(h => h.toUpperCase() === "GARANTIA") ||
+                                headers.find(h => h.toLowerCase().includes("garantia"));
+            const colObs = headers.find(h => h.toUpperCase() === "OBSERVAÇÃO") ||
+                           headers.find(h => h.toLowerCase().includes("obs"));
+            const colLocal = headers.find(h => h.toUpperCase() === "LOCAL") ||
+                             headers.find(h => h.toLowerCase().includes("local"));
+
+            if (!colPlaca || !colModelo || !colVencimento) {
+                // Se não encontrar automaticamente, oferece mapeamento manual
                 pendingBatRows = rows;
+                pendingBatHeaders = headers;
                 exibirMappingBaterias(headers);
                 return;
             }
-            processarBateriasRows(rows, batColMapping, skipFilter);
-        } catch(e){ console.error(e); bateriasData = []; showErrorInTab('tabBaterias', 'Erro ao carregar Baterias: ' + e.message); if(!skipFilter) aplicarFiltrosBaterias(); }
+
+            bateriasData = [];
+            for (const row of rows) {
+                let venc = moment(row[colVencimento], ['DD/MM/YYYY', 'YYYY-MM-DD', 'MM/DD/YYYY'], true);
+                if (!venc.isValid()) continue;
+
+                let dataVenda = null;
+                if (colDataVenda && row[colDataVenda]) {
+                    let vend = moment(row[colDataVenda], ['DD/MM/YYYY', 'YYYY-MM-DD', 'MM/DD/YYYY'], true);
+                    if (vend.isValid()) dataVenda = vend.toDate();
+                }
+
+                bateriasData.push({
+                    placa: row[colPlaca] || "",
+                    modelo: row[colModelo] || "",
+                    dataVenda: dataVenda,
+                    vencimento: venc.toDate(),
+                    numero: colNumero ? (row[colNumero] || "") : "",
+                    nota: colNota ? (row[colNota] || "") : "",
+                    ordem: colOrdem ? (row[colOrdem] || "") : "",
+                    garantia: colGarantia ? (row[colGarantia] || "") : "",
+                    obs: colObs ? (row[colObs] || "") : "",
+                    local: colLocal ? (row[colLocal] || "") : ""
+                });
+            }
+
+            // Atualiza datalists dos filtros
+            const modelos = [...new Set(bateriasData.map(i => i.modelo).filter(m => m))].sort();
+            const locais = [...new Set(bateriasData.map(i => i.local).filter(l => l))].sort();
+            document.getElementById('batModeloList').innerHTML = modelos.map(m => `<option value="${m}">`).join('');
+            document.getElementById('batLocalList').innerHTML = locais.map(l => `<option value="${l}">`).join('');
+
+            if (!skipFilter) aplicarFiltrosBaterias();
+
+            // Remove mensagem de erro se houver
+            const errorDiv = document.querySelector('#tabBaterias .error-message');
+            if (errorDiv) errorDiv.remove();
+
+        } catch (e) {
+            console.error("Erro em Baterias:", e);
+            bateriasData = [];
+            showErrorInTab('tabBaterias', 'Erro ao carregar Baterias: ' + e.message + '. Verifique se a URL está publicada como CSV.');
+            if (!skipFilter) aplicarFiltrosBaterias();
+        }
     }
+
     function exibirMappingBaterias(headers) {
         const container = document.getElementById('batMappingContainer');
         container.innerHTML = `
             <div class="dashboard-card debug-card">
                 <h3>⚠️ Mapeamento manual – Baterias</h3>
-                <p>As colunas não foram identificadas automaticamente. Selecione cada campo (campos obrigatórios: PLACA, MODELO, VENCIMENTO):</p>
+                <p>As colunas não foram identificadas automaticamente. Selecione cada campo (obrigatórios: PLACA, MODELO, VENCIMENTO):</p>
                 <label>🔖 PLACA: <select id="mapBatPlaca">${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
                 <label>🔋 MODELO: <select id="mapBatModelo">${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
                 <label>📅 DATA VENDA: <select id="mapBatDataVenda"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
@@ -692,63 +746,74 @@
             </div>
         `;
         document.getElementById('btnConfirmBatMapping').onclick = () => {
-            batColMapping.placa = document.getElementById('mapBatPlaca').value;
-            batColMapping.modelo = document.getElementById('mapBatModelo').value;
-            batColMapping.dataVenda = document.getElementById('mapBatDataVenda').value || null;
-            batColMapping.vencimento = document.getElementById('mapBatVencimento').value;
-            batColMapping.numero = document.getElementById('mapBatNumero').value || null;
-            batColMapping.nota = document.getElementById('mapBatNota').value || null;
-            batColMapping.ordem = document.getElementById('mapBatOrdem').value || null;
-            batColMapping.garantia = document.getElementById('mapBatGarantia').value || null;
-            batColMapping.obs = document.getElementById('mapBatObs').value || null;
-            batColMapping.local = document.getElementById('mapBatLocal').value || null;
-            if (!batColMapping.placa || !batColMapping.modelo || !batColMapping.vencimento) {
+            const mapeamento = {
+                placa: document.getElementById('mapBatPlaca').value,
+                modelo: document.getElementById('mapBatModelo').value,
+                dataVenda: document.getElementById('mapBatDataVenda').value || null,
+                vencimento: document.getElementById('mapBatVencimento').value,
+                numero: document.getElementById('mapBatNumero').value || null,
+                nota: document.getElementById('mapBatNota').value || null,
+                ordem: document.getElementById('mapBatOrdem').value || null,
+                garantia: document.getElementById('mapBatGarantia').value || null,
+                obs: document.getElementById('mapBatObs').value || null,
+                local: document.getElementById('mapBatLocal').value || null
+            };
+            if (!mapeamento.placa || !mapeamento.modelo || !mapeamento.vencimento) {
                 alert("Selecione pelo menos PLACA, MODELO e VENCIMENTO");
                 return;
             }
             container.innerHTML = '';
-            processarBateriasRows(pendingBatRows, batColMapping, false);
+            processarBateriasRows(pendingBatRows, mapeamento, false);
             pendingBatRows = null;
         };
     }
+
     function processarBateriasRows(rows, mapping, skipFilter) {
         bateriasData = [];
-        for (let row of rows) {
-            let vend = mapping.dataVenda ? moment(row[mapping.dataVenda], ['DD/MM/YYYY','YYYY-MM-DD','MM/DD/YYYY'], true) : null;
-            let venc = moment(row[mapping.vencimento], ['DD/MM/YYYY','YYYY-MM-DD','MM/DD/YYYY'], true);
+        for (const row of rows) {
+            let venc = moment(row[mapping.vencimento], ['DD/MM/YYYY', 'YYYY-MM-DD', 'MM/DD/YYYY'], true);
             if (!venc.isValid()) continue;
+
+            let dataVenda = null;
+            if (mapping.dataVenda && row[mapping.dataVenda]) {
+                let vend = moment(row[mapping.dataVenda], ['DD/MM/YYYY', 'YYYY-MM-DD', 'MM/DD/YYYY'], true);
+                if (vend.isValid()) dataVenda = vend.toDate();
+            }
+
             bateriasData.push({
-                placa: row[mapping.placa] || '',
-                modelo: row[mapping.modelo] || '',
-                dataVenda: vend && vend.isValid() ? vend.toDate() : null,
+                placa: row[mapping.placa] || "",
+                modelo: row[mapping.modelo] || "",
+                dataVenda: dataVenda,
                 vencimento: venc.toDate(),
-                numero: mapping.numero ? (row[mapping.numero] || '') : '',
-                nota: mapping.nota ? (row[mapping.nota] || '') : '',
-                ordem: mapping.ordem ? (row[mapping.ordem] || '') : '',
-                garantia: mapping.garantia ? (row[mapping.garantia] || '') : '',
-                obs: mapping.obs ? (row[mapping.obs] || '') : '',
-                local: mapping.local ? (row[mapping.local] || '') : ''
+                numero: mapping.numero ? (row[mapping.numero] || "") : "",
+                nota: mapping.nota ? (row[mapping.nota] || "") : "",
+                ordem: mapping.ordem ? (row[mapping.ordem] || "") : "",
+                garantia: mapping.garantia ? (row[mapping.garantia] || "") : "",
+                obs: mapping.obs ? (row[mapping.obs] || "") : "",
+                local: mapping.local ? (row[mapping.local] || "") : ""
             });
         }
-        // Atualizar datalists de filtros
-        const modelos = [...new Set(bateriasData.map(i => i.modelo).filter(m=>m))].sort();
-        const locais = [...new Set(bateriasData.map(i => i.local).filter(l=>l))].sort();
-        document.getElementById('batModeloList').innerHTML = modelos.map(m=>`<option value="${m}">`).join('');
-        document.getElementById('batLocalList').innerHTML = locais.map(l=>`<option value="${l}">`).join('');
+
+        const modelos = [...new Set(bateriasData.map(i => i.modelo).filter(m => m))].sort();
+        const locais = [...new Set(bateriasData.map(i => i.local).filter(l => l))].sort();
+        document.getElementById('batModeloList').innerHTML = modelos.map(m => `<option value="${m}">`).join('');
+        document.getElementById('batLocalList').innerHTML = locais.map(l => `<option value="${l}">`).join('');
+
         if (!skipFilter) aplicarFiltrosBaterias();
     }
-    function aplicarFiltrosBaterias(){
+
+    function aplicarFiltrosBaterias() {
         const placa = document.getElementById('batPlaca').value.trim().toUpperCase();
         const modelo = document.getElementById('batModelo').value.trim();
         const vencInicio = document.getElementById('batVencInicio').value;
         const vencFim = document.getElementById('batVencFim').value;
         const local = document.getElementById('batLocal').value.trim();
         let filtered = bateriasData.filter(item => {
-            if(placa && !item.placa.toUpperCase().includes(placa)) return false;
-            if(modelo && !item.modelo.includes(modelo)) return false;
-            if(local && !item.local.includes(local)) return false;
-            if(vencInicio && item.vencimento < new Date(vencInicio)) return false;
-            if(vencFim){ let end = new Date(vencFim); end.setHours(23,59,59); if(item.vencimento > end) return false; }
+            if (placa && !item.placa.toUpperCase().includes(placa)) return false;
+            if (modelo && !item.modelo.includes(modelo)) return false;
+            if (local && !item.local.includes(local)) return false;
+            if (vencInicio && item.vencimento < new Date(vencInicio)) return false;
+            if (vencFim) { let end = new Date(vencFim); end.setHours(23,59,59); if (item.vencimento > end) return false; }
             return true;
         });
         const hoje = new Date(); hoje.setHours(0,0,0,0);
