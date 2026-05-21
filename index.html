@@ -132,6 +132,9 @@
         .url-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; z-index: 4000; padding: 2rem; border-radius: 32px; width: 90%; max-width: 500px; display: none; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
         .url-modal.active { display: block; }
         .url-modal input { width: 100%; margin: 0.5rem 0; padding: 0.6rem; border-radius: 40px; border: 1px solid #ccc; }
+        .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #fff; border-radius: 50%; border-top-color: transparent; animation: spin 0.6s linear infinite; margin-left: 8px; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .error-message { background: #fee2e2; color: #b91c1c; padding: 0.75rem; border-radius: 16px; margin-bottom: 1rem; border-left: 5px solid #ef4444; }
     </style>
 </head>
 <body>
@@ -187,11 +190,11 @@
         <div class="dashboard-card"><h3><i class="fas fa-chart-bar"></i> 📊 Soma por Tipo de Conta</h3><div class="chart-selector"><label>Tipo de gráfico: </label><select id="chartTypeSelect"><option value="bar">📊 Barras</option><option value="pie">🥧 Pizza</option></select></div><div class="chart-container"><canvas id="tipoChart" width="800" height="400" style="max-width:100%; height:auto;"></canvas></div></div>
         <div class="dashboard-card"><h3><i class="fas fa-trophy"></i> 🏆 Ranking por Tipo (maior valor)</h3><ul id="finRankingTipo" class="ranking-numerado"></ul></div>
         <div class="dashboard-card"><h3><i class="fas fa-city"></i> 🏆 Ranking por Local (maior valor)</h3><ul id="finRankingLocal" class="ranking-numerado"></ul></div>
-        <div class="dashboard-card"><h3>📋 Documentos (clique no serviço para ver detalhe)</h3><div style="overflow-x:auto"><table class="data-table" id="finTable"><thead><tr><th>Local</th><th>Tipo</th><th>Vencimento</th><th>Documento</th><th>Valor (R$)</th><th>Serviço</th></tr></thead><tbody><tr><td colspan="6">Carregando...</td></tr></tbody></table></div></div>
+        <div class="dashboard-card"><h3>📋 Documentos (clique no serviço para ver detalhe)</h3><div style="overflow-x:auto"><table class="data-table" id="finTable"><thead><tr><th>Local</th><th>Tipo</th><th>Vencimento</th><th>Documento</th><th>Valor (R$)</th><th>Serviço</th></tr></thead><tbody><tr><td colspan="6">Carregando...</td></tr></tbody>}</div></div>
         <div class="dashboard-card"><h3><i class="fas fa-chart-line"></i> 🔮 Previsão para próximos períodos</h3><div class="forecast-card"><table class="forecast-table" id="finPrevisaoTable"><thead><tr><th>Período</th><th>Previsão (R$)</th></tr></thead><tbody><tr><td colspan="2">Aguarde carregamento...</td></tr></tbody></table></div></div>
     </div>
     
-    <!-- FATURAMENTO com mapeamento manual -->
+    <!-- FATURAMENTO -->
     <div id="tabFaturamento" class="tab-content">
         <div id="fatMappingContainer"></div>
         <div class="dashboard-card"><h3>Filtros</h3><div>
@@ -206,12 +209,12 @@
         </div></div>
         <div class="dashboard-card"><h3>🏆 Top 5 Maiores Fretes</h3><div id="rankMelhoresViagens"></div></div>
         <div class="dashboard-card"><div class="ranking-grid"><div class="ranking-box"><h4>Motoristas</h4><div id="rankMotorista"></div></div><div class="ranking-box"><h4>Placas Cavalo</h4><div id="rankPlacaCavalo"></div></div><div class="ranking-box"><h4>Placas Carreta</h4><div id="rankPlacaCarreta"></div></div><div class="ranking-box"><h4>Embarcadoras</h4><div id="rankEmbarcadora"></div></div></div></div>
-        <div class="dashboard-card"><h3>🚛 Tabela de Fretes (clique na placa do cavalo)</h3><div style="overflow-x:auto"><table class="data-table" id="fatTable"><thead><tr><th>Data</th><th>Placa Cavalo</th><th>Placa Carreta</th><th>Motorista</th><th>Embarcadora</th><th>Origem</th><th>Destino</th><th>Valor (R$)</th></tr></thead><tbody></tbody></table></div><div id="fichaPlaca" class="ficha-placa" style="display:none;"></div></div>
+        <div class="dashboard-card"><h3>🚛 Tabela de Fretes (clique na placa do cavalo)</h3><div style="overflow-x:auto"><table class="data-table" id="fatTable"><thead><tr><th>Data</th><th>Placa Cavalo</th><th>Placa Carreta</th><th>Motorista</th><th>Embarcadora</th><th>Origem</th><th>Destino</th><th>Valor (R$)</th></tr></thead><tbody></tbody>}</div><div id="fichaPlaca" class="ficha-placa" style="display:none;"></div></div>
     </div>
 
-    <!-- BATERIAS -->
+    <!-- BATERIAS com mapeamento manual -->
     <div id="tabBaterias" class="tab-content">
-        <div id="batDebugCard" class="dashboard-card debug-card" style="display: none;"><h3>🔍 Diagnóstico Baterias</h3><div id="batDebugInfo"></div></div>
+        <div id="batMappingContainer"></div>
         <div class="dashboard-card"><h3>Filtros</h3><div>
             <div class="filter-group"><label>PLACA</label><input type="text" id="batPlaca"></div>
             <div class="filter-group"><label>MODELO</label><input list="batModeloList" id="batModelo"><datalist id="batModeloList"></datalist></div>
@@ -241,6 +244,7 @@
     let currentFinanceiroFiltered = [];
     let tipoChart = null;
     let pendingFatRows = null, pendingFatHeaders = null;
+    let pendingBatRows = null, pendingBatHeaders = null;
 
     function parseMoney(v) { if(v===undefined||v===null) return 0; let cleaned=String(v).replace(/[^\d,.-]/g,''); if(cleaned==='') return 0; cleaned=cleaned.replace(',','.'); let parts=cleaned.split('.'); if(parts.length>2){let last=parts.pop(); cleaned=parts.join('')+'.'+last;} let num=parseFloat(cleaned); return isNaN(num)?0:num; }
     function findColumn(headers, keywords){ let lower=headers.map(h=>h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')); for(let kw of keywords){ let idx=lower.findIndex(h=>h.includes(kw.toLowerCase())); if(idx!==-1) return headers[idx]; } return null; }
@@ -260,23 +264,45 @@
         localStorage.setItem("urlFaturamento", URL_FATURAMENTO);
         localStorage.setItem("urlBaterias", URL_BATERIAS);
         document.getElementById('urlConfigModal').classList.remove('active');
-        refreshAllData();
+        refreshAllData(true);
     };
     document.getElementById('closeUrlModalBtn').onclick = () => document.getElementById('urlConfigModal').classList.remove('active');
 
     // LOGIN
     const publicSite=document.getElementById('publicSite'), privateArea=document.getElementById('privateArea'), loginModal=document.getElementById('loginModal');
     document.getElementById('privateAccessBtn').addEventListener('click',(e)=>{e.preventDefault(); loginModal.classList.add('active');});
-    document.getElementById('doLoginBtn').addEventListener('click',()=>{ let u=document.getElementById('loginUser').value.trim(), p=document.getElementById('loginPass').value.trim(); if(u===VALID_USER && p===VALID_PASS){ publicSite.style.display='none'; privateArea.style.display='block'; loginModal.classList.remove('active'); refreshAllData(); } else document.getElementById('loginError').innerText='Credenciais inválidas'; });
+    document.getElementById('doLoginBtn').addEventListener('click',()=>{ let u=document.getElementById('loginUser').value.trim(), p=document.getElementById('loginPass').value.trim(); if(u===VALID_USER && p===VALID_PASS){ publicSite.style.display='none'; privateArea.style.display='block'; loginModal.classList.remove('active'); refreshAllData(true); } else document.getElementById('loginError').innerText='Credenciais inválidas'; });
     document.getElementById('logoutPrivateBtn').addEventListener('click',()=>{ publicSite.style.display='block'; privateArea.style.display='none'; loginModal.classList.remove('active'); });
-    async function refreshAllData(){ await Promise.all([loadFinanceiroData(true), loadFaturamentoData(true), loadBateriasData(true)]); atualizarSelectMotoristasCalculadora(); }
-    document.getElementById('refreshDataBtn').addEventListener('click',refreshAllData);
 
-    // ========== FINANCEIRO (igual ao original, com mapeamento manual) ==========
+    async function refreshAllData(forceReapplyFilters = true) {
+        const refreshBtn = document.getElementById('refreshDataBtn');
+        const originalText = refreshBtn.innerHTML;
+        refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizando <span class="spinner"></span>';
+        refreshBtn.disabled = true;
+        try {
+            await Promise.all([loadFinanceiroData(true), loadFaturamentoData(true), loadBateriasData(true)]);
+            if (forceReapplyFilters) {
+                // Reaplica os filtros atuais em cada aba, se os dados existirem
+                if (financeiroData.length) applyFinFilters();
+                if (faturamentoData.length) aplicarFiltrosFaturamento();
+                if (bateriasData.length) aplicarFiltrosBaterias();
+            }
+            atualizarSelectMotoristasCalculadora();
+        } catch (err) {
+            console.error("Erro ao atualizar dados:", err);
+        } finally {
+            refreshBtn.innerHTML = originalText;
+            refreshBtn.disabled = false;
+        }
+    }
+    document.getElementById('refreshDataBtn').addEventListener('click', () => refreshAllData(true));
+
+    // ========== FINANCEIRO ==========
     let colMapping = { data: null, valor: null, local: null, tipo: null };
     async function loadFinanceiroData(skipFilter=false){
         try{
             const resp = await fetch(URL_FINANCEIRO);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             const text = await resp.text();
             const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
             const rows = parsed.data;
@@ -312,7 +338,7 @@
                 manualDiv.style.display = 'none';
                 carregarDadosFinanceiro(rows, colMapping, skipFilter);
             }
-        } catch(e){ console.error(e); financeiroData = []; if(!skipFilter) applyFinFilters(); }
+        } catch(e){ console.error(e); financeiroData = []; showErrorInTab('tabFinanceiro', 'Erro ao carregar Financeiro: ' + e.message); if(!skipFilter) applyFinFilters(); }
     }
     function carregarDadosFinanceiro(rows, mapping, skipFilter){
         financeiroData = [];
@@ -417,7 +443,7 @@
             `;
         });
         document.querySelectorAll('.servico-detalhe').forEach(el=>el.addEventListener('click',()=>{ document.getElementById('servicoDetalheTexto').innerText=el.getAttribute('data-servico'); document.getElementById('servicoModal').classList.add('active'); }));
-        // previsão simples
+        // previsão
         const monthlySum = new Map();
         currentFinanceiroFiltered.forEach(i => {
             if(i.vencimentoDate){
@@ -499,18 +525,18 @@
     });
     document.getElementById('finExportarPDF').addEventListener('click',()=>alert("Use Ctrl+P"));
 
-    // ========== FATURAMENTO COM MAPEAMENTO MANUAL ==========
+    // ========== FATURAMENTO ==========
     let fatColMapping = { data: null, motorista: null, cavalo: null, carreta: null, embarcadora: null, origem: null, destino: null, valor: null };
     async function loadFaturamentoData(skipFilter=false){
         try {
             const resp = await fetch(URL_FATURAMENTO);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             const text = await resp.text();
             const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
             const rows = parsed.data;
             if (!rows.length) throw new Error("Planilha vazia");
             const headers = Object.keys(rows[0]);
             pendingFatHeaders = headers;
-            // tentativa automática
             fatColMapping.data = findColumn(headers, ['data', 'emissao', 'data emissao', 'dt_viagem']);
             fatColMapping.motorista = findColumn(headers, ['motorista', 'condutor', 'nome motorista']);
             fatColMapping.cavalo = findColumn(headers, ['cavalo', 'placa cavalo', 'trator', 'cavalo placa']);
@@ -525,7 +551,7 @@
                 return;
             }
             processarFaturamentoRows(rows, fatColMapping, skipFilter);
-        } catch(e) { console.error(e); faturamentoData = []; if(!skipFilter) aplicarFiltrosFaturamento(); atualizarSelectMotoristasCalculadora(); }
+        } catch(e) { console.error(e); faturamentoData = []; showErrorInTab('tabFaturamento', 'Erro ao carregar Faturamento: ' + e.message); if(!skipFilter) aplicarFiltrosFaturamento(); atualizarSelectMotoristasCalculadora(); }
     }
     function exibirMappingFaturamento(headers) {
         const container = document.getElementById('fatMappingContainer');
@@ -606,49 +632,141 @@
         document.getElementById('rankMelhoresViagens').innerHTML=top5.map(v=>`<div>${v.origem}→${v.destino} | ${v.placaCavalo} | R$ ${v.valor.toFixed(2)}</div>`).join('');
         let tbody=document.querySelector('#fatTable tbody'); tbody.innerHTML='';
         filtered.forEach(i=>{ let row=tbody.insertRow(); row.innerHTML=`<td>${i.data?moment(i.data).format('DD/MM/YYYY'):''}</td><td style="cursor:pointer;color:var(--primary)">${i.placaCavalo}</td><td>${i.placaCarreta}</td><td>${i.motorista}</td><td>${i.embarcadora}</td><td>${i.origem}</td><td>${i.destino}</td><td style="text-align:right">R$ ${i.valor.toFixed(2)}</td>`; row.cells[1].addEventListener('click',()=>{ let viagens=faturamentoData.filter(v=>v.placaCavalo===i.placaCavalo); let total=viagens.reduce((s,v)=>s+v.valor,0); let fichaDiv=document.getElementById('fichaPlaca'); fichaDiv.style.display='block'; fichaDiv.innerHTML=`<h4>Ficha Cavalo ${i.placaCavalo}</h4><p>Viagens: ${viagens.length} | Total: R$ ${total.toFixed(2)}<br>Motoristas: ${[...new Set(viagens.map(v=>v.motorista))].join(', ')}</p><button id="fecharFicha">Fechar</button>`; document.getElementById('fecharFicha').onclick=()=>fichaDiv.style.display='none'; }); });
-        let totalGeral=filtered.reduce((s,i)=>s+i.valor,0); if(!document.querySelector('#fatTable tfoot')){ let foot=document.createElement('tfoot'); document.querySelector('#fatTable').appendChild(foot); } document.querySelector('#fatTable tfoot').innerHTML=`<tr class="total-soma"><td colspan="7"><strong>Total Geral</strong></td><td style="text-align:right"><strong>R$ ${totalGeral.toFixed(2)}</strong></td></tr>`;
+        let totalGeral=filtered.reduce((s,i)=>s+i.valor,0); let foot = document.querySelector('#fatTable tfoot'); if(!foot) { foot = document.createElement('tfoot'); document.querySelector('#fatTable').appendChild(foot); } foot.innerHTML=`<tr class="total-soma"><td colspan="7"><strong>Total Geral</strong></td><td style="text-align:right"><strong>R$ ${totalGeral.toFixed(2)}</strong></td></tr>`;
     }
     document.getElementById('fatAplicarFiltros').addEventListener('click',aplicarFiltrosFaturamento);
     document.getElementById('fatResetFiltros').addEventListener('click',()=>{ document.getElementById('fatMesSelect').value='all'; document.getElementById('fatMotorista').value=''; document.getElementById('fatPlacaCavalo').value=''; document.getElementById('fatPlacaCarreta').value=''; document.getElementById('fatEmbarcadora').value=''; document.getElementById('fatValorMin').value=''; aplicarFiltrosFaturamento(); });
     document.getElementById('fatExportarCSV').addEventListener('click',()=>{ let csv=[["Data","Placa Cavalo","Placa Carreta","Motorista","Embarcadora","Origem","Destino","Valor"]]; faturamentoData.forEach(i=>{ csv.push([i.data?moment(i.data).format('DD/MM/YYYY'):'', i.placaCavalo, i.placaCarreta, i.motorista, i.embarcadora, i.origem, i.destino, i.valor]); }); let blob=new Blob(["\uFEFF"+csv.map(r=>r.join(",")).join("\n")],{type:"text/csv"}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download="faturamento.csv"; a.click(); });
     document.getElementById('fatExportarPDF').addEventListener('click',()=>alert("Use Ctrl+P"));
 
-    // ========== BATERIAS ==========
+    // ========== BATERIAS com mapeamento manual ==========
+    let batColMapping = { placa: null, modelo: null, dataVenda: null, vencimento: null, numero: null, nota: null, ordem: null, garantia: null, obs: null, local: null };
     async function loadBateriasData(skipFilter=false){
         try{
-            const resp=await fetch(URL_BATERIAS); const text=await resp.text(); const parsed=Papa.parse(text,{header:true,skipEmptyLines:true}); const rows=parsed.data;
-            if(!rows.length) throw new Error("Planilha vazia");
-            const headers=Object.keys(rows[0]);
-            const colPlaca=findColumn(headers,['PLACA','placa','Placa']); const colModelo=findColumn(headers,['MODELO BATERIA','modelo','bateria']); const colDataVenda=findColumn(headers,['DATA DA VENDA','data venda','Data Venda']); const colVencimento=findColumn(headers,['VENCIMENTO','vencimento','Validade']); const colNumero=findColumn(headers,['NUMERO','número','numero']); const colNota=findColumn(headers,['NOTA','nota','Nota']); const colOrdem=findColumn(headers,['ORDEM','ordem']); const colGarantia=findColumn(headers,['GARANTIA','garantia']); const colObs=findColumn(headers,['OBSERVAÇÃO','obs','Observação']); const colLocal=findColumn(headers,['LOCAL','local','Local']);
-            bateriasData=[];
-            for(let row of rows){
-                let vend=moment(row[colDataVenda],['DD/MM/YYYY','YYYY-MM-DD','MM/DD/YYYY'],true);
-                let venc=moment(row[colVencimento],['DD/MM/YYYY','YYYY-MM-DD','MM/DD/YYYY'],true);
-                if(!venc.isValid()) continue;
-                bateriasData.push({ placa:row[colPlaca]||'', modelo:row[colModelo]||'', dataVenda:vend.isValid()?vend.toDate():null, vencimento:venc.toDate(), numero:row[colNumero]||'', nota:row[colNota]||'', ordem:row[colOrdem]||'', garantia:row[colGarantia]||'', obs:row[colObs]||'', local:row[colLocal]||'' });
+            const resp = await fetch(URL_BATERIAS);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const text = await resp.text();
+            const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+            const rows = parsed.data;
+            if (!rows.length) throw new Error("Planilha vazia");
+            const headers = Object.keys(rows[0]);
+            pendingBatHeaders = headers;
+            // Detecção automática
+            batColMapping.placa = findColumn(headers, ['PLACA','placa','Placa']);
+            batColMapping.modelo = findColumn(headers, ['MODELO BATERIA','modelo','bateria','Modelo']);
+            batColMapping.dataVenda = findColumn(headers, ['DATA DA VENDA','data venda','Data Venda','venda']);
+            batColMapping.vencimento = findColumn(headers, ['VENCIMENTO','vencimento','Validade','validade']);
+            batColMapping.numero = findColumn(headers, ['NUMERO','número','numero']);
+            batColMapping.nota = findColumn(headers, ['NOTA','nota','Nota']);
+            batColMapping.ordem = findColumn(headers, ['ORDEM','ordem']);
+            batColMapping.garantia = findColumn(headers, ['GARANTIA','garantia']);
+            batColMapping.obs = findColumn(headers, ['OBSERVAÇÃO','obs','Observação']);
+            batColMapping.local = findColumn(headers, ['LOCAL','local','Local']);
+
+            if (!batColMapping.placa || !batColMapping.modelo || !batColMapping.vencimento) {
+                // Mostra mapeamento manual
+                pendingBatRows = rows;
+                exibirMappingBaterias(headers);
+                return;
             }
-            const modelos=[...new Set(bateriasData.map(i=>i.modelo).filter(m=>m))].sort(); const locais=[...new Set(bateriasData.map(i=>i.local).filter(l=>l))].sort();
-            document.getElementById('batModeloList').innerHTML=modelos.map(m=>`<option value="${m}">`).join(''); document.getElementById('batLocalList').innerHTML=locais.map(l=>`<option value="${l}">`).join('');
-            if(!skipFilter) aplicarFiltrosBaterias();
-        } catch(e){ console.error(e); bateriasData=[]; aplicarFiltrosBaterias(); }
+            processarBateriasRows(rows, batColMapping, skipFilter);
+        } catch(e){ console.error(e); bateriasData = []; showErrorInTab('tabBaterias', 'Erro ao carregar Baterias: ' + e.message); if(!skipFilter) aplicarFiltrosBaterias(); }
+    }
+    function exibirMappingBaterias(headers) {
+        const container = document.getElementById('batMappingContainer');
+        container.innerHTML = `
+            <div class="dashboard-card debug-card">
+                <h3>⚠️ Mapeamento manual – Baterias</h3>
+                <p>As colunas não foram identificadas automaticamente. Selecione cada campo (campos obrigatórios: PLACA, MODELO, VENCIMENTO):</p>
+                <label>🔖 PLACA: <select id="mapBatPlaca">${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
+                <label>🔋 MODELO: <select id="mapBatModelo">${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
+                <label>📅 DATA VENDA: <select id="mapBatDataVenda"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
+                <label>⏳ VENCIMENTO: <select id="mapBatVencimento">${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
+                <label>🔢 NÚMERO: <select id="mapBatNumero"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
+                <label>📄 NOTA: <select id="mapBatNota"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
+                <label>📌 ORDEM: <select id="mapBatOrdem"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
+                <label>🛡️ GARANTIA: <select id="mapBatGarantia"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
+                <label>📝 OBS: <select id="mapBatObs"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
+                <label>📍 LOCAL: <select id="mapBatLocal"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
+                <button id="btnConfirmBatMapping" class="btn-export">Confirmar e Carregar</button>
+            </div>
+        `;
+        document.getElementById('btnConfirmBatMapping').onclick = () => {
+            batColMapping.placa = document.getElementById('mapBatPlaca').value;
+            batColMapping.modelo = document.getElementById('mapBatModelo').value;
+            batColMapping.dataVenda = document.getElementById('mapBatDataVenda').value || null;
+            batColMapping.vencimento = document.getElementById('mapBatVencimento').value;
+            batColMapping.numero = document.getElementById('mapBatNumero').value || null;
+            batColMapping.nota = document.getElementById('mapBatNota').value || null;
+            batColMapping.ordem = document.getElementById('mapBatOrdem').value || null;
+            batColMapping.garantia = document.getElementById('mapBatGarantia').value || null;
+            batColMapping.obs = document.getElementById('mapBatObs').value || null;
+            batColMapping.local = document.getElementById('mapBatLocal').value || null;
+            if (!batColMapping.placa || !batColMapping.modelo || !batColMapping.vencimento) {
+                alert("Selecione pelo menos PLACA, MODELO e VENCIMENTO");
+                return;
+            }
+            container.innerHTML = '';
+            processarBateriasRows(pendingBatRows, batColMapping, false);
+            pendingBatRows = null;
+        };
+    }
+    function processarBateriasRows(rows, mapping, skipFilter) {
+        bateriasData = [];
+        for (let row of rows) {
+            let vend = mapping.dataVenda ? moment(row[mapping.dataVenda], ['DD/MM/YYYY','YYYY-MM-DD','MM/DD/YYYY'], true) : null;
+            let venc = moment(row[mapping.vencimento], ['DD/MM/YYYY','YYYY-MM-DD','MM/DD/YYYY'], true);
+            if (!venc.isValid()) continue;
+            bateriasData.push({
+                placa: row[mapping.placa] || '',
+                modelo: row[mapping.modelo] || '',
+                dataVenda: vend && vend.isValid() ? vend.toDate() : null,
+                vencimento: venc.toDate(),
+                numero: mapping.numero ? (row[mapping.numero] || '') : '',
+                nota: mapping.nota ? (row[mapping.nota] || '') : '',
+                ordem: mapping.ordem ? (row[mapping.ordem] || '') : '',
+                garantia: mapping.garantia ? (row[mapping.garantia] || '') : '',
+                obs: mapping.obs ? (row[mapping.obs] || '') : '',
+                local: mapping.local ? (row[mapping.local] || '') : ''
+            });
+        }
+        // Atualizar datalists de filtros
+        const modelos = [...new Set(bateriasData.map(i => i.modelo).filter(m=>m))].sort();
+        const locais = [...new Set(bateriasData.map(i => i.local).filter(l=>l))].sort();
+        document.getElementById('batModeloList').innerHTML = modelos.map(m=>`<option value="${m}">`).join('');
+        document.getElementById('batLocalList').innerHTML = locais.map(l=>`<option value="${l}">`).join('');
+        if (!skipFilter) aplicarFiltrosBaterias();
     }
     function aplicarFiltrosBaterias(){
-        const placa=document.getElementById('batPlaca').value.trim().toUpperCase(), modelo=document.getElementById('batModelo').value.trim(), vencInicio=document.getElementById('batVencInicio').value, vencFim=document.getElementById('batVencFim').value, local=document.getElementById('batLocal').value.trim();
-        let filtered=bateriasData.filter(item=>{ if(placa&&!item.placa.toUpperCase().includes(placa)) return false; if(modelo&&!item.modelo.includes(modelo)) return false; if(local&&!item.local.includes(local)) return false; if(vencInicio&&item.vencimento<new Date(vencInicio)) return false; if(vencFim){ let end=new Date(vencFim); end.setHours(23,59,59); if(item.vencimento>end) return false; } return true; });
-        const hoje=new Date(); hoje.setHours(0,0,0,0); const tresMeses=new Date(hoje); tresMeses.setMonth(hoje.getMonth()+3);
-        const venceProximos=filtered.filter(item=>item.vencimento>=hoje&&item.vencimento<=tresMeses);
-        document.getElementById('listaVencimento3Meses').innerHTML=venceProximos.length? venceProximos.map(b=>`<div class="bateria-alerta"><strong>${b.placa}</strong> – ${b.modelo}<br>Vence em: ${moment(b.vencimento).format('DD/MM/YYYY')} (${Math.ceil((b.vencimento-hoje)/(1000*3600*24))} dias)<br>Local: ${b.local} | Nota: ${b.nota}</div>`).join('') : '<div class="alert-card warning">✅ Nenhuma bateria vence nos próximos 3 meses.</div>';
-        const modeloCount=new Map(); filtered.forEach(b=>modeloCount.set(b.modelo,(modeloCount.get(b.modelo)||0)+1));
-        const sortedModelos=Array.from(modeloCount.entries()).sort((a,b)=>b[1]-a[1]).slice(0,10);
-        document.getElementById('rankFornecedores').innerHTML=sortedModelos.map(([mod,qtd])=>`<div style="background:#f8fafc; padding:0.5rem; border-radius:12px;"><strong>${mod||'Sem modelo'}</strong>: ${qtd} bateria(s)</div>`).join('');
-        const comDatas=filtered.filter(b=>b.dataVenda&&b.vencimento); comDatas.forEach(b=>{ b.diasGarantia=Math.floor((b.vencimento-b.dataVenda)/(1000*3600*24)); });
-        const melhores=[...comDatas].sort((a,b)=>b.diasGarantia-a.diasGarantia).slice(0,10);
-        document.getElementById('rankMelhoresPorTempo').innerHTML=melhores.length? melhores.map(b=>`<div style="border-bottom:1px solid #e2e8f0; padding:0.5rem;"><strong>${b.placa}</strong> – ${b.modelo}<br>Venda: ${moment(b.dataVenda).format('DD/MM/YYYY')} → Venc: ${moment(b.vencimento).format('DD/MM/YYYY')}<br>Período: ${b.diasGarantia} dias</div>`).join('') : '<div>Sem dados de venda/vencimento</div>';
-        let tbody=document.querySelector('#batTable tbody'); tbody.innerHTML='';
-        filtered.forEach(b=>{ tbody.innerHTML+=`<tr><td>${b.placa}</td><td>${b.modelo}</td><td>${b.dataVenda?moment(b.dataVenda).format('DD/MM/YYYY'):'---'}</td><td>${moment(b.vencimento).format('DD/MM/YYYY')}</td><td>${b.numero}</td><td>${b.nota}</td><td>${b.ordem}</td><td>${b.garantia}</td><td>${b.obs.substring(0,50)}</td><td>${b.local}</td></tr>`; });
-        if(filtered.length===0) tbody.innerHTML='<tr><td colspan="10">Nenhum registro encontrado</td></tr>';
+        const placa = document.getElementById('batPlaca').value.trim().toUpperCase();
+        const modelo = document.getElementById('batModelo').value.trim();
+        const vencInicio = document.getElementById('batVencInicio').value;
+        const vencFim = document.getElementById('batVencFim').value;
+        const local = document.getElementById('batLocal').value.trim();
+        let filtered = bateriasData.filter(item => {
+            if(placa && !item.placa.toUpperCase().includes(placa)) return false;
+            if(modelo && !item.modelo.includes(modelo)) return false;
+            if(local && !item.local.includes(local)) return false;
+            if(vencInicio && item.vencimento < new Date(vencInicio)) return false;
+            if(vencFim){ let end = new Date(vencFim); end.setHours(23,59,59); if(item.vencimento > end) return false; }
+            return true;
+        });
+        const hoje = new Date(); hoje.setHours(0,0,0,0);
+        const tresMeses = new Date(hoje); tresMeses.setMonth(hoje.getMonth()+3);
+        const venceProximos = filtered.filter(item => item.vencimento >= hoje && item.vencimento <= tresMeses);
+        document.getElementById('listaVencimento3Meses').innerHTML = venceProximos.length ? venceProximos.map(b => `<div class="bateria-alerta"><strong>${b.placa}</strong> – ${b.modelo}<br>Vence em: ${moment(b.vencimento).format('DD/MM/YYYY')} (${Math.ceil((b.vencimento - hoje)/(1000*3600*24))} dias)<br>Local: ${b.local} | Nota: ${b.nota}</div>`).join('') : '<div class="alert-card warning">✅ Nenhuma bateria vence nos próximos 3 meses.</div>';
+        const modeloCount = new Map(); filtered.forEach(b => modeloCount.set(b.modelo, (modeloCount.get(b.modelo)||0)+1));
+        const sortedModelos = Array.from(modeloCount.entries()).sort((a,b)=>b[1]-a[1]).slice(0,10);
+        document.getElementById('rankFornecedores').innerHTML = sortedModelos.map(([mod,qtd]) => `<div style="background:#f8fafc; padding:0.5rem; border-radius:12px;"><strong>${mod||'Sem modelo'}</strong>: ${qtd} bateria(s)</div>`).join('');
+        const comDatas = filtered.filter(b => b.dataVenda && b.vencimento);
+        comDatas.forEach(b => { b.diasGarantia = Math.floor((b.vencimento - b.dataVenda)/(1000*3600*24)); });
+        const melhores = [...comDatas].sort((a,b)=>b.diasGarantia - a.diasGarantia).slice(0,10);
+        document.getElementById('rankMelhoresPorTempo').innerHTML = melhores.length ? melhores.map(b => `<div style="border-bottom:1px solid #e2e8f0; padding:0.5rem;"><strong>${b.placa}</strong> – ${b.modelo}<br>Venda: ${moment(b.dataVenda).format('DD/MM/YYYY')} → Venc: ${moment(b.vencimento).format('DD/MM/YYYY')}<br>Período: ${b.diasGarantia} dias</div>`).join('') : '<div>Sem dados de venda/vencimento</div>';
+        let tbody = document.querySelector('#batTable tbody'); tbody.innerHTML = '';
+        filtered.forEach(b => { tbody.innerHTML += `<tr><td>${b.placa}</td><td>${b.modelo}</td><td>${b.dataVenda?moment(b.dataVenda).format('DD/MM/YYYY'):'---'}</td><td>${moment(b.vencimento).format('DD/MM/YYYY')}</td><td>${b.numero}</td><td>${b.nota}</td><td>${b.ordem}</td><td>${b.garantia}</td><td>${b.obs.substring(0,50)}</td><td>${b.local}</td></tr>`; });
+        if(filtered.length===0) tbody.innerHTML = '<tr><td colspan="10">Nenhum registro encontrado</td></tr>';
     }
-    document.getElementById('batAplicarFiltros').addEventListener('click',aplicarFiltrosBaterias);
+    document.getElementById('batAplicarFiltros').addEventListener('click', aplicarFiltrosBaterias);
     document.getElementById('batResetFiltros').addEventListener('click',()=>{ document.getElementById('batPlaca').value=''; document.getElementById('batModelo').value=''; document.getElementById('batVencInicio').value=''; document.getElementById('batVencFim').value=''; document.getElementById('batLocal').value=''; aplicarFiltrosBaterias(); });
     document.getElementById('batExportarCSV').addEventListener('click',()=>{ let csv=[["PLACA","MODELO","DATA VENDA","VENCIMENTO","NUMERO","NOTA","ORDEM","GARANTIA","OBS","LOCAL"]]; bateriasData.forEach(b=>{ csv.push([b.placa,b.modelo,b.dataVenda?moment(b.dataVenda).format('DD/MM/YYYY'):'',moment(b.vencimento).format('DD/MM/YYYY'),b.numero,b.nota,b.ordem,b.garantia,b.obs,b.local]); }); let blob=new Blob(["\uFEFF"+csv.map(r=>r.join(",")).join("\n")],{type:"text/csv"}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download="baterias.csv"; a.click(); });
 
@@ -659,8 +777,23 @@
     document.getElementById('calcAplicarFiltros').addEventListener('click',calcularSalario);
     ['calcComissaoPercent','calcDespesasMot','calcDiaria','calcBonus','calcVales','calcIr','calcMulta','calcDepFolha'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{ let total=parseFloat(document.getElementById('calcTotalFrete').innerText.replace(/[^0-9,-]/g,'').replace(',','.'))||0; atualizarReceber(total); }));
     
+    // Helper para mostrar erro na aba
+    function showErrorInTab(tabId, message) {
+        const tab = document.getElementById(tabId);
+        if (!tab) return;
+        let errorDiv = tab.querySelector('.error-message');
+        if (!errorDiv) {
+            errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            tab.insertBefore(errorDiv, tab.firstChild);
+        }
+        errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
+        setTimeout(() => { if(errorDiv.parentNode) errorDiv.remove(); }, 8000);
+    }
+    
     // Inicialização das abas
     document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>{ let tabId=btn.getAttribute('data-tab'); document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active')); document.getElementById(tabId).classList.add('active'); if(tabId==='tabBaterias' && bateriasData.length===0) loadBateriasData(true); else if(tabId==='tabBaterias') aplicarFiltrosBaterias(); }));
+    // Carregamento inicial
     loadFinanceiroData(true); loadFaturamentoData(true); loadBateriasData(true);
 </script>
 </body>
