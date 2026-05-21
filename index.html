@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -140,7 +141,7 @@
 <body>
 
 <div id="servicoModal" class="modal-popup"><h3>Detalhe do Serviço</h3><p id="servicoDetalheTexto"></p><button onclick="document.getElementById('servicoModal').classList.remove('active')">Fechar</button></div>
-<div id="urlConfigModal" class="url-modal"><h3>⚙️ Configurar URLs das Planilhas</h3><label>💰 Financeiro (CSV):</label><input type="text" id="urlFinanceiro" placeholder="https://.../pub?output=csv"><label>🚛 Faturamento (CSV):</label><input type="text" id="urlFaturamento" placeholder="https://.../pub?output=csv"><label>🔋 Baterias (CSV):</label><input type="text" id="urlBaterias" placeholder="https://.../pub?output=csv"><br><br><button id="saveUrlsBtn" class="btn-export">Salvar e Recarregar</button><button id="closeUrlModalBtn" class="btn-export btn-reset">Fechar</button></div>
+<div id="urlConfigModal" class="url-modal"><h3>⚙️ Configurar URLs das Planilhas</h3><label>💰 Financeiro (CSV):</label><input type="text" id="urlFinanceiro" placeholder="https://.../pub?output=csv"><label>🚛 Faturamento (CSV):</label><input type="text" id="urlFaturamento" placeholder="https://.../pub?output=csv"><label>🔋 Baterias (CSV/XLSX):</label><input type="text" id="urlBaterias" placeholder="https://.../pub?output=csv ou .../pub?output=xlsx"><br><br><button id="saveUrlsBtn" class="btn-export">Salvar e Recarregar</button><button id="closeUrlModalBtn" class="btn-export btn-reset">Fechar</button></div>
 
 <div id="publicSite">
     <div class="whatsapp-float"><a href="https://wa.me/5549999675448" target="_blank" style="background:#25D366; color:white; padding:10px 16px; border-radius:50px; text-decoration:none;">📱 WhatsApp</a></div>
@@ -190,7 +191,7 @@
         <div class="dashboard-card"><h3><i class="fas fa-chart-bar"></i> 📊 Soma por Tipo de Conta</h3><div class="chart-selector"><label>Tipo de gráfico: </label><select id="chartTypeSelect"><option value="bar">📊 Barras</option><option value="pie">🥧 Pizza</option></select></div><div class="chart-container"><canvas id="tipoChart" width="800" height="400" style="max-width:100%; height:auto;"></canvas></div></div>
         <div class="dashboard-card"><h3><i class="fas fa-trophy"></i> 🏆 Ranking por Tipo (maior valor)</h3><ul id="finRankingTipo" class="ranking-numerado"></ul></div>
         <div class="dashboard-card"><h3><i class="fas fa-city"></i> 🏆 Ranking por Local (maior valor)</h3><ul id="finRankingLocal" class="ranking-numerado"></ul></div>
-        <div class="dashboard-card"><h3>📋 Documentos (clique no serviço para ver detalhe)</h3><div style="overflow-x:auto"><table class="data-table" id="finTable"><thead><tr><th>Local</th><th>Tipo</th><th>Vencimento</th><th>Documento</th><th>Valor (R$)</th><th>Serviço</th></tr></thead><tbody><tr><td colspan="6">Carregando...</td></tr></tbody>}</div></div>
+        <div class="dashboard-card"><h3>📋 Documentos (clique no serviço para ver detalhe)</h3><div style="overflow-x:auto"><table class="data-table" id="finTable"><thead><tr><th>Local</th><th>Tipo</th><th>Vencimento</th><th>Documento</th><th>Valor (R$)</th><th>Serviço</th></tr></thead><tbody><tr><td colspan="6">Carregando...</td></tr></tbody></table></div></div>
         <div class="dashboard-card"><h3><i class="fas fa-chart-line"></i> 🔮 Previsão para próximos períodos</h3><div class="forecast-card"><table class="forecast-table" id="finPrevisaoTable"><thead><tr><th>Período</th><th>Previsão (R$)</th></tr></thead><tbody><tr><td colspan="2">Aguarde carregamento...</td></tr></tbody></table></div></div>
     </div>
     
@@ -209,10 +210,10 @@
         </div></div>
         <div class="dashboard-card"><h3>🏆 Top 5 Maiores Fretes</h3><div id="rankMelhoresViagens"></div></div>
         <div class="dashboard-card"><div class="ranking-grid"><div class="ranking-box"><h4>Motoristas</h4><div id="rankMotorista"></div></div><div class="ranking-box"><h4>Placas Cavalo</h4><div id="rankPlacaCavalo"></div></div><div class="ranking-box"><h4>Placas Carreta</h4><div id="rankPlacaCarreta"></div></div><div class="ranking-box"><h4>Embarcadoras</h4><div id="rankEmbarcadora"></div></div></div></div>
-        <div class="dashboard-card"><h3>🚛 Tabela de Fretes (clique na placa do cavalo)</h3><div style="overflow-x:auto"><table class="data-table" id="fatTable"><thead><tr><th>Data</th><th>Placa Cavalo</th><th>Placa Carreta</th><th>Motorista</th><th>Embarcadora</th><th>Origem</th><th>Destino</th><th>Valor (R$)</th></tr></thead><tbody></tbody>}</div><div id="fichaPlaca" class="ficha-placa" style="display:none;"></div></div>
+        <div class="dashboard-card"><h3>🚛 Tabela de Fretes (clique na placa do cavalo)</h3><div style="overflow-x:auto"><table class="data-table" id="fatTable"><thead><tr><th>Data</th><th>Placa Cavalo</th><th>Placa Carreta</th><th>Motorista</th><th>Embarcadora</th><th>Origem</th><th>Destino</th><th>Valor (R$)</th></tr></thead><tbody></tbody></table></div><div id="fichaPlaca" class="ficha-placa" style="display:none;"></div></div>
     </div>
 
-    <!-- BATERIAS com mapeamento exato para as colunas -->
+    <!-- BATERIAS -->
     <div id="tabBaterias" class="tab-content">
         <div id="batMappingContainer"></div>
         <div class="dashboard-card"><h3>Filtros</h3><div>
@@ -238,7 +239,7 @@
     const VALID_USER = "malacarne", VALID_PASS = "mala2325";
     let URL_FINANCEIRO = localStorage.getItem("urlFinanceiro") || "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZOvOYa2B9fg5pQuPa54usv9Tl0bRP7EDRBtYrmYnJuXZkK5_A7j4roQZdmiXaaQ/pub?output=csv";
     let URL_FATURAMENTO = localStorage.getItem("urlFaturamento") || "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2S-LdrEMpvvosLHfFDOucVENw-T8OOaC2td00ySdFnim79Lm7AEooZBL--q9zKA/pub?output=csv";
-    let URL_BATERIAS = localStorage.getItem("urlBaterias") || "https://docs.google.com/spreadsheets/d/e/2PACX-1vTCotTJjgS2YX7kj4LwUiz3eGGAbuo98npFM6QaqZhHwawIt_RuG1H14c9sRED70Q/pub?output=csv";
+    let URL_BATERIAS = localStorage.getItem("urlBaterias") || "https://docs.google.com/spreadsheets/d/e/2PACX-1vTOou_NE7FOOF2fSs8UuU8icxj0c8ZUEwLmLOeWZBzcAYKhsWrKLYWvSGO43k19jw/pub?output=xlsx";
 
     let financeiroData = [], faturamentoData = [], bateriasData = [];
     let currentFinanceiroFiltered = [];
@@ -433,7 +434,7 @@
             }
             const row = tbody.insertRow();
             row.innerHTML = `
-                <tr>${item.local}</td>
+                <td>${item.local}</td>
                 <td>${item.tipoConta}</td>
                 <td>${dateStr} ${status}</td>
                 <td>${item.documento}</td>
@@ -638,104 +639,74 @@
     document.getElementById('fatExportarCSV').addEventListener('click',()=>{ let csv=[["Data","Placa Cavalo","Placa Carreta","Motorista","Embarcadora","Origem","Destino","Valor"]]; faturamentoData.forEach(i=>{ csv.push([i.data?moment(i.data).format('DD/MM/YYYY'):'', i.placaCavalo, i.placaCarreta, i.motorista, i.embarcadora, i.origem, i.destino, i.valor]); }); let blob=new Blob(["\uFEFF"+csv.map(r=>r.join(",")).join("\n")],{type:"text/csv"}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download="faturamento.csv"; a.click(); });
     document.getElementById('fatExportarPDF').addEventListener('click',()=>alert("Use Ctrl+P"));
 
-    // ========== BATERIAS com mapeamento exato para suas colunas ==========
+    // ========== BATERIAS COM LEITOR UNIVERSAL (CSV/XLSX) ==========
     async function loadBateriasData(skipFilter = false) {
         try {
             const resp = await fetch(URL_BATERIAS);
-            if (!resp.ok) throw new Error(`HTTP ${resp.status} - URL inválida ou não publicada como CSV`);
-            const text = await resp.text();
-            const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
-            const rows = parsed.data;
-            if (!rows.length) throw new Error("Planilha vazia");
-
+            if (!resp.ok) throw new Error(`HTTP ${resp.status} - URL inválida`);
+            
+            const contentType = resp.headers.get('content-type');
+            const isXlsx = URL_BATERIAS.includes('.xlsx') || (contentType && contentType.includes('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'));
+            
+            let rows = [];
+            if (isXlsx) {
+                // Leitura de arquivo XLSX usando SheetJS
+                const arrayBuffer = await resp.arrayBuffer();
+                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                rows = jsonData;
+            } else {
+                // Leitura de arquivo CSV usando PapaParse
+                const text = await resp.text();
+                const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+                rows = parsed.data;
+            }
+            
+            if (!rows.length) throw new Error("Planilha vazia ou não acessível");
+            
             const headers = Object.keys(rows[0]);
-            console.log("Cabeçalhos encontrados em Baterias:", headers);
-
-            // Mapeamento exato baseado nos cabeçalhos informados (case insensitive)
-            const colPlaca = headers.find(h => h.toUpperCase() === "PLACA") ||
-                             headers.find(h => h.toLowerCase().includes("placa"));
-            const colModelo = headers.find(h => h.toUpperCase() === "MODELO BATERIA") ||
-                              headers.find(h => h.toLowerCase().includes("modelo"));
-            const colDataVenda = headers.find(h => h.toUpperCase() === "DATA DA VENDA") ||
-                                 headers.find(h => h.toLowerCase().includes("data venda"));
-            const colVencimento = headers.find(h => h.toUpperCase() === "VENCIMENTO") ||
-                                  headers.find(h => h.toLowerCase().includes("vencimento"));
-            const colNumero = headers.find(h => h.toUpperCase() === "NUMERO") ||
-                              headers.find(h => h.toLowerCase().includes("numero"));
-            const colNota = headers.find(h => h.toUpperCase() === "NOTA") ||
-                            headers.find(h => h.toLowerCase().includes("nota"));
-            const colOrdem = headers.find(h => h.toUpperCase() === "ORDEM") ||
-                             headers.find(h => h.toLowerCase().includes("ordem"));
-            const colGarantia = headers.find(h => h.toUpperCase() === "GARANTIA") ||
-                                headers.find(h => h.toLowerCase().includes("garantia"));
-            const colObs = headers.find(h => h.toUpperCase() === "OBSERVAÇÃO") ||
-                           headers.find(h => h.toLowerCase().includes("obs"));
-            const colLocal = headers.find(h => h.toUpperCase() === "LOCAL") ||
-                             headers.find(h => h.toLowerCase().includes("local"));
-
+            console.log(`Cabeçalhos encontrados em Baterias (${isXlsx ? 'XLSX' : 'CSV'}):`, headers);
+            
+            const colPlaca = findColumn(headers, ['PLACA', 'placa', 'Placa', 'PLACA CAVALO', 'CAVALO']);
+            const colModelo = findColumn(headers, ['MODELO BATERIA', 'modelo', 'Modelo', 'MODELO', 'BATERIA']);
+            const colDataVenda = findColumn(headers, ['DATA DA VENDA', 'DATA VENDA', 'data venda', 'Data Venda', 'VENDA']);
+            const colVencimento = findColumn(headers, ['VENCIMENTO', 'vencimento', 'Validade', 'VALIDADE']);
+            const colNumero = findColumn(headers, ['NUMERO', 'numero', 'NÚMERO']);
+            const colNota = findColumn(headers, ['NOTA', 'nota', 'Nota']);
+            const colOrdem = findColumn(headers, ['ORDEM', 'ordem']);
+            const colGarantia = findColumn(headers, ['GARANTIA', 'garantia']);
+            const colObs = findColumn(headers, ['OBSERVAÇÃO', 'OBS', 'obs', 'Observação']);
+            const colLocal = findColumn(headers, ['LOCAL', 'local', 'Local', 'LOCALIZAÇÃO']);
+            
             if (!colPlaca || !colModelo || !colVencimento) {
-                // Se não encontrar automaticamente, oferece mapeamento manual
                 pendingBatRows = rows;
                 pendingBatHeaders = headers;
                 exibirMappingBaterias(headers);
                 return;
             }
-
-            bateriasData = [];
-            for (const row of rows) {
-                let venc = moment(row[colVencimento], ['DD/MM/YYYY', 'YYYY-MM-DD', 'MM/DD/YYYY'], true);
-                if (!venc.isValid()) continue;
-
-                let dataVenda = null;
-                if (colDataVenda && row[colDataVenda]) {
-                    let vend = moment(row[colDataVenda], ['DD/MM/YYYY', 'YYYY-MM-DD', 'MM/DD/YYYY'], true);
-                    if (vend.isValid()) dataVenda = vend.toDate();
-                }
-
-                bateriasData.push({
-                    placa: row[colPlaca] || "",
-                    modelo: row[colModelo] || "",
-                    dataVenda: dataVenda,
-                    vencimento: venc.toDate(),
-                    numero: colNumero ? (row[colNumero] || "") : "",
-                    nota: colNota ? (row[colNota] || "") : "",
-                    ordem: colOrdem ? (row[colOrdem] || "") : "",
-                    garantia: colGarantia ? (row[colGarantia] || "") : "",
-                    obs: colObs ? (row[colObs] || "") : "",
-                    local: colLocal ? (row[colLocal] || "") : ""
-                });
-            }
-
-            // Atualiza datalists dos filtros
-            const modelos = [...new Set(bateriasData.map(i => i.modelo).filter(m => m))].sort();
-            const locais = [...new Set(bateriasData.map(i => i.local).filter(l => l))].sort();
-            document.getElementById('batModeloList').innerHTML = modelos.map(m => `<option value="${m}">`).join('');
-            document.getElementById('batLocalList').innerHTML = locais.map(l => `<option value="${l}">`).join('');
-
-            if (!skipFilter) aplicarFiltrosBaterias();
-
-            // Remove mensagem de erro se houver
-            const errorDiv = document.querySelector('#tabBaterias .error-message');
-            if (errorDiv) errorDiv.remove();
-
+            
+            processarBateriasRows(rows, { placa: colPlaca, modelo: colModelo, dataVenda: colDataVenda, vencimento: colVencimento, numero: colNumero, nota: colNota, ordem: colOrdem, garantia: colGarantia, obs: colObs, local: colLocal }, skipFilter);
+            
         } catch (e) {
             console.error("Erro em Baterias:", e);
             bateriasData = [];
-            showErrorInTab('tabBaterias', 'Erro ao carregar Baterias: ' + e.message + '. Verifique se a URL está publicada como CSV.');
+            showErrorInTab('tabBaterias', 'Erro ao carregar Baterias: ' + e.message + '. Verifique se a URL está publicada corretamente.');
             if (!skipFilter) aplicarFiltrosBaterias();
         }
     }
-
+    
     function exibirMappingBaterias(headers) {
         const container = document.getElementById('batMappingContainer');
         container.innerHTML = `
             <div class="dashboard-card debug-card">
                 <h3>⚠️ Mapeamento manual – Baterias</h3>
-                <p>As colunas não foram identificadas automaticamente. Selecione cada campo (obrigatórios: PLACA, MODELO, VENCIMENTO):</p>
-                <label>🔖 PLACA: <select id="mapBatPlaca">${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
-                <label>🔋 MODELO: <select id="mapBatModelo">${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
-                <label>📅 DATA VENDA: <select id="mapBatDataVenda"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
-                <label>⏳ VENCIMENTO: <select id="mapBatVencimento">${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
+                <p>Colunas detectadas: ${headers.join(', ')}</p>
+                <p>Selecione as colunas corretas abaixo:</p>
+                <label>🔖 PLACA (obrigatório): <select id="mapBatPlaca">${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
+                <label>🔋 MODELO (obrigatório): <select id="mapBatModelo">${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
+                <label>📅 DATA VENDA (opcional): <select id="mapBatDataVenda"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
+                <label>⏳ VENCIMENTO (obrigatório): <select id="mapBatVencimento">${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
                 <label>🔢 NÚMERO: <select id="mapBatNumero"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
                 <label>📄 NOTA: <select id="mapBatNota"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
                 <label>📌 ORDEM: <select id="mapBatOrdem"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
@@ -746,7 +717,7 @@
             </div>
         `;
         document.getElementById('btnConfirmBatMapping').onclick = () => {
-            const mapeamento = {
+            const mapping = {
                 placa: document.getElementById('mapBatPlaca').value,
                 modelo: document.getElementById('mapBatModelo').value,
                 dataVenda: document.getElementById('mapBatDataVenda').value || null,
@@ -758,28 +729,28 @@
                 obs: document.getElementById('mapBatObs').value || null,
                 local: document.getElementById('mapBatLocal').value || null
             };
-            if (!mapeamento.placa || !mapeamento.modelo || !mapeamento.vencimento) {
+            if (!mapping.placa || !mapping.modelo || !mapping.vencimento) {
                 alert("Selecione pelo menos PLACA, MODELO e VENCIMENTO");
                 return;
             }
             container.innerHTML = '';
-            processarBateriasRows(pendingBatRows, mapeamento, false);
+            processarBateriasRows(pendingBatRows, mapping, false);
             pendingBatRows = null;
         };
     }
-
+    
     function processarBateriasRows(rows, mapping, skipFilter) {
         bateriasData = [];
         for (const row of rows) {
             let venc = moment(row[mapping.vencimento], ['DD/MM/YYYY', 'YYYY-MM-DD', 'MM/DD/YYYY'], true);
             if (!venc.isValid()) continue;
-
+            
             let dataVenda = null;
             if (mapping.dataVenda && row[mapping.dataVenda]) {
                 let vend = moment(row[mapping.dataVenda], ['DD/MM/YYYY', 'YYYY-MM-DD', 'MM/DD/YYYY'], true);
                 if (vend.isValid()) dataVenda = vend.toDate();
             }
-
+            
             bateriasData.push({
                 placa: row[mapping.placa] || "",
                 modelo: row[mapping.modelo] || "",
@@ -793,15 +764,18 @@
                 local: mapping.local ? (row[mapping.local] || "") : ""
             });
         }
-
+        
         const modelos = [...new Set(bateriasData.map(i => i.modelo).filter(m => m))].sort();
         const locais = [...new Set(bateriasData.map(i => i.local).filter(l => l))].sort();
         document.getElementById('batModeloList').innerHTML = modelos.map(m => `<option value="${m}">`).join('');
         document.getElementById('batLocalList').innerHTML = locais.map(l => `<option value="${l}">`).join('');
-
+        
         if (!skipFilter) aplicarFiltrosBaterias();
+        
+        const errorDiv = document.querySelector('#tabBaterias .error-message');
+        if (errorDiv) errorDiv.remove();
     }
-
+    
     function aplicarFiltrosBaterias() {
         const placa = document.getElementById('batPlaca').value.trim().toUpperCase();
         const modelo = document.getElementById('batModelo').value.trim();
