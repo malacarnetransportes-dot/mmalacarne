@@ -141,7 +141,11 @@
 <body>
 
 <div id="servicoModal" class="modal-popup"><h3>Detalhe do Serviço</h3><p id="servicoDetalheTexto"></p><button onclick="document.getElementById('servicoModal').classList.remove('active')">Fechar</button></div>
-<div id="urlConfigModal" class="url-modal"><h3>⚙️ Configurar URLs das Planilhas</h3><label>💰 Financeiro (CSV):</label><input type="text" id="urlFinanceiro" placeholder="https://.../pub?output=csv"><label>🚛 Faturamento (CSV):</label><input type="text" id="urlFaturamento" placeholder="https://.../pub?output=csv"><label>🔋 Baterias (CSV/XLSX):</label><input type="text" id="urlBaterias" placeholder="https://.../pub?output=csv ou .../pub?output=xlsx"><br><br><button id="saveUrlsBtn" class="btn-export">Salvar e Recarregar</button><button id="closeUrlModalBtn" class="btn-export btn-reset">Fechar</button></div>
+<div id="urlConfigModal" class="url-modal"><h3>⚙️ Configurar URLs das Planilhas</h3><p style="font-size:0.8rem; color:#666;">Use os links de publicação CSV: <strong>Arquivo → Publicar na web → CSV</strong></p>
+<label>💰 Financeiro (CSV):</label><input type="text" id="urlFinanceiro" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv">
+<label>🚛 Faturamento (CSV):</label><input type="text" id="urlFaturamento" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv">
+<label>🔋 Baterias (CSV):</label><input type="text" id="urlBaterias" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv">
+<br><br><button id="saveUrlsBtn" class="btn-export">Salvar e Recarregar</button><button id="closeUrlModalBtn" class="btn-export btn-reset">Fechar</button></div>
 
 <div id="publicSite">
     <div class="whatsapp-float"><a href="https://wa.me/5549999675448" target="_blank" style="background:#25D366; color:white; padding:10px 16px; border-radius:50px; text-decoration:none;">📱 WhatsApp</a></div>
@@ -191,9 +195,8 @@
         <div class="dashboard-card"><h3><i class="fas fa-chart-bar"></i> 📊 Soma por Tipo de Conta</h3><div class="chart-selector"><label>Tipo de gráfico: </label><select id="chartTypeSelect"><option value="bar">📊 Barras</option><option value="pie">🥧 Pizza</option></select></div><div class="chart-container"><canvas id="tipoChart" width="800" height="400" style="max-width:100%; height:auto;"></canvas></div></div>
         <div class="dashboard-card"><h3><i class="fas fa-trophy"></i> 🏆 Ranking por Tipo (maior valor)</h3><ul id="finRankingTipo" class="ranking-numerado"></ul></div>
         <div class="dashboard-card"><h3><i class="fas fa-city"></i> 🏆 Ranking por Local (maior valor)</h3><ul id="finRankingLocal" class="ranking-numerado"></ul></div>
-        <div class="dashboard-card"><h3>📋 Documentos (clique no serviço para ver detalhe)</h3><div style="overflow-x:auto"><table class="data-table" id="finTable"><thead><tr><th>Local</th><th>Tipo</th><th>Vencimento</th><th>Documento</th><th>Valor (R$)</th><th>Serviço</th></tr></thead><tbody><tr><td colspan="6">Carregando...</td></tr></tbody></table></div></div>
-        <div class="dashboard-card"><h3><i class="fas fa-chart-line"></i> 🔮 Previsão para próximos períodos</h3><div class="forecast-card"><table class="forecast-table" id="finPrevisaoTable"><thead><tr><th>Período</th><th>Previsão (R$)</th></tr></thead><tbody><tr><td colspan="2">Aguarde carregamento...</td></tr></tbody></table></div></div>
-    </div>
+        <div class="dashboard-card"><h3>📋 Documentos (clique no serviço para ver detalhe)</h3><div style="overflow-x:auto"><table class="data-table" id="finTable"><thead><tr><th>Local</th><th>Tipo</th><th>Vencimento</th><th>Documento</th><th>Valor (R$)</th><th>Serviço</th></tr></thead><tbody><tr><td colspan="6">Carregando...</td></tr></tbody>}</div></div>
+        <div class="dashboard-card"><h3><i class="fas fa-chart-line"></i> 🔮 Previsão para próximos períodos</h3><div class="forecast-card"><table class="forecast-table" id="finPrevisaoTable"><thead><tr><th>Período</th><th>Previsão (R$)</th></tr></thead><tbody><tr><td colspan="2">Aguarde carregamento...<\/td><\/tr><\/tbody><\/table><\/div><\/div><\/div>
     
     <!-- FATURAMENTO -->
     <div id="tabFaturamento" class="tab-content">
@@ -210,7 +213,7 @@
         </div></div>
         <div class="dashboard-card"><h3>🏆 Top 5 Maiores Fretes</h3><div id="rankMelhoresViagens"></div></div>
         <div class="dashboard-card"><div class="ranking-grid"><div class="ranking-box"><h4>Motoristas</h4><div id="rankMotorista"></div></div><div class="ranking-box"><h4>Placas Cavalo</h4><div id="rankPlacaCavalo"></div></div><div class="ranking-box"><h4>Placas Carreta</h4><div id="rankPlacaCarreta"></div></div><div class="ranking-box"><h4>Embarcadoras</h4><div id="rankEmbarcadora"></div></div></div></div>
-        <div class="dashboard-card"><h3>🚛 Tabela de Fretes (clique na placa do cavalo)</h3><div style="overflow-x:auto"><table class="data-table" id="fatTable"><thead><tr><th>Data</th><th>Placa Cavalo</th><th>Placa Carreta</th><th>Motorista</th><th>Embarcadora</th><th>Origem</th><th>Destino</th><th>Valor (R$)</th></tr></thead><tbody></tbody></table></div><div id="fichaPlaca" class="ficha-placa" style="display:none;"></div></div>
+        <div class="dashboard-card"><h3>🚛 Tabela de Fretes (clique na placa do cavalo)</h3><div style="overflow-x:auto"><table class="data-table" id="fatTable"><thead><tr><th>Data</th><th>Placa Cavalo</th><th>Placa Carreta</th><th>Motorista</th><th>Embarcadora</th><th>Origem</th><th>Destino</th><th>Valor (R$)</th></tr></thead><tbody></tbody>}</div><div id="fichaPlaca" class="ficha-placa" style="display:none;"></div></div>
     </div>
 
     <!-- BATERIAS -->
@@ -228,29 +231,36 @@
         <div class="dashboard-card"><h3>⚠️ Baterias com vencimento em até 3 meses</h3><div id="listaVencimento3Meses"></div></div>
         <div class="dashboard-card"><h3>🏆 Modelos com mais baterias</h3><div id="rankFornecedores"></div></div>
         <div class="dashboard-card"><h3>📈 Melhores por período venda→vencimento</h3><div id="rankMelhoresPorTempo"></div></div>
-        <div class="dashboard-card"><h3>📋 Todas as baterias</h3><div style="overflow-x:auto"><table class="data-table" id="batTable"><thead><tr><th>PLACA</th><th>MODELO</th><th>DATA VENDA</th><th>VENCIMENTO</th><th>NUMERO</th><th>NOTA</th><th>ORDEM</th><th>GARANTIA</th><th>OBS</th><th>LOCAL</th></tr></thead><tbody><tr><td colspan="10">Carregando...</td></tr></tbody></table></div></div>
-    </div>
+        <div class="dashboard-card"><h3>📋 Todas as baterias</h3><div style="overflow-x:auto"><table class="data-table" id="batTable"><thead><tr><th>PLACA</th><th>MODELO</th><th>DATA VENDA</th><th>VENCIMENTO</th><th>NUMERO</th><th>NOTA</th><th>ORDEM</th><th>GARANTIA</th><th>OBS</th><th>LOCAL</th></tr></thead><tbody><tr><td colspan="10">Carregando...<\/td><\/tr><\/tbody><\/table><\/div><\/div><\/div>
 
     <div id="tabCalculadora" class="tab-content"><div class="dashboard-card salary-calc"><h4>Calculadora Salário Motorista</h4><div class="filter-group"><label>Motorista</label><select id="calcMotoristaSelect"><option>Carregando...</option></select></div><div class="filter-group"><label>Mês/Ano</label><input type="month" id="calcPeriodo"></div><button id="calcAplicarFiltros" class="btn-export">Calcular</button><div id="calcResultado"><p><strong>Faturamento total:</strong> <span id="calcTotalFrete">R$ 0,00</span></p><div id="calcListaFretes"></div></div><hr><div class="salary-row"><label>% Comissão:</label><input type="number" id="calcComissaoPercent" value="5" step="0.5"> %</div><div class="salary-row"><label>Despesas:</label><input type="number" id="calcDespesasMot" value="0"></div><div class="salary-row"><label>Diária:</label><input type="number" id="calcDiaria" value="0"></div><div class="salary-row"><label>Bônus:</label><input type="number" id="calcBonus" value="0"></div><div class="salary-row"><label>Vales:</label><input type="number" id="calcVales" value="0"></div><div class="salary-row"><label>IR/Multa/DepFolha:</label><input type="number" id="calcIr" value="0"><input type="number" id="calcMulta" value="0"><input type="number" id="calcDepFolha" value="0"></div><div class="salary-row"><label><strong>Valor a Receber:</strong></label><span id="calcValorReceber" class="result-value">R$ 0,00</span></div></div></div>
-</div>
+<\/div>
 
 <script>
     // ========== CREDENCIAIS ==========
     const VALID_USER = "malacarne", VALID_PASS = "mala2325";
-    let URL_FINANCEIRO = localStorage.getItem("urlFinanceiro") || "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZOvOYa2B9fg5pQuPa54usv9Tl0bRP7EDRBtYrmYnJuXZkK5_A7j4roQZdmiXaaQ/pub?output=csv";
-    let URL_FATURAMENTO = localStorage.getItem("urlFaturamento") || "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2S-LdrEMpvvosLHfFDOucVENw-T8OOaC2td00ySdFnim79Lm7AEooZBL--q9zKA/pub?output=csv";
-    let URL_BATERIAS = localStorage.getItem("urlBaterias") || "https://docs.google.com/spreadsheets/d/e/2PACX-1vTOou_NE7FOOF2fSs8UuU8icxj0c8ZUEwLmLOeWZBzcAYKhsWrKLYWvSGO43k19jw/pub?output=xlsx";
+    let URL_FINANCEIRO = localStorage.getItem("urlFinanceiro") || "";
+    let URL_FATURAMENTO = localStorage.getItem("urlFaturamento") || "";
+    let URL_BATERIAS = localStorage.getItem("urlBaterias") || "";
 
     let financeiroData = [], faturamentoData = [], bateriasData = [];
     let currentFinanceiroFiltered = [];
     let tipoChart = null;
     let pendingFatRows = null, pendingFatHeaders = null;
-    let pendingBatRows = null, pendingBatHeaders = null;
+
+    // ========== PROXY CORS AUTOMÁTICO ==========
+    function getProxiedUrl(url) {
+        if (!url) return url;
+        // Se já tiver o proxy ou não for do Google Sheets, retorna original
+        if (url.includes('allorigins') || !url.includes('docs.google.com/spreadsheets')) return url;
+        // Aplica proxy allorigins
+        return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+    }
 
     function parseMoney(v) { if(v===undefined||v===null) return 0; let cleaned=String(v).replace(/[^\d,.-]/g,''); if(cleaned==='') return 0; cleaned=cleaned.replace(',','.'); let parts=cleaned.split('.'); if(parts.length>2){let last=parts.pop(); cleaned=parts.join('')+'.'+last;} let num=parseFloat(cleaned); return isNaN(num)?0:num; }
     function findColumn(headers, keywords){ let lower=headers.map(h=>h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')); for(let kw of keywords){ let idx=lower.findIndex(h=>h.includes(kw.toLowerCase())); if(idx!==-1) return headers[idx]; } return null; }
 
-    // URLs
+    // URLs config
     document.getElementById('openUrlConfig').onclick = () => {
         document.getElementById('urlFinanceiro').value = URL_FINANCEIRO;
         document.getElementById('urlFaturamento').value = URL_FATURAMENTO;
@@ -300,8 +310,10 @@
     // ========== FINANCEIRO ==========
     let colMapping = { data: null, valor: null, local: null, tipo: null };
     async function loadFinanceiroData(skipFilter=false){
+        if (!URL_FINANCEIRO) { console.warn("URL Financeiro não configurada"); return; }
         try{
-            const resp = await fetch(URL_FINANCEIRO);
+            const proxied = getProxiedUrl(URL_FINANCEIRO);
+            const resp = await fetch(proxied);
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             const text = await resp.text();
             const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
@@ -438,8 +450,8 @@
                 <td>${item.tipoConta}</td>
                 <td>${dateStr} ${status}</td>
                 <td>${item.documento}</td>
-                <td style="text-align:right">R$ ${item.valor.toFixed(2)}</td>
-                <td class="servico-detalhe" data-servico="${item.servico.replace(/"/g, '&quot;')}">${item.servico.substring(0,60)}</td>
+                <td style="text-align:right">R$ ${item.valor.toFixed(2)}<\/td>
+                <td class="servico-detalhe" data-servico="${item.servico.replace(/"/g, '&quot;')}">${item.servico.substring(0,60)}<\/td>
             `;
         });
         document.querySelectorAll('.servico-detalhe').forEach(el=>el.addEventListener('click',()=>{ document.getElementById('servicoDetalheTexto').innerText=el.getAttribute('data-servico'); document.getElementById('servicoModal').classList.add('active'); }));
@@ -488,7 +500,7 @@
                     const daysCount = (moment({year, month, date: p.end}).endOf('day').diff(periodStart, 'days')) + 1;
                     const projected = avgDaily * daysCount;
                     const monthName = moment({year, month}).format('MMM/YYYY');
-                    forecastRows.push(`<tr><td>${monthName} (${p.label})</td><td>R$ ${projected.toLocaleString('pt-BR',{minFractionDigits:2})}</td></tr>`);
+                    forecastRows.push(`<tr><td>${monthName} (${p.label})<\/td><td>R$ ${projected.toLocaleString('pt-BR',{minFractionDigits:2})}<\/td><\/tr>`);
                     periodsGenerated++;
                     addedAny = true;
                     if(periodsGenerated >= maxPeriods) break;
@@ -503,9 +515,9 @@
         }
         const forecastTbody = document.querySelector('#finPrevisaoTable tbody');
         if(avgMonthly === 0 || currentFinanceiroFiltered.length === 0) {
-            forecastTbody.innerHTML = '<tr><td colspan="2">Sem dados históricos suficientes para projeção</td></tr>';
+            forecastTbody.innerHTML = '<tr><td colspan="2">Sem dados históricos suficientes para projeção<\/td><\/tr>';
         } else if(forecastRows.length === 0) {
-            forecastTbody.innerHTML = '<tr><td colspan="2">Nenhum período futuro a projetar</td></tr>';
+            forecastTbody.innerHTML = '<tr><td colspan="2">Nenhum período futuro a projetar<\/td><\/tr>';
         } else {
             forecastTbody.innerHTML = forecastRows.join('');
         }
@@ -528,8 +540,10 @@
     // ========== FATURAMENTO ==========
     let fatColMapping = { data: null, motorista: null, cavalo: null, carreta: null, embarcadora: null, origem: null, destino: null, valor: null };
     async function loadFaturamentoData(skipFilter=false){
+        if (!URL_FATURAMENTO) { console.warn("URL Faturamento não configurada"); return; }
         try {
-            const resp = await fetch(URL_FATURAMENTO);
+            const proxied = getProxiedUrl(URL_FATURAMENTO);
+            const resp = await fetch(proxied);
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             const text = await resp.text();
             const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
@@ -559,14 +573,14 @@
             <div class="dashboard-card debug-card">
                 <h3>⚠️ Mapeamento manual – Faturamento</h3>
                 <p>As colunas não foram identificadas automaticamente. Selecione cada campo:</p>
-                <label>📅 Data: <select id="mapFatData"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
-                <label>👨‍✈️ Motorista: <select id="mapFatMotorista">${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
-                <label>🚛 Placa Cavalo: <select id="mapFatCavalo">${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
-                <label>📦 Placa Carreta: <select id="mapFatCarreta"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
-                <label>🏢 Embarcadora: <select id="mapFatEmbarcadora">${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
-                <label>📍 Origem: <select id="mapFatOrigem"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
-                <label>📍 Destino: <select id="mapFatDestino"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
-                <label>💰 Valor (R$): <select id="mapFatValor">${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
+                <label>📅 Data: <select id="mapFatData"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select><\/label><br>
+                <label>👨‍✈️ Motorista: <select id="mapFatMotorista">${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select><\/label><br>
+                <label>🚛 Placa Cavalo: <select id="mapFatCavalo">${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select><\/label><br>
+                <label>📦 Placa Carreta: <select id="mapFatCarreta"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select><\/label><br>
+                <label>🏢 Embarcadora: <select id="mapFatEmbarcadora">${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select><\/label><br>
+                <label>📍 Origem: <select id="mapFatOrigem"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select><\/label><br>
+                <label>📍 Destino: <select id="mapFatDestino"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select><\/label><br>
+                <label>💰 Valor (R$): <select id="mapFatValor">${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select><\/label><br>
                 <button id="btnConfirmFatMapping" class="btn-export">Confirmar e Carregar</button>
             </div>
         `;
@@ -631,149 +645,77 @@
         let top5=filtered.sort((a,b)=>b.valor-a.valor).slice(0,5);
         document.getElementById('rankMelhoresViagens').innerHTML=top5.map(v=>`<div>${v.origem}→${v.destino} | ${v.placaCavalo} | R$ ${v.valor.toFixed(2)}</div>`).join('');
         let tbody=document.querySelector('#fatTable tbody'); tbody.innerHTML='';
-        filtered.forEach(i=>{ let row=tbody.insertRow(); row.innerHTML=`<td>${i.data?moment(i.data).format('DD/MM/YYYY'):''}</td><td style="cursor:pointer;color:var(--primary)">${i.placaCavalo}</td><td>${i.placaCarreta}</td><td>${i.motorista}</td><td>${i.embarcadora}</td><td>${i.origem}</td><td>${i.destino}</td><td style="text-align:right">R$ ${i.valor.toFixed(2)}</td>`; row.cells[1].addEventListener('click',()=>{ let viagens=faturamentoData.filter(v=>v.placaCavalo===i.placaCavalo); let total=viagens.reduce((s,v)=>s+v.valor,0); let fichaDiv=document.getElementById('fichaPlaca'); fichaDiv.style.display='block'; fichaDiv.innerHTML=`<h4>Ficha Cavalo ${i.placaCavalo}</h4><p>Viagens: ${viagens.length} | Total: R$ ${total.toFixed(2)}<br>Motoristas: ${[...new Set(viagens.map(v=>v.motorista))].join(', ')}</p><button id="fecharFicha">Fechar</button>`; document.getElementById('fecharFicha').onclick=()=>fichaDiv.style.display='none'; }); });
-        let totalGeral=filtered.reduce((s,i)=>s+i.valor,0); let foot = document.querySelector('#fatTable tfoot'); if(!foot) { foot = document.createElement('tfoot'); document.querySelector('#fatTable').appendChild(foot); } foot.innerHTML=`<tr class="total-soma"><td colspan="7"><strong>Total Geral</strong></td><td style="text-align:right"><strong>R$ ${totalGeral.toFixed(2)}</strong></td></tr>`;
+        filtered.forEach(i=>{ let row=tbody.insertRow(); row.innerHTML=`<td>${i.data?moment(i.data).format('DD/MM/YYYY'):''}<\/td><td style="cursor:pointer;color:var(--primary)">${i.placaCavalo}<\/td><td>${i.placaCarreta}<\/td><td>${i.motorista}<\/td><td>${i.embarcadora}<\/td><td>${i.origem}<\/td><td>${i.destino}<\/td><td style="text-align:right">R$ ${i.valor.toFixed(2)}<\/td>`; row.cells[1].addEventListener('click',()=>{ let viagens=faturamentoData.filter(v=>v.placaCavalo===i.placaCavalo); let total=viagens.reduce((s,v)=>s+v.valor,0); let fichaDiv=document.getElementById('fichaPlaca'); fichaDiv.style.display='block'; fichaDiv.innerHTML=`<h4>Ficha Cavalo ${i.placaCavalo}</h4><p>Viagens: ${viagens.length} | Total: R$ ${total.toFixed(2)}<br>Motoristas: ${[...new Set(viagens.map(v=>v.motorista))].join(', ')}</p><button id="fecharFicha">Fechar</button>`; document.getElementById('fecharFicha').onclick=()=>fichaDiv.style.display='none'; }); });
+        let totalGeral=filtered.reduce((s,i)=>s+i.valor,0); let foot = document.querySelector('#fatTable tfoot'); if(!foot) { foot = document.createElement('tfoot'); document.querySelector('#fatTable').appendChild(foot); } foot.innerHTML=`<tr class="total-soma"><td colspan="7"><strong>Total Geral</strong><\/td><td style="text-align:right"><strong>R$ ${totalGeral.toFixed(2)}<\/strong><\/td><\/tr>`;
     }
     document.getElementById('fatAplicarFiltros').addEventListener('click',aplicarFiltrosFaturamento);
     document.getElementById('fatResetFiltros').addEventListener('click',()=>{ document.getElementById('fatMesSelect').value='all'; document.getElementById('fatMotorista').value=''; document.getElementById('fatPlacaCavalo').value=''; document.getElementById('fatPlacaCarreta').value=''; document.getElementById('fatEmbarcadora').value=''; document.getElementById('fatValorMin').value=''; aplicarFiltrosFaturamento(); });
     document.getElementById('fatExportarCSV').addEventListener('click',()=>{ let csv=[["Data","Placa Cavalo","Placa Carreta","Motorista","Embarcadora","Origem","Destino","Valor"]]; faturamentoData.forEach(i=>{ csv.push([i.data?moment(i.data).format('DD/MM/YYYY'):'', i.placaCavalo, i.placaCarreta, i.motorista, i.embarcadora, i.origem, i.destino, i.valor]); }); let blob=new Blob(["\uFEFF"+csv.map(r=>r.join(",")).join("\n")],{type:"text/csv"}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download="faturamento.csv"; a.click(); });
     document.getElementById('fatExportarPDF').addEventListener('click',()=>alert("Use Ctrl+P"));
 
-    // ========== BATERIAS COM LEITOR UNIVERSAL (CSV/XLSX) ==========
+    // ========== BATERIAS (CSV via proxy) ==========
     async function loadBateriasData(skipFilter = false) {
+        if (!URL_BATERIAS) { console.warn("URL Baterias não configurada"); return; }
         try {
-            const resp = await fetch(URL_BATERIAS);
-            if (!resp.ok) throw new Error(`HTTP ${resp.status} - URL inválida`);
-            
-            const contentType = resp.headers.get('content-type');
-            const isXlsx = URL_BATERIAS.includes('.xlsx') || (contentType && contentType.includes('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'));
-            
-            let rows = [];
-            if (isXlsx) {
-                // Leitura de arquivo XLSX usando SheetJS
-                const arrayBuffer = await resp.arrayBuffer();
-                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-                rows = jsonData;
-            } else {
-                // Leitura de arquivo CSV usando PapaParse
-                const text = await resp.text();
-                const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
-                rows = parsed.data;
-            }
-            
-            if (!rows.length) throw new Error("Planilha vazia ou não acessível");
-            
+            const proxied = getProxiedUrl(URL_BATERIAS);
+            console.log("Carregando Baterias via proxy:", proxied);
+            const resp = await fetch(proxied);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const text = await resp.text();
+            const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+            const rows = parsed.data;
+            if (!rows.length) throw new Error("CSV vazio");
             const headers = Object.keys(rows[0]);
-            console.log(`Cabeçalhos encontrados em Baterias (${isXlsx ? 'XLSX' : 'CSV'}):`, headers);
+            console.log("Cabeçalhos Baterias:", headers);
             
-            const colPlaca = findColumn(headers, ['PLACA', 'placa', 'Placa', 'PLACA CAVALO', 'CAVALO']);
-            const colModelo = findColumn(headers, ['MODELO BATERIA', 'modelo', 'Modelo', 'MODELO', 'BATERIA']);
-            const colDataVenda = findColumn(headers, ['DATA DA VENDA', 'DATA VENDA', 'data venda', 'Data Venda', 'VENDA']);
-            const colVencimento = findColumn(headers, ['VENCIMENTO', 'vencimento', 'Validade', 'VALIDADE']);
-            const colNumero = findColumn(headers, ['NUMERO', 'numero', 'NÚMERO']);
-            const colNota = findColumn(headers, ['NOTA', 'nota', 'Nota']);
-            const colOrdem = findColumn(headers, ['ORDEM', 'ordem']);
-            const colGarantia = findColumn(headers, ['GARANTIA', 'garantia']);
-            const colObs = findColumn(headers, ['OBSERVAÇÃO', 'OBS', 'obs', 'Observação']);
-            const colLocal = findColumn(headers, ['LOCAL', 'local', 'Local', 'LOCALIZAÇÃO']);
+            const colPlaca = headers.find(h => h.toUpperCase() === "PLACA") || headers.find(h => h.toLowerCase().includes("placa"));
+            const colModelo = headers.find(h => h.toUpperCase() === "MODELO BATERIA") || headers.find(h => h.toLowerCase().includes("modelo"));
+            const colVencimento = headers.find(h => h.toUpperCase() === "VENCIMENTO") || headers.find(h => h.toLowerCase().includes("vencimento"));
+            const colDataVenda = headers.find(h => h.toUpperCase() === "DATA DA VENDA") || headers.find(h => h.toLowerCase().includes("data venda"));
+            const colLocal = headers.find(h => h.toUpperCase() === "LOCAL") || headers.find(h => h.toLowerCase().includes("local"));
             
             if (!colPlaca || !colModelo || !colVencimento) {
-                pendingBatRows = rows;
-                pendingBatHeaders = headers;
-                exibirMappingBaterias(headers);
-                return;
+                throw new Error(`Colunas obrigatórias não encontradas. Encontradas: ${headers.join(", ")}`);
             }
             
-            processarBateriasRows(rows, { placa: colPlaca, modelo: colModelo, dataVenda: colDataVenda, vencimento: colVencimento, numero: colNumero, nota: colNota, ordem: colOrdem, garantia: colGarantia, obs: colObs, local: colLocal }, skipFilter);
-            
-        } catch (e) {
-            console.error("Erro em Baterias:", e);
             bateriasData = [];
-            showErrorInTab('tabBaterias', 'Erro ao carregar Baterias: ' + e.message + '. Verifique se a URL está publicada corretamente.');
+            for (const row of rows) {
+                let venc = moment(row[colVencimento], ['DD/MM/YYYY', 'YYYY-MM-DD', 'MM/DD/YYYY'], true);
+                if (!venc.isValid()) continue;
+                let dataVenda = null;
+                if (colDataVenda && row[colDataVenda]) {
+                    let dv = moment(row[colDataVenda], ['DD/MM/YYYY', 'YYYY-MM-DD', 'MM/DD/YYYY'], true);
+                    if (dv.isValid()) dataVenda = dv.toDate();
+                }
+                bateriasData.push({
+                    placa: row[colPlaca] || "",
+                    modelo: row[colModelo] || "",
+                    dataVenda: dataVenda,
+                    vencimento: venc.toDate(),
+                    numero: row["NUMERO"] || "",
+                    nota: row["NOTA"] || "",
+                    ordem: row["ORDEM"] || "",
+                    garantia: row["GARANTIA"] || "",
+                    obs: row["OBSERVAÇÃO"] || row["OBS"] || "",
+                    local: colLocal ? (row[colLocal] || "") : ""
+                });
+            }
+            console.log(`${bateriasData.length} baterias carregadas`);
+            
+            const modelos = [...new Set(bateriasData.map(i=>i.modelo).filter(m=>m))].sort();
+            const locais = [...new Set(bateriasData.map(i=>i.local).filter(l=>l))].sort();
+            document.getElementById('batModeloList').innerHTML = modelos.map(m=>`<option value="${m}">`).join('');
+            document.getElementById('batLocalList').innerHTML = locais.map(l=>`<option value="${l}">`).join('');
+            
+            if (!skipFilter) aplicarFiltrosBaterias();
+            const errorDiv = document.querySelector('#tabBaterias .error-message');
+            if (errorDiv) errorDiv.remove();
+        } catch (err) {
+            console.error("Erro Baterias:", err);
+            bateriasData = [];
+            showErrorInTab('tabBaterias', `Erro: ${err.message}. Verifique se a planilha está publicada como CSV.`);
             if (!skipFilter) aplicarFiltrosBaterias();
         }
-    }
-    
-    function exibirMappingBaterias(headers) {
-        const container = document.getElementById('batMappingContainer');
-        container.innerHTML = `
-            <div class="dashboard-card debug-card">
-                <h3>⚠️ Mapeamento manual – Baterias</h3>
-                <p>Colunas detectadas: ${headers.join(', ')}</p>
-                <p>Selecione as colunas corretas abaixo:</p>
-                <label>🔖 PLACA (obrigatório): <select id="mapBatPlaca">${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
-                <label>🔋 MODELO (obrigatório): <select id="mapBatModelo">${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
-                <label>📅 DATA VENDA (opcional): <select id="mapBatDataVenda"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
-                <label>⏳ VENCIMENTO (obrigatório): <select id="mapBatVencimento">${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
-                <label>🔢 NÚMERO: <select id="mapBatNumero"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
-                <label>📄 NOTA: <select id="mapBatNota"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
-                <label>📌 ORDEM: <select id="mapBatOrdem"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
-                <label>🛡️ GARANTIA: <select id="mapBatGarantia"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
-                <label>📝 OBS: <select id="mapBatObs"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
-                <label>📍 LOCAL: <select id="mapBatLocal"><option value="">ignorar</option>${headers.map(h=>`<option value="${h}">${h}</option>`).join('')}</select></label><br>
-                <button id="btnConfirmBatMapping" class="btn-export">Confirmar e Carregar</button>
-            </div>
-        `;
-        document.getElementById('btnConfirmBatMapping').onclick = () => {
-            const mapping = {
-                placa: document.getElementById('mapBatPlaca').value,
-                modelo: document.getElementById('mapBatModelo').value,
-                dataVenda: document.getElementById('mapBatDataVenda').value || null,
-                vencimento: document.getElementById('mapBatVencimento').value,
-                numero: document.getElementById('mapBatNumero').value || null,
-                nota: document.getElementById('mapBatNota').value || null,
-                ordem: document.getElementById('mapBatOrdem').value || null,
-                garantia: document.getElementById('mapBatGarantia').value || null,
-                obs: document.getElementById('mapBatObs').value || null,
-                local: document.getElementById('mapBatLocal').value || null
-            };
-            if (!mapping.placa || !mapping.modelo || !mapping.vencimento) {
-                alert("Selecione pelo menos PLACA, MODELO e VENCIMENTO");
-                return;
-            }
-            container.innerHTML = '';
-            processarBateriasRows(pendingBatRows, mapping, false);
-            pendingBatRows = null;
-        };
-    }
-    
-    function processarBateriasRows(rows, mapping, skipFilter) {
-        bateriasData = [];
-        for (const row of rows) {
-            let venc = moment(row[mapping.vencimento], ['DD/MM/YYYY', 'YYYY-MM-DD', 'MM/DD/YYYY'], true);
-            if (!venc.isValid()) continue;
-            
-            let dataVenda = null;
-            if (mapping.dataVenda && row[mapping.dataVenda]) {
-                let vend = moment(row[mapping.dataVenda], ['DD/MM/YYYY', 'YYYY-MM-DD', 'MM/DD/YYYY'], true);
-                if (vend.isValid()) dataVenda = vend.toDate();
-            }
-            
-            bateriasData.push({
-                placa: row[mapping.placa] || "",
-                modelo: row[mapping.modelo] || "",
-                dataVenda: dataVenda,
-                vencimento: venc.toDate(),
-                numero: mapping.numero ? (row[mapping.numero] || "") : "",
-                nota: mapping.nota ? (row[mapping.nota] || "") : "",
-                ordem: mapping.ordem ? (row[mapping.ordem] || "") : "",
-                garantia: mapping.garantia ? (row[mapping.garantia] || "") : "",
-                obs: mapping.obs ? (row[mapping.obs] || "") : "",
-                local: mapping.local ? (row[mapping.local] || "") : ""
-            });
-        }
-        
-        const modelos = [...new Set(bateriasData.map(i => i.modelo).filter(m => m))].sort();
-        const locais = [...new Set(bateriasData.map(i => i.local).filter(l => l))].sort();
-        document.getElementById('batModeloList').innerHTML = modelos.map(m => `<option value="${m}">`).join('');
-        document.getElementById('batLocalList').innerHTML = locais.map(l => `<option value="${l}">`).join('');
-        
-        if (!skipFilter) aplicarFiltrosBaterias();
-        
-        const errorDiv = document.querySelector('#tabBaterias .error-message');
-        if (errorDiv) errorDiv.remove();
     }
     
     function aplicarFiltrosBaterias() {
@@ -802,8 +744,8 @@
         const melhores = [...comDatas].sort((a,b)=>b.diasGarantia - a.diasGarantia).slice(0,10);
         document.getElementById('rankMelhoresPorTempo').innerHTML = melhores.length ? melhores.map(b => `<div style="border-bottom:1px solid #e2e8f0; padding:0.5rem;"><strong>${b.placa}</strong> – ${b.modelo}<br>Venda: ${moment(b.dataVenda).format('DD/MM/YYYY')} → Venc: ${moment(b.vencimento).format('DD/MM/YYYY')}<br>Período: ${b.diasGarantia} dias</div>`).join('') : '<div>Sem dados de venda/vencimento</div>';
         let tbody = document.querySelector('#batTable tbody'); tbody.innerHTML = '';
-        filtered.forEach(b => { tbody.innerHTML += `<tr><td>${b.placa}</td><td>${b.modelo}</td><td>${b.dataVenda?moment(b.dataVenda).format('DD/MM/YYYY'):'---'}</td><td>${moment(b.vencimento).format('DD/MM/YYYY')}</td><td>${b.numero}</td><td>${b.nota}</td><td>${b.ordem}</td><td>${b.garantia}</td><td>${b.obs.substring(0,50)}</td><td>${b.local}</td></tr>`; });
-        if(filtered.length===0) tbody.innerHTML = '<tr><td colspan="10">Nenhum registro encontrado</td></tr>';
+        filtered.forEach(b => { tbody.innerHTML += `<tr><td>${b.placa}<\/td><td>${b.modelo}<\/td><td>${b.dataVenda?moment(b.dataVenda).format('DD/MM/YYYY'):'---'}<\/td><td>${moment(b.vencimento).format('DD/MM/YYYY')}<\/td><td>${b.numero}<\/td><td>${b.nota}<\/td><td>${b.ordem}<\/td><td>${b.garantia}<\/td><td>${b.obs.substring(0,50)}<\/td><td>${b.local}<\/td><\/tr>`; });
+        if(filtered.length===0) tbody.innerHTML = '<tr><td colspan="10">Nenhum registro encontrado<\/td><\/tr>';
     }
     document.getElementById('batAplicarFiltros').addEventListener('click', aplicarFiltrosBaterias);
     document.getElementById('batResetFiltros').addEventListener('click',()=>{ document.getElementById('batPlaca').value=''; document.getElementById('batModelo').value=''; document.getElementById('batVencInicio').value=''; document.getElementById('batVencFim').value=''; document.getElementById('batLocal').value=''; aplicarFiltrosBaterias(); });
@@ -811,12 +753,11 @@
 
     // ========== CALCULADORA ==========
     function atualizarSelectMotoristasCalculadora(){ let motoristas=[...new Set(faturamentoData.map(i=>i.motorista))]; let sel=document.getElementById('calcMotoristaSelect'); sel.innerHTML='<option value="">Selecione</option>'+motoristas.map(m=>`<option value="${m}">${m}</option>`).join(''); }
-    function calcularSalario(){ let motorista=document.getElementById('calcMotoristaSelect').value, periodo=document.getElementById('calcPeriodo').value; if(!motorista){ document.getElementById('calcTotalFrete').innerHTML='R$ 0,00'; document.getElementById('calcListaFretes').innerHTML=''; atualizarReceber(0); return; } let fretes=faturamentoData.filter(f=>f.motorista===motorista); if(periodo){ let [ano,mes]=periodo.split('-'); fretes=fretes.filter(f=>f.data&&f.data.getFullYear()==ano&&f.data.getMonth()+1==mes); } let total=fretes.reduce((s,f)=>s+f.valor,0); document.getElementById('calcTotalFrete').innerHTML=`R$ ${total.toLocaleString('pt-BR',{minFractionDigits:2})}`; if(fretes.length) document.getElementById('calcListaFretes').innerHTML=`<table class="data-table"><thead><tr><th>Data</th><th>Rota</th><th>Valor</th></tr></thead><tbody>${fretes.map(f=>`<tr><td>${moment(f.data).format('DD/MM/YY')}</td><td>${f.origem}→${f.destino}</td><td>R$ ${f.valor.toFixed(2)}</td></tr>`).join('')}</tbody></table>`; else document.getElementById('calcListaFretes').innerHTML='<small>Nenhum frete</small>'; atualizarReceber(total); }
+    function calcularSalario(){ let motorista=document.getElementById('calcMotoristaSelect').value, periodo=document.getElementById('calcPeriodo').value; if(!motorista){ document.getElementById('calcTotalFrete').innerHTML='R$ 0,00'; document.getElementById('calcListaFretes').innerHTML=''; atualizarReceber(0); return; } let fretes=faturamentoData.filter(f=>f.motorista===motorista); if(periodo){ let [ano,mes]=periodo.split('-'); fretes=fretes.filter(f=>f.data&&f.data.getFullYear()==ano&&f.data.getMonth()+1==mes); } let total=fretes.reduce((s,f)=>s+f.valor,0); document.getElementById('calcTotalFrete').innerHTML=`R$ ${total.toLocaleString('pt-BR',{minFractionDigits:2})}`; if(fretes.length) document.getElementById('calcListaFretes').innerHTML=`<table class="data-table"><thead><tr><th>Data</th><th>Rota</th><th>Valor</th></tr></thead><tbody>${fretes.map(f=>`<tr><td>${moment(f.data).format('DD/MM/YY')}<\/td><td>${f.origem}→${f.destino}<\/td><td>R$ ${f.valor.toFixed(2)}<\/td><\/tr>`).join('')}<\/tbody><\/table>`; else document.getElementById('calcListaFretes').innerHTML='<small>Nenhum frete</small>'; atualizarReceber(total); }
     function atualizarReceber(totalFrete){ let comissao=parseFloat(document.getElementById('calcComissaoPercent').value)||0; let despesas=parseFloat(document.getElementById('calcDespesasMot').value)||0; let diaria=parseFloat(document.getElementById('calcDiaria').value)||0; let bonus=parseFloat(document.getElementById('calcBonus').value)||0; let vales=parseFloat(document.getElementById('calcVales').value)||0; let ir=parseFloat(document.getElementById('calcIr').value)||0; let multa=parseFloat(document.getElementById('calcMulta').value)||0; let dep=parseFloat(document.getElementById('calcDepFolha').value)||0; let valor=(totalFrete*(comissao/100))+despesas+diaria+bonus-vales-ir-multa-dep; document.getElementById('calcValorReceber').innerHTML=`R$ ${valor.toLocaleString('pt-BR',{minFractionDigits:2})}`; }
     document.getElementById('calcAplicarFiltros').addEventListener('click',calcularSalario);
     ['calcComissaoPercent','calcDespesasMot','calcDiaria','calcBonus','calcVales','calcIr','calcMulta','calcDepFolha'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{ let total=parseFloat(document.getElementById('calcTotalFrete').innerText.replace(/[^0-9,-]/g,'').replace(',','.'))||0; atualizarReceber(total); }));
     
-    // Helper para mostrar erro na aba
     function showErrorInTab(tabId, message) {
         const tab = document.getElementById(tabId);
         if (!tab) return;
@@ -830,10 +771,11 @@
         setTimeout(() => { if(errorDiv.parentNode) errorDiv.remove(); }, 8000);
     }
     
-    // Inicialização das abas
     document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>{ let tabId=btn.getAttribute('data-tab'); document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active')); document.getElementById(tabId).classList.add('active'); if(tabId==='tabBaterias' && bateriasData.length===0) loadBateriasData(true); else if(tabId==='tabBaterias') aplicarFiltrosBaterias(); }));
-    // Carregamento inicial
-    loadFinanceiroData(true); loadFaturamentoData(true); loadBateriasData(true);
+    // Carregamento inicial (aguarda URLs serem configuradas, mas tenta com vazio)
+    if (URL_FINANCEIRO) loadFinanceiroData(true);
+    if (URL_FATURAMENTO) loadFaturamentoData(true);
+    if (URL_BATERIAS) loadBateriasData(true);
 </script>
 </body>
 </html>
