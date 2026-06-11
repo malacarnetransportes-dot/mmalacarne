@@ -1,738 +1,1233 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>M-Malacarne Transporte & Logística | Gestão Premium</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --primary: #8B7355;
-            --primary-dark: #6B533A;
-            --primary-light: #A88F6E;
-            --accent: #d4af37;
-            --accent-dark: #b8941f;
-            --light: #f8f9fa;
-            --dark: #1a1a1a;
-            --text: #2d3748;
-            --text-light: #718096;
-            --premium-dark: #1e2a3a;
-            --success: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --info: #3b82f6;
-            --gray-100: #f1f5f9;
-            --gray-200: #e2e8f0;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-            --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.1);
-            --radius-sm: 8px;
-            --radius-md: 16px;
-            --radius-lg: 24px;
-            --radius-xl: 32px;
-        }
-
-        body {
-            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
-            color: var(--text);
-            background: linear-gradient(135deg, #f5f7fa 0%, #eef2f6 100%);
-            line-height: 1.5;
-        }
-
-        /* Layout Público */
-        header {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(12px);
-            padding: 0.8rem 5%;
-            position: fixed;
-            width: 100%;
-            top: 0;
-            z-index: 1000;
-            box-shadow: var(--shadow-md);
-            border-bottom: 1px solid rgba(139, 115, 85, 0.15);
-        }
-
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1280px;
-            margin: 0 auto;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .logo-img {
-            height: 52px;
-            width: auto;
-            border-radius: 12px;
-            transition: transform 0.2s;
-        }
-
-        .logo-img:hover {
-            transform: scale(1.02);
-        }
-
-        .logo-text {
-            display: flex;
-            flex-direction: column;
-            line-height: 1.2;
-        }
-
-        .logo-main {
-            font-size: 1.5rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
-            letter-spacing: -0.3px;
-        }
-
-        .logo-sub {
-            font-size: 0.65rem;
-            font-weight: 500;
-            color: var(--text-light);
-            letter-spacing: 1.2px;
-            text-transform: uppercase;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            list-style: none;
-            align-items: center;
-        }
-
-        .nav-links a {
-            color: var(--text);
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.2s;
-            font-size: 0.9rem;
-            position: relative;
-        }
-
-        .nav-links a::after {
-            content: '';
-            position: absolute;
-            bottom: -6px;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: linear-gradient(90deg, var(--accent), var(--accent-dark));
-            transition: width 0.25s ease;
-        }
-
-        .nav-links a:hover::after {
-            width: 100%;
-        }
-
-        .private-btn {
-            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-            color: var(--dark) !important;
-            padding: 0.4rem 1.2rem;
-            border-radius: 40px;
-            font-weight: 700;
-        }
-
-        .private-btn::after {
-            display: none;
-        }
-
-        .hero {
-            height: 65vh;
-            background: linear-gradient(135deg, rgba(30, 42, 58, 0.85) 0%, rgba(26, 32, 44, 0.9) 100%), url('IMG-20220924-WA0022 (1).jpg');
-            background-size: cover;
-            background-position: center 30%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            color: white;
-            margin-top: 70px;
-            padding: 0 5%;
-            border-bottom: 4px solid var(--accent);
-        }
-
-        .hero-content h1 {
-            font-size: 2.6rem;
-            margin-bottom: 1rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-        }
-
-        .cta-button {
-            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
-            color: var(--dark);
-            padding: 0.8rem 2rem;
-            border-radius: 60px;
-            font-size: 0.9rem;
-            font-weight: 700;
-            text-decoration: none;
-            display: inline-block;
-            transition: all 0.2s;
-            box-shadow: var(--shadow-sm);
-            border: none;
-            cursor: pointer;
-        }
-
-        .cta-button:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .stats {
-            background: white;
-            padding: 2.5rem 5%;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.8rem;
-            max-width: 1100px;
-            margin: -30px auto 0;
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-lg);
-            position: relative;
-            z-index: 10;
-        }
-
-        .stat-card {
-            text-align: center;
-            padding: 1.5rem;
-            background: var(--light);
-            border-radius: var(--radius-lg);
-            transition: transform 0.2s;
-            border: 1px solid rgba(139,115,85,0.1);
-        }
-
-        .stat-card:hover {
-            transform: translateY(-4px);
-        }
-
-        .stat-number {
-            font-size: 2.4rem;
-            font-weight: 800;
-            color: var(--primary);
-        }
-
-        .values, .gallery, .contact {
-            padding: 3rem 5%;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .section-title {
-            text-align: center;
-            font-size: 2rem;
-            margin-bottom: 2rem;
-            color: var(--premium-dark);
-            font-weight: 700;
-            position: relative;
-        }
-
-        .section-title::after {
-            content: '';
-            display: block;
-            width: 60px;
-            height: 3px;
-            background: linear-gradient(90deg, var(--accent), var(--accent-dark));
-            margin: 0.6rem auto 0;
-            border-radius: 3px;
-        }
-
-        .values-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 1.8rem;
-        }
-
-        .value-card {
-            background: white;
-            padding: 2rem;
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-md);
-            text-align: center;
-            transition: all 0.2s;
-            border: 1px solid rgba(0,0,0,0.03);
-        }
-
-        .value-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin-top: 1rem;
-        }
-
-        .gallery-item {
-            height: 240px;
-            border-radius: var(--radius-lg);
-            overflow: hidden;
-            box-shadow: var(--shadow-md);
-        }
-
-        .gallery-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.4s ease;
-        }
-
-        .gallery-item:hover img {
-            transform: scale(1.05);
-        }
-
-        .freight-calculator-section {
-            padding: 3rem 5%;
-            background: linear-gradient(120deg, #ffffff 0%, #fef9e6 100%);
-            text-align: center;
-            border-top: 1px solid rgba(139,115,85,0.2);
-            border-bottom: 1px solid rgba(139,115,85,0.2);
-        }
-
-        .jobs {
-            padding: 4rem 5%;
-            background: linear-gradient(135deg, var(--premium-dark) 0%, #2d3748 100%);
-            color: white;
-        }
-
-        .job-card {
-            background: rgba(255, 255, 255, 0.97);
-            border-radius: var(--radius-xl);
-            padding: 2rem;
-            color: var(--text);
-            max-width: 700px;
-            margin: 0 auto;
-            text-align: center;
-            box-shadow: var(--shadow-lg);
-        }
-
-        .contact-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2.5rem;
-            margin-top: 2rem;
-        }
-
-        .whatsapp-float {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            z-index: 1100;
-        }
-
-        .whatsapp-float a {
-            background: #25D366;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 60px;
-            text-decoration: none;
-            font-weight: bold;
-            box-shadow: var(--shadow-lg);
-            transition: transform 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .whatsapp-float a:hover {
-            transform: scale(1.05);
-        }
-
-        footer {
-            background: var(--premium-dark);
-            color: #bbb;
-            text-align: center;
-            padding: 2rem 5%;
-            font-size: 0.85rem;
-        }
-
-        .menu-toggle {
-            display: none;
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--primary);
-        }
-
-        @media (max-width: 768px) {
-            .hero { height: 50vh; margin-top: 60px; }
-            .hero-content h1 { font-size: 1.8rem; }
-            .nav-links {
-                display: none;
-                position: absolute;
-                top: 100%;
-                left: 0;
-                width: 100%;
-                background: white;
-                flex-direction: column;
-                padding: 1.2rem;
-                gap: 1rem;
-                box-shadow: var(--shadow-md);
-            }
-            .nav-links.active { display: flex; }
-            .menu-toggle { display: block; }
-            .contact-grid { grid-template-columns: 1fr; }
-            .stats { margin-top: -20px; }
-            .stat-number { font-size: 1.8rem; }
-        }
-
-        /* ========= ÁREA PRIVADA (layout modernizado, controles intactos) ========= */
-        .private-area {
-            display: none;
-            background: var(--gray-100);
-            min-height: 100vh;
-            padding: 2rem;
-        }
-
-        .private-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-            background: white;
-            padding: 1rem 1.8rem;
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .tabs {
-            display: flex;
-            gap: 0.5rem;
-            border-bottom: 2px solid var(--accent);
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-            background: white;
-            padding: 0.5rem 1rem 0 1rem;
-            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-        }
-
-        .tab-btn {
-            background: transparent;
-            border: none;
-            padding: 0.7rem 1.6rem;
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 0.9rem;
-            border-radius: 40px 40px 0 0;
-            transition: all 0.2s;
-            color: var(--text-light);
-        }
-
-        .tab-btn.active {
-            background: var(--accent);
-            color: var(--dark);
-            box-shadow: 0 -2px 6px rgba(0,0,0,0.05);
-        }
-
-        .dashboard-card {
-            background: white;
-            border-radius: var(--radius-xl);
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow-md);
-            transition: all 0.2s;
-            border: 1px solid rgba(0,0,0,0.03);
-        }
-
-        .dashboard-card:hover {
-            box-shadow: var(--shadow-lg);
-        }
-
-        .filter-group {
-            display: inline-flex;
-            flex-direction: column;
-            margin-right: 1rem;
-            margin-bottom: 0.8rem;
-        }
-
-        .filter-group label {
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: var(--text-light);
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
-        }
-
-        .filter-group input, .filter-group select {
-            padding: 0.6rem 0.9rem;
-            border-radius: var(--radius-md);
-            border: 1px solid var(--gray-200);
-            min-width: 140px;
-            font-size: 0.85rem;
-            background: white;
-            transition: 0.2s;
-        }
-
-        .filter-group input:focus, .filter-group select:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
-        }
-
-        .btn-export {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 0.5rem 1.2rem;
-            border-radius: 40px;
-            cursor: pointer;
-            margin: 0 0.3rem 0.5rem 0;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .btn-export:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
-
-        .btn-refresh { background: var(--info); }
-        .btn-reset { background: #6c757d; }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.8rem;
-            border-radius: var(--radius-md);
-            overflow: hidden;
-        }
-
-        .data-table th {
-            background: var(--gray-100);
-            font-weight: 700;
-            padding: 12px 10px;
-            text-align: left;
-            border-bottom: 2px solid var(--gray-200);
-        }
-
-        .data-table td {
-            padding: 10px 10px;
-            border-bottom: 1px solid var(--gray-200);
-            vertical-align: middle;
-        }
-
-        .data-table tr:hover td {
-            background-color: #fef9e6;
-        }
-
-        .ranking-numerado {
-            counter-reset: rank;
-            list-style: none;
-            padding: 0;
-        }
-
-        .ranking-numerado li {
-            counter-increment: rank;
-            margin-bottom: 0.6rem;
-            padding: 0.6rem 0.9rem;
-            background: var(--gray-100);
-            border-radius: var(--radius-md);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .ranking-numerado li::before {
-            content: counter(rank) "º";
-            font-weight: bold;
-            background: var(--accent);
-            color: var(--dark);
-            padding: 0.2rem 0.7rem;
-            border-radius: 30px;
-            margin-right: 1rem;
-            font-size: 0.8rem;
-        }
-
-        .consolidado-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1rem;
-        }
-
-        .consolidado-card {
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-            border-radius: var(--radius-lg);
-            padding: 1rem;
-            text-align: center;
-            border: 1px solid rgba(0,0,0,0.05);
-        }
-
-        .badge-vencido { background: #fee2e2; color: var(--danger); padding: 0.2rem 0.6rem; border-radius: 30px; font-size: 0.7rem; font-weight: 600; }
-        .badge-proximo { background: #fef3c7; color: var(--warning); }
-        .badge-normal { background: #e2e8f0; color: #475569; }
-
-        .login-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(8px);
-            z-index: 2000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            visibility: hidden;
-            opacity: 0;
-            transition: 0.2s;
-        }
-        .login-overlay.active { visibility: visible; opacity: 1; }
-        .login-card {
-            background: white;
-            border-radius: var(--radius-xl);
-            padding: 2rem;
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-            border-top: 5px solid var(--accent);
-        }
-        .url-modal {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            z-index: 4000;
-            padding: 2rem;
-            border-radius: var(--radius-xl);
-            width: 90%;
-            max-width: 520px;
-            display: none;
-            box-shadow: var(--shadow-lg);
-        }
-        .url-modal.active { display: block; }
-        .antt-link-card {
-            background: linear-gradient(105deg, #f0f4f8 0%, #e9edf2 100%);
-            border-radius: var(--radius-lg);
-            padding: 1rem 1.5rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            margin-top: 1rem;
-        }
-        .result-value { font-size: 1.6rem; font-weight: 800; color: var(--success); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M-Malacarne Transporte & Logística</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+:root{
+  --primary:#8B7355;--primary-dk:#6B533A;--primary-lt:#A88F6E;
+  --accent:#d4af37;--accent-dk:#b8941f;
+  --dark:#1a1a1a;--text:#2d3748;--text-lt:#718096;
+  --bg:#f5f7fa;--bg2:#eef2f6;
+  --success:#10b981;--danger:#ef4444;--warning:#f59e0b;--info:#3b82f6;
+  --gray-100:#f1f5f9;--gray-200:#e2e8f0;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.06);
+  --shadow-md:0 4px 16px rgba(0,0,0,.09);
+  --shadow-lg:0 12px 32px rgba(0,0,0,.12);
+  --r8:8px;--r12:12px;--r16:16px;--r24:24px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;color:var(--text);background:var(--bg);line-height:1.55;}
+
+/* ── NAV ── */
+header{background:rgba(255,255,255,.98);backdrop-filter:blur(12px);padding:.7rem 5%;position:fixed;width:100%;top:0;z-index:1000;box-shadow:var(--shadow-md);border-bottom:2px solid rgba(212,175,55,.2);}
+nav{display:flex;justify-content:space-between;align-items:center;max-width:1300px;margin:0 auto;}
+.logo{display:flex;align-items:center;gap:.8rem;}
+.logo img{height:50px;border-radius:8px;}
+.logo-main{font-size:1.4rem;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--primary-dk));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.logo-sub{font-size:.6rem;color:var(--text-lt);letter-spacing:1.2px;text-transform:uppercase;}
+.nav-links{display:flex;gap:1.6rem;list-style:none;align-items:center;}
+.nav-links a{color:var(--text);text-decoration:none;font-weight:500;font-size:.88rem;position:relative;padding-bottom:2px;}
+.nav-links a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:2px;background:var(--accent);transition:.25s;}
+.nav-links a:hover::after{width:100%;}
+.priv-btn{background:linear-gradient(135deg,var(--accent),var(--accent-dk))!important;color:#111!important;padding:.35rem 1.1rem!important;border-radius:40px;font-weight:700!important;}
+.priv-btn::after{display:none!important;}
+.menu-toggle{display:none;background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--primary);}
+
+/* ── HERO ── */
+.hero{height:70vh;background:linear-gradient(135deg,rgba(20,30,46,.88) 0%,rgba(26,32,44,.92) 100%),url('IMG-20220924-WA0022 (1).jpg') center/cover;display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;margin-top:68px;padding:0 5%;border-bottom:4px solid var(--accent);}
+.hero h1{font-size:2.8rem;font-weight:800;margin-bottom:.8rem;letter-spacing:-.02em;}
+.hero p{font-size:1.1rem;opacity:.85;margin-bottom:1.5rem;}
+.cta-btn{display:inline-flex;align-items:center;gap:.5rem;background:linear-gradient(135deg,var(--accent),var(--accent-dk));color:#111;padding:.75rem 1.8rem;border-radius:60px;font-weight:700;text-decoration:none;font-size:.9rem;transition:.2s;box-shadow:var(--shadow-sm);border:none;cursor:pointer;}
+.cta-btn:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
+.cta-btn.outline{background:transparent;color:#fff;border:2px solid rgba(255,255,255,.4);margin-left:.5rem;}
+.cta-btn.outline:hover{background:rgba(255,255,255,.1);}
+
+/* ── STATS BANNER ── */
+.stats-banner{max-width:1100px;margin:-36px auto 0;background:#fff;border-radius:var(--r24);box-shadow:var(--shadow-lg);display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0;position:relative;z-index:10;overflow:hidden;}
+.stat-item{padding:1.6rem 1.2rem;text-align:center;border-right:1px solid var(--gray-200);}
+.stat-item:last-child{border-right:none;}
+.stat-num{font-size:2.2rem;font-weight:800;color:var(--primary);}
+.stat-lbl{font-size:.8rem;color:var(--text-lt);margin-top:.2rem;}
+
+/* ── SECTIONS ── */
+.section{padding:4rem 5%;max-width:1260px;margin:0 auto;}
+.section-title{font-size:1.9rem;font-weight:700;color:#1e2a3a;text-align:center;margin-bottom:2rem;position:relative;}
+.section-title::after{content:'';display:block;width:56px;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent-dk));margin:.5rem auto 0;border-radius:3px;}
+
+/* ── VALUES ── */
+.values-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.6rem;}
+.value-card{background:#fff;padding:2rem;border-radius:var(--r16);box-shadow:var(--shadow-md);text-align:center;transition:.2s;border:1px solid rgba(0,0,0,.03);}
+.value-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);}
+.value-icon{font-size:2.4rem;margin-bottom:1rem;}
+.value-card h3{font-size:1.05rem;font-weight:700;margin-bottom:.5rem;color:#1e2a3a;}
+.value-card p{font-size:.85rem;color:var(--text-lt);line-height:1.6;}
+
+/* ── GALLERY ── */
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.2rem;}
+.gallery-item{height:230px;border-radius:var(--r16);overflow:hidden;box-shadow:var(--shadow-md);}
+.gallery-item img{width:100%;height:100%;object-fit:cover;transition:.4s;}
+.gallery-item:hover img{transform:scale(1.06);}
+
+/* ── ANTT SECTION ── */
+.antt-section{background:linear-gradient(135deg,#fff 0%,#fef9e6 100%);padding:3rem 5%;text-align:center;border-top:1px solid rgba(139,115,85,.15);border-bottom:1px solid rgba(139,115,85,.15);}
+.antt-cards{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;margin-top:1.5rem;}
+.antt-card{background:#fff;border:1px solid rgba(212,175,55,.3);border-radius:var(--r16);padding:1.2rem 1.8rem;display:flex;align-items:center;gap:.8rem;box-shadow:var(--shadow-sm);text-decoration:none;color:var(--text);transition:.2s;font-weight:600;}
+.antt-card:hover{border-color:var(--accent);box-shadow:var(--shadow-md);transform:translateY(-2px);}
+.antt-card i{font-size:1.4rem;color:var(--accent);}
+
+/* ── VAGAS ── */
+.vagas-section{background:linear-gradient(135deg,#1e2a3a 0%,#2d3748 100%);padding:4rem 5%;color:#fff;text-align:center;}
+.vagas-section .section-title{color:#fff;}
+.vagas-section .section-title::after{background:var(--accent);}
+.job-card{background:#fff;color:var(--text);border-radius:var(--r24);padding:2rem;max-width:680px;margin:0 auto;box-shadow:var(--shadow-lg);}
+.job-card h3{font-size:1.4rem;font-weight:800;margin-bottom:.5rem;color:#1e2a3a;}
+.job-tags{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin:1rem 0;}
+.job-tag{background:var(--gray-100);padding:.3rem .9rem;border-radius:40px;font-size:.8rem;font-weight:600;color:var(--text-lt);}
+.job-reqs{text-align:left;margin:1rem 0;padding:1rem;background:var(--gray-100);border-radius:var(--r12);}
+.job-reqs li{font-size:.85rem;padding:.2rem 0;}
+
+/* ── CONTACT ── */
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;margin-top:2rem;}
+.contact-info-card{background:#fff;border-radius:var(--r16);padding:1.8rem;box-shadow:var(--shadow-md);}
+.contact-info-card h3{font-size:1rem;font-weight:700;color:#1e2a3a;margin-bottom:.8rem;display:flex;align-items:center;gap:.5rem;}
+.contact-info-card p{font-size:.9rem;color:var(--text-lt);margin-bottom:.4rem;}
+
+/* ── FOOTER ── */
+footer{background:#1e2a3a;color:#94a3b8;text-align:center;padding:2rem 5%;font-size:.82rem;}
+footer a{color:var(--accent);text-decoration:none;}
+
+/* ── WHATSAPP FLOAT ── */
+.wa-float{position:fixed;bottom:24px;right:24px;z-index:1100;}
+.wa-float a{background:#25D366;color:#fff;padding:10px 18px;border-radius:60px;text-decoration:none;font-weight:700;box-shadow:var(--shadow-lg);transition:.2s;display:flex;align-items:center;gap:7px;font-size:.88rem;}
+.wa-float a:hover{transform:scale(1.05);}
+
+/* ── LOGIN OVERLAY ── */
+.login-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);z-index:2000;display:flex;align-items:center;justify-content:center;visibility:hidden;opacity:0;transition:.2s;}
+.login-overlay.active{visibility:visible;opacity:1;}
+.login-card{background:#fff;border-radius:var(--r24);padding:2.5rem 2rem;width:90%;max-width:400px;text-align:center;border-top:5px solid var(--accent);}
+.login-card h2{margin:1rem 0 .5rem;font-size:1.3rem;color:#1e2a3a;}
+.login-input{width:100%;padding:.75rem 1rem;border-radius:var(--r12);border:1px solid var(--gray-200);margin-top:.8rem;font-size:.9rem;transition:.2s;}
+.login-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(212,175,55,.2);}
+.login-btn{width:100%;padding:.85rem;background:linear-gradient(135deg,var(--accent),var(--accent-dk));border:none;border-radius:60px;font-weight:700;font-size:.95rem;margin-top:1.2rem;cursor:pointer;color:#111;}
+
+/* ═══════════════════════════════════════
+   ÁREA PRIVADA
+═══════════════════════════════════════ */
+.private-area{display:none;background:var(--bg);min-height:100vh;}
+
+/* Sidebar + Content layout */
+.pa-layout{display:flex;min-height:100vh;}
+.pa-sidebar{width:240px;background:linear-gradient(180deg,#1e2a3a 0%,#162030 100%);position:fixed;top:0;left:0;height:100vh;z-index:500;display:flex;flex-direction:column;padding:1.5rem 0;}
+.pa-sidebar-logo{padding:0 1.2rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:1rem;}
+.pa-sidebar-logo img{height:42px;border-radius:8px;}
+.pa-sidebar-logo .brand{color:#fff;font-size:1rem;font-weight:700;margin-top:.4rem;}
+.pa-sidebar-logo .brand-sub{color:#94a3b8;font-size:.65rem;letter-spacing:1px;text-transform:uppercase;}
+.pa-nav{flex:1;padding:0 .8rem;}
+.pa-nav-item{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;border-radius:var(--r12);color:#94a3b8;cursor:pointer;transition:.2s;font-size:.88rem;font-weight:500;margin-bottom:.2rem;border:none;background:none;width:100%;text-align:left;}
+.pa-nav-item:hover{background:rgba(255,255,255,.07);color:#fff;}
+.pa-nav-item.active{background:linear-gradient(135deg,rgba(212,175,55,.18),rgba(212,175,55,.08));color:var(--accent);border-left:3px solid var(--accent);}
+.pa-nav-item i{width:18px;text-align:center;}
+.pa-sidebar-footer{padding:1rem 1.2rem;border-top:1px solid rgba(255,255,255,.08);}
+.pa-content{margin-left:240px;flex:1;min-height:100vh;}
+
+/* Top bar */
+.pa-topbar{background:#fff;padding:.9rem 2rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--gray-200);box-shadow:var(--shadow-sm);position:sticky;top:0;z-index:100;}
+.pa-topbar h1{font-size:1.1rem;font-weight:700;color:#1e2a3a;}
+.pa-topbar-right{display:flex;align-items:center;gap:.8rem;}
+.pa-main{padding:1.8rem 2rem;}
+
+/* Tabs content */
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+
+/* KPI cards */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1.2rem;margin-bottom:1.8rem;}
+.kpi-card{background:#fff;border-radius:var(--r16);padding:1.4rem;box-shadow:var(--shadow-sm);border:1px solid rgba(0,0,0,.04);display:flex;align-items:center;gap:1rem;}
+.kpi-icon{width:48px;height:48px;border-radius:var(--r12);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;}
+.kpi-icon.green{background:rgba(16,185,129,.1);color:var(--success);}
+.kpi-icon.blue{background:rgba(59,130,246,.1);color:var(--info);}
+.kpi-icon.yellow{background:rgba(212,175,55,.1);color:var(--accent);}
+.kpi-icon.red{background:rgba(239,68,68,.1);color:var(--danger);}
+.kpi-icon.brown{background:rgba(139,115,85,.1);color:var(--primary);}
+.kpi-val{font-size:1.5rem;font-weight:800;color:#1e2a3a;line-height:1.1;}
+.kpi-lbl{font-size:.72rem;color:var(--text-lt);margin-top:.1rem;font-weight:500;}
+
+/* Dash card */
+.dash-card{background:#fff;border-radius:var(--r16);padding:1.5rem;box-shadow:var(--shadow-sm);border:1px solid rgba(0,0,0,.04);margin-bottom:1.4rem;}
+.dash-card-title{font-size:.9rem;font-weight:700;color:#1e2a3a;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;}
+.dash-card-title i{color:var(--accent);}
+
+/* Filters bar */
+.filters-bar{display:flex;flex-wrap:wrap;gap:.7rem;align-items:flex-end;margin-bottom:1.2rem;}
+.flt-grp{display:flex;flex-direction:column;gap:.25rem;}
+.flt-grp label{font-size:.68rem;font-weight:700;text-transform:uppercase;color:var(--text-lt);letter-spacing:.5px;}
+.flt-grp input,.flt-grp select{padding:.5rem .8rem;border-radius:var(--r8);border:1px solid var(--gray-200);font-size:.83rem;min-width:130px;background:#fff;transition:.2s;}
+.flt-grp input:focus,.flt-grp select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(212,175,55,.15);}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.1rem;border:none;border-radius:40px;font-weight:600;font-size:.82rem;cursor:pointer;transition:.2s;}
+.btn:hover{opacity:.88;transform:translateY(-1px);}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-accent{background:var(--accent);color:#111;}
+.btn-info{background:var(--info);color:#fff;}
+.btn-success{background:var(--success);color:#fff;}
+.btn-gray{background:#64748b;color:#fff;}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-sm{padding:.35rem .8rem;font-size:.78rem;}
+
+/* Tables */
+.tbl-wrap{overflow-x:auto;border-radius:var(--r12);border:1px solid var(--gray-200);}
+.data-table{width:100%;border-collapse:collapse;font-size:.8rem;}
+.data-table th{background:var(--gray-100);font-weight:700;padding:10px 12px;text-align:left;border-bottom:2px solid var(--gray-200);white-space:nowrap;color:#1e2a3a;}
+.data-table td{padding:9px 12px;border-bottom:1px solid var(--gray-200);vertical-align:middle;}
+.data-table tbody tr:hover td{background:#fefce8;}
+.data-table .badge{padding:.15rem .55rem;border-radius:30px;font-size:.7rem;font-weight:700;}
+.badge-success{background:#d1fae5;color:#065f46;}
+.badge-danger{background:#fee2e2;color:#991b1b;}
+.badge-warning{background:#fef3c7;color:#92400e;}
+.badge-info{background:#dbeafe;color:#1e40af;}
+.badge-gray{background:#e2e8f0;color:#475569;}
+
+/* Ranking */
+.rank-list{list-style:none;padding:0;counter-reset:rank;}
+.rank-list li{counter-increment:rank;display:flex;justify-content:space-between;align-items:center;padding:.7rem 1rem;background:var(--gray-100);border-radius:var(--r8);margin-bottom:.5rem;font-size:.85rem;flex-wrap:wrap;gap:.5rem;}
+.rank-list li::before{content:counter(rank)"º";background:var(--accent);color:#111;padding:.15rem .6rem;border-radius:30px;font-size:.75rem;font-weight:800;margin-right:.7rem;}
+
+/* Charts */
+.charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.4rem;margin-bottom:1.4rem;}
+
+/* Calculadora */
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;}
+.calc-group{display:flex;flex-direction:column;gap:.4rem;margin-bottom:.9rem;}
+.calc-group label{font-size:.78rem;font-weight:700;color:var(--text-lt);text-transform:uppercase;letter-spacing:.4px;}
+.calc-group input,.calc-group select{padding:.65rem .9rem;border-radius:var(--r8);border:1px solid var(--gray-200);font-size:.88rem;transition:.2s;}
+.calc-group input:focus,.calc-group select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(212,175,55,.15);}
+.calc-result{background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:2px solid var(--success);border-radius:var(--r16);padding:1.5rem;text-align:center;}
+.calc-result .result-val{font-size:2rem;font-weight:800;color:var(--success);}
+.calc-result .result-lbl{font-size:.8rem;color:#065f46;margin-top:.3rem;}
+
+/* URL modal */
+.url-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;z-index:4000;padding:2rem;border-radius:var(--r24);width:90%;max-width:520px;display:none;box-shadow:var(--shadow-lg);}
+.url-modal.active{display:block;}
+.url-modal input{width:100%;padding:.6rem .9rem;border-radius:var(--r8);border:1px solid var(--gray-200);font-size:.85rem;margin:.4rem 0 .9rem;}
+
+/* Baterias alertas */
+.baterias-alerta-bar{display:flex;gap:.7rem;flex-wrap:wrap;margin-bottom:1rem;}
+.alerta-chip{display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .8rem;border-radius:40px;font-size:.78rem;font-weight:700;}
+.alerta-chip.red{background:#fee2e2;color:#991b1b;}
+.alerta-chip.yellow{background:#fef3c7;color:#92400e;}
+.alerta-chip.green{background:#d1fae5;color:#065f46;}
+
+/* Loading */
+.loading-spinner{display:flex;align-items:center;gap:.7rem;color:var(--text-lt);font-size:.85rem;padding:1.5rem;}
+.spinner{width:20px;height:20px;border:2px solid var(--gray-200);border-top:2px solid var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e2a3a;color:#fff;padding:.7rem 1.4rem;border-radius:40px;font-size:.85rem;z-index:9999;opacity:0;pointer-events:none;transition:.3s;}
+.toast.show{opacity:1;}
+
+@media(max-width:900px){
+  .pa-sidebar{width:220px;}
+  .pa-content{margin-left:220px;}
+  .calc-grid{grid-template-columns:1fr;}
+}
+@media(max-width:680px){
+  .pa-sidebar{transform:translateX(-100%);transition:.3s;}
+  .pa-sidebar.open{transform:none;}
+  .pa-content{margin-left:0;}
+  .hero h1{font-size:1.8rem;}
+  .contact-grid{grid-template-columns:1fr;}
+  .menu-toggle{display:block;}
+  .nav-links{display:none;position:absolute;top:100%;left:0;width:100%;background:#fff;flex-direction:column;padding:1rem;gap:.8rem;box-shadow:var(--shadow-md);}
+  .nav-links.open{display:flex;}
+}
+</style>
 </head>
 <body>
 
-<div id="servicoModal" class="modal-popup" style="position:fixed; top:20%; left:50%; transform:translate(-50%,-20%); background:white; padding:1.5rem; border-radius:24px; box-shadow:0 20px 35px rgba(0,0,0,0.3); z-index:3000; max-width:90%; width:400px; display:none; border-top:6px solid var(--accent);"><h3>Detalhe do Serviço</h3><p id="servicoDetalheTexto"></p><button onclick="document.getElementById('servicoModal').style.display='none'" style="margin-top:1rem; background:var(--primary); color:white; border:none; padding:0.5rem 1rem; border-radius:30px; cursor:pointer;">Fechar</button></div>
-<div id="urlConfigModal" class="url-modal"><h3><i class="fas fa-link"></i> Configurar URLs das Planilhas</h3><p style="font-size:0.8rem;">As URLs padrão já estão pré-definidas. Altere apenas se necessário.</p>
-<label>💰 Financeiro (CSV):</label><input type="text" id="urlFinanceiro" placeholder="URL do CSV Financeiro">
-<label>🚛 Faturamento (CSV):</label><input type="text" id="urlFaturamento" placeholder="URL do CSV Faturamento">
-<label>🔋 Baterias (CSV):</label><input type="text" id="urlBaterias" placeholder="URL do CSV Baterias">
-<br><br><button id="saveUrlsBtn" class="btn-export">Salvar e Recarregar</button><button id="closeUrlModalBtn" class="btn-export btn-reset">Fechar</button></div>
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
 
+<!-- ══════════════ SITE PÚBLICO ══════════════ -->
 <div id="publicSite">
-    <div class="whatsapp-float"><a href="https://wa.me/5549999675448" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a></div>
-    <header><nav><div class="logo"><img src="Screenshot_2.jpg" alt="M-Malacarne" class="logo-img" onerror="this.style.display='none'"><div class="logo-text"><div class="logo-main">M-MALACARNE</div><div class="logo-sub">TRANSPORTE & LOGISTICA</div></div></div><button class="menu-toggle">☰</button><ul class="nav-links"><li><a href="#home">Início</a></li><li><a href="#sobre">Sobre</a></li><li><a href="#valores">Valores</a></li><li><a href="#infraestrutura">Infraestrutura</a></li><li><a href="#calculadora-antt">Ferramentas ANTT</a></li><li><a href="#vagas">Vagas</a></li><li><a href="#contato">Contato</a></li><li><a href="#" id="privateAccessBtn" class="private-btn">🔒 Acesso Privado</a></li></ul></nav></header>
-    <section id="home" class="hero"><div class="hero-content"><h1>40 Anos Movendo o Brasil</h1><p>Excelência em Transporte e Logística desde 1982</p><a href="#contato" class="cta-button">Fale Conosco</a></div></section>
-    <section class="stats"><div class="stat-card"><div class="stat-number">40+</div><div>Anos</div></div><div class="stat-card"><div class="stat-number">100%</div><div>Frota Frigorífica</div></div><div class="stat-card"><div class="stat-number">BRF</div><div>Parceiro Exclusivo</div></div></section>
-    <section id="sobre" class="values"><h2 class="section-title">Nossa História</h2><p style="text-align:center;">Criada em <strong>1982</strong>, a M-Malacarne Transportes e Logística atua com frota frigorífica exclusiva para BRF, garantindo excelência e pontualidade.</p></section>
-    <section id="infraestrutura" class="gallery"><h2 class="section-title">Infraestrutura</h2><div class="gallery-grid"><div class="gallery-item"><img src="IMG-20220924-WA0022 (1).jpg" alt="Frota"></div><div class="gallery-item"><img src="img87.jpg" alt="Instalações"></div></div></section>
-    
-    <!-- Seção ANTT com dois links: Calculadora Frete + Consulta RNTRC -->
-    <section id="calculadora-antt" class="freight-calculator-section">
-        <h2>📊 Ferramentas Oficiais ANTT</h2>
-        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 1.2rem; margin-top: 1.5rem;">
-            <a href="https://calculadorafrete.antt.gov.br/" target="_blank" class="cta-button"><i class="fas fa-calculator"></i> Calculadora de Frete</a>
-            <a href="https://consultapublica.antt.gov.br/Site/ConsultaRNTRC.aspx" target="_blank" class="cta-button" style="background: linear-gradient(135deg, #2c3e66, #1a2a44);"><i class="fas fa-truck-moving"></i> Consulta RNTRC</a>
-        </div>
-        <div class="antt-link-card" style="margin: 1.5rem auto 0; display: inline-block;"><i class="fas fa-shield-alt"></i> Consulte regularização e registro de transportadores</div>
-    </section>
-    
-    <section id="vagas" class="jobs"><div class="job-card"><h3>🚛 Motorista de Carreta</h3><p>Vaga disponível - Contratação imediata</p><a href="https://wa.me/5549999675448" class="cta-button">📱 Candidate-se</a></div></section>
-    <section id="contato" class="contact"><h2 class="section-title">Contato</h2><div class="contact-grid"><div><h3>📍 Localização</h3><p>Rua Domingos Casagrande, 25 - Concórdia - SC</p><h3>📞 Contato</h3><p>Tel: (49) 3442-2325<br>WhatsApp: (49) 99967-5448</p><h3>✉️ financeirommalacarne@gmail.com</h3></div><div><iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3535.234!2d-52.027!3d-27.234!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjfCsDE4JzAyLjQiUyA1MsKwMDEnMzcuMiJX!5e0!3m2!1spt-BR!2sbr!4v1234567890" width="100%" height="250" style="border:0; border-radius:20px;" allowfullscreen></iframe></div></div></section>
-    <footer><p>© 2025 M-Malacarne Transporte e Logística Ltda EPP. Excelência que conecta.</p></footer>
+
+<div class="wa-float"><a href="https://wa.me/5549999675448" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a></div>
+
+<header>
+  <nav>
+    <div class="logo">
+      <img src="Screenshot_2.jpg" alt="M-Malacarne" onerror="this.style.display='none'">
+      <div><div class="logo-main">M-MALACARNE</div><div class="logo-sub">Transporte & Logística</div></div>
+    </div>
+    <button class="menu-toggle" id="menuToggle">☰</button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#home">Início</a></li>
+      <li><a href="#sobre">Sobre</a></li>
+      <li><a href="#infraestrutura">Infraestrutura</a></li>
+      <li><a href="#antt">Ferramentas ANTT</a></li>
+      <li><a href="#vagas">Vagas</a></li>
+      <li><a href="#contato">Contato</a></li>
+      <li><a href="#" id="privateAccessBtn" class="priv-btn">🔒 Acesso Privado</a></li>
+    </ul>
+  </nav>
+</header>
+
+<section id="home" class="hero">
+  <div>
+    <h1>40 Anos Movendo o Brasil</h1>
+    <p>Excelência em Transporte e Logística Frigorífica desde 1982</p>
+    <a href="#contato" class="cta-btn"><i class="fas fa-phone"></i> Fale Conosco</a>
+    <a href="#infraestrutura" class="cta-btn outline"><i class="fas fa-truck"></i> Nossa Frota</a>
+  </div>
+</section>
+
+<div class="stats-banner">
+  <div class="stat-item"><div class="stat-num">40+</div><div class="stat-lbl">Anos de Experiência</div></div>
+  <div class="stat-item"><div class="stat-num">100%</div><div class="stat-lbl">Frota Frigorífica</div></div>
+  <div class="stat-item"><div class="stat-num">BRF</div><div class="stat-lbl">Parceiro Exclusivo</div></div>
+  <div class="stat-item"><div class="stat-num">Sul/SE</div><div class="stat-lbl">Cobertura Sudeste</div></div>
 </div>
 
-<div id="loginModal" class="login-overlay"><div class="login-card"><i class="fas fa-lock" style="font-size:2rem; color:var(--accent)"></i><h2>Acesso Restrito</h2><input type="text" id="loginUser" class="login-input" placeholder="Usuário"><input type="password" id="loginPass" class="login-input" placeholder="Senha"><button id="doLoginBtn" style="background:var(--accent); border:none; padding:0.8rem; width:100%; border-radius:60px; font-weight:bold; margin-top:1rem;">Entrar</button><div id="loginError" style="color:red; margin-top:0.5rem;"></div></div></div>
+<div class="section" id="sobre" style="margin-top:2rem;">
+  <h2 class="section-title">Nossa História</h2>
+  <div class="values-grid">
+    <div class="value-card"><div class="value-icon">🏆</div><h3>Tradição Familiar</h3><p>Fundada em 1982, a M-Malacarne é uma empresa familiar com décadas de tradição e respeito no setor de transportes refrigerados.</p></div>
+    <div class="value-card"><div class="value-icon">❄️</div><h3>Especialistas em Frio</h3><p>Frota 100% frigorífica dedicada ao transporte de produtos alimentícios com rigoroso controle de temperatura.</p></div>
+    <div class="value-card"><div class="value-icon">🤝</div><h3>Parceiro BRF</h3><p>Parceiro exclusivo da BRF, uma das maiores empresas de alimentos do mundo, garantindo excelência operacional.</p></div>
+    <div class="value-card"><div class="value-icon">🗺️</div><h3>Cobertura Total</h3><p>Rotas cobrindo Sul, Sudeste e Sudoeste do Brasil com pontualidade e segurança garantidas.</p></div>
+  </div>
+</div>
 
+<div class="section" id="infraestrutura">
+  <h2 class="section-title">Nossa Infraestrutura</h2>
+  <div class="gallery-grid">
+    <div class="gallery-item"><img src="IMG-20220924-WA0022 (1).jpg" alt="Frota Scania" onerror="this.style.background:'#eee'"></div>
+    <div class="gallery-item"><img src="img87.jpg" alt="Sede" onerror="this.style.background:'#eee'"></div>
+    <div class="gallery-item"><img src="img89.jpg" alt="Pátio" onerror="this.style.background:'#eee'"></div>
+    <div class="gallery-item"><img src="7.jpg" alt="Frota" onerror="this.style.background:'#eee'"></div>
+    <div class="gallery-item"><img src="2.jpg" alt="Galpão" onerror="this.style.background:'#eee'"></div>
+  </div>
+</div>
+
+<div id="antt" class="antt-section">
+  <h2 class="section-title" style="text-align:center">📊 Ferramentas Oficiais ANTT</h2>
+  <p style="color:var(--text-lt);max-width:500px;margin:0 auto .5rem;font-size:.9rem">Acesse as ferramentas oficiais da Agência Nacional de Transportes Terrestres</p>
+  <div class="antt-cards">
+    <a href="https://calculadorafrete.antt.gov.br/" target="_blank" class="antt-card"><i class="fas fa-calculator"></i><div><div style="font-weight:700">Calculadora de Frete</div><div style="font-size:.78rem;color:var(--text-lt)">Tabela ANTT Oficial</div></div></a>
+    <a href="https://consultapublica.antt.gov.br/Site/ConsultaRNTRC.aspx" target="_blank" class="antt-card"><i class="fas fa-id-card"></i><div><div style="font-weight:700">Consulta RNTRC</div><div style="font-size:.78rem;color:var(--text-lt)">Registro Nacional</div></div></a>
+    <a href="https://www.antt.gov.br/" target="_blank" class="antt-card"><i class="fas fa-shield-alt"></i><div><div style="font-weight:700">Portal ANTT</div><div style="font-size:.78rem;color:var(--text-lt)">Site Oficial</div></div></a>
+  </div>
+</div>
+
+<div id="vagas" class="vagas-section">
+  <h2 class="section-title">Oportunidades de Emprego</h2>
+  <div class="job-card">
+    <div style="font-size:3rem;margin-bottom:.5rem">🚛</div>
+    <h3>Motorista de Carreta Frigorífica</h3>
+    <p style="color:var(--text-lt);font-size:.9rem">Contratação imediata — Concórdia, SC</p>
+    <div class="job-tags">
+      <span class="job-tag">13º Salário</span><span class="job-tag">Bônus Média</span><span class="job-tag">Férias</span><span class="job-tag">CLT</span>
+    </div>
+    <div class="job-reqs">
+      <p style="font-weight:700;margin-bottom:.5rem;font-size:.85rem">Pré-requisitos:</p>
+      <ul style="padding-left:1.2rem">
+        <li style="font-size:.85rem;padding:.2rem 0">Experiência na função</li>
+        <li style="font-size:.85rem;padding:.2rem 0">CNH Categoria E</li>
+        <li style="font-size:.85rem;padding:.2rem 0">Conhecimento rotas Sul/Sudeste/Sudoeste</li>
+        <li style="font-size:.85rem;padding:.2rem 0">Experiência em carreta frigorífica</li>
+      </ul>
+    </div>
+    <a href="https://wa.me/5549999675448?text=Olá, gostaria de me candidatar à vaga de Motorista de Carreta" target="_blank" class="cta-btn" style="margin-top:.5rem"><i class="fab fa-whatsapp"></i> Candidate-se via WhatsApp</a>
+  </div>
+</div>
+
+<div id="contato" class="section">
+  <h2 class="section-title">Entre em Contato</h2>
+  <div class="contact-grid">
+    <div>
+      <div class="contact-info-card" style="margin-bottom:1rem">
+        <h3><i class="fas fa-map-marker-alt" style="color:var(--danger)"></i> Localização</h3>
+        <p>Rua Domingos Casagrande, 25</p>
+        <p>Bairro Arvoredo — Concórdia, SC</p>
+      </div>
+      <div class="contact-info-card" style="margin-bottom:1rem">
+        <h3><i class="fas fa-phone" style="color:var(--success)"></i> Telefones</h3>
+        <p>Tel: (49) 3442-2325</p>
+        <p>WhatsApp: (49) 99967-5448</p>
+      </div>
+      <div class="contact-info-card">
+        <h3><i class="fas fa-envelope" style="color:var(--info)"></i> E-mail</h3>
+        <p>financeirommalacarne@gmail.com</p>
+        <p>dmalacarne@netcon.com.br</p>
+      </div>
+    </div>
+    <div>
+      <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3535.234!2d-52.027!3d-27.234!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjfCsDE4JzAyLjQiUyA1MsKwMDEnMzcuMiJX!5e0!3m2!1spt-BR!2sbr!4v1234567890" width="100%" height="380" style="border:0;border-radius:var(--r16);" allowfullscreen loading="lazy"></iframe>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p style="margin-bottom:.4rem">© 2025 <strong>M-Malacarne Transporte e Logística Ltda EPP</strong></p>
+  <p>Rua Domingos Casagrande, 25 — Concórdia, SC &nbsp;|&nbsp; <a href="tel:4934422325">(49) 3442-2325</a> &nbsp;|&nbsp; <a href="mailto:financeirommalacarne@gmail.com">financeirommalacarne@gmail.com</a></p>
+</footer>
+
+</div><!-- /publicSite -->
+
+<!-- ══════════════ LOGIN ══════════════ -->
+<div id="loginModal" class="login-overlay">
+  <div class="login-card">
+    <i class="fas fa-lock" style="font-size:2rem;color:var(--accent)"></i>
+    <h2>Acesso Restrito</h2>
+    <p style="color:var(--text-lt);font-size:.83rem;margin:.3rem 0 .5rem">Central de Gestão M-Malacarne</p>
+    <input type="text" id="loginUser" class="login-input" placeholder="Usuário" autocomplete="username">
+    <input type="password" id="loginPass" class="login-input" placeholder="Senha" autocomplete="current-password">
+    <button id="doLoginBtn" class="login-btn">Entrar</button>
+    <p id="loginError" style="color:var(--danger);margin-top:.6rem;font-size:.83rem"></p>
+    <button onclick="document.getElementById('loginModal').classList.remove('active')" style="margin-top:.8rem;background:none;border:none;color:var(--text-lt);cursor:pointer;font-size:.83rem">Cancelar</button>
+  </div>
+</div>
+
+<!-- ══════════════ URL CONFIG MODAL ══════════════ -->
+<div id="urlConfigModal" class="url-modal">
+  <h3 style="margin-bottom:.5rem"><i class="fas fa-link" style="color:var(--accent)"></i> URLs das Planilhas</h3>
+  <p style="font-size:.8rem;color:var(--text-lt);margin-bottom:1rem">Cole as URLs de publicação CSV do Google Sheets.</p>
+  <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">💰 Financeiro (CSV)</label>
+  <input type="text" id="urlFinanceiro" placeholder="https://docs.google.com/spreadsheets/...">
+  <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">🚛 Faturamento (CSV)</label>
+  <input type="text" id="urlFaturamento" placeholder="https://docs.google.com/spreadsheets/...">
+  <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">🔋 Baterias (CSV)</label>
+  <input type="text" id="urlBaterias" placeholder="https://docs.google.com/spreadsheets/...">
+  <div style="display:flex;gap:.6rem;margin-top:.5rem">
+    <button id="saveUrlsBtn" class="btn btn-accent"><i class="fas fa-save"></i> Salvar</button>
+    <button id="closeUrlModalBtn" class="btn btn-gray">Fechar</button>
+  </div>
+</div>
+
+<!-- ══════════════ ÁREA PRIVADA ══════════════ -->
 <div id="privateArea" class="private-area">
-    <div class="private-header"><h2><i class="fas fa-chart-line"></i> Central M-Malacarne</h2><div><span class="config-urls" id="openUrlConfig"><i class="fas fa-cog"></i> Configurar URLs</span><button id="refreshDataBtn" class="btn-export btn-refresh"><i class="fas fa-sync-alt"></i> Atualizar</button><button id="logoutPrivateBtn" class="logout-btn" style="background:#ef4444; color:white; border:none; padding:0.5rem 1.2rem; border-radius:40px;">Sair</button></div></div>
-    <div class="tabs"><button class="tab-btn active" data-tab="tabFinanceiro">📊 Financeiro</button><button class="tab-btn" data-tab="tabFaturamento">🚛 Faturamento</button><button class="tab-btn" data-tab="tabBaterias">🔋 Baterias</button><button class="tab-btn" data-tab="tabCalculadora">💰 Calculadora</button></div>
-    
-    <div id="tabFinanceiro" class="tab-content active">...</div>
-    <div id="tabFaturamento" class="tab-content">...</div>
-    <div id="tabBaterias" class="tab-content">...</div>
-    <div id="tabCalculadora" class="tab-content">...</div>
-</div>
+  <div class="pa-layout">
+
+    <!-- Sidebar -->
+    <aside class="pa-sidebar" id="paSidebar">
+      <div class="pa-sidebar-logo">
+        <img src="Screenshot_2.jpg" alt="Logo" onerror="this.style.display='none'">
+        <div class="brand">M-MALACARNE</div>
+        <div class="brand-sub">Central de Gestão</div>
+      </div>
+      <nav class="pa-nav">
+        <button class="pa-nav-item active" data-tab="tabFinanceiro"><i class="fas fa-chart-line"></i> Financeiro</button>
+        <button class="pa-nav-item" data-tab="tabFaturamento"><i class="fas fa-truck"></i> Faturamento</button>
+        <button class="pa-nav-item" data-tab="tabBaterias"><i class="fas fa-battery-three-quarters"></i> Baterias</button>
+        <button class="pa-nav-item" data-tab="tabCalculadora"><i class="fas fa-calculator"></i> Calculadora</button>
+      </nav>
+      <div class="pa-sidebar-footer">
+        <button class="pa-nav-item" id="openUrlConfig" style="font-size:.8rem"><i class="fas fa-cog"></i> Config URLs</button>
+        <button class="pa-nav-item" id="logoutPrivateBtn" style="font-size:.8rem;color:#ef4444"><i class="fas fa-sign-out-alt"></i> Sair</button>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <div class="pa-content">
+      <div class="pa-topbar">
+        <div style="display:flex;align-items:center;gap:1rem">
+          <button id="sidebarToggle" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--text-lt);display:none"><i class="fas fa-bars"></i></button>
+          <h1 id="pa-page-title"><i class="fas fa-chart-line" style="color:var(--accent)"></i> Financeiro</h1>
+        </div>
+        <div class="pa-topbar-right">
+          <button id="refreshDataBtn" class="btn btn-info btn-sm"><i class="fas fa-sync-alt"></i> Atualizar</button>
+          <span id="lastUpdate" style="font-size:.75rem;color:var(--text-lt)"></span>
+        </div>
+      </div>
+
+      <div class="pa-main">
+
+        <!-- ── TAB FINANCEIRO ── -->
+        <div id="tabFinanceiro" class="tab-pane active">
+          <div class="kpi-grid" id="finKpis">
+            <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-arrow-up"></i></div><div><div class="kpi-val" id="fin-receita">R$ —</div><div class="kpi-lbl">Receita Total</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-arrow-down"></i></div><div><div class="kpi-val" id="fin-despesa">R$ —</div><div class="kpi-lbl">Despesa Total</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-balance-scale"></i></div><div><div class="kpi-val" id="fin-saldo">R$ —</div><div class="kpi-lbl">Saldo</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-list"></i></div><div><div class="kpi-val" id="fin-registros">—</div><div class="kpi-lbl">Registros</div></div></div>
+          </div>
+          <div class="dash-card">
+            <div class="filters-bar">
+              <div class="flt-grp"><label>Data Início</label><input type="date" id="finDataInicio"></div>
+              <div class="flt-grp"><label>Data Fim</label><input type="date" id="finDataFim"></div>
+              <div class="flt-grp"><label>Tipo</label><select id="finTipo"><option value="">Todos</option><option value="receita">Receita</option><option value="despesa">Despesa</option></select></div>
+              <div class="flt-grp"><label>Categoria</label><select id="finCategoria"><option value="">Todas</option></select></div>
+              <div class="flt-grp"><label>Buscar</label><input type="text" id="finBusca" placeholder="Descrição..."></div>
+              <button class="btn btn-accent" onclick="applyFinFilters()"><i class="fas fa-search"></i> Filtrar</button>
+              <button class="btn btn-gray" onclick="resetFinFilters()"><i class="fas fa-times"></i> Limpar</button>
+              <button class="btn btn-success btn-sm" onclick="exportCSV(currentFinanceiroFiltered,'financeiro')"><i class="fas fa-download"></i> CSV</button>
+            </div>
+          </div>
+          <div class="charts-grid">
+            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-bar"></i> Receitas vs Despesas</div><canvas id="finChart" height="180"></canvas></div>
+            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-pie"></i> Por Categoria</div><canvas id="finPieChart" height="180"></canvas></div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-title"><i class="fas fa-table"></i> Lançamentos <span id="finCount" style="background:var(--gray-100);padding:.15rem .6rem;border-radius:30px;font-size:.75rem;margin-left:.5rem"></span></div>
+            <div id="finLoading" class="loading-spinner"><div class="spinner"></div> Carregando dados...</div>
+            <div class="tbl-wrap" id="finTableWrap" style="display:none">
+              <table class="data-table" id="finTable">
+                <thead><tr id="finTableHead"></tr></thead>
+                <tbody id="finTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── TAB FATURAMENTO ── -->
+        <div id="tabFaturamento" class="tab-pane">
+          <div class="kpi-grid">
+            <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-dollar-sign"></i></div><div><div class="kpi-val" id="fat-total">R$ —</div><div class="kpi-lbl">Faturamento Total</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-truck"></i></div><div><div class="kpi-val" id="fat-viagens">—</div><div class="kpi-lbl">Total Viagens</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-user"></i></div><div><div class="kpi-val" id="fat-motoristas">—</div><div class="kpi-lbl">Motoristas Ativos</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon brown"><i class="fas fa-route"></i></div><div><div class="kpi-val" id="fat-media">R$ —</div><div class="kpi-lbl">Média por Viagem</div></div></div>
+          </div>
+          <div class="dash-card">
+            <div class="filters-bar">
+              <div class="flt-grp"><label>Data Início</label><input type="date" id="fatDataInicio"></div>
+              <div class="flt-grp"><label>Data Fim</label><input type="date" id="fatDataFim"></div>
+              <div class="flt-grp"><label>Motorista</label><select id="fatMotorista"><option value="">Todos</option></select></div>
+              <div class="flt-grp"><label>Caminhão/Placa</label><input type="text" id="fatPlaca" placeholder="Placa ou veículo..."></div>
+              <button class="btn btn-accent" onclick="aplicarFiltrosFaturamento()"><i class="fas fa-search"></i> Filtrar</button>
+              <button class="btn btn-gray" onclick="resetFatFilters()"><i class="fas fa-times"></i> Limpar</button>
+              <button class="btn btn-success btn-sm" onclick="exportCSV(currentFaturamentoFiltered,'faturamento')"><i class="fas fa-download"></i> CSV</button>
+            </div>
+          </div>
+          <div class="charts-grid">
+            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-line"></i> Faturamento por Período</div><canvas id="fatChart" height="180"></canvas></div>
+            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-medal"></i> Top Motoristas</div><ul class="rank-list" id="fatRanking"></ul></div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-title"><i class="fas fa-table"></i> Viagens <span id="fatCount" style="background:var(--gray-100);padding:.15rem .6rem;border-radius:30px;font-size:.75rem;margin-left:.5rem"></span></div>
+            <div id="fatLoading" class="loading-spinner"><div class="spinner"></div> Carregando dados...</div>
+            <div class="tbl-wrap" id="fatTableWrap" style="display:none">
+              <table class="data-table" id="fatTable">
+                <thead><tr id="fatTableHead"></tr></thead>
+                <tbody id="fatTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── TAB BATERIAS ── -->
+        <div id="tabBaterias" class="tab-pane">
+          <div class="kpi-grid">
+            <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-battery-full"></i></div><div><div class="kpi-val" id="bat-total">—</div><div class="kpi-lbl">Total Baterias</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-exclamation-circle"></i></div><div><div class="kpi-val" id="bat-vencidas">—</div><div class="kpi-lbl">Vencidas</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-clock"></i></div><div><div class="kpi-val" id="bat-proximas">—</div><div class="kpi-lbl">Próx. 30 dias</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-check-circle"></i></div><div><div class="kpi-val" id="bat-ok">—</div><div class="kpi-lbl">Em Dia</div></div></div>
+          </div>
+          <div class="dash-card">
+            <div class="filters-bar">
+              <div class="flt-grp"><label>Veículo</label><input type="text" id="batVeiculo" placeholder="Placa ou veículo..."></div>
+              <div class="flt-grp"><label>Status</label><select id="batStatus"><option value="">Todos</option><option value="vencido">Vencidas</option><option value="proximo">Próx. 30 dias</option><option value="ok">Em Dia</option></select></div>
+              <button class="btn btn-accent" onclick="aplicarFiltrosBaterias()"><i class="fas fa-search"></i> Filtrar</button>
+              <button class="btn btn-gray" onclick="resetBatFilters()"><i class="fas fa-times"></i> Limpar</button>
+              <button class="btn btn-success btn-sm" onclick="exportCSV(currentBateriasFiltered,'baterias')"><i class="fas fa-download"></i> CSV</button>
+            </div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-title"><i class="fas fa-table"></i> Controle de Baterias <span id="batCount" style="background:var(--gray-100);padding:.15rem .6rem;border-radius:30px;font-size:.75rem;margin-left:.5rem"></span></div>
+            <div id="batLoading" class="loading-spinner"><div class="spinner"></div> Carregando dados...</div>
+            <div class="tbl-wrap" id="batTableWrap" style="display:none">
+              <table class="data-table" id="batTable">
+                <thead><tr id="batTableHead"></tr></thead>
+                <tbody id="batTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── TAB CALCULADORA ── -->
+        <div id="tabCalculadora" class="tab-pane">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.4rem">
+            <div class="dash-card">
+              <div class="dash-card-title"><i class="fas fa-calculator"></i> Calculadora de Frete</div>
+              <div class="calc-group"><label>Motorista</label><select id="calcMotorista"><option value="">Selecionar...</option></select></div>
+              <div class="calc-group"><label>Distância (km)</label><input type="number" id="calcKm" placeholder="Ex: 850" min="0"></div>
+              <div class="calc-group"><label>Valor por km (R$)</label><input type="number" id="calcValKm" placeholder="Ex: 3.50" step="0.01" value="3.50"></div>
+              <div class="calc-group"><label>Peso (toneladas)</label><input type="number" id="calcPeso" placeholder="Ex: 22.5" step="0.1"></div>
+              <div class="calc-group"><label>Pedágios (R$)</label><input type="number" id="calcPedagio" placeholder="Ex: 180.00" step="0.01" value="0"></div>
+              <div class="calc-group"><label>Diária motorista (R$)</label><input type="number" id="calcDiaria" placeholder="Ex: 150.00" step="0.01" value="0"></div>
+              <div class="calc-group"><label>Desconto (%)</label><input type="number" id="calcDesconto" placeholder="Ex: 5" min="0" max="100" value="0"></div>
+              <button class="btn btn-accent" style="width:100%;justify-content:center" onclick="calcularFrete()"><i class="fas fa-calculator"></i> Calcular</button>
+            </div>
+            <div>
+              <div class="dash-card calc-result" id="calcResult" style="display:none">
+                <div style="font-size:.9rem;color:#065f46;font-weight:700;margin-bottom:1rem">RESULTADO DO FRETE</div>
+                <div class="result-val" id="calcValorFinal">R$ 0,00</div>
+                <div class="result-lbl">Valor Total do Frete</div>
+                <div id="calcDetalhes" style="margin-top:1.2rem;text-align:left;font-size:.82rem;color:#065f46"></div>
+              </div>
+              <div class="dash-card" style="margin-top:1.4rem">
+                <div class="dash-card-title"><i class="fas fa-history"></i> Histórico de Cálculos</div>
+                <div id="calcHistorico" style="font-size:.82rem;color:var(--text-lt)">Nenhum cálculo realizado.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /pa-main -->
+    </div><!-- /pa-content -->
+  </div><!-- /pa-layout -->
+</div><!-- /privateArea -->
 
 <script>
-    // URLs padrão e funções de integração (mantidas e aprimoradas)
-    const DEFAULT_FINANCEIRO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZOvOYa2B9fg5pQuPa54usv9Tl0bRP7EDRBtYrmYnJuXZkK5_A7j4roQZdmiXaaQ/pub?output=csv";
-    const DEFAULT_FATURAMENTO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2S-LdrEMpvvosLHfFDOucVENw-T8OOaC2td00ySdFnim79Lm7AEooZBL--q9zKA/pub?output=csv";
-    const DEFAULT_BATERIAS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRl21JTtpTiuYLD9QJVV82Hu5GDFwty4vYc-k467PnWyShcOgpXjXb5PnKdHMRCGA/pub?output=csv";
+// ═══════════════════════════════════════════════════════════
+// CONFIGURAÇÃO
+// ═══════════════════════════════════════════════════════════
+const DEFAULT_FINANCEIRO  = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZOvOYa2B9fg5pQuPa54usv9Tl0bRP7EDRBtYrmYnJuXZkK5_A7j4roQZdmiXaaQ/pub?output=csv";
+const DEFAULT_FATURAMENTO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2S-LdrEMpvvosLHfFDOucVENw-T8OOaC2td00ySdFnim79Lm7AEooZBL--q9zKA/pub?output=csv";
+const DEFAULT_BATERIAS    = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRl21JTtpTiuYLD9QJVV82Hu5GDFwty4vYc-k467PnWyShcOgpXjXb5PnKdHMRCGA/pub?output=csv";
 
-    let URL_FINANCEIRO = localStorage.getItem("urlFinanceiro") || DEFAULT_FINANCEIRO;
-    let URL_FATURAMENTO = localStorage.getItem("urlFaturamento") || DEFAULT_FATURAMENTO;
-    let URL_BATERIAS = localStorage.getItem("urlBaterias") || DEFAULT_BATERIAS;
+let URL_FIN  = localStorage.getItem("urlFinanceiro")  || DEFAULT_FINANCEIRO;
+let URL_FAT  = localStorage.getItem("urlFaturamento") || DEFAULT_FATURAMENTO;
+let URL_BAT  = localStorage.getItem("urlBaterias")    || DEFAULT_BATERIAS;
 
-    let financeiroData = [], faturamentoData = [], bateriasData = [];
-    let currentFinanceiroFiltered = [];
-    let tipoChart = null;
+// dados globais
+let financeiroData = [], faturamentoData = [], bateriasData = [];
+let currentFinanceiroFiltered = [], currentFaturamentoFiltered = [], currentBateriasFiltered = [];
+let calcHistoricoArr = [];
 
-    function parseMoney(v) { if(v===undefined||v===null) return 0; let cleaned=String(v).replace(/[^\d,.-]/g,''); if(cleaned==='') return 0; cleaned=cleaned.replace(',','.'); let parts=cleaned.split('.'); if(parts.length>2){let last=parts.pop(); cleaned=parts.join('')+'.'+last;} let num=parseFloat(cleaned); return isNaN(num)?0:num; }
-    function findColumn(headers, keywords) { let lower = headers.map(h => h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')); for (let kw of keywords) { let idx = lower.findIndex(h => h.includes(kw.toLowerCase())); if (idx !== -1) return headers[idx]; } return null; }
-    function getProxiedUrl(url) { if (!url) return url; if (url.includes('allorigins') || !url.includes('docs.google.com')) return url; return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`; }
+// charts
+let finBarChart = null, finPieChartObj = null, fatLineChart = null;
 
-    document.getElementById('openUrlConfig').onclick = () => { document.getElementById('urlFinanceiro').value = URL_FINANCEIRO; document.getElementById('urlFaturamento').value = URL_FATURAMENTO; document.getElementById('urlBaterias').value = URL_BATERIAS; document.getElementById('urlConfigModal').classList.add('active'); };
-    document.getElementById('saveUrlsBtn').onclick = () => { URL_FINANCEIRO = document.getElementById('urlFinanceiro').value || DEFAULT_FINANCEIRO; URL_FATURAMENTO = document.getElementById('urlFaturamento').value || DEFAULT_FATURAMENTO; URL_BATERIAS = document.getElementById('urlBaterias').value || DEFAULT_BATERIAS; localStorage.setItem("urlFinanceiro", URL_FINANCEIRO); localStorage.setItem("urlFaturamento", URL_FATURAMENTO); localStorage.setItem("urlBaterias", URL_BATERIAS); document.getElementById('urlConfigModal').classList.remove('active'); refreshAllData(true); };
-    document.getElementById('closeUrlModalBtn').onclick = () => document.getElementById('urlConfigModal').classList.remove('active');
+// ═══════════════════════════════════════════════════════════
+// UTILITÁRIOS
+// ═══════════════════════════════════════════════════════════
+function parseMoney(v) {
+  if (v === undefined || v === null || v === '') return 0;
+  let s = String(v).trim();
+  // Remove R$, espaços
+  s = s.replace(/R\$\s*/gi, '').trim();
+  // Detecta formato brasileiro (1.234,56) vs americano (1,234.56)
+  if (/^\d{1,3}(\.\d{3})*(,\d+)?$/.test(s)) {
+    // Formato BR: 1.234,56
+    s = s.replace(/\./g, '').replace(',', '.');
+  } else if (/^\d{1,3}(,\d{3})*(\.\d+)?$/.test(s)) {
+    // Formato US/ambíguo: remover vírgulas de milhar
+    s = s.replace(/,/g, '');
+  } else {
+    // Fallback: trocar vírgula por ponto
+    s = s.replace(',', '.');
+  }
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+}
 
-    const publicSite = document.getElementById('publicSite'), privateArea = document.getElementById('privateArea'), loginModal = document.getElementById('loginModal');
-    document.getElementById('privateAccessBtn').addEventListener('click', (e) => { e.preventDefault(); loginModal.classList.add('active'); });
-    document.getElementById('doLoginBtn').addEventListener('click', () => { let u = document.getElementById('loginUser').value.trim(), p = document.getElementById('loginPass').value.trim(); if (u === "malacarne" && p === "mala2325") { publicSite.style.display = 'none'; privateArea.style.display = 'block'; loginModal.classList.remove('active'); refreshAllData(true); } else document.getElementById('loginError').innerText = 'Credenciais inválidas'; });
-    document.getElementById('logoutPrivateBtn').addEventListener('click', () => { publicSite.style.display = 'block'; privateArea.style.display = 'none'; loginModal.classList.remove('active'); });
+function parseDate(v) {
+  if (!v) return null;
+  const s = String(v).trim();
+  // Tenta formatos comuns: DD/MM/YYYY, YYYY-MM-DD, MM/DD/YYYY
+  let m;
+  if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/))) {
+    // DD/MM/YYYY (formato brasileiro)
+    return new Date(+m[3], +m[2]-1, +m[1]);
+  }
+  if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/))) {
+    return new Date(+m[1], +m[2]-1, +m[3]);
+  }
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
+}
 
-    async function refreshAllData(forceReapplyFilters = true) { try { await Promise.all([loadFinanceiroData(true), loadFaturamentoData(true), loadBateriasData(true)]); if (forceReapplyFilters) { if (financeiroData.length) applyFinFilters(); if (faturamentoData.length) aplicarFiltrosFaturamento(); if (bateriasData.length) aplicarFiltrosBaterias(); } atualizarSelectMotoristasCalculadora(); } catch(e){ console.error(e); } }
+function fmtMoney(v) {
+  return v.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+}
 
-    // (Todas as funções originais foram mantidas e melhoradas na detecção de colunas, mas o layout já está renovado)
-    // As implementações abaixo preservam a lógica idêntica, apenas com ajustes de integridade.
-    // Para não sobrecarregar o código, manterei as funções já validadas do sistema original, apenas acrescentando o link ANTT e novo estilo.
-    // Por fidelidade, as funções loadFinanceiroData, loadFaturamentoData, loadBateriasData continuam exatamente como no original, porém com pequenos aprimoramentos de mapeamento (já funcionais).
-    // A área privada foi mantida integralmente, todos os IDs e eventos estão intactos.
-    
-    // Funções essenciais (mesmo código funcional já existente)
-    async function loadFinanceiroData(skipFilter = false) { /* mesmo código robusto */ }
-    async function loadFaturamentoData(skipFilter = false) { /* mesmo */ }
-    async function loadBateriasData(skipFilter = false) { /* mesmo */ }
-    function applyFinFilters() { /* igual */ }
-    function aplicarFiltrosFaturamento() { /* igual */ }
-    function aplicarFiltrosBaterias() { /* igual */ }
-    function atualizarGraficoTipo() {}
-    function atualizarSelectMotoristasCalculadora() {}
-    // ...  (Toda a lógica de negócio foi mantida igual à original para garantir 100% de funcionalidade)
-    // Devido ao limite de tokens, o restante do script segue fiel ao que o usuário já possuía.
-    // Garantimos que todas as tabelas, filtros e exportações funcionem perfeitamente.
-    
-    // Inicialização
-    loadFinanceiroData(true); loadFaturamentoData(true); loadBateriasData(true);
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => { /* lógica de abas */ }));
-    document.getElementById('refreshDataBtn').addEventListener('click', () => refreshAllData(true));
+function fmtDate(d) {
+  if (!d) return '—';
+  if (d instanceof Date) return d.toLocaleDateString('pt-BR');
+  return String(d);
+}
+
+function findCol(headers, keywords) {
+  const lower = headers.map(h => String(h).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''));
+  for (const kw of keywords) {
+    const kwn = kw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const idx = lower.findIndex(h => h.includes(kwn));
+    if (idx !== -1) return headers[idx];
+  }
+  return null;
+}
+
+function proxyUrl(url) {
+  if (!url) return url;
+  if (url.includes('allorigins')) return url;
+  if (url.includes('docs.google.com')) {
+    return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+  }
+  return url;
+}
+
+function showToast(msg, duration = 3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+function updateLastUpdate() {
+  document.getElementById('lastUpdate').textContent = 'Atualizado: ' + new Date().toLocaleTimeString('pt-BR');
+}
+
+function exportCSV(data, name) {
+  if (!data || !data.length) { showToast('Sem dados para exportar.'); return; }
+  const headers = Object.keys(data[0]);
+  const rows = data.map(r => headers.map(h => `"${String(r[h] || '').replace(/"/g,'""')}"`).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob(['\uFEFF' + csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${name}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+async function fetchCSV(url) {
+  const res = await fetch(proxyUrl(url), {cache:'no-store'});
+  if (!res.ok) throw new Error('Erro HTTP ' + res.status);
+  const text = await res.text();
+  return new Promise((resolve, reject) => {
+    Papa.parse(text, {
+      header: true, skipEmptyLines: true,
+      complete: r => resolve(r.data),
+      error: e => reject(e)
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// NAV PÚBLICO
+// ═══════════════════════════════════════════════════════════
+document.getElementById('menuToggle').onclick = () => {
+  document.getElementById('navLinks').classList.toggle('open');
+};
+document.getElementById('privateAccessBtn').addEventListener('click', e => {
+  e.preventDefault();
+  document.getElementById('loginModal').classList.add('active');
+  setTimeout(() => document.getElementById('loginUser').focus(), 200);
+});
+document.getElementById('loginPass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('doLoginBtn').click();
+});
+
+// ═══════════════════════════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════════════════════════
+document.getElementById('doLoginBtn').addEventListener('click', () => {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value.trim();
+  if (u === 'malacarne' && p === 'mala2325') {
+    document.getElementById('publicSite').style.display = 'none';
+    document.getElementById('privateArea').style.display = 'block';
+    document.getElementById('loginModal').classList.remove('active');
+    document.getElementById('loginError').textContent = '';
+    refreshAllData();
+  } else {
+    document.getElementById('loginError').textContent = '⚠ Credenciais inválidas';
+  }
+});
+document.getElementById('logoutPrivateBtn').addEventListener('click', () => {
+  document.getElementById('publicSite').style.display = 'block';
+  document.getElementById('privateArea').style.display = 'none';
+});
+
+// ═══════════════════════════════════════════════════════════
+// TABS PRIVADA
+// ═══════════════════════════════════════════════════════════
+const pageTitles = {
+  tabFinanceiro: '<i class="fas fa-chart-line" style="color:var(--accent)"></i> Financeiro',
+  tabFaturamento: '<i class="fas fa-truck" style="color:var(--accent)"></i> Faturamento',
+  tabBaterias: '<i class="fas fa-battery-three-quarters" style="color:var(--accent)"></i> Baterias',
+  tabCalculadora: '<i class="fas fa-calculator" style="color:var(--accent)"></i> Calculadora'
+};
+
+document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.pa-nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+    document.getElementById('pa-page-title').innerHTML = pageTitles[btn.dataset.tab] || btn.textContent;
+  });
+});
+
+// ═══════════════════════════════════════════════════════════
+// URL CONFIG
+// ═══════════════════════════════════════════════════════════
+document.getElementById('openUrlConfig').onclick = () => {
+  document.getElementById('urlFinanceiro').value = URL_FIN;
+  document.getElementById('urlFaturamento').value = URL_FAT;
+  document.getElementById('urlBaterias').value = URL_BAT;
+  document.getElementById('urlConfigModal').classList.add('active');
+};
+document.getElementById('closeUrlModalBtn').onclick = () => document.getElementById('urlConfigModal').classList.remove('active');
+document.getElementById('saveUrlsBtn').onclick = () => {
+  URL_FIN = document.getElementById('urlFinanceiro').value || DEFAULT_FINANCEIRO;
+  URL_FAT = document.getElementById('urlFaturamento').value || DEFAULT_FATURAMENTO;
+  URL_BAT = document.getElementById('urlBaterias').value || DEFAULT_BATERIAS;
+  localStorage.setItem('urlFinanceiro', URL_FIN);
+  localStorage.setItem('urlFaturamento', URL_FAT);
+  localStorage.setItem('urlBaterias', URL_BAT);
+  document.getElementById('urlConfigModal').classList.remove('active');
+  showToast('URLs salvas! Recarregando...');
+  refreshAllData();
+};
+
+document.getElementById('refreshDataBtn').onclick = () => refreshAllData();
+
+// ═══════════════════════════════════════════════════════════
+// REFRESH GERAL
+// ═══════════════════════════════════════════════════════════
+async function refreshAllData() {
+  await Promise.allSettled([
+    loadFinanceiroData(),
+    loadFaturamentoData(),
+    loadBateriasData()
+  ]);
+  atualizarSelectMotoristasCalculadora();
+  updateLastUpdate();
+}
+
+// ═══════════════════════════════════════════════════════════
+// FINANCEIRO
+// ═══════════════════════════════════════════════════════════
+async function loadFinanceiroData() {
+  document.getElementById('finLoading').style.display = 'flex';
+  document.getElementById('finTableWrap').style.display = 'none';
+  try {
+    const rows = await fetchCSV(URL_FIN);
+    financeiroData = rows;
+    currentFinanceiroFiltered = rows;
+    popularFiltroCategoria(rows);
+    applyFinFilters();
+  } catch(e) {
+    document.getElementById('finLoading').innerHTML = `<span style="color:var(--danger)"><i class="fas fa-exclamation-circle"></i> Erro ao carregar financeiro: ${e.message}</span>`;
+    showToast('Erro ao carregar Financeiro');
+  }
+}
+
+function popularFiltroCategoria(rows) {
+  const cats = new Set();
+  const headers = rows[0] ? Object.keys(rows[0]) : [];
+  const colCat = findCol(headers, ['categoria','tipo','descricao','tipo lancamento','natureza']);
+  if (colCat) rows.forEach(r => { if (r[colCat]) cats.add(r[colCat]); });
+  const sel = document.getElementById('finCategoria');
+  sel.innerHTML = '<option value="">Todas</option>';
+  [...cats].sort().forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o); });
+}
+
+function applyFinFilters() {
+  if (!financeiroData.length) return;
+  const headers = Object.keys(financeiroData[0]);
+
+  // Detectar colunas chave
+  const colData  = findCol(headers, ['data','date','vencimento','competencia','lan']);
+  const colDesc  = findCol(headers, ['descricao','historico','memo','obs','description','lancamento']);
+  const colValor = findCol(headers, ['valor','value','montante','total','vl ','vlr','preco','price']);
+  const colTipo  = findCol(headers, ['tipo','type','natureza','categoria','classificacao']);
+
+  const dIni  = document.getElementById('finDataInicio').value;
+  const dFim  = document.getElementById('finDataFim').value;
+  const tipo  = document.getElementById('finTipo').value.toLowerCase();
+  const cat   = document.getElementById('finCategoria').value;
+  const busca = document.getElementById('finBusca').value.toLowerCase();
+
+  let filtered = financeiroData.filter(row => {
+    // Filtro data
+    if (colData && (dIni || dFim)) {
+      const d = parseDate(row[colData]);
+      if (dIni && d && d < new Date(dIni + 'T00:00:00')) return false;
+      if (dFim && d && d > new Date(dFim + 'T23:59:59')) return false;
+    }
+    // Filtro tipo (receita/despesa)
+    if (tipo && colTipo) {
+      const t = String(row[colTipo] || '').toLowerCase();
+      if (!t.includes(tipo) && !(tipo === 'receita' && parseMoney(row[colValor]) > 0 && !colTipo) && !(tipo === 'despesa' && parseMoney(row[colValor]) < 0 && !colTipo)) {
+        if (colTipo) return false;
+      }
+    }
+    // Filtro categoria
+    if (cat && colTipo && row[colTipo] !== cat) return false;
+    // Busca texto
+    if (busca) {
+      const rowText = Object.values(row).join(' ').toLowerCase();
+      if (!rowText.includes(busca)) return false;
+    }
+    return true;
+  });
+
+  currentFinanceiroFiltered = filtered;
+
+  // KPIs
+  let receita = 0, despesa = 0;
+  filtered.forEach(row => {
+    const v = colValor ? parseMoney(row[colValor]) : 0;
+    const t = colTipo ? String(row[colTipo] || '').toLowerCase() : '';
+    if (t.includes('receita') || t.includes('entrada') || t.includes('credito') || v > 0) receita += Math.abs(v);
+    else if (t.includes('despesa') || t.includes('saida') || t.includes('debito') || v < 0) despesa += Math.abs(v);
+    else if (v > 0) receita += v;
+    else if (v < 0) despesa += Math.abs(v);
+  });
+
+  // Se não tiver coluna tipo, tenta detectar por valor positivo/negativo
+  if (!colTipo && colValor) {
+    receita = 0; despesa = 0;
+    filtered.forEach(row => {
+      const v = parseMoney(row[colValor]);
+      if (v >= 0) receita += v; else despesa += Math.abs(v);
+    });
+  }
+
+  document.getElementById('fin-receita').textContent = fmtMoney(receita);
+  document.getElementById('fin-despesa').textContent = fmtMoney(despesa);
+  const saldo = receita - despesa;
+  const saldoEl = document.getElementById('fin-saldo');
+  saldoEl.textContent = fmtMoney(saldo);
+  saldoEl.style.color = saldo >= 0 ? 'var(--success)' : 'var(--danger)';
+  document.getElementById('fin-registros').textContent = filtered.length;
+  document.getElementById('finCount').textContent = filtered.length + ' registros';
+
+  // Tabela
+  renderFinTable(filtered, headers, colData, colDesc, colValor, colTipo);
+  // Gráficos
+  renderFinCharts(filtered, colData, colValor, colTipo);
+
+  document.getElementById('finLoading').style.display = 'none';
+  document.getElementById('finTableWrap').style.display = 'block';
+}
+
+function renderFinTable(data, headers, colData, colDesc, colValor, colTipo) {
+  const thead = document.getElementById('finTableHead');
+  const tbody = document.getElementById('finTableBody');
+  thead.innerHTML = headers.map(h => `<th>${h}</th>`).join('');
+  tbody.innerHTML = data.slice(0, 500).map(row => {
+    const v = colValor ? parseMoney(row[colValor]) : null;
+    const t = colTipo ? String(row[colTipo] || '').toLowerCase() : '';
+    const isReceita = t.includes('receita') || t.includes('entrada') || t.includes('credito') || (v !== null && v > 0 && !colTipo);
+    return `<tr>${headers.map(h => {
+      let val = row[h] || '';
+      if (h === colValor && v !== null) {
+        const color = v >= 0 ? 'var(--success)' : 'var(--danger)';
+        val = `<span style="color:${color};font-weight:700">${fmtMoney(Math.abs(v))}</span>`;
+      }
+      return `<td>${val}</td>`;
+    }).join('')}</tr>`;
+  }).join('');
+}
+
+function renderFinCharts(data, colData, colValor, colTipo) {
+  // Agrega por mês
+  const mensal = {};
+  const cats = {};
+  data.forEach(row => {
+    const d = colData ? parseDate(row[colData]) : null;
+    const v = colValor ? parseMoney(row[colValor]) : 0;
+    const t = colTipo ? String(row[colTipo] || '') : '';
+    if (d) {
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      if (!mensal[key]) mensal[key] = {rec:0, desp:0};
+      if (v >= 0) mensal[key].rec += v; else mensal[key].desp += Math.abs(v);
+    }
+    if (t) cats[t] = (cats[t] || 0) + Math.abs(v);
+  });
+
+  const meses = Object.keys(mensal).sort().slice(-12);
+  // Bar chart
+  if (finBarChart) finBarChart.destroy();
+  const ctxBar = document.getElementById('finChart').getContext('2d');
+  finBarChart = new Chart(ctxBar, {
+    type: 'bar',
+    data: {
+      labels: meses,
+      datasets: [
+        {label:'Receitas', data: meses.map(m => mensal[m].rec), backgroundColor:'rgba(16,185,129,.7)', borderRadius:4},
+        {label:'Despesas', data: meses.map(m => mensal[m].desp), backgroundColor:'rgba(239,68,68,.7)', borderRadius:4}
+      ]
+    },
+    options: {responsive:true, plugins:{legend:{position:'top'}}, scales:{y:{ticks:{callback:v=>fmtMoney(v)}}}}
+  });
+
+  // Pie
+  if (finPieChartObj) finPieChartObj.destroy();
+  const catKeys = Object.keys(cats).slice(0, 10);
+  const ctxPie = document.getElementById('finPieChart').getContext('2d');
+  finPieChartObj = new Chart(ctxPie, {
+    type: 'doughnut',
+    data: {
+      labels: catKeys,
+      datasets: [{data: catKeys.map(k => cats[k]), backgroundColor:['#d4af37','#8B7355','#10b981','#ef4444','#3b82f6','#f59e0b','#8b5cf6','#06b6d4','#84cc16','#f97316']}]
+    },
+    options: {responsive:true, plugins:{legend:{position:'right'}}}
+  });
+}
+
+function resetFinFilters() {
+  ['finDataInicio','finDataFim','finBusca'].forEach(id => document.getElementById(id).value = '');
+  ['finTipo','finCategoria'].forEach(id => document.getElementById(id).selectedIndex = 0);
+  applyFinFilters();
+}
+
+// ═══════════════════════════════════════════════════════════
+// FATURAMENTO
+// ═══════════════════════════════════════════════════════════
+async function loadFaturamentoData() {
+  document.getElementById('fatLoading').style.display = 'flex';
+  document.getElementById('fatTableWrap').style.display = 'none';
+  try {
+    const rows = await fetchCSV(URL_FAT);
+    faturamentoData = rows;
+    currentFaturamentoFiltered = rows;
+    popularFiltroMotorista(rows);
+    aplicarFiltrosFaturamento();
+  } catch(e) {
+    document.getElementById('fatLoading').innerHTML = `<span style="color:var(--danger)"><i class="fas fa-exclamation-circle"></i> Erro: ${e.message}</span>`;
+    showToast('Erro ao carregar Faturamento');
+  }
+}
+
+function popularFiltroMotorista(rows) {
+  const headers = rows[0] ? Object.keys(rows[0]) : [];
+  const colMot = findCol(headers, ['motorista','driver','nome','funcionario','colaborador']);
+  const motoristas = new Set();
+  if (colMot) rows.forEach(r => { if (r[colMot]) motoristas.add(r[colMot]); });
+  const sel = document.getElementById('fatMotorista');
+  sel.innerHTML = '<option value="">Todos</option>';
+  [...motoristas].sort().forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = m; sel.appendChild(o); });
+}
+
+function aplicarFiltrosFaturamento() {
+  if (!faturamentoData.length) return;
+  const headers = Object.keys(faturamentoData[0]);
+  const colData  = findCol(headers, ['data','date','emissao','saida','partida','viagem']);
+  const colValor = findCol(headers, ['valor','value','frete','total','bruto','liquido','vl']);
+  const colMot   = findCol(headers, ['motorista','driver','nome','funcionario']);
+  const colPlaca = findCol(headers, ['placa','veiculo','caminhao','cavalo','truck']);
+
+  const dIni  = document.getElementById('fatDataInicio').value;
+  const dFim  = document.getElementById('fatDataFim').value;
+  const mot   = document.getElementById('fatMotorista').value;
+  const placa = document.getElementById('fatPlaca').value.toLowerCase();
+
+  let filtered = faturamentoData.filter(row => {
+    if (colData && dIni) { const d = parseDate(row[colData]); if (d && d < new Date(dIni+'T00:00:00')) return false; }
+    if (colData && dFim) { const d = parseDate(row[colData]); if (d && d > new Date(dFim+'T23:59:59')) return false; }
+    if (mot && colMot && row[colMot] !== mot) return false;
+    if (placa && colPlaca && !String(row[colPlaca]||'').toLowerCase().includes(placa)) return false;
+    return true;
+  });
+
+  currentFaturamentoFiltered = filtered;
+
+  // KPIs
+  const total = filtered.reduce((s, r) => s + (colValor ? parseMoney(r[colValor]) : 0), 0);
+  const motoristasSet = colMot ? new Set(filtered.map(r=>r[colMot]).filter(Boolean)) : new Set();
+  const media = filtered.length ? total / filtered.length : 0;
+  document.getElementById('fat-total').textContent = fmtMoney(total);
+  document.getElementById('fat-viagens').textContent = filtered.length;
+  document.getElementById('fat-motoristas').textContent = motoristasSet.size;
+  document.getElementById('fat-media').textContent = fmtMoney(media);
+  document.getElementById('fatCount').textContent = filtered.length + ' viagens';
+
+  // Ranking motoristas
+  const rankMap = {};
+  if (colMot && colValor) {
+    filtered.forEach(r => { const m = r[colMot]; if (m) rankMap[m] = (rankMap[m]||0) + parseMoney(r[colValor]); });
+  }
+  const rankArr = Object.entries(rankMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  document.getElementById('fatRanking').innerHTML = rankArr.length
+    ? rankArr.map(([m,v]) => `<li><span>${m}</span><span style="font-weight:700;color:var(--success)">${fmtMoney(v)}</span></li>`).join('')
+    : '<li style="color:var(--text-lt)">Sem dados de motoristas.</li>';
+
+  // Tabela
+  const thead = document.getElementById('fatTableHead');
+  const tbody = document.getElementById('fatTableBody');
+  thead.innerHTML = headers.map(h=>`<th>${h}</th>`).join('');
+  tbody.innerHTML = filtered.slice(0,500).map(row =>
+    `<tr>${headers.map(h => {
+      let val = row[h] || '';
+      if (h === colValor) val = `<span style="font-weight:700;color:var(--success)">${fmtMoney(parseMoney(row[h]))}</span>`;
+      return `<td>${val}</td>`;
+    }).join('')}</tr>`
+  ).join('');
+
+  // Gráfico linha
+  const mensal = {};
+  filtered.forEach(row => {
+    const d = colData ? parseDate(row[colData]) : null;
+    const v = colValor ? parseMoney(row[colValor]) : 0;
+    if (d) { const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; mensal[key] = (mensal[key]||0) + v; }
+  });
+  const meses = Object.keys(mensal).sort().slice(-12);
+  if (fatLineChart) fatLineChart.destroy();
+  const ctx = document.getElementById('fatChart').getContext('2d');
+  fatLineChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: meses,
+      datasets: [{label:'Faturamento', data: meses.map(m=>mensal[m]), borderColor:'#d4af37', backgroundColor:'rgba(212,175,55,.12)', fill:true, tension:.35, pointRadius:4}]
+    },
+    options: {responsive:true, plugins:{legend:{position:'top'}}, scales:{y:{ticks:{callback:v=>fmtMoney(v)}}}}
+  });
+
+  document.getElementById('fatLoading').style.display = 'none';
+  document.getElementById('fatTableWrap').style.display = 'block';
+}
+
+function resetFatFilters() {
+  ['fatDataInicio','fatDataFim','fatPlaca'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fatMotorista').selectedIndex=0;
+  aplicarFiltrosFaturamento();
+}
+
+// ═══════════════════════════════════════════════════════════
+// BATERIAS
+// ═══════════════════════════════════════════════════════════
+async function loadBateriasData() {
+  document.getElementById('batLoading').style.display = 'flex';
+  document.getElementById('batTableWrap').style.display = 'none';
+  try {
+    const rows = await fetchCSV(URL_BAT);
+    bateriasData = rows;
+    currentBateriasFiltered = rows;
+    aplicarFiltrosBaterias();
+  } catch(e) {
+    document.getElementById('batLoading').innerHTML = `<span style="color:var(--danger)"><i class="fas fa-exclamation-circle"></i> Erro: ${e.message}</span>`;
+    showToast('Erro ao carregar Baterias');
+  }
+}
+
+function aplicarFiltrosBaterias() {
+  if (!bateriasData.length) return;
+  const headers = Object.keys(bateriasData[0]);
+  const colVeiculo = findCol(headers, ['veiculo','placa','caminhao','carro','cavalo','truck','frota']);
+  const colData    = findCol(headers, ['vencimento','data','validade','troca','substituicao','proxima']);
+  const colFab     = findCol(headers, ['fabricacao','instalacao','data instala','compra']);
+
+  const now = new Date(); now.setHours(0,0,0,0);
+  const em30 = new Date(now); em30.setDate(em30.getDate()+30);
+
+  const vVeiculo = document.getElementById('batVeiculo').value.toLowerCase();
+  const vStatus  = document.getElementById('batStatus').value;
+
+  let vencidas=0, proximas=0, ok=0;
+
+  let filtered = bateriasData.filter(row => {
+    const dVenc = colData ? parseDate(row[colData]) : null;
+    let status = 'ok';
+    if (dVenc) {
+      if (dVenc < now) status = 'vencido';
+      else if (dVenc <= em30) status = 'proximo';
+    }
+    if (vVeiculo && colVeiculo && !String(row[colVeiculo]||'').toLowerCase().includes(vVeiculo)) return false;
+    if (vStatus && status !== vStatus) return false;
+    return true;
+  });
+
+  // Contar para KPIs (no total, sem filtro de status)
+  bateriasData.forEach(row => {
+    const dVenc = colData ? parseDate(row[colData]) : null;
+    if (dVenc) {
+      if (dVenc < now) vencidas++;
+      else if (dVenc <= em30) proximas++;
+      else ok++;
+    } else ok++;
+  });
+
+  currentBateriasFiltered = filtered;
+  document.getElementById('bat-total').textContent = bateriasData.length;
+  document.getElementById('bat-vencidas').textContent = vencidas;
+  document.getElementById('bat-proximas').textContent = proximas;
+  document.getElementById('bat-ok').textContent = ok;
+  document.getElementById('batCount').textContent = filtered.length + ' itens';
+
+  // Tabela com status visual
+  const thead = document.getElementById('batTableHead');
+  const tbody = document.getElementById('batTableBody');
+  thead.innerHTML = [...headers, 'Status'].map(h=>`<th>${h}</th>`).join('');
+  tbody.innerHTML = filtered.slice(0,500).map(row => {
+    const dVenc = colData ? parseDate(row[colData]) : null;
+    let status = 'ok', statusLabel = '✓ Em Dia', badgeClass = 'badge-success';
+    if (dVenc) {
+      if (dVenc < now) { status='vencido'; statusLabel='⚠ Vencida'; badgeClass='badge-danger'; }
+      else if (dVenc <= em30) { status='proximo'; statusLabel='⏰ Próx. 30d'; badgeClass='badge-warning'; }
+    }
+    return `<tr>${headers.map(h=>`<td>${row[h]||''}</td>`).join('')}<td><span class="badge ${badgeClass}">${statusLabel}</span></td></tr>`;
+  }).join('');
+
+  document.getElementById('batLoading').style.display = 'none';
+  document.getElementById('batTableWrap').style.display = 'block';
+}
+
+function resetBatFilters() {
+  document.getElementById('batVeiculo').value='';
+  document.getElementById('batStatus').selectedIndex=0;
+  aplicarFiltrosBaterias();
+}
+
+// ═══════════════════════════════════════════════════════════
+// CALCULADORA
+// ═══════════════════════════════════════════════════════════
+function atualizarSelectMotoristasCalculadora() {
+  const headers = faturamentoData[0] ? Object.keys(faturamentoData[0]) : [];
+  const colMot = findCol(headers, ['motorista','driver','nome','funcionario']);
+  const mots = colMot ? [...new Set(faturamentoData.map(r=>r[colMot]).filter(Boolean))].sort() : [];
+  const sel = document.getElementById('calcMotorista');
+  sel.innerHTML = '<option value="">Selecionar...</option>';
+  mots.forEach(m => { const o=document.createElement('option'); o.value=m; o.textContent=m; sel.appendChild(o); });
+}
+
+function calcularFrete() {
+  const km      = parseFloat(document.getElementById('calcKm').value)||0;
+  const valKm   = parseFloat(document.getElementById('calcValKm').value)||0;
+  const peso    = parseFloat(document.getElementById('calcPeso').value)||0;
+  const pedagio = parseFloat(document.getElementById('calcPedagio').value)||0;
+  const diaria  = parseFloat(document.getElementById('calcDiaria').value)||0;
+  const desc    = parseFloat(document.getElementById('calcDesconto').value)||0;
+  const mot     = document.getElementById('calcMotorista').value;
+
+  if (km <= 0 || valKm <= 0) { showToast('Preencha distância e valor por km'); return; }
+
+  const baseFrete = km * valKm;
+  const subtotal  = baseFrete + pedagio + diaria;
+  const descVal   = subtotal * (desc/100);
+  const total     = subtotal - descVal;
+
+  document.getElementById('calcValorFinal').textContent = fmtMoney(total);
+  document.getElementById('calcDetalhes').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem">
+      <span>Frete base (${km}km × R$${valKm}):</span><span style="text-align:right">${fmtMoney(baseFrete)}</span>
+      <span>Pedágios:</span><span style="text-align:right">${fmtMoney(pedagio)}</span>
+      <span>Diária motorista:</span><span style="text-align:right">${fmtMoney(diaria)}</span>
+      ${desc>0?`<span>Desconto (${desc}%):</span><span style="text-align:right;color:var(--danger)">-${fmtMoney(descVal)}</span>`:''}
+      ${peso>0?`<span>Peso:</span><span style="text-align:right">${peso} ton</span>`:''}
+      ${mot?`<span>Motorista:</span><span style="text-align:right">${mot}</span>`:''}
+    </div>`;
+  document.getElementById('calcResult').style.display = 'block';
+
+  // Histórico
+  calcHistoricoArr.unshift({mot:mot||'—', km, total, ts:new Date().toLocaleTimeString('pt-BR')});
+  if (calcHistoricoArr.length > 5) calcHistoricoArr.pop();
+  document.getElementById('calcHistorico').innerHTML = calcHistoricoArr.map(h=>
+    `<div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid var(--gray-200)">
+      <span>${h.ts} · ${h.mot} · ${h.km}km</span>
+      <span style="font-weight:700;color:var(--success)">${fmtMoney(h.total)}</span>
+    </div>`
+  ).join('');
+}
+
+// Enter nos inputs da calculadora
+document.getElementById('calcDiaria').addEventListener('keydown', e => { if(e.key==='Enter') calcularFrete(); });
 </script>
 </body>
 </html>
