@@ -661,13 +661,16 @@ function findCol(headers, keywords) {
   return null;
 }
 
-function proxyUrl(url) {
-  if (!url) return url;
-  if (url.includes('allorigins')) return url;
-  if (url.includes('docs.google.com')) {
-    return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-  }
-  return url;
+// Lista de proxies CORS, tentados em ordem até um funcionar
+const CORS_PROXIES = [
+  url => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+];
+
+function toCsvUrl(url) {
+  // Garante que a URL do Google Sheets retorne CSV (mesmo se foi colada como xlsx)
+  return url.replace(/output=xlsx/i, 'output=csv');
 }
 
 function showToast(msg, duration = 3000) {
@@ -694,16 +697,36 @@ function exportCSV(data, name) {
 }
 
 async function fetchCSV(url) {
-  const res = await fetch(proxyUrl(url), {cache:'no-store'});
-  if (!res.ok) throw new Error('Erro HTTP ' + res.status);
-  const text = await res.text();
-  return new Promise((resolve, reject) => {
-    Papa.parse(text, {
-      header: true, skipEmptyLines: true,
-      complete: r => resolve(r.data),
-      error: e => reject(e)
-    });
-  });
+  if (!url) throw new Error('URL não configurada');
+  const target = toCsvUrl(url);
+  let lastErr;
+
+  // 1ª tentativa: direto (caso o Sheet permita CORS)
+  const attempts = [target, ...CORS_PROXIES.map(fn => fn(target))];
+
+  for (const attemptUrl of attempts) {
+    try {
+      const res = await fetch(attemptUrl, {cache:'no-store'});
+      if (!res.ok) { lastErr = new Error('HTTP ' + res.status); continue; }
+      const text = await res.text();
+      if (!text || text.trim().length < 2) { lastErr = new Error('Resposta vazia'); continue; }
+      // Detecta se voltou HTML (erro de permissão/login) em vez de CSV
+      if (/^\s*<(!doctype|html)/i.test(text)) { lastErr = new Error('Planilha não publicada ou sem permissão'); continue; }
+      const parsed = await new Promise((resolve, reject) => {
+        Papa.parse(text, {
+          header: true, skipEmptyLines: true,
+          complete: r => resolve(r.data),
+          error: e => reject(e)
+        });
+      });
+      if (!parsed.length) { lastErr = new Error('Planilha sem dados'); continue; }
+      return parsed;
+    } catch(e) {
+      lastErr = e;
+      continue;
+    }
+  }
+  throw lastErr || new Error('Falha ao carregar dados');
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -851,14 +874,21 @@ function applyFinFilters() {
       if (dFim && d && d > new Date(dFim + 'T23:59:59')) return false;
     }
     // Filtro tipo (receita/despesa)
-    if (tipo && colTipo) {
-      const t = String(row[colTipo] || '').toLowerCase();
-      if (!t.includes(tipo) && !(tipo === 'receita' && parseMoney(row[colValor]) > 0 && !colTipo) && !(tipo === 'despesa' && parseMoney(row[colValor]) < 0 && !colTipo)) {
-        if (colTipo) return false;
-      }
+    if (tipo) {
+      const v = colValor ? parseMoney(row[colValor]) : 0;
+      const t = colTipo ? String(row[colTipo] || '').toLowerCase() : '';
+      let rowTipo;
+      if (t.includes('receita') || t.includes('entrada') || t.includes('credito')) rowTipo = 'receita';
+      else if (t.includes('despesa') || t.includes('saida') || t.includes('debito')) rowTipo = 'despesa';
+      else rowTipo = v >= 0 ? 'receita' : 'despesa';
+      if (rowTipo !== tipo) return false;
     }
     // Filtro categoria
-    if (cat && colTipo && row[colTipo] !== cat) return false;
+    if (cat) {
+      const colCat = findCol(headers, ['categoria','tipo lancamento','natureza','descricao']);
+      const checkCol = colCat || colTipo;
+      if (checkCol && row[checkCol] !== cat) return false;
+    }
     // Busca texto
     if (busca) {
       const rowText = Object.values(row).join(' ').toLowerCase();
