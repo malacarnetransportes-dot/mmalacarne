@@ -629,16 +629,27 @@ function parseMoney(v) {
 }
 
 function parseDate(v) {
-  if (!v) return null;
+  if (v === null || v === undefined || v === '') return null;
   const s = String(v).trim();
-  // Tenta formatos comuns: DD/MM/YYYY, YYYY-MM-DD, MM/DD/YYYY
   let m;
-  if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/))) {
-    // DD/MM/YYYY (formato brasileiro)
-    return new Date(+m[3], +m[2]-1, +m[1]);
+  // DD/MM/YYYY ou DD/MM/YYYY HH:MM(:SS) - formato brasileiro
+  if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/))) {
+    let year = +m[3];
+    if (year < 100) year += 2000;
+    const hh = m[4] ? +m[4] : 0, mi = m[5] ? +m[5] : 0, ss = m[6] ? +m[6] : 0;
+    const d = new Date(year, +m[2]-1, +m[1], hh, mi, ss);
+    return isNaN(d) ? null : d;
   }
-  if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/))) {
+  // YYYY-MM-DD ou YYYY-MM-DDTHH:MM:SS (ISO)
+  if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})/))) {
+    const d = new Date(s);
+    if (!isNaN(d)) return d;
     return new Date(+m[1], +m[2]-1, +m[3]);
+  }
+  // Número serial do Google Sheets/Excel (dias desde 30/12/1899)
+  if (/^\d+(\.\d+)?$/.test(s) && +s > 20000 && +s < 80000) {
+    const epoch = new Date(1899, 11, 30);
+    return new Date(epoch.getTime() + (+s) * 86400000);
   }
   const d = new Date(s);
   return isNaN(d) ? null : d;
@@ -873,8 +884,9 @@ function applyFinFilters() {
     // Filtro data
     if (colData && (dIni || dFim)) {
       const d = parseDate(row[colData]);
-      if (dIni && d && d < new Date(dIni + 'T00:00:00')) return false;
-      if (dFim && d && d > new Date(dFim + 'T23:59:59')) return false;
+      if (!d) return false;
+      if (dIni && d < new Date(dIni + 'T00:00:00')) return false;
+      if (dFim && d > new Date(dFim + 'T23:59:59')) return false;
     }
     // Filtro tipo (receita/despesa)
     if (tipo) {
