@@ -310,11 +310,17 @@ footer a{color:var(--accent);text-decoration:none;}
 <div class="section" id="infraestrutura">
   <h2 class="section-title">Nossa Infraestrutura</h2>
   <div class="gallery-grid">
-    <div class="gallery-item"><img src="IMG-20220924-WA0022 (1).jpg" alt="Frota Scania" onerror="this.style.background:'#eee'"></div>
-    <div class="gallery-item"><img src="img87.jpg" alt="Sede" onerror="this.style.background:'#eee'"></div>
-    <div class="gallery-item"><img src="img89.jpg" alt="Pátio" onerror="this.style.background:'#eee'"></div>
-    <div class="gallery-item"><img src="7.jpg" alt="Frota" onerror="this.style.background:'#eee'"></div>
-    <div class="gallery-item"><img src="2.jpg" alt="Galpão" onerror="this.style.background:'#eee'"></div>
+    <div class="gallery-item"><img src="IMG-20220924-WA0022 (1).jpg" alt="Frota Scania" onerror="this.style.background='#eee'"></div>
+    <div class="gallery-item"><img src="img87.jpg" alt="Sede" onerror="this.style.background='#eee'"></div>
+    <div class="gallery-item"><img src="img89.jpg" alt="Pátio" onerror="this.style.background='#eee'"></div>
+    <div class="gallery-item"><img src="7.jpg" alt="Frota" onerror="this.style.background='#eee'"></div>
+    <div class="gallery-item"><img src="2.jpg" alt="Galpão" onerror="this.style.background='#eee'"></div>
+    <div class="gallery-item"><img src="IMG-20230213-WA0005.jpg" alt="Caminhões Scania" onerror="this.style.background='#eee'"></div>
+    <div class="gallery-item"><img src="IMG-20230213-WA0006.jpg" alt="Sede — Vista Exterior" onerror="this.style.background='#eee'"></div>
+    <div class="gallery-item"><img src="IMG-20230213-WA0009.jpg" alt="Pátio — Vista Aérea" onerror="this.style.background='#eee'"></div>
+    <div class="gallery-item"><img src="IMG-20230213-WA0015.jpg" alt="Painel Solar" onerror="this.style.background='#eee'"></div>
+    <div class="gallery-item"><img src="IMG-20230213-WA0017.jpg" alt="Instalações" onerror="this.style.background='#eee'"></div>
+    <div class="gallery-item"><img src="WhatsApp_Image_2025-05-09_at_09_03_08.jpeg" alt="Frota em Operação" onerror="this.style.background='#eee'"></div>
   </div>
 </div>
 
@@ -325,6 +331,9 @@ footer a{color:var(--accent);text-decoration:none;}
     <a href="https://calculadorafrete.antt.gov.br/" target="_blank" class="antt-card"><i class="fas fa-calculator"></i><div><div style="font-weight:700">Calculadora de Frete</div><div style="font-size:.78rem;color:var(--text-lt)">Tabela ANTT Oficial</div></div></a>
     <a href="https://consultapublica.antt.gov.br/Site/ConsultaRNTRC.aspx" target="_blank" class="antt-card"><i class="fas fa-id-card"></i><div><div style="font-weight:700">Consulta RNTRC</div><div style="font-size:.78rem;color:var(--text-lt)">Registro Nacional</div></div></a>
     <a href="https://www.antt.gov.br/" target="_blank" class="antt-card"><i class="fas fa-shield-alt"></i><div><div style="font-weight:700">Portal ANTT</div><div style="font-size:.78rem;color:var(--text-lt)">Site Oficial</div></div></a>
+    <a href="https://www.nfe.fazenda.gov.br/portal/consultaRecaptcha.aspx?tipoConsulta=completa" target="_blank" class="antt-card"><i class="fas fa-file-invoice"></i><div><div style="font-weight:700">Consulta NF-e</div><div style="font-size:.78rem;color:var(--text-lt)">Situação na SEFAZ</div></div></a>
+    <a href="https://detran.sc.gov.br/" target="_blank" class="antt-card"><i class="fas fa-car"></i><div><div style="font-weight:700">DETRAN SC</div><div style="font-size:.78rem;color:var(--text-lt)">CNH, Multas e Veículos</div></div></a>
+    <a href="https://www.newrastreamentoonline.com.br/new/login" target="_blank" class="antt-card"><i class="fas fa-satellite-dish"></i><div><div style="font-weight:700">Rastreamento Online</div><div style="font-size:.78rem;color:var(--text-lt)">Monitoramento da Frota</div></div></a>
   </div>
 </div>
 
@@ -430,6 +439,8 @@ footer a{color:var(--accent);text-decoration:none;}
         <button class="pa-nav-item" data-tab="tabFaturamento"><i class="fas fa-truck"></i> Faturamento</button>
         <button class="pa-nav-item" data-tab="tabBaterias"><i class="fas fa-battery-three-quarters"></i> Baterias</button>
         <button class="pa-nav-item" data-tab="tabCalculadora"><i class="fas fa-calculator"></i> Calculadora</button>
+        <button class="pa-nav-item" data-tab="tabSenhas"><i class="fas fa-key"></i> Senhas</button>
+        <button class="pa-nav-item" data-tab="tabFrota"><i class="fas fa-id-card"></i> Frota / Motoristas</button>
       </nav>
       <div class="pa-sidebar-footer">
         <button class="pa-nav-item" id="openUrlConfig" style="font-size:.8rem"><i class="fas fa-cog"></i> Config URLs</button>
@@ -558,6 +569,8 @@ footer a{color:var(--accent);text-decoration:none;}
             <div class="filters-bar">
               <div class="flt-grp"><label>Veículo</label><input type="text" id="batVeiculo" placeholder="Placa ou veículo..."></div>
               <div class="flt-grp"><label>Status</label><select id="batStatus"><option value="">Todos</option><option value="vencido">Vencidas</option><option value="proximo">Próx. 30 dias</option><option value="ok">Em Dia</option></select></div>
+              <div class="flt-grp"><label>Data Início</label><input type="date" id="batDataInicio"></div>
+              <div class="flt-grp"><label>Data Fim</label><input type="date" id="batDataFim"></div>
               <button class="btn btn-accent" onclick="aplicarFiltrosBaterias()"><i class="fas fa-search"></i> Filtrar</button>
               <button class="btn btn-gray" onclick="resetBatFilters()"><i class="fas fa-times"></i> Limpar</button>
               <button class="btn btn-success btn-sm" onclick="exportCSV(currentBateriasFiltered,'baterias')"><i class="fas fa-download"></i> CSV</button>
@@ -600,6 +613,48 @@ footer a{color:var(--accent);text-decoration:none;}
                 <div class="dash-card-title"><i class="fas fa-history"></i> Histórico de Cálculos</div>
                 <div id="calcHistorico" style="font-size:.82rem;color:var(--text-lt)">Nenhum cálculo realizado.</div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── TAB SENHAS ── -->
+        <div id="tabSenhas" class="tab-pane">
+          <div class="dash-card" style="margin-bottom:1.4rem">
+            <div class="dash-card-title"><i class="fas fa-search"></i> Buscar Senha</div>
+            <div class="filters-bar">
+              <div class="flt-grp"><label>Sistema / Site</label><input type="text" id="senhaBusca" placeholder="Ex: BRF, Scania, ANTT..." oninput="filtrarSenhas()"></div>
+              <button class="btn btn-gray" onclick="document.getElementById('senhaBusca').value='';filtrarSenhas()"><i class="fas fa-times"></i> Limpar</button>
+            </div>
+          </div>
+          <div id="senhasGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem"></div>
+        </div>
+
+        <!-- ── TAB FROTA / MOTORISTAS ── -->
+        <div id="tabFrota" class="tab-pane">
+          <div class="kpi-grid">
+            <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-users"></i></div><div><div class="kpi-val" id="frota-total">14</div><div class="kpi-lbl">Motoristas</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon brown"><i class="fas fa-truck"></i></div><div><div class="kpi-val" id="frota-placas">17</div><div class="kpi-lbl">Veículos Cadastrados</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-boxes"></i></div><div><div class="kpi-val">28–30</div><div class="kpi-lbl">Paletes por Viagem</div></div></div>
+          </div>
+
+          <div class="dash-card" style="margin-bottom:1.4rem">
+            <div class="filters-bar">
+              <div class="flt-grp"><label>Buscar</label><input type="text" id="frotaBusca" placeholder="Nome, placa, carreta ou CPF..." oninput="filtrarFrota()"></div>
+              <div class="flt-grp"><label>Paletes</label><select id="frotaPaletes" onchange="filtrarFrota()"><option value="">Todos</option><option value="28">28 paletes</option><option value="30">30 paletes (Van)</option></select></div>
+              <button class="btn btn-gray" onclick="document.getElementById('frotaBusca').value='';document.getElementById('frotaPaletes').selectedIndex=0;filtrarFrota()"><i class="fas fa-times"></i> Limpar</button>
+            </div>
+          </div>
+
+          <!-- Cards de motoristas -->
+          <div id="frotaCards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.1rem"></div>
+
+          <div class="dash-card" style="margin-top:1.4rem">
+            <div class="dash-card-title"><i class="fas fa-table"></i> Lista Completa <span id="frotaCount" style="background:var(--gray-100);padding:.15rem .6rem;border-radius:30px;font-size:.75rem;margin-left:.5rem"></span></div>
+            <div class="tbl-wrap">
+              <table class="data-table" id="frotaTable">
+                <thead><tr><th>#</th><th>Motorista</th><th>Placa Cavalo</th><th>Carreta</th><th>Paletes</th><th>Celular</th><th>CPF</th><th>Ações</th></tr></thead>
+                <tbody id="frotaTableBody"></tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -811,7 +866,9 @@ const pageTitles = {
   tabFinanceiro: '<i class="fas fa-chart-line" style="color:var(--accent)"></i> Financeiro',
   tabFaturamento: '<i class="fas fa-truck" style="color:var(--accent)"></i> Faturamento',
   tabBaterias: '<i class="fas fa-battery-three-quarters" style="color:var(--accent)"></i> Baterias',
-  tabCalculadora: '<i class="fas fa-calculator" style="color:var(--accent)"></i> Calculadora'
+  tabCalculadora: '<i class="fas fa-calculator" style="color:var(--accent)"></i> Calculadora',
+  tabSenhas: '<i class="fas fa-key" style="color:var(--accent)"></i> Senhas',
+  tabFrota: '<i class="fas fa-id-card" style="color:var(--accent)"></i> Frota / Motoristas'
 };
 
 document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
@@ -1455,13 +1512,14 @@ function aplicarFiltrosBaterias() {
   const headers = Object.keys(bateriasData[0]);
   const colVeiculo = findCol(headers, ['veiculo','placa','caminhao','carro','cavalo','truck','frota']);
   const colData    = findCol(headers, ['vencimento','data','validade','troca','substituicao','proxima']);
-  const colFab     = findCol(headers, ['fabricacao','instalacao','data instala','compra']);
 
   const now = new Date(); now.setHours(0,0,0,0);
   const em30 = new Date(now); em30.setDate(em30.getDate()+30);
 
   const vVeiculo = document.getElementById('batVeiculo').value.toLowerCase();
   const vStatus  = document.getElementById('batStatus').value;
+  const vDataIni = document.getElementById('batDataInicio').value ? new Date(document.getElementById('batDataInicio').value) : null;
+  const vDataFim = document.getElementById('batDataFim').value ? new Date(document.getElementById('batDataFim').value + 'T23:59:59') : null;
 
   let vencidas=0, proximas=0, ok=0;
 
@@ -1474,6 +1532,8 @@ function aplicarFiltrosBaterias() {
     }
     if (vVeiculo && colVeiculo && !String(row[colVeiculo]||'').toLowerCase().includes(vVeiculo)) return false;
     if (vStatus && status !== vStatus) return false;
+    if (vDataIni && dVenc && dVenc < vDataIni) return false;
+    if (vDataFim && dVenc && dVenc > vDataFim) return false;
     return true;
   });
 
@@ -1494,7 +1554,7 @@ function aplicarFiltrosBaterias() {
   document.getElementById('bat-ok').textContent = ok;
   document.getElementById('batCount').textContent = filtered.length + ' itens';
 
-  // Tabela com status visual
+  // Tabela com status visual — formata datas no padrão BR
   const thead = document.getElementById('batTableHead');
   const tbody = document.getElementById('batTableBody');
   thead.innerHTML = [...headers, 'Status'].map(h=>`<th>${h}</th>`).join('');
@@ -1505,7 +1565,17 @@ function aplicarFiltrosBaterias() {
       if (dVenc < now) { status='vencido'; statusLabel='⚠ Vencida'; badgeClass='badge-danger'; }
       else if (dVenc <= em30) { status='proximo'; statusLabel='⏰ Próx. 30d'; badgeClass='badge-warning'; }
     }
-    return `<tr>${headers.map(h=>`<td>${row[h]||''}</td>`).join('')}<td><span class="badge ${badgeClass}">${statusLabel}</span></td></tr>`;
+    const cells = headers.map(h => {
+      const val = row[h] || '';
+      // Formata campos que parecem data
+      const h_lc = h.toLowerCase();
+      if (h_lc.includes('data') || h_lc.includes('venc') || h_lc.includes('valid') || h_lc.includes('troca') || h_lc.includes('instala') || h_lc.includes('fabric')) {
+        const d = parseDate(val);
+        return `<td>${d ? fmtDate(d) : val}</td>`;
+      }
+      return `<td>${val}</td>`;
+    }).join('');
+    return `<tr>${cells}<td><span class="badge ${badgeClass}">${statusLabel}</span></td></tr>`;
   }).join('');
 
   document.getElementById('batLoading').style.display = 'none';
@@ -1515,6 +1585,8 @@ function aplicarFiltrosBaterias() {
 function resetBatFilters() {
   document.getElementById('batVeiculo').value='';
   document.getElementById('batStatus').selectedIndex=0;
+  document.getElementById('batDataInicio').value='';
+  document.getElementById('batDataFim').value='';
   aplicarFiltrosBaterias();
 }
 
@@ -1571,6 +1643,246 @@ function calcularFrete() {
 
 // Enter nos inputs da calculadora
 document.getElementById('calcDiaria').addEventListener('keydown', e => { if(e.key==='Enter') calcularFrete(); });
+
+// ═══════════════════════════════════════════════════════════
+// SENHAS
+// ═══════════════════════════════════════════════════════════
+const SENHAS_DATA = [
+  {sistema:'Trizy (Plataforma)',url:'https://plataforma.trizy.com.br/',usuario:'',senha:'Mala23252325@'},
+  {sistema:'Angel Lira — Logística',url:'https://logistica.angellira.com.br/lira-verso/home',usuario:'',senha:'Malacarne2325@'},
+  {sistema:'Angel Lira — App (VINICIUS)',url:'https://app.angellira.com.br/',usuario:'VINICIUS.MALACARNE',senha:'Mala2325@'},
+  {sistema:'Angel Lira — App (RONALDO)',url:'https://app.angellira.com.br/',usuario:'RONALDO.MALACARNE',senha:'Mala23252325@'},
+  {sistema:'Averb. Carga Seguro ATM',url:'',usuario:'RONI / COD 11455200',senha:'mala2325'},
+  {sistema:'Integração Multicte',url:'',usuario:'WS / COD 11455200',senha:'base123'},
+  {sistema:'Posto Pelanda',url:'http://www.postospelanda.com.br',usuario:'76344936000100',senha:'14689'},
+  {sistema:'Graal FrotaFlex',url:'https://graal.frotaflex.com.br/',usuario:'76344936000100',senha:'7634'},
+  {sistema:'Atlas Facilities (Novo Portal)',url:'https://gestao.atlasfacilities.com.br/contracts/list',usuario:'maximinovilmormalacarne@gmail.com',senha:'Mala2325@'},
+  {sistema:'OnixSat — Espelhamento',url:'https://www.onixsat.com.br/rastreamento/new/login.aspx',usuario:'MAXIMINO',senha:'Malamvm30@'},
+  {sistema:'OnixSat — Enterprise',url:'',usuario:'MAXIMINO',senha:'@mvm30'},
+  {sistema:'OnixSat — COOPERSEARA',url:'',usuario:'COOPERSEARA',senha:'CoFrseara@123'},
+  {sistema:'OnixSat — NewMaps App',url:'https://www.newrastreamentoonline.com.br/new/espelhamento/',usuario:'mmalacarne@netcon.com.br',senha:'@Malamvm30'},
+  {sistema:'Rede OLA FrotaFlex (Sol da Dutra)',url:'https://redeola.frotaflex.com.br/',usuario:'76344936000100',senha:'mala2325'},
+  {sistema:'OpenTech SIL (BRF/MLCN01)',url:'https://sil.opentechgr.com.br/',usuario:'BRF/MLCN01',senha:'Mala23252325'},
+  {sistema:'OpenTech SIL (BRF/MLCN02)',url:'https://sil.opentechgr.com.br/',usuario:'BRF/MLCN02',senha:'#Mala23252325@0'},
+  {sistema:'Meu TIM',url:'https://meutim.tim.com.br/novo',usuario:'106197412',senha:'7746'},
+  {sistema:'BRF Parceiros (Service Now)',url:'https://brfprd.service-now.com/parceiros?id=csm_vehicles',usuario:'76344936000100',senha:'mala2325 / 446032'},
+  {sistema:'Scania FINAME (Boletos)',url:'https://scania.ifclick.com.br/meus_boletos.php',usuario:'mmalacarnetransporte@gmail.com',senha:'A9F9501D'},
+  {sistema:'My Scania',url:'https://my.scania.com/#/start',usuario:'financeirommalacarne@gmail.com',senha:'Mala2325@'},
+  {sistema:'Scania Banco (Boletos)',url:'https://boletos.scaniabanco.com.br/',usuario:'dmalacarne@netcon.com.br',senha:'6B29A976'},
+  {sistema:'Scania Banco (Portal)',url:'https://www.scaniabanco.com.br/portal/',usuario:'MALACARNE',senha:'C6BE23C1'},
+  {sistema:'Scania FMP NextGen',url:'https://fmpnextgen.scania.com/#/sign-in',usuario:'maldiomax5',senha:'@mala2325'},
+  {sistema:'Volvo Boleto (Plano Manutenção)',url:'https://volvo.cob360.com.br/site/login',usuario:'76344936000100',senha:'M@76344'},
+  {sistema:'Volvo Boletos',url:'https://volvo.cob360.com.br/boletos',usuario:'76344936000100',senha:'mala2325'},
+  {sistema:'BRF MIISY',url:'https://brf.miisy.com/supplier/do/dashboard',usuario:'dmalacarne@netcon.com.br',senha:'Mala23252325@@'},
+  {sistema:'BRF TMS',url:'https://tms.brf-corp.com/tm/framework/Frame.jsp',usuario:'T328629',senha:'mala2325'},
+  {sistema:'BRF Primária (Temperatura)',url:'https://brfprimaria.hbsis.com.br/account/login',usuario:'76344936',senha:'M@lacarne19'},
+  {sistema:'BRF Extrato',url:'',usuario:'76344936',senha:'328629'},
+  {sistema:'Gente e Gestão',url:'http://www.genteegestao.com.br/portal/index.aspx',usuario:'dmalacarne@netcon.com.br',senha:'mala2325'},
+  {sistema:'Novo JDA (Oracle)',url:'https://idcs-c7036628499e4f669fda23e2a82fbf86.identity.oraclecloud.com/ui/v1/signin',usuario:'mmalacarne@netcon.com.br',senha:'Malacarne2325'},
+  {sistema:'ARIBA',url:'https://service-2.ariba.com/Supplier.aw',usuario:'dmalacarne@netcon.com.br',senha:'mala2325 | Cód: AN01056409856'},
+  {sistema:'Agriçopel Portal',url:'https://agricopel.portaldocliente.online/',usuario:'dmalacarne@netcon.com.br',senha:'mala2325'},
+  {sistema:'Grupo Ravanello',url:'http://gruporavanello.lzt.com.br/',usuario:'76.3444.936/0001-00',senha:'T0A803'},
+  {sistema:'Grupo CSV',url:'',usuario:'76344936000100',senha:'i9@2017'},
+  {sistema:'Trucks Control / OnixTec',url:'https://www.truckscontrol.com.br/financeiro/',usuario:'mmalacarne@netcon.com.br',senha:'mala.66'},
+  {sistema:'Multicadastro APISUL',url:'',usuario:'76344936000100',senha:'948548'},
+  {sistema:'WebAlarme',url:'http://WWW.WEBALARME.COM.BR',usuario:'Conta: 1807-591',senha:'0275'},
+  {sistema:'HiveCloud / MDF-e (SC)',url:'https://login.hivecloud.com.br/login',usuario:'76344-SC',senha:'76344'},
+  {sistema:'HiveCloud / MDF-e (PR)',url:'https://login.hivecloud.com.br/login',usuario:'76344-PR',senha:'76344'},
+  {sistema:'HiveCloud / MDF-e (SP)',url:'https://login.hivecloud.com.br/login',usuario:'76344-SP',senha:'76344'},
+  {sistema:'MultiCTE (SC)',url:'http://brf.multicte.com.br/CTe/Logon.aspx',usuario:'76344-SC',senha:'76344'},
+  {sistema:'MultiCTE (PR)',url:'http://brf.multicte.com.br/CTe/Logon.aspx',usuario:'76344-PR',senha:'76344'},
+  {sistema:'MultiCTE (SP)',url:'http://brf.multicte.com.br/CTe/Logon.aspx',usuario:'76344-SP',senha:'76344'},
+  {sistema:'Veltec (Câmera ao Vivo)',url:'https://vplayer.com.br/',usuario:'',senha:'1234'},
+  {sistema:'Veltec Suporte',url:'https://veltec.atlassian.net/servicedesk/customer/user/login',usuario:'dmalacarne@netcon.com.br',senha:'mala2325'},
+  {sistema:'VFleets',url:'https://ce.vfleets.com.br/app/',usuario:'mmalacarnetransporte@gmail.com',senha:'@Mala2325'},
+  {sistema:'Aurora',url:'',usuario:'76344936/000100',senha:'Mala2025*'},
+  {sistema:'Sem Parar',url:'',usuario:'76344936000100',senha:'c2047d7c'},
+  {sistema:'SitCarga',url:'',usuario:'CPF: 34806660949 / ANTT: 001293941',senha:'mala2325'},
+  {sistema:'Vivo',url:'',usuario:'dmalacarne@netcon.com.br',senha:'232500'},
+  {sistema:'Home Office',url:'',usuario:'eudiomar@hotmail.com',senha:'@mvm30'},
+  {sistema:'E-mail Netcon (dmalacarne)',url:'',usuario:'dmalacarne@netcon.com.br',senha:'sala22325'},
+  {sistema:'Gmail (maximino)',url:'',usuario:'maximinovilmormalacarne@gmail.com',senha:'Mala23252325@'},
+  {sistema:'Gmail (financeiro)',url:'',usuario:'financeirommalacarne@gmail.com',senha:'Mala2325@'},
+  {sistema:'Gmail (dmalacarne990)',url:'',usuario:'dmalacarne990@gmail.com',senha:'mala2325'},
+  {sistema:'Wireless (Senha)',url:'',usuario:'25carne2523',senha:'@M@L@2325'},
+  {sistema:'Roteador',url:'',usuario:'MALACARNE2325',senha:'MALACARNE2325'},
+];
+
+let senhasVisiveis = {};
+
+function filtrarSenhas() {
+  const busca = document.getElementById('senhaBusca').value.toLowerCase();
+  const grid = document.getElementById('senhasGrid');
+  const dados = busca
+    ? SENHAS_DATA.filter(s => s.sistema.toLowerCase().includes(busca) || s.usuario.toLowerCase().includes(busca) || s.url.toLowerCase().includes(busca))
+    : SENHAS_DATA;
+  grid.innerHTML = dados.map((s, i) => {
+    const id = 'senha_' + i;
+    const vis = senhasVisiveis[id];
+    const senhaDisplay = vis ? s.senha : s.senha.replace(/./g,'●');
+    const urlBtn = s.url ? `<a href="${s.url}" target="_blank" style="font-size:.75rem;color:var(--info);text-decoration:none"><i class="fas fa-external-link-alt"></i></a>` : '';
+    return `<div class="dash-card" style="padding:1rem">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.5rem">
+        <div style="font-weight:700;font-size:.88rem;color:#1e2a3a">${s.sistema} ${urlBtn}</div>
+        <button onclick="copiarSenha('${s.senha.replace(/'/g,"\\'")}','${s.sistema}')" class="btn btn-sm btn-gray" title="Copiar senha"><i class="fas fa-copy"></i></button>
+      </div>
+      ${s.usuario ? `<div style="font-size:.78rem;color:var(--text-lt);margin-bottom:.3rem"><i class="fas fa-user" style="width:12px"></i> ${s.usuario}</div>` : ''}
+      <div style="display:flex;align-items:center;gap:.5rem;margin-top:.4rem">
+        <code style="font-size:.82rem;background:var(--gray-100);padding:.25rem .6rem;border-radius:6px;flex:1;word-break:break-all" id="${id}">${senhaDisplay}</code>
+        <button onclick="toggleSenha('${id}','${s.senha.replace(/'/g,"\\'")}');" class="btn btn-sm btn-gray" title="Mostrar/ocultar"><i class="fas fa-eye${vis?'-slash':''}"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleSenha(id, senha) {
+  senhasVisiveis[id] = !senhasVisiveis[id];
+  const el = document.getElementById(id);
+  if (el) el.textContent = senhasVisiveis[id] ? senha : senha.replace(/./g,'●');
+  // Atualizar ícone
+  const btn = el ? el.nextElementSibling : null;
+  if (btn) btn.innerHTML = `<i class="fas fa-eye${senhasVisiveis[id]?'-slash':''}"></i>`;
+}
+
+function copiarSenha(senha, sistema) {
+  navigator.clipboard.writeText(senha).then(() => showToast(`✓ Senha de "${sistema}" copiada!`));
+}
+
+// ═══════════════════════════════════════════════════════════
+// FROTA / MOTORISTAS
+// ═══════════════════════════════════════════════════════════
+const FROTA_DATA = [
+  {motorista:'ADRIANO VAZ DOS SANTOS',     placa:'RYE7J26', carreta:'QJH0591',                  paletes:'28', celular:'46 - 99983-7772', cpf:'023.114.919-03'},
+  {motorista:'ALEXANDRE VENETZEI',          placa:'RLB3E26', carreta:'MGG7C96 — 30 pal. Van',    paletes:'28', celular:'42 - 991414-5266',cpf:'056.205.439-19'},
+  {motorista:'ANDERSON VEIGA SANTOS',       placa:'QTM0G30', carreta:'RYQ7I03 — 30 pal. Van',    paletes:'30', celular:'42 - 99832-0501', cpf:'012.273.449-10'},
+  {motorista:'BRUNO EDUARDO RIBEIRO',       placa:'RAC4760', carreta:'RDS9G71',                  paletes:'28', celular:'41 - 99281-3168', cpf:'077.594.359-24'},
+  {motorista:'CRISTIANO DE ALMEIDA',        placa:'QJM1350', carreta:'OKD8A19',                  paletes:'28', celular:'49 - 99110-7517', cpf:'029.395.779-11'},
+  {motorista:'ERI ORLANDO ROMERO',          placa:'QJC0B40', carreta:'MLB0J76',                  paletes:'28', celular:'92 - 99220-9993', cpf:'706.920.112-50'},
+  {motorista:'GILSON MARGOTTI',             placa:'RAC4780', carreta:'RXS3D84',                  paletes:'28', celular:'41 - 99930-9646', cpf:'045.221.079-86'},
+  {motorista:'HILDO ANTONIO ALMEIDA',       placa:'QJY0640', carreta:'QHI5B08',                  paletes:'28', celular:'49 - 99913-6578', cpf:'394.955.669-91'},
+  {motorista:'JORGE ODAIR LOPES',           placa:'RLB3C26', carreta:'MKB0A39 — 30 pal. Van',    paletes:'30', celular:'49 - 99840-9613', cpf:'848.045.729-53'},
+  {motorista:'JOSIAS FERREIRA DOS SANTOS',  placa:'QTM0E20', carreta:'QIW2885',                  paletes:'28', celular:'41 - 99782-7246', cpf:'035.686.699-86'},
+  {motorista:'LEANDRO L KLEE',              placa:'RYE7J76', carreta:'RLO9G15',                  paletes:'28', celular:'49 - 99910-0398', cpf:'038.197.969-59'},
+  {motorista:'MARIANO DE SOUZA',            placa:'QJA0E90', carreta:'QHA1357',                  paletes:'30', celular:'87 - 98134-2532', cpf:'098.235.784-27'},
+  {motorista:'RAFAEL DE FRANÇA RAMOS',      placa:'RLB3E46', carreta:'IWV8B19',                  paletes:'28', celular:'42 - 98804-7766', cpf:'065.936.019-50'},
+  {motorista:'RODRIGO DA ROSA',             placa:'RYE7J36', carreta:'RDS9H31',                  paletes:'30', celular:'49 - 99922-8442', cpf:'944.742.309-49'},
+  {motorista:'—',                           placa:'QJL8F70', carreta:'RXQ4H32',                  paletes:'28', celular:'49 - 99927-1817', cpf:'560.043.389-15'},
+  {motorista:'—',                           placa:'MKQ1A80', carreta:'MME7C92',                  paletes:'28', celular:'49 - 98826-7227', cpf:'065.544.399-19'},
+  {motorista:'—',                           placa:'MKR1080', carreta:'MHF6E75 — 30 pal. Van',    paletes:'28', celular:'42 - 99800-0365', cpf:'079.554.549-52'},
+];
+
+function getInitials(name) {
+  if (!name || name === '—') return '?';
+  const parts = name.trim().split(' ');
+  return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+}
+
+const AVATAR_COLORS = [
+  {bg:'#1e3a5f',text:'#90bef5'},{bg:'#1a3c2e',text:'#7dd4a8'},
+  {bg:'#3d2000',text:'#f5b942'},{bg:'#3b1a1a',text:'#f48a8a'},
+  {bg:'#2a1a40',text:'#b49cf5'},{bg:'#1a2e40',text:'#7ec8f0'},
+  {bg:'#1e3320',text:'#8fd46a'},{bg:'#3a2810',text:'#e8a96a'},
+];
+
+function getAvatarColor(name) {
+  let hash = 0;
+  for (let c of (name||'')) hash = (hash * 31 + c.charCodeAt(0)) & 0xffff;
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+}
+
+function filtrarFrota() {
+  const busca   = (document.getElementById('frotaBusca').value || '').toLowerCase();
+  const palFilt = document.getElementById('frotaPaletes').value;
+
+  const dados = FROTA_DATA.filter(r => {
+    const txt = (r.motorista + r.placa + r.carreta + r.cpf).toLowerCase();
+    if (busca && !txt.includes(busca)) return false;
+    if (palFilt && r.paletes !== palFilt) return false;
+    return true;
+  });
+
+  const motoristas = dados.filter(r => r.motorista !== '—');
+  const semNome    = dados.filter(r => r.motorista === '—');
+  document.getElementById('frotaCount').textContent = dados.length + ' registros';
+
+  // ── CARDS premium ──
+  const cardsEl = document.getElementById('frotaCards');
+  cardsEl.innerHTML = motoristas.map((r, i) => {
+    const av = getAvatarColor(r.motorista);
+    const ini = getInitials(r.motorista);
+    const isVan = r.carreta.includes('Van') || r.paletes === '30';
+    const tel = r.celular.replace(/\D/g,'');
+    return `
+    <div style="background:#fff;border-radius:16px;border:1px solid rgba(0,0,0,.06);overflow:hidden;transition:.2s;box-shadow:0 2px 8px rgba(0,0,0,.06)" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.12)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 8px rgba(0,0,0,.06)'">
+      <!-- Header colorido -->
+      <div style="background:${av.bg};padding:1.2rem 1.2rem .9rem;display:flex;align-items:center;gap:.9rem">
+        <div style="width:48px;height:48px;border-radius:50%;background:${av.text}22;border:2px solid ${av.text}55;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:800;color:${av.text};flex-shrink:0">${ini}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:.92rem;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.motorista}</div>
+          <div style="font-size:.72rem;color:${av.text};margin-top:.1rem;opacity:.85">Motorista de Carreta</div>
+        </div>
+        ${isVan ? `<span style="background:rgba(212,175,55,.2);color:var(--accent);font-size:.65rem;font-weight:700;padding:.2rem .55rem;border-radius:20px;white-space:nowrap;border:1px solid rgba(212,175,55,.3)">VAN</span>` : ''}
+      </div>
+      <!-- Body -->
+      <div style="padding:1rem 1.2rem">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem .5rem;margin-bottom:.9rem">
+          <div>
+            <div style="font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-lt);margin-bottom:.2rem">Cavalo</div>
+            <div style="font-size:.85rem;font-weight:700;color:#1e2a3a;font-family:monospace;letter-spacing:.5px">${r.placa}</div>
+          </div>
+          <div>
+            <div style="font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-lt);margin-bottom:.2rem">Carreta</div>
+            <div style="font-size:.82rem;font-weight:600;color:#1e2a3a;font-family:monospace">${r.carreta.split('—')[0].trim()}</div>
+          </div>
+          <div>
+            <div style="font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-lt);margin-bottom:.2rem">Paletes</div>
+            <div style="display:inline-flex;align-items:center;gap:.3rem">
+              <span style="font-size:.85rem;font-weight:700;color:#1e2a3a">${r.paletes}</span>
+              <span style="font-size:.65rem;background:var(--gray-100);color:var(--text-lt);padding:.1rem .45rem;border-radius:20px">paletes</span>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-lt);margin-bottom:.2rem">CPF</div>
+            <div style="font-size:.78rem;color:var(--text-lt)">${r.cpf}</div>
+          </div>
+        </div>
+        <!-- Footer com whatsapp -->
+        <div style="border-top:1px solid var(--gray-200);padding-top:.75rem;display:flex;align-items:center;justify-content:space-between">
+          <div style="font-size:.82rem;color:var(--text-lt)"><i class="fas fa-phone" style="font-size:.72rem;margin-right:.35rem;color:var(--success)"></i>${r.celular}</div>
+          <div style="display:flex;gap:.4rem">
+            <a href="https://wa.me/55${tel}" target="_blank" style="background:#25D366;color:#fff;border:none;border-radius:8px;padding:.3rem .7rem;font-size:.72rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem"><i class="fab fa-whatsapp"></i> WA</a>
+            <a href="tel:${tel}" style="background:var(--info);color:#fff;border:none;border-radius:8px;padding:.3rem .7rem;font-size:.72rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem"><i class="fas fa-phone"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // ── TABELA completa ──
+  const tbody = document.getElementById('frotaTableBody');
+  tbody.innerHTML = dados.map((r, i) => {
+    const isVan = r.carreta.includes('Van') || r.paletes === '30';
+    const tel = r.celular.replace(/\D/g,'');
+    return `<tr>
+      <td style="color:var(--text-lt);font-size:.78rem">${i+1}</td>
+      <td style="font-weight:600">${r.motorista}</td>
+      <td><span style="font-family:monospace;font-weight:700;font-size:.82rem;background:linear-gradient(135deg,#1e2a3a,#2d3748);color:#fff;padding:.2rem .6rem;border-radius:6px">${r.placa}</span></td>
+      <td style="font-size:.82rem">${r.carreta}</td>
+      <td style="text-align:center">${isVan ? `<span class="badge badge-warning">${r.paletes} Van</span>` : `<span class="badge badge-info">${r.paletes}</span>`}</td>
+      <td><a href="https://wa.me/55${tel}" target="_blank" style="color:var(--success);text-decoration:none;font-size:.82rem"><i class="fab fa-whatsapp"></i> ${r.celular}</a></td>
+      <td style="font-size:.75rem;color:var(--text-lt)">${r.cpf}</td>
+      <td><a href="tel:${tel}" class="btn btn-sm btn-success" style="padding:.25rem .6rem"><i class="fas fa-phone"></i></a></td>
+    </tr>`;
+  }).join('');
+}
+
+// Inicializar Senhas e Frota quando ativar tab
+document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.tab === 'tabSenhas') setTimeout(filtrarSenhas, 50);
+    if (btn.dataset.tab === 'tabFrota') setTimeout(filtrarFrota, 50);
+  });
+});
 </script>
 </body>
 </html>
