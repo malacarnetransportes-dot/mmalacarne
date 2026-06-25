@@ -202,7 +202,7 @@ footer a{color:var(--accent);text-decoration:none;}
 .rank-list li::before{content:counter(rank)"º";background:var(--accent);color:#111;padding:.15rem .6rem;border-radius:30px;font-size:.75rem;font-weight:800;margin-right:.7rem;}
 
 /* Charts */
-.charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.4rem;margin-bottom:1.4rem;}
+.charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin-bottom:1rem;}
 
 /* Calculadora */
 .calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;}
@@ -441,6 +441,7 @@ footer a{color:var(--accent);text-decoration:none;}
         <button class="pa-nav-item" data-tab="tabCalculadora"><i class="fas fa-calculator"></i> Calculadora</button>
         <button class="pa-nav-item" data-tab="tabSenhas"><i class="fas fa-key"></i> Senhas</button>
         <button class="pa-nav-item" data-tab="tabFrota"><i class="fas fa-id-card"></i> Frota / Motoristas</button>
+        <button class="pa-nav-item" data-tab="tabAuditoria"><i class="fas fa-clipboard-check"></i> Auditoria GIF</button>
       </nav>
       <div class="pa-sidebar-footer">
         <button class="pa-nav-item" id="openUrlConfig" style="font-size:.8rem"><i class="fas fa-cog"></i> Config URLs</button>
@@ -483,9 +484,9 @@ footer a{color:var(--accent);text-decoration:none;}
               <button class="btn btn-success btn-sm" onclick="exportCSV(currentFinanceiroFiltered,'financeiro')"><i class="fas fa-download"></i> CSV</button>
             </div>
           </div>
-          <div class="charts-grid">
-            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-bar"></i> Receitas vs Despesas</div><canvas id="finChart" height="180"></canvas></div>
-            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-pie"></i> Por Categoria</div><canvas id="finPieChart" height="180"></canvas></div>
+          <div class="charts-grid" style="grid-template-columns:1fr">
+            <canvas id="finChart" style="display:none"></canvas>
+            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-pie"></i> Por Categoria</div><canvas id="finPieChart" height="100"></canvas></div>
           </div>
           <div class="dash-card">
             <div class="dash-card-title"><i class="fas fa-table"></i> Lançamentos <span id="finCount" style="background:var(--gray-100);padding:.15rem .6rem;border-radius:30px;font-size:.75rem;margin-left:.5rem"></span></div>
@@ -536,7 +537,7 @@ footer a{color:var(--accent);text-decoration:none;}
 
           <!-- Gráficos -->
           <div class="charts-grid">
-            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-line"></i> Faturamento por Período</div><canvas id="fatChart" height="180"></canvas></div>
+            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-line"></i> Faturamento por Período</div><canvas id="fatChart" height="100"></canvas></div>
             <div class="dash-card"><div class="dash-card-title"><i class="fas fa-medal"></i> Top Motoristas</div><ul class="rank-list" id="fatRanking"></ul></div>
           </div>
 
@@ -659,6 +660,28 @@ footer a{color:var(--accent);text-decoration:none;}
           </div>
         </div>
 
+
+        <!-- ── TAB AUDITORIA GIF ── -->
+        <div id="tabAuditoria" class="tab-pane">
+          <div class="dash-card">
+            <div class="dash-card-title"><i class="fas fa-clipboard-check"></i> Itens da Auditoria GIF <span style="background:var(--gray-100);padding:.15rem .6rem;border-radius:30px;font-size:.72rem;margin-left:.5rem" id="auditCount">32 itens</span></div>
+            <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem">
+              <button onclick="filtrarAudit('')" class="btn btn-accent btn-sm">Todos</button>
+              <button onclick="filtrarAudit('Contratação')" class="btn btn-gray btn-sm">Contratação</button>
+              <button onclick="filtrarAudit('Horas Extras')" class="btn btn-gray btn-sm">Horas Extras</button>
+              <button onclick="filtrarAudit('Custos/DRE')" class="btn btn-gray btn-sm">Custos/DRE</button>
+              <button onclick="filtrarAudit('Pneus')" class="btn btn-gray btn-sm">Pneus</button>
+              <button onclick="filtrarAudit('Manutenção')" class="btn btn-gray btn-sm">Manutenção</button>
+              <button onclick="filtrarAudit('Indicadores')" class="btn btn-gray btn-sm">Indicadores</button>
+            </div>
+            <div class="tbl-wrap">
+              <table class="data-table" id="auditTable">
+                <thead><tr><th>#</th><th>Sub</th><th>Grupo</th><th>Evidência necessária</th><th>Status</th></tr></thead>
+                <tbody id="auditTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div><!-- /tabAuditoria -->
       </div><!-- /pa-main -->
     </div><!-- /pa-content -->
   </div><!-- /pa-layout -->
@@ -1875,6 +1898,92 @@ function filtrarFrota() {
     </tr>`;
   }).join('');
 }
+
+
+// ═══════════════════════════════════════════════════════════
+// AUDITORIA GIF
+// ═══════════════════════════════════════════════════════════
+const AUDIT_ITENS = [
+  {n:1,s:'a',grupo:'Contratação',desc:'Possui divulgação/captação de candidatos externa e qual o perfil preferencial para o cargo de motorista? Quais os Critérios de Desclassificação?'},
+  {n:1,s:'b',grupo:'Contratação',desc:'Possui controle das contratações e desligamentos com respectivas datas e acompanhamento de Turnover?'},
+  {n:1,s:'c',grupo:'Contratação',desc:'Possui laboratório credenciado para exames admissionais? Quais os exames são realizados?'},
+  {n:1,s:'d',grupo:'Contratação',desc:'São aplicados os testes/treinamentos Demarco/Sest Senat para todo o quadro? (português, matemática, teste teórico e prático de direção)'},
+  {n:1,s:'e',grupo:'Contratação',desc:'Possui integração institucional abordando temas de Financeiro / Regras Clientes / SST / Macros / Jornada / Velocidade / Média / Manutenção / Frio / Teste prático? Apresentar material e checklist assinado.'},
+  {n:1,s:'f',grupo:'Contratação',desc:'Realiza entrevista de desligamento em 100% dos funcionários? Os motivos são estratificados e possuem plano de ação?'},
+  {n:1,s:'g',grupo:'Horas Extras',desc:'Possui sistema de controle de jornada? Apresentar forma de controle e onde são geradas as horas extras/compensáveis pagas em folha.'},
+  {n:1,s:'h',grupo:'Horas Extras',desc:'Existe compensação ou remuneração de hora extra conforme Convenção Coletiva? Apresentar folha de pagamento com as evidências.'},
+  {n:1,s:'i',grupo:'Horas Extras',desc:'Todos os pagamentos aos colaboradores são realizados via folha de pagamento?'},
+  {n:1,s:'j',grupo:'Horas Extras',desc:'Controle das Ações Trabalhistas por Motivo, Função, Valor e Status (Finalizada/Em aberto).'},
+  {n:1,s:'k',grupo:'Custos/DRE',desc:'Possui controle de custos e orçamento mês a mês do ano vigente por grupos de custos?'},
+  {n:1,s:'l',grupo:'Custos/DRE',desc:'Gente: salários, encargos, benefícios, 13º, férias.'},
+  {n:1,s:'m',grupo:'Custos/DRE',desc:'Manutenção da frota (fixo e variável).'},
+  {n:1,s:'n',grupo:'Custos/DRE',desc:'Investimentos: parcelas de financiamentos de veículos, carrocerias, equipamento de refrigeração, estrutura.'},
+  {n:1,s:'o',grupo:'Custos/DRE',desc:'Operacionais: aluguel, material de escritório, telefonia, veículos de apoio.'},
+  {n:1,s:'p',grupo:'Custos/DRE',desc:'Financeiras/administrativas: multas, impostos, notas fiscais, passivo trabalhista, pró-labore.'},
+  {n:1,s:'q',grupo:'Custos/DRE',desc:'Possui DRE e Balancete assinado e atualizado?'},
+  {n:1,s:'r',grupo:'Custos/DRE',desc:'Possui controle de renovação de documentos (IPVA/Licenciamento) de todas as placas?'},
+  {n:1,s:'s',grupo:'Custos/DRE',desc:'Possui controle de consumo Média por Litro dos cavalos com métricas utilizadas e ranking de melhores e piores?'},
+  {n:1,s:'t',grupo:'Custos/DRE',desc:'Possui controle de consumo Média por Litro das carretas/Equipamentos de Refrigeração com métricas e ranking?'},
+  {n:1,s:'u',grupo:'Pneus',desc:'Cadastro de todos os pneus da operação: Quantidade, Marca, Tipo e Modelo.'},
+  {n:1,s:'v',grupo:'Pneus',desc:'Posição de cada pneu em utilização ou em estoque.'},
+  {n:1,s:'x',grupo:'Pneus',desc:'Controle de Número de Série e/ou Fogo.'},
+  {n:1,s:'w',grupo:'Pneus',desc:'Km rodado CPK ou Custo por MM/Sulco.'},
+  {n:1,s:'y',grupo:'Pneus',desc:'Existe análise da vida útil média por pneu, marca e tipo?'},
+  {n:1,s:'z',grupo:'Manutenção',desc:'Controle de Custos dos cavalos com separação de Preventivas e Corretivas e ranking dos melhores e piores.'},
+  {n:1,s:'aa',grupo:'Manutenção',desc:'Controle de Custos das carretas com separação de Preventivas e Corretivas e ranking dos melhores e piores.'},
+  {n:1,s:'ab',grupo:'Manutenção',desc:'Controle de Custos dos equipamentos de refrigeração com separação de Preventivas e Corretivas e ranking.'},
+  {n:1,s:'ac',grupo:'Manutenção',desc:'Existe programa de controle de manutenção preventiva considerando o manual do fabricante ou Km de rodagem? Está sendo cumprido?'},
+  {n:1,s:'ad',grupo:'Indicadores',desc:'Abertura de todos os controles de indicadores da categoria de resultados aplicáveis ao segmento da transportadora.'},
+  {n:1,s:'af',grupo:'Indicadores',desc:'Possui quadro de gestão à vista? (Painel Impresso / TV / Telas)'},
+];
+
+const AUDIT_STATUS_CYCLE = ['—','✅ OK','⚠️ Parcial','❌ Pendente'];
+const auditStatus = {};
+
+function renderAuditTable(filtro) {
+  const tbody = document.getElementById('auditTableBody');
+  if (!tbody) return;
+  const grupos = {
+    'Contratação':'#3b82f6','Horas Extras':'#8b5cf6','Custos/DRE':'#10b981',
+    'Pneus':'#f59e0b','Manutenção':'#ef4444','Indicadores':'#d4af37'
+  };
+  const itens = filtro ? AUDIT_ITENS.filter(i => i.grupo === filtro) : AUDIT_ITENS;
+  tbody.innerHTML = itens.map((item, idx) => {
+    const cor = grupos[item.grupo] || '#94a3b8';
+    const key = item.n + item.s;
+    const st = auditStatus[key] || '—';
+    const stIdx = AUDIT_STATUS_CYCLE.indexOf(st);
+    const stColor = st === '✅ OK' ? 'var(--success)' : st === '⚠️ Parcial' ? 'var(--warning)' : st === '❌ Pendente' ? 'var(--danger)' : 'var(--text-lt)';
+    return \`<tr>
+      <td style="color:var(--text-lt);font-size:.75rem;font-weight:700">\${item.n}</td>
+      <td><span style="background:\${cor}22;color:\${cor};font-weight:800;font-size:.78rem;padding:.15rem .45rem;border-radius:6px">\${item.s}</span></td>
+      <td><span style="font-size:.75rem;font-weight:600;color:\${cor}">\${item.grupo}</span></td>
+      <td style="font-size:.82rem">\${item.desc}</td>
+      <td><button onclick="cycleAuditStatus('\${key}', this)" style="background:none;border:1px solid var(--gray-200);border-radius:20px;padding:.2rem .7rem;font-size:.75rem;cursor:pointer;color:\${stColor};font-weight:600;white-space:nowrap">\${st}</button></td>
+    </tr>\`;
+  }).join('');
+}
+
+function cycleAuditStatus(key, btn) {
+  const cur = auditStatus[key] || '—';
+  const idx = AUDIT_STATUS_CYCLE.indexOf(cur);
+  const next = AUDIT_STATUS_CYCLE[(idx + 1) % AUDIT_STATUS_CYCLE.length];
+  auditStatus[key] = next;
+  const colors = {'—':'var(--text-lt)','✅ OK':'var(--success)','⚠️ Parcial':'var(--warning)','❌ Pendente':'var(--danger)'};
+  btn.textContent = next;
+  btn.style.color = colors[next];
+}
+
+function filtrarAudit(grupo) {
+  renderAuditTable(grupo);
+}
+
+// Inicializar quando ativar tab
+document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.tab === 'tabAuditoria') setTimeout(() => renderAuditTable(''), 50);
+  });
+});
 
 // Inicializar Senhas e Frota quando ativar tab
 document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
