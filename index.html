@@ -250,6 +250,59 @@ footer a{color:var(--accent);text-decoration:none;}
   .nav-links{display:none;position:absolute;top:100%;left:0;width:100%;background:#fff;flex-direction:column;padding:1rem;gap:.8rem;box-shadow:var(--shadow-md);}
   .nav-links.open{display:flex;}
 }
+/* ═══════════════════════════════════════
+   AUDITORIA GIF
+═══════════════════════════════════════ */
+.aud-banner{background:linear-gradient(135deg,#0d1f3c 0%,#1a3a5c 60%,#0a3d2e 100%);border-radius:var(--r16);padding:1.6rem 1.8rem;margin-bottom:1rem;position:relative;overflow:hidden;}
+.aud-banner::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:rgba(212,175,55,.06);border-radius:50%;}
+.aud-banner-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;position:relative;z-index:1;}
+.aud-banner-left h2{color:#fff;font-size:1.35rem;font-weight:800;margin:.35rem 0 .2rem;}
+.aud-banner-left p{color:rgba(255,255,255,.65);font-size:.83rem;}
+.aud-badge{display:inline-flex;align-items:center;gap:.4rem;background:rgba(212,175,55,.18);border:1px solid rgba(212,175,55,.35);color:var(--accent);padding:.25rem .8rem;border-radius:30px;font-size:.72rem;font-weight:700;}
+.aud-banner-meta{display:flex;gap:1rem;flex-wrap:wrap;}
+.aud-meta-item{display:flex;align-items:center;gap:.6rem;background:rgba(255,255,255,.07);border-radius:var(--r8);padding:.6rem .9rem;min-width:100px;}
+.aud-meta-item i{font-size:1.1rem;color:var(--accent);}
+.aud-meta-item span{display:block;font-size:.62rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px;}
+.aud-meta-item strong{display:block;color:#fff;font-size:.92rem;font-weight:700;}
+.aud-alert{background:#fef9e6;border:1px solid rgba(212,175,55,.4);border-left:4px solid var(--accent);border-radius:var(--r8);padding:.8rem 1rem;display:flex;align-items:flex-start;gap:.7rem;font-size:.84rem;color:#78590a;margin-bottom:1rem;}
+.aud-alert i{color:var(--accent);margin-top:.1rem;flex-shrink:0;}
+.aud-progress-bar{height:10px;background:var(--gray-200);border-radius:10px;overflow:hidden;}
+.aud-progress-fill{height:100%;background:linear-gradient(90deg,var(--success),#34d399);border-radius:10px;transition:.5s;}
+.aud-section-header{display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r12);padding:.9rem 1.1rem;cursor:pointer;margin-bottom:.35rem;transition:.2s;}
+.aud-section-header:hover{background:var(--gray-100);border-color:rgba(212,175,55,.3);}
+.aud-section-header > div{display:flex;align-items:center;gap:.7rem;font-size:.9rem;}
+.aud-chev{color:var(--text-lt);transition:.25s;}
+.aud-chev.open{transform:rotate(180deg);}
+.aud-section-body{background:#fff;border:1px solid var(--gray-200);border-top:none;border-radius:0 0 var(--r12) var(--r12);padding:1.2rem 1.2rem 1rem;margin-bottom:.8rem;display:none;}
+.aud-section-body.open{display:block;}
+.aud-etapa-badge{background:linear-gradient(135deg,var(--accent),var(--accent-dk));color:#111;padding:.2rem .8rem;border-radius:30px;font-size:.72rem;font-weight:800;white-space:nowrap;}
+.aud-orient-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.8rem;margin-bottom:.5rem;}
+.aud-orient-card{display:flex;align-items:flex-start;gap:.75rem;background:var(--gray-100);border-radius:var(--r8);padding:.9rem 1rem;}
+.aud-orient-card i{font-size:1.3rem;margin-top:.1rem;flex-shrink:0;}
+.aud-orient-card strong{display:block;font-size:.85rem;margin-bottom:.25rem;color:#1e2a3a;}
+.aud-orient-card p{font-size:.78rem;color:var(--text-lt);line-height:1.5;margin:0;}
+/* Checklist items */
+.aud-check-list{display:flex;flex-direction:column;gap:.5rem;}
+.aud-item{border:1px solid var(--gray-200);border-radius:var(--r8);overflow:hidden;transition:.2s;}
+.aud-item.status-ok{border-left:4px solid var(--success);}
+.aud-item.status-nao{border-left:4px solid var(--danger);}
+.aud-item.status-pendente{border-left:4px solid var(--warning);}
+.aud-item-header{display:flex;align-items:center;gap:.7rem;padding:.75rem 1rem;cursor:pointer;background:#fff;}
+.aud-item-header:hover{background:var(--gray-100);}
+.aud-item-code{background:linear-gradient(135deg,#1e2a3a,#2d3748);color:#fff;border-radius:6px;padding:.18rem .55rem;font-size:.72rem;font-weight:800;font-family:monospace;white-space:nowrap;flex-shrink:0;}
+.aud-item-cat{font-size:.68rem;background:var(--gray-100);color:var(--text-lt);padding:.15rem .55rem;border-radius:20px;white-space:nowrap;flex-shrink:0;}
+.aud-item-desc{flex:1;font-size:.82rem;color:var(--text);font-weight:500;}
+.aud-item-actions{display:flex;gap:.3rem;flex-shrink:0;}
+.aud-btn{border:none;border-radius:6px;padding:.28rem .65rem;font-size:.72rem;font-weight:700;cursor:pointer;transition:.15s;opacity:.55;}
+.aud-btn:hover{opacity:1;transform:scale(1.08);}
+.aud-btn.ok{background:#d1fae5;color:#065f46;}
+.aud-btn.ok.active{opacity:1;box-shadow:0 0 0 2px var(--success);}
+.aud-btn.nao{background:#fee2e2;color:#991b1b;}
+.aud-btn.nao.active{opacity:1;box-shadow:0 0 0 2px var(--danger);}
+.aud-item-obs{padding:0 1rem 0;background:#fafafa;border-top:0px solid var(--gray-200);max-height:0;overflow:hidden;transition:.3s;}
+.aud-item-obs.open{max-height:200px;padding:.7rem 1rem;border-top:1px solid var(--gray-200);}
+.aud-item-obs textarea{width:100%;border:1.5px solid var(--gray-200);border-radius:var(--r8);padding:.5rem .75rem;font-size:.8rem;font-family:inherit;resize:vertical;min-height:60px;transition:.2s;}
+.aud-item-obs textarea:focus{outline:none;border-color:var(--accent);}
 </style>
 </head>
 <body>
@@ -441,6 +494,7 @@ footer a{color:var(--accent);text-decoration:none;}
         <button class="pa-nav-item" data-tab="tabCalculadora"><i class="fas fa-calculator"></i> Calculadora</button>
         <button class="pa-nav-item" data-tab="tabSenhas"><i class="fas fa-key"></i> Senhas</button>
         <button class="pa-nav-item" data-tab="tabFrota"><i class="fas fa-id-card"></i> Frota / Motoristas</button>
+        <button class="pa-nav-item" data-tab="tabAuditoria"><i class="fas fa-clipboard-check"></i> Auditoria GIF</button>
       </nav>
       <div class="pa-sidebar-footer">
         <button class="pa-nav-item" id="openUrlConfig" style="font-size:.8rem"><i class="fas fa-cog"></i> Config URLs</button>
@@ -659,7 +713,139 @@ footer a{color:var(--accent);text-decoration:none;}
           </div>
         </div>
 
-      </div><!-- /pa-main -->
+        <!-- ── TAB AUDITORIA GIF ── -->
+        <div id="tabAuditoria" class="tab-pane">
+
+          <!-- Banner BRF -->
+          <div class="aud-banner">
+            <div class="aud-banner-inner">
+              <div class="aud-banner-left">
+                <div class="aud-badge"><i class="fas fa-clipboard-check"></i> GIF — Gestão Integrada de Fornecedores</div>
+                <h2>Roteiro da Auditoria Presencial</h2>
+                <p>BRF Curitiba &nbsp;|&nbsp; M Malacarne Transp e Logística</p>
+              </div>
+              <div class="aud-banner-meta">
+                <div class="aud-meta-item"><i class="fas fa-calendar-alt"></i><div><span>Data</span><strong>09/12</strong></div></div>
+                <div class="aud-meta-item"><i class="fas fa-clock"></i><div><span>Horário</span><strong>13:30</strong></div></div>
+                <div class="aud-meta-item"><i class="fas fa-map-marker-alt"></i><div><span>Local</span><strong>BRF Curitiba</strong></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Alerta política -->
+          <div class="aud-alert">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>A <strong>falta de confirmação ou recusa</strong> à Auditoria Presencial resulta em pontuação <strong>0 (zero)</strong>, conforme descrito no Book GIF.</span>
+          </div>
+
+          <!-- Progresso geral -->
+          <div class="dash-card" style="margin-bottom:1rem">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.8rem">
+              <div class="dash-card-title" style="margin:0"><i class="fas fa-tasks"></i> Progresso Geral da Auditoria</div>
+              <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+                <span class="alerta-chip green"><i class="fas fa-check"></i> <span id="aud-ok-count">0</span> OK</span>
+                <span class="alerta-chip yellow"><i class="fas fa-clock"></i> <span id="aud-pend-count">0</span> Pendentes</span>
+                <span class="alerta-chip red"><i class="fas fa-times"></i> <span id="aud-nok-count">0</span> N/A</span>
+                <span style="font-size:.82rem;font-weight:700;color:var(--primary);align-self:center" id="aud-pct-label">0%</span>
+              </div>
+            </div>
+            <div class="aud-progress-bar" style="margin-top:.8rem">
+              <div class="aud-progress-fill" id="aud-progress-fill" style="width:0%"></div>
+            </div>
+          </div>
+
+          <!-- Orientações colapsáveis -->
+          <div class="aud-section-header" onclick="toggleAudSection('audOrientacoes')">
+            <div><i class="fas fa-info-circle" style="color:var(--info)"></i> <strong>Estrutura e Orientações</strong></div>
+            <i class="fas fa-chevron-down aud-chev" id="chevAudOrientacoes"></i>
+          </div>
+          <div id="audOrientacoes" class="aud-section-body">
+            <div class="aud-orient-grid">
+              <div class="aud-orient-card"><i class="fas fa-wifi" style="color:var(--info)"></i><div><strong>Wi-Fi BRF</strong><p>A rede pode sofrer instabilidades. Salve todos os documentos localmente antes da auditoria.</p></div></div>
+              <div class="aud-orient-card"><i class="fas fa-laptop" style="color:var(--primary)"></i><div><strong>Equipamentos</strong><p>Traga notebook e documentos comprobatórios para cada questão (ex: documentos assinados pelo motorista).</p></div></div>
+              <div class="aud-orient-card"><i class="fas fa-user-tie" style="color:var(--success)"></i><div><strong>Presença Obrigatória</strong><p>Representante legal da transportadora e colaborador ativo no programa GIF devem estar presentes.</p></div></div>
+              <div class="aud-orient-card"><i class="fas fa-camera" style="color:var(--accent)"></i><div><strong>Evidências</strong><p>Detalhe cada item com evidências claras: assinatura, fotos, vídeo ou outro documento formal.</p></div></div>
+            </div>
+          </div>
+
+          <!-- ETAPA 1 -->
+          <div class="aud-section-header" onclick="toggleAudSection('audEtapa1')">
+            <div><span class="aud-etapa-badge">1ª Etapa</span> <strong>Apresentação da Empresa</strong></div>
+            <i class="fas fa-chevron-down aud-chev" id="chevAudEtapa1"></i>
+          </div>
+          <div id="audEtapa1" class="aud-section-body">
+            <p style="font-size:.83rem;color:var(--text-lt);margin-bottom:1rem">Apresente vídeo, fotos e relatos da empresa. Preencha a evolução histórica da frota e equipe.</p>
+
+            <!-- Dados históricos -->
+            <div class="dash-card" style="margin-bottom:1rem;overflow-x:auto">
+              <div class="dash-card-title"><i class="fas fa-table"></i> Evolução Histórica da Frota</div>
+              <table class="data-table" id="aud-hist-table">
+                <thead><tr><th>Item</th><th>2021</th><th>2022</th><th>2023</th><th>2024</th><th>2025</th></tr></thead>
+                <tbody id="aud-hist-body"></tbody>
+              </table>
+            </div>
+
+            <!-- Checklist etapa 1 -->
+            <div class="aud-check-list" id="aud-etapa1-checks"></div>
+          </div>
+
+          <!-- ETAPA 2 -->
+          <div class="aud-section-header" onclick="toggleAudSection('audEtapa2')">
+            <div><span class="aud-etapa-badge" style="background:linear-gradient(135deg,var(--info),#2563eb)">2ª Etapa</span> <strong>Itens da Auditoria — Evidências</strong></div>
+            <i class="fas fa-chevron-down aud-chev" id="chevAudEtapa2"></i>
+          </div>
+          <div id="audEtapa2" class="aud-section-body">
+            <p style="font-size:.83rem;color:var(--text-lt);margin-bottom:1rem">Evidências conforme Book GIF para todos os itens presenciais. Marque o status de cada item.</p>
+
+            <!-- Filtro por categoria -->
+            <div class="filters-bar" style="margin-bottom:.8rem">
+              <div class="flt-grp"><label>Categoria</label>
+                <select id="audCatFiltro" onchange="filtrarAuditoria()">
+                  <option value="">Todas</option>
+                  <option value="Contratação">Contratação e Retenção</option>
+                  <option value="Horas">Horas Extras e Trabalhistas</option>
+                  <option value="Custos">Custos, DRE e Balancete</option>
+                  <option value="Documentos">Documentos e Consumo</option>
+                  <option value="Pneus">Controle de Pneus</option>
+                  <option value="Manutenção">Manutenção</option>
+                  <option value="Gestão">Gestão a Vista</option>
+                </select>
+              </div>
+              <div class="flt-grp"><label>Status</label>
+                <select id="audStatusFiltro" onchange="filtrarAuditoria()">
+                  <option value="">Todos</option>
+                  <option value="ok">✅ OK</option>
+                  <option value="pendente">⏳ Pendente</option>
+                  <option value="nao">❌ N/A</option>
+                </select>
+              </div>
+              <button class="btn btn-gray btn-sm" onclick="document.getElementById('audCatFiltro').value='';document.getElementById('audStatusFiltro').value='';filtrarAuditoria()"><i class="fas fa-times"></i> Limpar</button>
+              <button class="btn btn-accent btn-sm" onclick="exportarAuditoria()"><i class="fas fa-download"></i> Exportar CSV</button>
+            </div>
+
+            <div id="aud-itens-container"></div>
+          </div>
+
+          <!-- ETAPAS 3 e 4 -->
+          <div class="aud-section-header" onclick="toggleAudSection('audEtapa34')">
+            <div><span class="aud-etapa-badge" style="background:linear-gradient(135deg,var(--success),#059669)">3ª e 4ª Etapa</span> <strong>Indicadores e Relatório Final</strong></div>
+            <i class="fas fa-chevron-down aud-chev" id="chevAudEtapa34"></i>
+          </div>
+          <div id="audEtapa34" class="aud-section-body">
+            <div class="aud-orient-grid">
+              <div class="aud-orient-card"><i class="fas fa-chart-bar" style="color:var(--success)"></i><div><strong>3ª Etapa — Indicadores GIF</strong><p>Abertura de todos os indicadores da categoria de resultados pela equipe do GIF.</p></div></div>
+              <div class="aud-orient-card"><i class="fas fa-file-signature" style="color:var(--primary)"></i><div><strong>4ª Etapa — Relatório Final</strong><p>Relatório final da auditoria e formalização do documento ao transportador.</p></div></div>
+            </div>
+            <div class="dash-card" style="margin-top:1rem">
+              <div class="dash-card-title"><i class="fas fa-sticky-note"></i> Anotações da Reunião de Encerramento</div>
+              <textarea id="aud-notas-finais" placeholder="Registre aqui as observações, pontuações e encaminhamentos definidos na reunião final..." style="width:100%;min-height:120px;padding:.75rem;border-radius:var(--r8);border:1.5px solid var(--gray-200);font-size:.85rem;font-family:inherit;resize:vertical;transition:.2s" oninput="salvarAuditoriaLocal()"></textarea>
+              <div style="text-align:right;margin-top:.5rem">
+                <button class="btn btn-success btn-sm" onclick="salvarAuditoriaLocal()"><i class="fas fa-save"></i> Salvar Notas</button>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /tabAuditoria -->
     </div><!-- /pa-content -->
   </div><!-- /pa-layout -->
 </div><!-- /privateArea -->
@@ -868,7 +1054,8 @@ const pageTitles = {
   tabBaterias: '<i class="fas fa-battery-three-quarters" style="color:var(--accent)"></i> Baterias',
   tabCalculadora: '<i class="fas fa-calculator" style="color:var(--accent)"></i> Calculadora',
   tabSenhas: '<i class="fas fa-key" style="color:var(--accent)"></i> Senhas',
-  tabFrota: '<i class="fas fa-id-card" style="color:var(--accent)"></i> Frota / Motoristas'
+  tabFrota: '<i class="fas fa-id-card" style="color:var(--accent)"></i> Frota / Motoristas',
+  tabAuditoria: '<i class="fas fa-clipboard-check" style="color:var(--accent)"></i> Auditoria GIF — BRF'
 };
 
 document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
@@ -878,6 +1065,9 @@ document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
     btn.classList.add('active');
     document.getElementById(btn.dataset.tab).classList.add('active');
     document.getElementById('pa-page-title').innerHTML = pageTitles[btn.dataset.tab] || btn.textContent;
+    if (btn.dataset.tab === 'tabSenhas') setTimeout(filtrarSenhas, 50);
+    if (btn.dataset.tab === 'tabFrota') setTimeout(filtrarFrota, 50);
+    if (btn.dataset.tab === 'tabAuditoria') setTimeout(initAuditoria, 50);
   });
 });
 
@@ -1876,13 +2066,228 @@ function filtrarFrota() {
   }).join('');
 }
 
-// Inicializar Senhas e Frota quando ativar tab
-document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    if (btn.dataset.tab === 'tabSenhas') setTimeout(filtrarSenhas, 50);
-    if (btn.dataset.tab === 'tabFrota') setTimeout(filtrarFrota, 50);
+// ═══════════════════════════════════════════════════════════
+// AUDITORIA GIF
+// ═══════════════════════════════════════════════════════════
+
+const AUD_HISTORICO = [
+  { item: 'Cavalo' },
+  { item: 'Carreta' },
+  { item: 'Qtd. Motoristas' },
+  { item: 'Qtd. ADM/Colaboradores' },
+];
+
+const AUD_ETAPA1_CHECKS = [
+  { id: 'e1-video',   desc: 'Vídeo / fotos / relatos da empresa' },
+  { id: 'e1-fund',    desc: 'Data de fundação da empresa' },
+  { id: 'e1-brf',     desc: 'Data de início de operação com a BRF' },
+  { id: 'e1-cavalos', desc: 'Quantidade de cavalos (por ano)' },
+  { id: 'e1-carretas',desc: 'Quantidade de carretas (por ano)' },
+  { id: 'e1-moto',    desc: 'Quantidade de motoristas (por ano)' },
+  { id: 'e1-colab',   desc: 'Quantidade de colaboradores (administrativo / mecânica / limpeza etc.)' },
+  { id: 'e1-espaco',  desc: 'Espaço físico: escritório, mecânica, borracharia, sala de treinamento, pátio de pernoite, almoxarifado, bomba de combustível, lavador, FABET, pontos de apoio em outros estados' },
+];
+
+const AUD_ITENS = [
+  // Contratação
+  { id:'1a', cat:'Contratação', desc:'Possui divulgação/captação de candidatos externa e qual o perfil preferencial para o cargo de motorista? Quais os critérios de desclassificação da contratação?' },
+  { id:'1b', cat:'Contratação', desc:'Possui controle das contratações e desligamentos da empresa com suas respectivas datas e acompanhamento de Turnover?' },
+  { id:'1c', cat:'Contratação', desc:'Possui laboratório credenciado para realização de exames admissionais? Quais os exames são realizados?' },
+  { id:'1d', cat:'Contratação', desc:'São aplicados os testes/treinamentos Demarco/Sest Senat para todo o quadro? (português, matemática, teste teórico e prático de direção)' },
+  { id:'1e', cat:'Contratação', desc:'Possui integração institucional abordando temas de Financeiro / Regras Clientes / SST / Macros / Jornada / Velocidade / Média / Manutenção / Frio / Teste prático? Apresentar material e checklist/evidências assinadas.' },
+  { id:'1f', cat:'Contratação', desc:'Realiza entrevista de desligamento em 100% dos funcionários desligados? Os motivos são estratificados e possuem plano de ação com as principais causas?' },
+  // Horas Extras
+  { id:'1g', cat:'Horas', desc:'Possui sistema de controle de jornada? Apresentar forma de controle e onde são geradas as horas extras/compensáveis que serão pagas em folha.' },
+  { id:'1h', cat:'Horas', desc:'Existe compensação ou remuneração de hora extra de acordo com a convenção Coletiva de cada região? Apresentar folha de pagamento com evidências refletindo as horas geradas.' },
+  { id:'1i', cat:'Horas', desc:'Todos os pagamentos aos colaboradores são realizados via folha de pagamento?' },
+  { id:'1j', cat:'Horas', desc:'Controle das Ações Trabalhistas por Motivo, Função, Valor e Status (Finalizada / Em aberto).' },
+  // Custos / DRE
+  { id:'1k', cat:'Custos', desc:'Possui controle de custos e orçamento mês a mês do ano vigente dos grupos de custos?' },
+  { id:'1l', cat:'Custos', desc:'Gente: salários, encargos, benefícios, 13º, férias.' },
+  { id:'1m', cat:'Custos', desc:'Manutenção da frota (fixo e variável).' },
+  { id:'1n', cat:'Custos', desc:'Investimentos: parcelas de financiamentos de veículos, carrocerias, equipamento de refrigeração, estrutura.' },
+  { id:'1o', cat:'Custos', desc:'Operacionais: aluguel, material escritório, telefonia, veículos de apoio.' },
+  { id:'1p', cat:'Custos', desc:'Financeiras/administrativas: multas, impostos, notas fiscais, passivo trabalhista, pró-labore.' },
+  { id:'1q', cat:'Custos', desc:'Possui DRE, Balancete assinado e atualizado?' },
+  // Documentos e Consumo
+  { id:'1r', cat:'Documentos', desc:'Possui controle de renovação de documentos considerando os vencimentos de IPVA/Licenciamento de todas as placas da transportadora?' },
+  { id:'1s', cat:'Documentos', desc:'Possui controle de consumo Média por Litro dos cavalos com as métricas utilizadas e ranking de melhores e piores?' },
+  { id:'1t', cat:'Documentos', desc:'Possui controle de consumo Média por Litro das carretas/Equipamentos de Refrigeração com as métricas utilizadas e ranking de melhores e piores?' },
+  // Pneus
+  { id:'1u', cat:'Pneus', desc:'Cadastro de todos os pneus da operação com relação de Quantidade, Marca, tipo e modelo.' },
+  { id:'1v', cat:'Pneus', desc:'Posição de cada pneu em utilização ou em estoque.' },
+  { id:'1x', cat:'Pneus', desc:'Controle de Número de série e/ou fogo.' },
+  { id:'1w', cat:'Pneus', desc:'Km rodado CPK ou Custo por MM/Sulco.' },
+  { id:'1y', cat:'Pneus', desc:'Existe análise da vida útil média por pneu, marca e tipo?' },
+  // Manutenção
+  { id:'1z',  cat:'Manutenção', desc:'Apresentar Controle de Custos dos cavalos com separação de Preventivas e Corretivas e ranking dos melhores e piores.' },
+  { id:'1aa', cat:'Manutenção', desc:'Apresentar Controle de Custos das carretas com separação de Preventivas e Corretivas e ranking dos melhores e piores.' },
+  { id:'1ab', cat:'Manutenção', desc:'Apresentar Controle de Custos dos equipamentos de refrigeração com separação de Preventivas e Corretivas e ranking dos melhores e piores.' },
+  { id:'1ac', cat:'Manutenção', desc:'Existe um programa de controle de manutenção preventiva considerando o manual do fabricante ou Km de rodagem? Está sendo cumprido?' },
+  // Gestão
+  { id:'1ad', cat:'Gestão', desc:'Abertura de todos os controles de indicadores da categoria de resultados aplicáveis ao segmento da transportadora.' },
+  { id:'1af', cat:'Gestão', desc:'Possui quadro de gestão a vista? (Painel Impresso / TV / Telas)' },
+];
+
+// Estado
+let auditoriaState = {};
+
+function carregarAuditoriaLocal() {
+  try {
+    const saved = localStorage.getItem('auditoriaGIF');
+    if (saved) auditoriaState = JSON.parse(saved);
+  } catch(e) { auditoriaState = {}; }
+}
+
+function salvarAuditoriaLocal() {
+  // Salvar notas finais
+  const notas = document.getElementById('aud-notas-finais');
+  if (notas) auditoriaState['_notas'] = notas.value;
+  // Salvar observações de cada item
+  document.querySelectorAll('.aud-obs-input').forEach(ta => {
+    if (ta.value) auditoriaState[ta.dataset.id + '_obs'] = ta.value;
   });
-});
+  localStorage.setItem('auditoriaGIF', JSON.stringify(auditoriaState));
+  showToast('✅ Auditoria salva!');
+}
+
+function setAudStatus(id, status) {
+  if (auditoriaState[id] === status) {
+    delete auditoriaState[id]; // toggle off
+  } else {
+    auditoriaState[id] = status;
+  }
+  salvarAuditoriaLocal();
+  renderAudItem(id);
+  atualizarProgresso();
+}
+
+function renderAudItem(id) {
+  const el = document.querySelector(`.aud-item[data-id="${id}"]`);
+  if (!el) return;
+  const status = auditoriaState[id] || 'pendente';
+  el.className = 'aud-item status-' + status;
+  el.querySelector('.aud-btn.ok').classList.toggle('active', status === 'ok');
+  el.querySelector('.aud-btn.nao').classList.toggle('active', status === 'nao');
+}
+
+function toggleAudObs(id) {
+  const obs = document.getElementById('aud-obs-' + id);
+  if (obs) obs.classList.toggle('open');
+}
+
+function atualizarProgresso() {
+  const total = AUD_ITENS.length + AUD_ETAPA1_CHECKS.length;
+  let ok = 0, nao = 0;
+  [...AUD_ITENS, ...AUD_ETAPA1_CHECKS].forEach(item => {
+    const s = auditoriaState[item.id];
+    if (s === 'ok') ok++;
+    else if (s === 'nao') nao++;
+  });
+  const pend = total - ok - nao;
+  const pct = Math.round((ok / total) * 100);
+  document.getElementById('aud-ok-count').textContent = ok;
+  document.getElementById('aud-nok-count').textContent = nao;
+  document.getElementById('aud-pend-count').textContent = pend;
+  document.getElementById('aud-pct-label').textContent = pct + '%';
+  document.getElementById('aud-progress-fill').style.width = pct + '%';
+}
+
+function buildCheckItem(item) {
+  const status = auditoriaState[item.id] || 'pendente';
+  const obs = auditoriaState[item.id + '_obs'] || '';
+  const catLabel = {
+    'Contratação':'Contratação','Horas':'Horas Extras','Custos':'Custos/DRE',
+    'Documentos':'Documentos','Pneus':'Pneus','Manutenção':'Manutenção','Gestão':'Gestão'
+  }[item.cat] || item.cat || 'Etapa 1';
+  return `
+  <div class="aud-item status-${status}" data-id="${item.id}" data-cat="${item.cat||''}">
+    <div class="aud-item-header" onclick="toggleAudObs('${item.id}')">
+      <span class="aud-item-code">${item.id.toUpperCase()}</span>
+      ${item.cat ? `<span class="aud-item-cat">${catLabel}</span>` : ''}
+      <span class="aud-item-desc">${item.desc}</span>
+      <div class="aud-item-actions" onclick="event.stopPropagation()">
+        <button class="aud-btn ok${status==='ok'?' active':''}" onclick="setAudStatus('${item.id}','ok')" title="Conforme">✅</button>
+        <button class="aud-btn nao${status==='nao'?' active':''}" onclick="setAudStatus('${item.id}','nao')" title="Não conforme">❌</button>
+      </div>
+    </div>
+    <div class="aud-item-obs" id="aud-obs-${item.id}">
+      <textarea class="aud-obs-input" data-id="${item.id}" placeholder="Observações / evidências..." onchange="salvarAuditoriaLocal()">${obs}</textarea>
+    </div>
+  </div>`;
+}
+
+function filtrarAuditoria() {
+  const catFiltro = document.getElementById('audCatFiltro').value;
+  const statusFiltro = document.getElementById('audStatusFiltro').value;
+  const container = document.getElementById('aud-itens-container');
+  const itens = AUD_ITENS.filter(item => {
+    if (catFiltro && !item.cat.includes(catFiltro)) return false;
+    if (statusFiltro) {
+      const s = auditoriaState[item.id] || 'pendente';
+      if (s !== statusFiltro) return false;
+    }
+    return true;
+  });
+  container.innerHTML = `<div class="aud-check-list">${itens.map(buildCheckItem).join('')}</div>`;
+}
+
+function toggleAudSection(id) {
+  const body = document.getElementById(id);
+  const chev = document.getElementById('chev' + id.charAt(0).toUpperCase() + id.slice(1));
+  if (!body) return;
+  body.classList.toggle('open');
+  if (chev) chev.classList.toggle('open');
+}
+
+function exportarAuditoria() {
+  const rows = AUD_ITENS.map(item => ({
+    Código: item.id.toUpperCase(),
+    Categoria: item.cat,
+    Descrição: item.desc,
+    Status: auditoriaState[item.id] || 'pendente',
+    Observações: auditoriaState[item.id + '_obs'] || ''
+  }));
+  exportCSV(rows, 'auditoria_gif');
+}
+
+function initAuditoria() {
+  carregarAuditoriaLocal();
+
+  // Histórico
+  const tbody = document.getElementById('aud-hist-body');
+  if (tbody) {
+    tbody.innerHTML = AUD_HISTORICO.map(r => {
+      const anos = [2021,2022,2023,2024,2025];
+      const cells = anos.map(a => {
+        const key = `hist_${r.item}_${a}`;
+        const val = auditoriaState[key] || '';
+        return `<td><input type="number" min="0" value="${val}" placeholder="—" style="width:60px;border:1.5px solid var(--gray-200);border-radius:6px;padding:.3rem .5rem;font-size:.82rem;text-align:center" onchange="auditoriaState['${key}']=this.value;salvarAuditoriaLocal()"></td>`;
+      }).join('');
+      return `<tr><td style="font-weight:600">${r.item}</td>${cells}</tr>`;
+    }).join('');
+  }
+
+  // Etapa 1 checks
+  const e1 = document.getElementById('aud-etapa1-checks');
+  if (e1) e1.innerHTML = AUD_ETAPA1_CHECKS.map(buildCheckItem).join('');
+
+  // Etapa 2 itens
+  filtrarAuditoria();
+
+  // Notas finais
+  const notas = document.getElementById('aud-notas-finais');
+  if (notas && auditoriaState['_notas']) notas.value = auditoriaState['_notas'];
+
+  // Abrir etapas por default
+  ['audOrientacoes','audEtapa1','audEtapa2','audEtapa34'].forEach(id => {
+    const b = document.getElementById(id);
+    const c = document.getElementById('chev' + id.charAt(0).toUpperCase() + id.slice(1));
+    if (b) { b.classList.add('open'); if(c) c.classList.add('open'); }
+  });
+
+  atualizarProgresso();
+}
 </script>
 </body>
 </html>
