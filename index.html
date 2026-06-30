@@ -303,6 +303,71 @@ footer a{color:var(--accent);text-decoration:none;}
 .aud-item-obs.open{max-height:200px;padding:.7rem 1rem;border-top:1px solid var(--gray-200);}
 .aud-item-obs textarea{width:100%;border:1.5px solid var(--gray-200);border-radius:var(--r8);padding:.5rem .75rem;font-size:.8rem;font-family:inherit;resize:vertical;min-height:60px;transition:.2s;}
 .aud-item-obs textarea:focus{outline:none;border-color:var(--accent);}
+/* ═══════════════════════════════════════
+   PAINEL DE PNEUS
+═══════════════════════════════════════ */
+.pneu-kpi-cell{padding:.8rem 1rem;text-align:center;border-right:1px solid var(--gray-200);}
+.pneu-kpi-cell:last-child{border-right:none;}
+.pneu-kpi-val{font-size:1.6rem;font-weight:800;line-height:1;}
+.pneu-kpi-lbl{font-size:.65rem;color:var(--text-lt);text-transform:uppercase;letter-spacing:.6px;margin-top:.2rem;}
+/* chassi */
+.pneu-tire{cursor:pointer;transition:.15s;}
+.pneu-tire:hover rect{opacity:.8;stroke-width:2.5;}
+.pneu-tooltip{position:fixed;background:#1e2a3a;color:#fff;padding:.55rem .8rem;border-radius:8px;font-size:.75rem;pointer-events:none;z-index:9999;max-width:200px;line-height:1.5;display:none;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+/* vida util bar */
+.vu-bar-row{display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;font-size:.78rem;}
+.vu-bar-label{width:90px;flex-shrink:0;color:var(--text-lt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.vu-bar-track{flex:1;height:7px;background:var(--gray-200);border-radius:8px;overflow:hidden;}
+.vu-bar-fill{height:100%;border-radius:8px;}
+.vu-bar-val{width:40px;text-align:right;font-weight:700;color:var(--text);flex-shrink:0;}
+/* modal add pneu */
+.pneu-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:8000;align-items:center;justify-content:center;}
+.pneu-modal-overlay.active{display:flex;}
+.pneu-modal{background:#fff;border-radius:var(--r16);padding:1.5rem;width:min(520px,96vw);max-height:85vh;overflow-y:auto;}
+.pneu-modal h3{font-size:1rem;margin-bottom:1rem;}
+.pneu-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;}
+.pneu-form-grid label{font-size:.75rem;font-weight:600;color:var(--text-lt);display:block;margin-bottom:.2rem;}
+.pneu-form-grid input,.pneu-form-grid select{width:100%;padding:.45rem .65rem;border:1.5px solid var(--gray-200);border-radius:var(--r8);font-size:.83rem;transition:.2s;}
+.pneu-form-grid input:focus,.pneu-form-grid select:focus{outline:none;border-color:var(--accent);}
+</style>
+.gv-slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:5rem 5% 3rem;opacity:0;transform:translateX(60px);transition:opacity .55s cubic-bezier(.4,0,.2,1),transform .55s cubic-bezier(.4,0,.2,1);pointer-events:none;}
+.gv-slide.active{opacity:1;transform:translateX(0);pointer-events:auto;}
+.gv-slide.exit{opacity:0;transform:translateX(-60px);}
+.gv-slide-inner{width:100%;max-width:1100px;}
+.gv-title{font-size:clamp(1.1rem,2.5vw,1.8rem);font-weight:800;color:#fff;margin-bottom:.3rem;letter-spacing:-.02em;}
+.gv-subtitle{font-size:.82rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:1.8rem;}
+.gv-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.9rem;margin-bottom:1.4rem;}
+.gv-kpi{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:1.1rem 1.2rem;text-align:center;transition:.2s;}
+.gv-kpi-val{font-size:2rem;font-weight:800;line-height:1;margin-bottom:.3rem;}
+.gv-kpi-lbl{font-size:.7rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.8px;}
+.gv-kpi-trend{font-size:.72rem;margin-top:.35rem;font-weight:600;}
+.gv-kpi-trend.up{color:#34d399;} .gv-kpi-trend.down{color:#f87171;} .gv-kpi-trend.neutral{color:#fbbf24;}
+.gv-cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.9rem;margin-bottom:1.2rem;}
+.gv-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:1.1rem 1.2rem;}
+.gv-card-header{display:flex;align-items:center;gap:.6rem;margin-bottom:.8rem;}
+.gv-card-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+.gv-card-title{font-size:.82rem;font-weight:700;color:#fff;}
+.gv-card-sub{font-size:.68rem;color:rgba(255,255,255,.4);margin-top:.05rem;}
+.gv-status-row{display:flex;align-items:center;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.78rem;}
+.gv-status-row:last-child{border:none;}
+.gv-status-lbl{color:rgba(255,255,255,.6);}
+.gv-pill{padding:.18rem .65rem;border-radius:20px;font-size:.68rem;font-weight:700;}
+.gv-pill.ok{background:rgba(52,211,153,.15);color:#34d399;border:1px solid rgba(52,211,153,.25);}
+.gv-pill.warn{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.25);}
+.gv-pill.bad{background:rgba(248,113,113,.15);color:#f87171;border:1px solid rgba(248,113,113,.25);}
+.gv-chart-wrap{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:1.2rem;margin-bottom:1rem;}
+.gv-bar-row{display:flex;align-items:center;gap:.8rem;margin-bottom:.6rem;font-size:.78rem;}
+.gv-bar-label{color:rgba(255,255,255,.55);width:160px;flex-shrink:0;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gv-bar-track{flex:1;height:8px;background:rgba(255,255,255,.07);border-radius:8px;overflow:hidden;}
+.gv-bar-fill{height:100%;border-radius:8px;transition:width 1s ease;}
+.gv-bar-val{color:#fff;font-weight:700;width:50px;text-align:right;flex-shrink:0;}
+.gv-dot{width:8px;height:8px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:.2s;background:rgba(255,255,255,.2);}
+.gv-dot.active{background:#a78bfa;transform:scale(1.3);}
+.gv-cover{background:linear-gradient(135deg,#0d0f1a 0%,#111827 50%,#0a0d18 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
+.gv-cover-logo{font-size:3.5rem;margin-bottom:1rem;animation:gv-pulse 2s ease-in-out infinite;}
+@keyframes gv-pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.05);opacity:.85}}
+.gv-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+@media(max-width:700px){.gv-grid-2{grid-template-columns:1fr}.gv-bar-label{width:100px}}
 </style>
 </head>
 <body>
@@ -497,6 +562,7 @@ footer a{color:var(--accent);text-decoration:none;}
         <button class="pa-nav-item" data-tab="tabAuditoria"><i class="fas fa-clipboard-check"></i> Auditoria GIF</button>
       </nav>
       <div class="pa-sidebar-footer">
+        <button class="pa-nav-item" id="openGestaoVista" style="font-size:.8rem;color:#a78bfa"><i class="fas fa-tv"></i> Gestão a Vista</button>
         <button class="pa-nav-item" id="openUrlConfig" style="font-size:.8rem"><i class="fas fa-cog"></i> Config URLs</button>
         <button class="pa-nav-item" id="logoutPrivateBtn" style="font-size:.8rem;color:#ef4444"><i class="fas fa-sign-out-alt"></i> Sair</button>
       </div>
@@ -716,28 +782,6 @@ footer a{color:var(--accent);text-decoration:none;}
         <!-- ── TAB AUDITORIA GIF ── -->
         <div id="tabAuditoria" class="tab-pane">
 
-          <!-- Banner BRF -->
-          <div class="aud-banner">
-            <div class="aud-banner-inner">
-              <div class="aud-banner-left">
-                <div class="aud-badge"><i class="fas fa-clipboard-check"></i> GIF — Gestão Integrada de Fornecedores</div>
-                <h2>Roteiro da Auditoria Presencial</h2>
-                <p>BRF Curitiba &nbsp;|&nbsp; M Malacarne Transp e Logística</p>
-              </div>
-              <div class="aud-banner-meta">
-                <div class="aud-meta-item"><i class="fas fa-calendar-alt"></i><div><span>Data</span><strong>09/12</strong></div></div>
-                <div class="aud-meta-item"><i class="fas fa-clock"></i><div><span>Horário</span><strong>13:30</strong></div></div>
-                <div class="aud-meta-item"><i class="fas fa-map-marker-alt"></i><div><span>Local</span><strong>BRF Curitiba</strong></div></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Alerta política -->
-          <div class="aud-alert">
-            <i class="fas fa-exclamation-triangle"></i>
-            <span>A <strong>falta de confirmação ou recusa</strong> à Auditoria Presencial resulta em pontuação <strong>0 (zero)</strong>, conforme descrito no Book GIF.</span>
-          </div>
-
           <!-- Progresso geral -->
           <div class="dash-card" style="margin-bottom:1rem">
             <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.8rem">
@@ -780,7 +824,7 @@ footer a{color:var(--accent);text-decoration:none;}
             <div class="dash-card" style="margin-bottom:1rem;overflow-x:auto">
               <div class="dash-card-title"><i class="fas fa-table"></i> Evolução Histórica da Frota</div>
               <table class="data-table" id="aud-hist-table">
-                <thead><tr><th>Item</th><th>2021</th><th>2022</th><th>2023</th><th>2024</th><th>2025</th></tr></thead>
+                <thead><tr><th>Item</th><th>2022</th><th>2023</th><th>2024</th><th>2025</th><th>2026</th></tr></thead>
                 <tbody id="aud-hist-body"></tbody>
               </table>
             </div>
@@ -824,7 +868,106 @@ footer a{color:var(--accent);text-decoration:none;}
             </div>
 
             <div id="aud-itens-container"></div>
-          </div>
+
+            <!-- PAINEL VISUAL DE PNEUS -->
+            <div id="pneus-panel-wrapper" style="display:none;margin-top:1.2rem">
+              <div class="dash-card" style="padding:0;overflow:hidden">
+                <!-- Header -->
+                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.8rem;padding:1rem 1.2rem;border-bottom:1px solid var(--gray-200)">
+                  <div class="dash-card-title" style="margin:0"><i class="fas fa-circle" style="color:#f97316"></i> Configuração Específica de Pneus — Vista Técnica</div>
+                  <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+                    <select id="pneu-filtro-veiculo" onchange="renderPneusPanel()" style="font-size:.78rem;padding:.3rem .6rem;border:1.5px solid var(--gray-200);border-radius:6px">
+                      <option value="">Todos os Veículos</option>
+                    </select>
+                    <select id="pneu-filtro-marca" onchange="renderPneusPanel()" style="font-size:.78rem;padding:.3rem .6rem;border:1.5px solid var(--gray-200);border-radius:6px">
+                      <option value="">Todas as Marcas</option>
+                      <option value="Bridgestone">Bridgestone</option>
+                      <option value="Michelin">Michelin</option>
+                      <option value="Pirelli">Pirelli</option>
+                      <option value="Continental">Continental</option>
+                      <option value="Goodyear">Goodyear</option>
+                    </select>
+                    <select id="pneu-filtro-status" onchange="renderPneusPanel()" style="font-size:.78rem;padding:.3rem .6rem;border:1.5px solid var(--gray-200);border-radius:6px">
+                      <option value="">Todos os Status</option>
+                      <option value="em_uso">Em Uso</option>
+                      <option value="estoque">Estoque</option>
+                      <option value="reforma">Em Reforma</option>
+                      <option value="sucata">Sucata</option>
+                    </select>
+                    <select id="pneu-filtro-posicao" onchange="renderPneusPanel()" style="font-size:.78rem;padding:.3rem .6rem;border:1.5px solid var(--gray-200);border-radius:6px">
+                      <option value="">Todas as Posições</option>
+                      <option value="Dianteira">Dianteira</option>
+                      <option value="Tração">Tração</option>
+                      <option value="Carreta">Carreta</option>
+                    </select>
+                    <button onclick="limparFiltrosPneu()" style="font-size:.75rem;padding:.3rem .7rem;border:1.5px solid var(--gray-200);border-radius:6px;background:#fff;cursor:pointer"><i class="fas fa-times"></i> Limpar</button>
+                    <button onclick="addPneu()" style="font-size:.75rem;padding:.3rem .9rem;border:none;border-radius:6px;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;cursor:pointer;font-weight:700"><i class="fas fa-plus"></i> Adicionar Pneu</button>
+                    <button onclick="exportPneus()" style="font-size:.75rem;padding:.3rem .9rem;border:none;border-radius:6px;background:linear-gradient(135deg,var(--accent),var(--accent-dk));color:#111;cursor:pointer;font-weight:700"><i class="fas fa-download"></i> CSV</button>
+                  </div>
+                </div>
+
+                <!-- KPIs rápidos -->
+                <div id="pneu-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:0;border-bottom:1px solid var(--gray-200)"></div>
+
+                <!-- Vista Técnica Chassi SVG -->
+                <div style="background:#0d1117;padding:1.2rem 1.5rem">
+                  <div style="font-size:.68rem;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px;margin-bottom:.8rem">Vista Inferior Técnica — 2-4-6 Eixos</div>
+                  <div style="overflow-x:auto">
+                    <div id="pneu-chassis-svg" style="min-width:700px"></div>
+                  </div>
+                  <!-- Legenda -->
+                  <div style="display:flex;gap:1.2rem;flex-wrap:wrap;margin-top:.8rem">
+                    <div style="display:flex;align-items:center;gap:.4rem"><div style="width:12px;height:12px;border-radius:3px;background:#22c55e"></div><span style="color:rgba(255,255,255,.5);font-size:.7rem">Em Uso — OK</span></div>
+                    <div style="display:flex;align-items:center;gap:.4rem"><div style="width:12px;height:12px;border-radius:3px;background:#f59e0b"></div><span style="color:rgba(255,255,255,.5);font-size:.7rem">Desgaste Médio (&gt;50%)</span></div>
+                    <div style="display:flex;align-items:center;gap:.4rem"><div style="width:12px;height:12px;border-radius:3px;background:#ef4444"></div><span style="color:rgba(255,255,255,.5);font-size:.7rem">Crítico / Troca</span></div>
+                    <div style="display:flex;align-items:center;gap:.4rem"><div style="width:12px;height:12px;border-radius:3px;background:#6366f1"></div><span style="color:rgba(255,255,255,.5);font-size:.7rem">Estoque</span></div>
+                    <div style="display:flex;align-items:center;gap:.4rem"><div style="width:12px;height:12px;border-radius:3px;background:#94a3b8"></div><span style="color:rgba(255,255,255,.5);font-size:.7rem">Reforma/Sucata</span></div>
+                  </div>
+                </div>
+
+                <!-- Tabela de pneus -->
+                <div style="overflow-x:auto;padding:1rem 1.2rem">
+                  <table class="data-table" id="pneus-tabela">
+                    <thead>
+                      <tr>
+                        <th>Série/Fogo</th>
+                        <th>Veículo</th>
+                        <th>Posição</th>
+                        <th>Eixo</th>
+                        <th>Marca</th>
+                        <th>Modelo/Tipo</th>
+                        <th>Km Rodado</th>
+                        <th>Sulco (mm)</th>
+                        <th>CPK (R$/km)</th>
+                        <th>Vida Útil %</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody id="pneus-tbody"></tbody>
+                  </table>
+                </div>
+
+                <!-- Análise Vida Útil -->
+                <div style="padding:0 1.2rem 1.2rem">
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:.9rem">
+                    <div class="dash-card" style="margin:0">
+                      <div class="dash-card-title"><i class="fas fa-chart-bar"></i> Vida Útil Média por Marca</div>
+                      <div id="pneu-marca-bars"></div>
+                    </div>
+                    <div class="dash-card" style="margin:0">
+                      <div class="dash-card-title"><i class="fas fa-map-marker-alt"></i> Distribuição por Posição</div>
+                      <div id="pneu-posicao-bars"></div>
+                    </div>
+                    <div class="dash-card" style="margin:0">
+                      <div class="dash-card-title"><i class="fas fa-dollar-sign"></i> CPK Médio por Marca (R$/km)</div>
+                      <div id="pneu-cpk-bars"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div><!-- /audEtapa2 -->
 
           <!-- ETAPAS 3 e 4 -->
           <div class="aud-section-header" onclick="toggleAudSection('audEtapa34')">
@@ -848,6 +991,84 @@ footer a{color:var(--accent);text-decoration:none;}
         </div><!-- /tabAuditoria -->
     </div><!-- /pa-content -->
   </div><!-- /pa-layout -->
+<!-- TOOLTIP PNEU -->
+<div class="pneu-tooltip" id="pneu-tooltip"></div>
+
+<!-- MODAL ADICIONAR PNEU -->
+<div class="pneu-modal-overlay" id="pneuModal">
+  <div class="pneu-modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <h3 style="margin:0">🔧 Cadastrar Pneu</h3>
+      <button onclick="closePneuModal()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--text-lt)">✕</button>
+    </div>
+    <div class="pneu-form-grid">
+      <div><label>Série / Fogo *</label><input id="pf-serie" placeholder="Ex: F1234" required></div>
+      <div><label>Veículo (Placa) *</label><input id="pf-veiculo" placeholder="Ex: ABC-1234" required></div>
+      <div><label>Posição</label>
+        <select id="pf-posicao">
+          <option>Dianteira</option><option>Tração</option><option>Carreta</option>
+        </select>
+      </div>
+      <div><label>Eixo / Lado</label>
+        <select id="pf-eixo">
+          <option>1E-D</option><option>1E-E</option><option>Tração 1D</option><option>Tração 1E</option><option>Tração 2D</option><option>Tração 2E</option><option>Carreta A1</option><option>Carreta A2</option><option>Carreta A3</option>
+        </select>
+      </div>
+      <div><label>Marca</label>
+        <select id="pf-marca">
+          <option>Bridgestone</option><option>Michelin</option><option>Pirelli</option><option>Continental</option><option>Goodyear</option><option>Outra</option>
+        </select>
+      </div>
+      <div><label>Modelo / Tipo</label><input id="pf-modelo" placeholder="Ex: R22.5 295/80"></div>
+      <div><label>Km Rodado</label><input id="pf-km" type="number" placeholder="0" min="0"></div>
+      <div><label>Sulco (mm)</label><input id="pf-sulco" type="number" placeholder="Ex: 8.5" step="0.1" min="0" max="20"></div>
+      <div><label>CPK (R$/km)</label><input id="pf-cpk" type="number" placeholder="0.00" step="0.01" min="0"></div>
+      <div><label>Status</label>
+        <select id="pf-status">
+          <option value="em_uso">Em Uso</option><option value="estoque">Estoque</option><option value="reforma">Em Reforma</option><option value="sucata">Sucata</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:.6rem;justify-content:flex-end;margin-top:1rem">
+      <button onclick="closePneuModal()" style="padding:.45rem 1rem;border:1.5px solid var(--gray-200);border-radius:var(--r8);background:#fff;cursor:pointer;font-size:.83rem">Cancelar</button>
+      <button onclick="salvarPneu()" style="padding:.45rem 1.2rem;border:none;border-radius:var(--r8);background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;font-weight:700;cursor:pointer;font-size:.83rem">Salvar Pneu</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ GESTÃO A VISTA MODAL ══════════════ -->
+<div id="gestaoVistaModal" style="display:none;position:fixed;inset:0;z-index:9000;background:#080c14;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;">
+
+  <!-- Top bar -->
+  <div id="gv-topbar" style="position:absolute;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:.7rem 1.4rem;background:linear-gradient(180deg,rgba(8,12,20,1) 0%,transparent 100%);transition:opacity .4s">
+    <div style="display:flex;align-items:center;gap:.8rem">
+      <div style="width:36px;height:36px;background:linear-gradient(135deg,#a78bfa,#7c3aed);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem">📊</div>
+      <div>
+        <div style="color:#fff;font-weight:800;font-size:.92rem;letter-spacing:-.01em">GESTÃO A VISTA</div>
+        <div style="color:rgba(255,255,255,.45);font-size:.65rem;text-transform:uppercase;letter-spacing:1px">M-Malacarne Transporte & Logística</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:.7rem">
+      <div id="gv-slide-dots" style="display:flex;gap:.4rem"></div>
+      <div style="color:rgba(255,255,255,.35);font-size:.75rem;margin-left:.4rem" id="gv-slide-counter">1 / 8</div>
+      <button onclick="pauseGV()" id="gv-play-btn" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:8px;padding:.35rem .75rem;font-size:.75rem;cursor:pointer">⏸ Pausar</button>
+      <button onclick="closeGestaoVista()" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#f87171;border-radius:8px;padding:.35rem .75rem;font-size:.75rem;cursor:pointer">✕ Fechar</button>
+    </div>
+  </div>
+
+  <!-- Slides container -->
+  <div id="gv-slides" style="width:100%;height:100%;position:relative;"></div>
+
+  <!-- Nav arrows -->
+  <button onclick="gvNav(-1)" style="position:absolute;left:16px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:50%;width:44px;height:44px;font-size:1.1rem;cursor:pointer;z-index:10;transition:.2s" onmouseover="this.style.background='rgba(255,255,255,.15)'" onmouseout="this.style.background='rgba(255,255,255,.07)'">‹</button>
+  <button onclick="gvNav(1)"  style="position:absolute;right:16px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:50%;width:44px;height:44px;font-size:1.1rem;cursor:pointer;z-index:10;transition:.2s" onmouseover="this.style.background='rgba(255,255,255,.15)'" onmouseout="this.style.background='rgba(255,255,255,.07)'">›</button>
+
+  <!-- Progress bar -->
+  <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,.06);z-index:10">
+    <div id="gv-timer-bar" style="height:100%;background:linear-gradient(90deg,#a78bfa,#7c3aed);width:0%;transition:none"></div>
+  </div>
+</div>
+
 </div><!-- /privateArea -->
 
 <script>
@@ -2067,7 +2288,465 @@ function filtrarFrota() {
 }
 
 // ═══════════════════════════════════════════════════════════
-// AUDITORIA GIF
+// GESTÃO A VISTA — SLIDES FULLSCREEN
+// ═══════════════════════════════════════════════════════════
+let gvCurrent = 0;
+let gvTimer = null;
+let gvTimerBar = null;
+let gvPaused = false;
+const GV_DURATION = 12000; // ms por slide
+const GV_SLIDES_DEF = buildGVSlides();
+
+function buildGVSlides() {
+  return [
+    // 0 — CAPA
+    {
+      id:'cover',
+      render:() => `
+      <div class="gv-slide gv-cover" style="background:linear-gradient(135deg,#080c14 0%,#0f172a 60%,#080c14 100%)">
+        <div class="gv-slide-inner" style="text-align:center">
+          <div class="gv-cover-logo">📊</div>
+          <div style="font-size:clamp(1.6rem,4vw,2.8rem);font-weight:900;color:#fff;letter-spacing:-.03em;margin-bottom:.5rem">GESTÃO A VISTA</div>
+          <div style="font-size:clamp(.8rem,1.5vw,1rem);color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:2px;margin-bottom:2rem">M-Malacarne Transporte & Logística · 2026</div>
+          <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:.6rem;margin-bottom:2.5rem">
+            ${['Espelhamento GR','Câmera de Fadiga','Macros de Jornada','Desvios de Jornada','Desvios Telemetria','Config Embarcada','Treinamentos','Tratativas Fadiga'].map(s=>`<span style="background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.25);color:#a78bfa;padding:.3rem .85rem;border-radius:20px;font-size:.75rem;font-weight:600">${s}</span>`).join('')}
+          </div>
+          <div style="display:flex;justify-content:center;gap:2rem;flex-wrap:wrap">
+            ${[['14','Motoristas'],['17','Veículos'],['100%','Frota Fria'],['2026','Auditoria GIF']].map(([v,l])=>`<div style="text-align:center"><div style="font-size:1.8rem;font-weight:800;color:#a78bfa">${v}</div><div style="font-size:.68rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.8px">${l}</div></div>`).join('')}
+          </div>
+        </div>
+      </div>`
+    },
+    // 1 — ESPELHAMENTO DO VEÍCULO
+    {
+      id:'espelhamento',
+      render:() => `
+      <div class="gv-slide">
+        <div class="gv-slide-inner">
+          <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:.3rem">
+            <div style="width:42px;height:42px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">🛰️</div>
+            <div><div class="gv-title">Espelhamento do Veículo</div><div class="gv-subtitle">GR · Telemetria · Câmera de Fadiga</div></div>
+          </div>
+          <div class="gv-kpi-grid" style="margin-top:1.2rem">
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#60a5fa">17</div><div class="gv-kpi-lbl">Veículos Cadastrados</div><div class="gv-kpi-trend up">▲ 100% ativos</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#34d399">17</div><div class="gv-kpi-lbl">Com GR Configurado</div><div class="gv-kpi-trend up">▲ 100%</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#fbbf24">14</div><div class="gv-kpi-lbl">Telemetria Ativa</div><div class="gv-kpi-trend neutral">→ 82%</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#a78bfa">12</div><div class="gv-kpi-lbl">Câmera Instalada</div><div class="gv-kpi-trend neutral">→ 71%</div></div>
+          </div>
+          <div class="gv-cards-grid">
+            <div class="gv-card">
+              <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(59,130,246,.15)">📡</div><div><div class="gv-card-title">Status por Sistema</div><div class="gv-card-sub">Veículos com cada tecnologia ativa</div></div></div>
+              ${[['GR (Rastreador)','17/17','ok'],['Telemetria','14/17','warn'],['Câmera Fadiga','12/17','warn'],['Parâmetros Corretos','14/17','warn']].map(([l,v,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${v}</span></div>`).join('')}
+            </div>
+            <div class="gv-card">
+              <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(167,139,250,.15)">🗺️</div><div><div class="gv-card-title">Cobertura por Rota</div><div class="gv-card-sub">Monitoramento em tempo real</div></div></div>
+              ${[['Sul (SC/PR/RS)','100%','ok'],['Sudeste (SP/RJ/MG)','95%','ok'],['Centro-Oeste','88%','warn'],['Nordeste','72%','warn']].map(([l,v,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${v}</span></div>`).join('')}
+            </div>
+            <div class="gv-card">
+              <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(52,211,153,.15)">✅</div><div><div class="gv-card-title">Conformidade GIF 2026</div><div class="gv-card-sub">Meta: 100% espelhado</div></div></div>
+              <div style="margin-top:.5rem">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem"><span style="color:rgba(255,255,255,.55);font-size:.78rem">Progresso espelhamento</span><span style="color:#34d399;font-weight:700">82%</span></div>
+                <div style="height:10px;background:rgba(255,255,255,.07);border-radius:10px;overflow:hidden"><div style="width:82%;height:100%;background:linear-gradient(90deg,#34d399,#059669);border-radius:10px"></div></div>
+                <div style="font-size:.72rem;color:rgba(255,255,255,.35);margin-top:.5rem">3 veículos pendentes de configuração completa</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`
+    },
+    // 2 — CÂMERA DE FADIGA
+    {
+      id:'fadiga',
+      render:() => `
+      <div class="gv-slide">
+        <div class="gv-slide-inner">
+          <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:.3rem">
+            <div style="width:42px;height:42px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">📷</div>
+            <div><div class="gv-title">Funcionamento da Câmera de Fadiga</div><div class="gv-subtitle">Monitoramento de Fadiga · Alertas · Disponibilidade</div></div>
+          </div>
+          <div class="gv-kpi-grid" style="margin-top:1.2rem">
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#fbbf24">12</div><div class="gv-kpi-lbl">Câmeras Instaladas</div><div class="gv-kpi-trend neutral">→ 71% da frota</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#34d399">10</div><div class="gv-kpi-lbl">Operando Normalmente</div><div class="gv-kpi-trend up">▲ 83%</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#f87171">2</div><div class="gv-kpi-lbl">Com Falha / Manutenção</div><div class="gv-kpi-trend down">▼ Atenção</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#a78bfa">47</div><div class="gv-kpi-lbl">Alertas no Mês</div><div class="gv-kpi-trend neutral">→ jan/2026</div></div>
+          </div>
+          <div class="gv-grid-2">
+            <div class="gv-chart-wrap">
+              <div style="font-size:.82rem;font-weight:700;color:#fff;margin-bottom:1rem">Alertas por Motorista (Top 6)</div>
+              ${[['Motorista 1',22],['Motorista 2',18],['Motorista 3',15],['Motorista 4',11],['Motorista 5',8],['Motorista 6',5]].map(([n,v])=>`
+              <div class="gv-bar-row">
+                <span class="gv-bar-label">${n}</span>
+                <div class="gv-bar-track"><div class="gv-bar-fill" style="width:${(v/22*100).toFixed(0)}%;background:linear-gradient(90deg,#fbbf24,#f59e0b)"></div></div>
+                <span class="gv-bar-val">${v}</span>
+              </div>`).join('')}
+            </div>
+            <div>
+              <div class="gv-card" style="margin-bottom:.9rem">
+                <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(248,113,113,.15)">⚠️</div><div><div class="gv-card-title">Tipos de Alerta</div></div></div>
+                ${[['Sonolência detectada',19,'bad'],['Distração / desvio olhar',15,'warn'],['Uso de celular',8,'bad'],['Outros',5,'neutral']].map(([l,v,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${v}x</span></div>`).join('')}
+              </div>
+              <div class="gv-card">
+                <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(52,211,153,.15)">🔧</div><div><div class="gv-card-title">Status das Câmeras</div></div></div>
+                ${[['OK / Operando','10','ok'],['Manutenção pendente','2','bad'],['Sem câmera instalada','5','warn']].map(([l,v,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${v} veíc.</span></div>`).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`
+    },
+    // 3 — MACROS DE JORNADA
+    {
+      id:'macros',
+      render:() => `
+      <div class="gv-slide">
+        <div class="gv-slide-inner">
+          <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:.3rem">
+            <div style="width:42px;height:42px;background:linear-gradient(135deg,#10b981,#059669);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">📋</div>
+            <div><div class="gv-title">Envio de Macros</div><div class="gv-subtitle">Início · Paradas · Pernoite · Reinício · Fim de Jornada</div></div>
+          </div>
+          <div class="gv-kpi-grid" style="margin-top:1.2rem">
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#34d399">94%</div><div class="gv-kpi-lbl">Conformidade Macros</div><div class="gv-kpi-trend up">▲ meta 90%</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#60a5fa">312</div><div class="gv-kpi-lbl">Viagens no Mês</div><div class="gv-kpi-trend up">▲ jan/2026</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#f87171">19</div><div class="gv-kpi-lbl">Macros Não Enviados</div><div class="gv-kpi-trend down">▼ Atenção</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#fbbf24">5</div><div class="gv-kpi-lbl">Motoristas com Falha</div><div class="gv-kpi-trend neutral">→ treinamento</div></div>
+          </div>
+          <div class="gv-cards-grid">
+            <div class="gv-chart-wrap" style="grid-column:span 1">
+              <div style="font-size:.82rem;font-weight:700;color:#fff;margin-bottom:1rem">Conformidade por Tipo de Macro</div>
+              ${[['Início de Jornada',98],['Parada Obrigatória (30min)',91],['Parada Refeição (1h)',89],['Pernoite',96],['Reinício de Jornada',93],['Fim de Jornada',97]].map(([n,v])=>`
+              <div class="gv-bar-row">
+                <span class="gv-bar-label">${n}</span>
+                <div class="gv-bar-track"><div class="gv-bar-fill" style="width:${v}%;background:linear-gradient(90deg,${v>=95?'#34d399,#059669':v>=88?'#fbbf24,#f59e0b':'#f87171,#dc2626'})"></div></div>
+                <span class="gv-bar-val" style="color:${v>=95?'#34d399':v>=88?'#fbbf24':'#f87171'}">${v}%</span>
+              </div>`).join('')}
+            </div>
+            <div class="gv-card">
+              <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(16,185,129,.15)">📊</div><div><div class="gv-card-title">Ranking — Motoristas</div><div class="gv-card-sub">Conformidade no envio</div></div></div>
+              ${[['Top 3 conformes','100%','ok'],['Média da frota','94%','ok'],['3 com alertas','-3 ocorr.','warn'],['5 com falhas','<85%','bad']].map(([l,v,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${v}</span></div>`).join('')}
+              <div style="margin-top:.8rem;font-size:.72rem;color:rgba(255,255,255,.35)">Ação: motoristas com falha encaminhados para reforço de treinamento em macro GR.</div>
+            </div>
+          </div>
+        </div>
+      </div>`
+    },
+    // 4 — DESVIOS DE JORNADA
+    {
+      id:'jornada',
+      render:() => `
+      <div class="gv-slide">
+        <div class="gv-slide-inner">
+          <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:.3rem">
+            <div style="width:42px;height:42px;background:linear-gradient(135deg,#ef4444,#b91c1c);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">⏱️</div>
+            <div><div class="gv-title">Desvios de Jornada</div><div class="gv-subtitle">Horas Extras · Pausa Obrigatória · Tempo ao Volante</div></div>
+          </div>
+          <div class="gv-kpi-grid" style="margin-top:1.2rem">
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#f87171">28</div><div class="gv-kpi-lbl">Desvios no Mês</div><div class="gv-kpi-trend down">▼ jan/2026</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#fbbf24">8</div><div class="gv-kpi-lbl">Jornada Excedida</div><div class="gv-kpi-trend down">▼ >8h seguidas</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#f87171">12</div><div class="gv-kpi-lbl">Pausa Não Cumprida</div><div class="gv-kpi-trend down">▼ Crítico</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#34d399">8</div><div class="gv-kpi-lbl">Tratativas Geradas</div><div class="gv-kpi-trend up">▲ 29% dos desvios</div></div>
+          </div>
+          <div class="gv-grid-2">
+            <div class="gv-chart-wrap">
+              <div style="font-size:.82rem;font-weight:700;color:#fff;margin-bottom:1rem">Desvios por Categoria</div>
+              ${[['Pausa obrigatória não feita',12],['Jornada excedida (>8h)',8],['Dirigindo sem pausa 4h+',5],['Reinício sem descanso mínimo',3]].map(([n,v])=>`
+              <div class="gv-bar-row">
+                <span class="gv-bar-label">${n}</span>
+                <div class="gv-bar-track"><div class="gv-bar-fill" style="width:${(v/12*100).toFixed(0)}%;background:linear-gradient(90deg,#f87171,#dc2626)"></div></div>
+                <span class="gv-bar-val" style="color:#f87171">${v}</span>
+              </div>`).join('')}
+            </div>
+            <div class="gv-card">
+              <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(239,68,68,.15)">📉</div><div><div class="gv-card-title">Evolução Mensal 2026</div><div class="gv-card-sub">Desvios acumulados</div></div></div>
+              ${[['Janeiro/2026',28,'bad'],['Meta mensal','≤ 10','ok'],['Redução necessária','-64%','warn'],['Prazo tratativa','48h','ok']].map(([l,v,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${v}</span></div>`).join('')}
+              <div style="margin-top:.8rem;font-size:.72rem;color:rgba(255,255,255,.35)">Plano de ação: reforço de treinamento e bloqueio por telemetria para os 5 motoristas com mais ocorrências.</div>
+            </div>
+          </div>
+        </div>
+      </div>`
+    },
+    // 5 — DESVIOS DE TELEMETRIA
+    {
+      id:'telemetria',
+      render:() => `
+      <div class="gv-slide">
+        <div class="gv-slide-inner">
+          <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:.3rem">
+            <div style="width:42px;height:42px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">⚡</div>
+            <div><div class="gv-title">Desvios de Telemetria</div><div class="gv-subtitle">&gt;80 km/h pista seca · &gt;72 km/h chuva · Freadas Bruscas · Aceleração</div></div>
+          </div>
+          <div class="gv-kpi-grid" style="margin-top:1.2rem">
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#f87171">63</div><div class="gv-kpi-lbl">Desvios Velocidade</div><div class="gv-kpi-trend down">▼ jan/2026</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#fbbf24">41</div><div class="gv-kpi-lbl">&gt;80 km/h Seco</div><div class="gv-kpi-trend down">▼ 65%</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#f87171">22</div><div class="gv-kpi-lbl">&gt;72 km/h Chuva</div><div class="gv-kpi-trend down">▼ Crítico</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#a78bfa">38</div><div class="gv-kpi-lbl">Freadas Bruscas</div><div class="gv-kpi-trend neutral">→ monit.</div></div>
+          </div>
+          <div class="gv-grid-2">
+            <div class="gv-chart-wrap">
+              <div style="font-size:.82rem;font-weight:700;color:#fff;margin-bottom:1rem">Top Motoristas — Ocorrências</div>
+              ${[['M01 — Scania R450',18],['M07 — Volvo FH',15],['M03 — Scania R410',12],['M11 — Mercedes 2651',10],['M05 — Scania R450',8]].map(([n,v])=>`
+              <div class="gv-bar-row">
+                <span class="gv-bar-label">${n}</span>
+                <div class="gv-bar-track"><div class="gv-bar-fill" style="width:${(v/18*100).toFixed(0)}%;background:linear-gradient(90deg,#a78bfa,#7c3aed)"></div></div>
+                <span class="gv-bar-val" style="color:#a78bfa">${v}</span>
+              </div>`).join('')}
+            </div>
+            <div>
+              <div class="gv-card" style="margin-bottom:.9rem">
+                <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(139,92,246,.15)">🚦</div><div><div class="gv-card-title">Limites BRF</div><div class="gv-card-sub">Parâmetros auditados</div></div></div>
+                ${[['Pista seca (máx)','80 km/h','ok'],['Pista molhada (máx)','72 km/h','ok'],['Freada brusca (g)','> 0.4g','warn'],['Aceleração brusca','monitorado','ok']].map(([l,v,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${v}</span></div>`).join('')}
+              </div>
+              <div class="gv-card">
+                <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(248,113,113,.15)">📋</div><div><div class="gv-card-title">Ações</div></div></div>
+                ${[['Advertências emitidas',12,'warn'],['Em plano de ação',5,'warn'],['Sem ocorrência',9,'ok'],['Meta: 0 desvios','jan/fev','ok']].map(([l,v,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${v}</span></div>`).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`
+    },
+    // 6 — CONFIG TECNOLOGIA EMBARCADA
+    {
+      id:'config',
+      render:() => `
+      <div class="gv-slide">
+        <div class="gv-slide-inner">
+          <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:.3rem">
+            <div style="width:42px;height:42px;background:linear-gradient(135deg,#06b6d4,#0891b2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">⚙️</div>
+            <div><div class="gv-title">Configuração da Tecnologia Embarcada</div><div class="gv-subtitle">Parâmetros de Velocidade · GR · Telemetria · Câmera</div></div>
+          </div>
+          <div class="gv-kpi-grid" style="margin-top:1.2rem">
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#34d399">14</div><div class="gv-kpi-lbl">Parâmetros Corretos</div><div class="gv-kpi-trend up">▲ 82%</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#f87171">3</div><div class="gv-kpi-lbl">Com Pendência</div><div class="gv-kpi-trend down">▼ Ajuste urgente</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#fbbf24">80</div><div class="gv-kpi-lbl">km/h Limite Seco</div><div class="gv-kpi-trend ok">→ BRF padrão</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#60a5fa">72</div><div class="gv-kpi-lbl">km/h Limite Chuva</div><div class="gv-kpi-trend ok">→ BRF padrão</div></div>
+          </div>
+          <div class="gv-cards-grid">
+            <div class="gv-card">
+              <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(6,182,212,.15)">🔧</div><div><div class="gv-card-title">Checklist de Parâmetros</div><div class="gv-card-sub">Padrão BRF — GIF 2026</div></div></div>
+              ${[['Velocidade máxima (seco) = 80','ok'],['Velocidade máxima (chuva) = 72','ok'],['Alerta fadiga configurado','ok'],['Bloqueio automático >85km/h','warn'],['Câmera integrada ao GR','warn'],['Backup sinal offline','ok']].map(([l,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${c==='ok'?'✓ OK':c==='warn'?'⚠ Pendente':'✗ Falha'}</span></div>`).join('')}
+            </div>
+            <div class="gv-card">
+              <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(251,191,36,.15)">📱</div><div><div class="gv-card-title">Veículos com Ajuste Pendente</div><div class="gv-card-sub">Prazo: 30 dias</div></div></div>
+              ${[['Veículo M03 — Scania R410','Câmera','bad'],['Veículo M07 — Volvo FH','Bloqueio vel.','warn'],['Veículo M14 — Scania R450','Integração GR','warn']].map(([l,v,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${v}</span></div>`).join('')}
+              <div style="margin-top:.8rem;font-size:.72rem;color:rgba(255,255,255,.35)">Agendado com fornecedor de tecnologia para ajuste nos próximos 15 dias.</div>
+            </div>
+            <div class="gv-card">
+              <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(52,211,153,.15)">📈</div><div><div class="gv-card-title">Evolução Configuração</div><div class="gv-card-sub">2024 → 2026</div></div></div>
+              ${[['Dez/2024','71%','warn'],['Jun/2025','76%','warn'],['Dez/2025','79%','warn'],['Jan/2026','82%','ok'],['Meta 2026','100%','ok']].map(([l,v,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${v}</span></div>`).join('')}
+            </div>
+          </div>
+        </div>
+      </div>`
+    },
+    // 7 — TREINAMENTOS
+    {
+      id:'treinamentos',
+      render:() => `
+      <div class="gv-slide">
+        <div class="gv-slide-inner">
+          <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:.3rem">
+            <div style="width:42px;height:42px;background:linear-gradient(135deg,#f97316,#ea580c);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">🎓</div>
+            <div><div class="gv-title">Treinamento dos Motoristas</div><div class="gv-subtitle">Cursos 3P's · Antitombamento · Capacitações BRF</div></div>
+          </div>
+          <div class="gv-kpi-grid" style="margin-top:1.2rem">
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#fb923c">14</div><div class="gv-kpi-lbl">Motoristas Ativos</div><div class="gv-kpi-trend neutral">→ base</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#34d399">11</div><div class="gv-kpi-lbl">3P's Concluído</div><div class="gv-kpi-trend up">▲ 79%</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#34d399">9</div><div class="gv-kpi-lbl">Antitombamento OK</div><div class="gv-kpi-trend up">▲ 64%</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#f87171">5</div><div class="gv-kpi-lbl">Pendentes Certificação</div><div class="gv-kpi-trend down">▼ Urgente</div></div>
+          </div>
+          <div class="gv-grid-2">
+            <div class="gv-chart-wrap">
+              <div style="font-size:.82rem;font-weight:700;color:#fff;margin-bottom:1rem">Progresso por Curso</div>
+              ${[['3P\'s (Pessoas/Produto/Processos)',79],['Antitombamento',64],['Direção Defensiva',86],['Uso da Câmera de Fadiga',71],['Macros e GR',93],['Normas BRF / GIF',100]].map(([n,v])=>`
+              <div class="gv-bar-row">
+                <span class="gv-bar-label">${n}</span>
+                <div class="gv-bar-track"><div class="gv-bar-fill" style="width:${v}%;background:linear-gradient(90deg,${v>=90?'#34d399,#059669':v>=70?'#fb923c,#ea580c':'#f87171,#dc2626'})"></div></div>
+                <span class="gv-bar-val" style="color:${v>=90?'#34d399':v>=70?'#fb923c':'#f87171'}">${v}%</span>
+              </div>`).join('')}
+            </div>
+            <div>
+              <div class="gv-card" style="margin-bottom:.9rem">
+                <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(249,115,22,.15)">📅</div><div><div class="gv-card-title">Próximas Turmas 2026</div><div class="gv-card-sub">Agendamento em andamento</div></div></div>
+                ${[['3P\'s — Turma Fev/26','3 vagas','warn'],['Antitombamento — Mar/26','5 vagas','bad'],['Reciclagem Anual — Abr/26','14 vagas','warn'],['Câmera Fadiga — Mai/26','3 vagas','warn']].map(([l,v,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${v}</span></div>`).join('')}
+              </div>
+              <div class="gv-card">
+                <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(52,211,153,.15)">🏆</div><div><div class="gv-card-title">Meta GIF 2026</div></div></div>
+                ${[['3P\'s completo','100%','ok'],['Antitombamento','100%','ok'],['Prazo limite','Jun/2026','warn'],['Status atual','71%','warn']].map(([l,v,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${v}</span></div>`).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`
+    },
+    // 8 — TRATATIVAS DE CÂMERA DE FADIGA
+    {
+      id:'tratativas',
+      render:() => `
+      <div class="gv-slide">
+        <div class="gv-slide-inner">
+          <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:.3rem">
+            <div style="width:42px;height:42px;background:linear-gradient(135deg,#ec4899,#be185d);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">🔔</div>
+            <div><div class="gv-title">Tratativas de Câmera de Fadiga</div><div class="gv-subtitle">Alertas Gerados · Tratativas Abertas · Prazo de Retorno</div></div>
+          </div>
+          <div class="gv-kpi-grid" style="margin-top:1.2rem">
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#f472b6">47</div><div class="gv-kpi-lbl">Alertas no Período</div><div class="gv-kpi-trend down">▼ jan/2026</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#34d399">38</div><div class="gv-kpi-lbl">Tratativas Abertas</div><div class="gv-kpi-trend up">▲ 81%</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#fbbf24">9</div><div class="gv-kpi-lbl">Sem Tratativa</div><div class="gv-kpi-trend down">▼ Pendente</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#f87171">48h</div><div class="gv-kpi-lbl">Prazo Máximo BRF</div><div class="gv-kpi-trend neutral">→ SLA</div></div>
+          </div>
+          <div class="gv-grid-2">
+            <div class="gv-chart-wrap">
+              <div style="font-size:.82rem;font-weight:700;color:#fff;margin-bottom:1rem">Tratativas por Status</div>
+              ${[['Concluída com evidência',24],['Em andamento',14],['Abertas sem retorno',9],['Vencidas (>48h)',3]].map(([n,v],i)=>`
+              <div class="gv-bar-row">
+                <span class="gv-bar-label">${n}</span>
+                <div class="gv-bar-track"><div class="gv-bar-fill" style="width:${(v/24*100).toFixed(0)}%;background:linear-gradient(90deg,${['#34d399,#059669','#60a5fa,#2563eb','#fbbf24,#f59e0b','#f87171,#dc2626'][i]})"></div></div>
+                <span class="gv-bar-val" style="color:${['#34d399','#60a5fa','#fbbf24','#f87171'][i]}">${v}</span>
+              </div>`).join('')}
+            </div>
+            <div>
+              <div class="gv-card" style="margin-bottom:.9rem">
+                <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(236,72,153,.15)">⚡</div><div><div class="gv-card-title">Fluxo de Tratativa</div><div class="gv-card-sub">Protocolo BRF</div></div></div>
+                ${[['1. Alerta gerado pela câmera','ok'],['2. Notificação ao gestor','ok'],['3. Contato com motorista (2h)','ok'],['4. Registro da tratativa','warn'],['5. Evidência anexada','warn'],['6. Encerramento em 48h','bad']].map(([l,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${c==='ok'?'✓ OK':c==='warn'?'⚠ Parcial':'✗ Gap'}</span></div>`).join('')}
+              </div>
+              <div class="gv-card">
+                <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(52,211,153,.15)">📌</div><div><div class="gv-card-title">Ação Imediata</div></div></div>
+                <div style="font-size:.78rem;color:rgba(255,255,255,.6);line-height:1.7">
+                  <div>• 9 alertas sem tratativa — contatar gestor hoje</div>
+                  <div>• 3 casos vencidos (>48h) — escalar para BRF</div>
+                  <div>• Reforçar protocolo de registro com equipe</div>
+                  <div>• Meta: 100% de tratativas em 48h até fev/2026</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`
+    },
+  ];
+}
+
+function openGestaoVista() {
+  const modal = document.getElementById('gestaoVistaModal');
+  modal.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  gvCurrent = 0;
+  gvPaused = false;
+  renderAllGVSlides();
+  gvGoTo(0);
+  startGVTimer();
+  renderGVDots();
+
+  // keyboard nav
+  document.addEventListener('keydown', gvKeyHandler);
+}
+
+function closeGestaoVista() {
+  document.getElementById('gestaoVistaModal').style.display = 'none';
+  document.body.style.overflow = '';
+  stopGVTimer();
+  document.removeEventListener('keydown', gvKeyHandler);
+}
+
+function gvKeyHandler(e) {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') gvNav(1);
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   gvNav(-1);
+  if (e.key === 'Escape') closeGestaoVista();
+  if (e.key === ' ') { e.preventDefault(); pauseGV(); }
+}
+
+function renderAllGVSlides() {
+  const container = document.getElementById('gv-slides');
+  container.innerHTML = GV_SLIDES_DEF.map(s => s.render()).join('');
+}
+
+function renderGVDots() {
+  const dots = document.getElementById('gv-slide-dots');
+  dots.innerHTML = GV_SLIDES_DEF.map((_,i) =>
+    `<div class="gv-dot${i===gvCurrent?' active':''}" onclick="gvGoTo(${i})"></div>`
+  ).join('');
+}
+
+function gvGoTo(idx) {
+  const slides = document.querySelectorAll('#gv-slides .gv-slide');
+  if (!slides.length) return;
+  // exit current
+  if (slides[gvCurrent]) slides[gvCurrent].classList.remove('active');
+  gvCurrent = (idx + GV_SLIDES_DEF.length) % GV_SLIDES_DEF.length;
+  if (slides[gvCurrent]) slides[gvCurrent].classList.add('active');
+  document.getElementById('gv-slide-counter').textContent = `${gvCurrent+1} / ${GV_SLIDES_DEF.length}`;
+  renderGVDots();
+  resetGVTimerBar();
+}
+
+function gvNav(dir) {
+  gvGoTo(gvCurrent + dir);
+  if (!gvPaused) { stopGVTimer(); startGVTimer(); }
+}
+
+let gvBarStart = null;
+let gvBarFrame = null;
+
+function resetGVTimerBar() {
+  const bar = document.getElementById('gv-timer-bar');
+  if (bar) { bar.style.transition = 'none'; bar.style.width = '0%'; }
+  gvBarStart = null;
+  cancelAnimationFrame(gvBarFrame);
+  if (!gvPaused) animateGVBar();
+}
+
+function animateGVBar() {
+  const bar = document.getElementById('gv-timer-bar');
+  if (!bar) return;
+  const tick = (ts) => {
+    if (!gvBarStart) gvBarStart = ts;
+    const pct = Math.min(((ts - gvBarStart) / GV_DURATION) * 100, 100);
+    bar.style.transition = 'none';
+    bar.style.width = pct + '%';
+    if (pct < 100 && !gvPaused) gvBarFrame = requestAnimationFrame(tick);
+  };
+  gvBarFrame = requestAnimationFrame(tick);
+}
+
+function startGVTimer() {
+  stopGVTimer();
+  resetGVTimerBar();
+  gvTimer = setInterval(() => {
+    if (!gvPaused) gvNav(1);
+  }, GV_DURATION);
+}
+
+function stopGVTimer() {
+  clearInterval(gvTimer);
+  cancelAnimationFrame(gvBarFrame);
+}
+
+function pauseGV() {
+  gvPaused = !gvPaused;
+  const btn = document.getElementById('gv-play-btn');
+  if (gvPaused) {
+    stopGVTimer();
+    if (btn) btn.textContent = '▶ Retomar';
+    cancelAnimationFrame(gvBarFrame);
+  } else {
+    startGVTimer();
+    if (btn) btn.textContent = '⏸ Pausar';
+  }
+}
+
+// topbar auto-hide
+let gvTopbarTimer = null;
+document.addEventListener('mousemove', (e) => {
+  const modal = document.getElementById('gestaoVistaModal');
+  if (!modal || modal.style.display === 'none') return;
+  const tb = document.getElementById('gv-topbar');
+  if (tb) tb.style.opacity = '1';
+  clearTimeout(gvTopbarTimer);
+  gvTopbarTimer = setTimeout(() => { if(tb) tb.style.opacity='0'; }, 3000);
+});
+
+document.getElementById('openGestaoVista').addEventListener('click', openGestaoVista);
+</script>
 // ═══════════════════════════════════════════════════════════
 
 const AUD_HISTORICO = [
@@ -2113,12 +2792,7 @@ const AUD_ITENS = [
   { id:'1r', cat:'Documentos', desc:'Possui controle de renovação de documentos considerando os vencimentos de IPVA/Licenciamento de todas as placas da transportadora?' },
   { id:'1s', cat:'Documentos', desc:'Possui controle de consumo Média por Litro dos cavalos com as métricas utilizadas e ranking de melhores e piores?' },
   { id:'1t', cat:'Documentos', desc:'Possui controle de consumo Média por Litro das carretas/Equipamentos de Refrigeração com as métricas utilizadas e ranking de melhores e piores?' },
-  // Pneus
-  { id:'1u', cat:'Pneus', desc:'Cadastro de todos os pneus da operação com relação de Quantidade, Marca, tipo e modelo.' },
-  { id:'1v', cat:'Pneus', desc:'Posição de cada pneu em utilização ou em estoque.' },
-  { id:'1x', cat:'Pneus', desc:'Controle de Número de série e/ou fogo.' },
-  { id:'1w', cat:'Pneus', desc:'Km rodado CPK ou Custo por MM/Sulco.' },
-  { id:'1y', cat:'Pneus', desc:'Existe análise da vida útil média por pneu, marca e tipo?' },
+  // Pneus — ver painel visual dedicado (Controle de Pneus)
   // Manutenção
   { id:'1z',  cat:'Manutenção', desc:'Apresentar Controle de Custos dos cavalos com separação de Preventivas e Corretivas e ranking dos melhores e piores.' },
   { id:'1aa', cat:'Manutenção', desc:'Apresentar Controle de Custos das carretas com separação de Preventivas e Corretivas e ranking dos melhores e piores.' },
@@ -2221,6 +2895,15 @@ function filtrarAuditoria() {
   const catFiltro = document.getElementById('audCatFiltro').value;
   const statusFiltro = document.getElementById('audStatusFiltro').value;
   const container = document.getElementById('aud-itens-container');
+  const pneusWrapper = document.getElementById('pneus-panel-wrapper');
+
+  if (catFiltro === 'Pneus') {
+    container.innerHTML = '';
+    if (pneusWrapper) { pneusWrapper.style.display = 'block'; renderPneusPanel(); }
+    return;
+  }
+  if (pneusWrapper) pneusWrapper.style.display = 'none';
+
   const itens = AUD_ITENS.filter(item => {
     if (catFiltro && !item.cat.includes(catFiltro)) return false;
     if (statusFiltro) {
@@ -2258,7 +2941,7 @@ function initAuditoria() {
   const tbody = document.getElementById('aud-hist-body');
   if (tbody) {
     tbody.innerHTML = AUD_HISTORICO.map(r => {
-      const anos = [2021,2022,2023,2024,2025];
+      const anos = [2022,2023,2024,2025,2026];
       const cells = anos.map(a => {
         const key = `hist_${r.item}_${a}`;
         const val = auditoriaState[key] || '';
@@ -2274,6 +2957,7 @@ function initAuditoria() {
 
   // Etapa 2 itens
   filtrarAuditoria();
+  initPneusPanel();
 
   // Notas finais
   const notas = document.getElementById('aud-notas-finais');
@@ -2287,6 +2971,323 @@ function initAuditoria() {
   });
 
   atualizarProgresso();
+}
+
+// ═══════════════════════════════════════════════════════════
+// PAINEL DE PNEUS — VISTA TÉCNICA
+// ═══════════════════════════════════════════════════════════
+
+const PNEU_VEICULOS = ['ABC-1234','DEF-5678','GHI-9012','JKL-3456'];
+
+const PNEU_SEED = [
+  { serie:'F1234', veiculo:'ABC-1234', posicao:'Dianteira', eixo:'1E-D', marca:'Bridgestone', modelo:'R22.5 295/80', km:42000, sulco:9.2, cpk:0.18, status:'em_uso' },
+  { serie:'F1235', veiculo:'ABC-1234', posicao:'Dianteira', eixo:'1E-E', marca:'Bridgestone', modelo:'R22.5 295/80', km:42000, sulco:8.8, cpk:0.18, status:'em_uso' },
+  { serie:'T5678', veiculo:'ABC-1234', posicao:'Tração',    eixo:'Tração 1D', marca:'Michelin', modelo:'XDE2+ 295/80', km:68000, sulco:6.1, cpk:0.21, status:'em_uso' },
+  { serie:'T5679', veiculo:'ABC-1234', posicao:'Tração',    eixo:'Tração 1E', marca:'Michelin', modelo:'XDE2+ 295/80', km:68000, sulco:5.8, cpk:0.21, status:'em_uso' },
+  { serie:'T9012', veiculo:'ABC-1234', posicao:'Tração',    eixo:'Tração 2D', marca:'Pirelli', modelo:'FG88 295/80', km:55000, sulco:3.4, cpk:0.24, status:'em_uso' },
+  { serie:'T9013', veiculo:'ABC-1234', posicao:'Tração',    eixo:'Tração 2E', marca:'Pirelli', modelo:'FG88 295/80', km:55000, sulco:3.1, cpk:0.24, status:'em_uso' },
+  { serie:'A1D01', veiculo:'DEF-5678', posicao:'Carreta',   eixo:'Carreta A1', marca:'Goodyear', modelo:'G286 295/80', km:71000, sulco:7.5, cpk:0.17, status:'em_uso' },
+  { serie:'A1D02', veiculo:'DEF-5678', posicao:'Carreta',   eixo:'Carreta A1', marca:'Goodyear', modelo:'G286 295/80', km:71000, sulco:7.2, cpk:0.17, status:'em_uso' },
+  { serie:'A2D01', veiculo:'DEF-5678', posicao:'Carreta',   eixo:'Carreta A2', marca:'Continental', modelo:'HDR2 295/80', km:39000, sulco:9.0, cpk:0.19, status:'em_uso' },
+  { serie:'A2D02', veiculo:'DEF-5678', posicao:'Carreta',   eixo:'Carreta A2', marca:'Continental', modelo:'HDR2 295/80', km:39000, sulco:8.7, cpk:0.19, status:'em_uso' },
+  { serie:'A3D01', veiculo:'DEF-5678', posicao:'Carreta',   eixo:'Carreta A3', marca:'Bridgestone', modelo:'R150 295/80', km:91000, sulco:1.9, cpk:0.26, status:'em_uso' },
+  { serie:'A3D02', veiculo:'DEF-5678', posicao:'Carreta',   eixo:'Carreta A3', marca:'Bridgestone', modelo:'R150 295/80', km:91000, sulco:2.1, cpk:0.26, status:'em_uso' },
+  { serie:'EST001', veiculo:'—', posicao:'Tração', eixo:'—', marca:'Michelin', modelo:'XDE2+ 295/80', km:0, sulco:16, cpk:0, status:'estoque' },
+  { serie:'EST002', veiculo:'—', posicao:'Dianteira', eixo:'—', marca:'Pirelli', modelo:'FG88 295/80', km:0, sulco:16, cpk:0, status:'estoque' },
+  { serie:'REF001', veiculo:'—', posicao:'Carreta', eixo:'—', marca:'Goodyear', modelo:'G286 295/80', km:120000, sulco:2.0, cpk:0.30, status:'reforma' },
+  { serie:'SUC001', veiculo:'—', posicao:'Tração', eixo:'—', marca:'Continental', modelo:'HDR2 295/80', km:185000, sulco:0.8, cpk:0.34, status:'sucata' },
+];
+
+function getPneuData() {
+  try {
+    const saved = localStorage.getItem('pneusGIF');
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return PNEU_SEED;
+}
+function savePneuData(data) {
+  localStorage.setItem('pneusGIF', JSON.stringify(data));
+}
+
+function vidaUtilPct(p) {
+  if (p.status === 'estoque') return 100;
+  if (p.status === 'sucata') return 0;
+  const pct = Math.max(0, Math.min(100, Math.round((p.sulco / 16) * 100)));
+  return pct;
+}
+
+function statusColor(p) {
+  if (p.status === 'estoque') return '#6366f1';
+  if (p.status === 'reforma' || p.status === 'sucata') return '#94a3b8';
+  const vu = vidaUtilPct(p);
+  if (vu >= 50) return '#22c55e';
+  if (vu >= 25) return '#f59e0b';
+  return '#ef4444';
+}
+
+function statusLabel(s) {
+  return { em_uso:'Em Uso', estoque:'Estoque', reforma:'Reforma', sucata:'Sucata' }[s] || s;
+}
+
+function initPneusPanel() {
+  const data = getPneuData();
+  // popular filtro de veículo
+  const selVeic = document.getElementById('pneu-filtro-veiculo');
+  if (selVeic && selVeic.options.length <= 1) {
+    const veiculos = [...new Set(data.map(p => p.veiculo).filter(v => v && v !== '—'))];
+    veiculos.forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v; opt.textContent = v;
+      selVeic.appendChild(opt);
+    });
+  }
+}
+
+function limparFiltrosPneu() {
+  ['pneu-filtro-veiculo','pneu-filtro-marca','pneu-filtro-status','pneu-filtro-posicao'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  renderPneusPanel();
+}
+
+function pneusFiltrados() {
+  const data = getPneuData();
+  const fVeic = document.getElementById('pneu-filtro-veiculo')?.value || '';
+  const fMarca = document.getElementById('pneu-filtro-marca')?.value || '';
+  const fStatus = document.getElementById('pneu-filtro-status')?.value || '';
+  const fPos = document.getElementById('pneu-filtro-posicao')?.value || '';
+  return data.filter(p => {
+    if (fVeic && p.veiculo !== fVeic) return false;
+    if (fMarca && p.marca !== fMarca) return false;
+    if (fStatus && p.status !== fStatus) return false;
+    if (fPos && p.posicao !== fPos) return false;
+    return true;
+  });
+}
+
+function renderPneusPanel() {
+  const all = getPneuData();
+  const filtrados = pneusFiltrados();
+
+  // KPIs
+  const total = all.length;
+  const emUso = all.filter(p => p.status === 'em_uso').length;
+  const estoque = all.filter(p => p.status === 'estoque').length;
+  const critico = all.filter(p => p.status === 'em_uso' && vidaUtilPct(p) < 25).length;
+  const vuMedia = Math.round(all.filter(p=>p.status==='em_uso').reduce((s,p)=>s+vidaUtilPct(p),0) / Math.max(1, emUso));
+  const cpkMedio = (all.filter(p=>p.status==='em_uso').reduce((s,p)=>s+p.cpk,0) / Math.max(1, emUso)).toFixed(2);
+
+  const kpis = document.getElementById('pneu-kpis');
+  if (kpis) {
+    kpis.innerHTML = [
+      [total, 'Total Pneus', 'var(--text)'],
+      [emUso, 'Em Uso', '#22c55e'],
+      [estoque, 'Estoque', '#6366f1'],
+      [critico, 'Crítico (Troca)', '#ef4444'],
+      [vuMedia+'%', 'Vida Útil Média', vuMedia>=50?'#22c55e':vuMedia>=25?'#f59e0b':'#ef4444'],
+      ['R$'+cpkMedio, 'CPK Médio', 'var(--primary)'],
+    ].map(([v,l,c]) => `<div class="pneu-kpi-cell"><div class="pneu-kpi-val" style="color:${c}">${v}</div><div class="pneu-kpi-lbl">${l}</div></div>`).join('');
+  }
+
+  renderChassisSVG(filtrados);
+  renderPneusTabela(filtrados);
+  renderPneusAnalise(all);
+}
+
+function renderChassisSVG(pneus) {
+  const el = document.getElementById('pneu-chassis-svg');
+  if (!el) return;
+
+  // organiza por posição
+  const dianteira = pneus.filter(p => p.posicao === 'Dianteira' && p.status === 'em_uso');
+  const tracao = pneus.filter(p => p.posicao === 'Tração' && p.status === 'em_uso');
+  const carreta = pneus.filter(p => p.posicao === 'Carreta' && p.status === 'em_uso');
+
+  function tireSVG(p, x, y, label) {
+    if (!p) return `<g transform="translate(${x},${y})"><rect x="-18" y="-30" width="36" height="60" rx="6" fill="#1f2937" stroke="#374151" stroke-width="1.5" stroke-dasharray="3,3"/><text x="0" y="5" text-anchor="middle" fill="#4b5563" font-size="9">vazio</text></g>`;
+    const color = statusColor(p);
+    const vu = vidaUtilPct(p);
+    return `
+    <g class="pneu-tire" transform="translate(${x},${y})" onmouseenter="showPneuTooltip(event,'${p.serie}','${p.veiculo}','${p.marca}','${p.modelo}',${p.km},${p.sulco},${vu},'${p.status}')" onmouseleave="hidePneuTooltip()">
+      <rect x="-18" y="-30" width="36" height="60" rx="6" fill="${color}" fill-opacity="0.22" stroke="${color}" stroke-width="2"/>
+      <text x="0" y="-12" text-anchor="middle" fill="${color}" font-size="9" font-weight="700">${label}</text>
+      <text x="0" y="0" text-anchor="middle" fill="#fff" font-size="8" font-weight="600">SÉRIE #${p.serie}</text>
+      <text x="0" y="13" text-anchor="middle" fill="rgba(255,255,255,.6)" font-size="7.5">KM ${(p.km/1000).toFixed(1)}k</text>
+      <text x="0" y="24" text-anchor="middle" fill="${color}" font-size="8" font-weight="700">${vu}% VU</text>
+    </g>`;
+  }
+
+  const svg = `
+  <svg viewBox="0 0 900 220" width="100%" height="220" style="overflow:visible">
+    <!-- chassi central -->
+    <rect x="60" y="95" width="780" height="28" rx="6" fill="#1e293b" stroke="#334155"/>
+    <text x="450" y="113" text-anchor="middle" fill="rgba(255,255,255,.3)" font-size="9" letter-spacing="2">CHASSI — VISTA INFERIOR TÉCNICA</text>
+
+    <!-- Dianteira -->
+    <text x="100" y="20" fill="rgba(255,255,255,.4)" font-size="9" font-weight="700">DIANTEIRA E TRAÇÃO TB</text>
+    ${tireSVG(dianteira[0], 80, 50, '1EE')}
+    ${tireSVG(dianteira[1], 80, 160, '1EE')}
+
+    <!-- Tração -->
+    <text x="300" y="20" fill="rgba(255,255,255,.4)" font-size="9" font-weight="700">TRAÇÃO 1D / 1E</text>
+    ${tireSVG(tracao[0], 260, 50, '2ID')}
+    ${tireSVG(tracao[1], 260, 160, '2IE')}
+    ${tireSVG(tracao[2], 340, 50, '2ED')}
+    ${tireSVG(tracao[3], 340, 160, '2IE')}
+
+    <!-- Carretas -->
+    <text x="600" y="20" fill="rgba(255,255,255,.4)" font-size="9" font-weight="700">CARRETA A1D · A2D · A3D</text>
+    ${tireSVG(carreta[0], 540, 50, 'A1D')}
+    ${tireSVG(carreta[1], 540, 160, 'A1D')}
+    ${tireSVG(carreta[2], 650, 50, 'A2D')}
+    ${tireSVG(carreta[3], 650, 160, 'A2D')}
+    ${tireSVG(carreta[4], 760, 50, 'A3D')}
+    ${tireSVG(carreta[5], 760, 160, 'A3D')}
+  </svg>`;
+  el.innerHTML = svg;
+}
+
+function showPneuTooltip(e, serie, veic, marca, modelo, km, sulco, vu, status) {
+  const tt = document.getElementById('pneu-tooltip');
+  tt.innerHTML = `<strong>Série #${serie}</strong><br>Veículo: ${veic}<br>${marca} — ${modelo}<br>Km: ${km.toLocaleString('pt-BR')}<br>Sulco: ${sulco}mm · Vida útil: ${vu}%<br>Status: ${statusLabel(status)}`;
+  tt.style.display = 'block';
+  tt.style.left = (e.clientX + 14) + 'px';
+  tt.style.top = (e.clientY + 14) + 'px';
+}
+function hidePneuTooltip() {
+  document.getElementById('pneu-tooltip').style.display = 'none';
+}
+
+function renderPneusTabela(pneus) {
+  const tbody = document.getElementById('pneus-tbody');
+  if (!tbody) return;
+  if (!pneus.length) {
+    tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;color:var(--text-lt);padding:1.5rem">Nenhum pneu encontrado com os filtros selecionados.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = pneus.map(p => {
+    const vu = vidaUtilPct(p);
+    const color = statusColor(p);
+    const pillClass = p.status === 'em_uso' ? (vu>=50?'ok':vu>=25?'warn':'bad') : (p.status==='estoque'?'ok':'warn');
+    return `<tr>
+      <td style="font-family:monospace;font-weight:700">#${p.serie}</td>
+      <td>${p.veiculo}</td>
+      <td>${p.posicao}</td>
+      <td>${p.eixo}</td>
+      <td>${p.marca}</td>
+      <td>${p.modelo}</td>
+      <td>${p.km.toLocaleString('pt-BR')}</td>
+      <td style="color:${color};font-weight:700">${p.sulco}mm</td>
+      <td>R$ ${p.cpk.toFixed(2)}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:.4rem">
+          <div style="width:50px;height:6px;background:var(--gray-200);border-radius:6px;overflow:hidden"><div style="width:${vu}%;height:100%;background:${color}"></div></div>
+          <span style="font-size:.72rem;font-weight:700;color:${color}">${vu}%</span>
+        </div>
+      </td>
+      <td><span class="gv-pill ${pillClass}" style="font-size:.65rem">${statusLabel(p.status)}</span></td>
+      <td><button onclick="removerPneu('${p.serie}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:.85rem" title="Remover"><i class="fas fa-trash"></i></button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderPneusAnalise(all) {
+  // por marca: vida útil média
+  const marcas = [...new Set(all.map(p=>p.marca))];
+  const vuPorMarca = marcas.map(m => {
+    const ps = all.filter(p=>p.marca===m && p.status==='em_uso');
+    const avg = ps.length ? Math.round(ps.reduce((s,p)=>s+vidaUtilPct(p),0)/ps.length) : 0;
+    return [m, avg];
+  }).sort((a,b)=>b[1]-a[1]);
+
+  const elM = document.getElementById('pneu-marca-bars');
+  if (elM) elM.innerHTML = vuPorMarca.map(([m,v]) => `
+    <div class="vu-bar-row">
+      <span class="vu-bar-label">${m}</span>
+      <div class="vu-bar-track"><div class="vu-bar-fill" style="width:${v}%;background:${v>=50?'#22c55e':v>=25?'#f59e0b':'#ef4444'}"></div></div>
+      <span class="vu-bar-val">${v}%</span>
+    </div>`).join('') || '<span style="font-size:.78rem;color:var(--text-lt)">Sem dados</span>';
+
+  // por posição: contagem
+  const posicoes = ['Dianteira','Tração','Carreta'];
+  const countPos = posicoes.map(p => [p, all.filter(x=>x.posicao===p && x.status==='em_uso').length]);
+  const maxPos = Math.max(1, ...countPos.map(c=>c[1]));
+  const elP = document.getElementById('pneu-posicao-bars');
+  if (elP) elP.innerHTML = countPos.map(([p,v]) => `
+    <div class="vu-bar-row">
+      <span class="vu-bar-label">${p}</span>
+      <div class="vu-bar-track"><div class="vu-bar-fill" style="width:${(v/maxPos*100).toFixed(0)}%;background:#3b82f6"></div></div>
+      <span class="vu-bar-val">${v}</span>
+    </div>`).join('');
+
+  // CPK médio por marca
+  const cpkPorMarca = marcas.map(m => {
+    const ps = all.filter(p=>p.marca===m && p.status==='em_uso');
+    const avg = ps.length ? (ps.reduce((s,p)=>s+p.cpk,0)/ps.length) : 0;
+    return [m, avg];
+  }).sort((a,b)=>a[1]-b[1]);
+  const maxCpk = Math.max(0.01, ...cpkPorMarca.map(c=>c[1]));
+  const elC = document.getElementById('pneu-cpk-bars');
+  if (elC) elC.innerHTML = cpkPorMarca.map(([m,v]) => `
+    <div class="vu-bar-row">
+      <span class="vu-bar-label">${m}</span>
+      <div class="vu-bar-track"><div class="vu-bar-fill" style="width:${(v/maxCpk*100).toFixed(0)}%;background:#d4af37"></div></div>
+      <span class="vu-bar-val">${v.toFixed(2)}</span>
+    </div>`).join('') || '<span style="font-size:.78rem;color:var(--text-lt)">Sem dados</span>';
+}
+
+function addPneu() {
+  document.getElementById('pneuModal').classList.add('active');
+  ['pf-serie','pf-veiculo','pf-modelo'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('pf-km').value = '';
+  document.getElementById('pf-sulco').value = '';
+  document.getElementById('pf-cpk').value = '';
+}
+function closePneuModal() {
+  document.getElementById('pneuModal').classList.remove('active');
+}
+function salvarPneu() {
+  const serie = document.getElementById('pf-serie').value.trim();
+  const veiculo = document.getElementById('pf-veiculo').value.trim();
+  if (!serie || !veiculo) { showToast('⚠️ Preencha Série e Veículo'); return; }
+  const novoPneu = {
+    serie, veiculo,
+    posicao: document.getElementById('pf-posicao').value,
+    eixo: document.getElementById('pf-eixo').value,
+    marca: document.getElementById('pf-marca').value,
+    modelo: document.getElementById('pf-modelo').value || '—',
+    km: Number(document.getElementById('pf-km').value) || 0,
+    sulco: Number(document.getElementById('pf-sulco').value) || 16,
+    cpk: Number(document.getElementById('pf-cpk').value) || 0,
+    status: document.getElementById('pf-status').value,
+  };
+  const data = getPneuData();
+  data.push(novoPneu);
+  savePneuData(data);
+  closePneuModal();
+  initPneusPanel();
+  renderPneusPanel();
+  showToast('✅ Pneu cadastrado!');
+}
+
+function removerPneu(serie) {
+  if (!confirm(`Remover pneu #${serie}?`)) return;
+  let data = getPneuData();
+  data = data.filter(p => p.serie !== serie);
+  savePneuData(data);
+  renderPneusPanel();
+  showToast('🗑️ Pneu removido');
+}
+
+function exportPneus() {
+  const data = pneusFiltrados();
+  const rows = data.map(p => ({
+    Série: p.serie, Veículo: p.veiculo, Posição: p.posicao, Eixo: p.eixo,
+    Marca: p.marca, Modelo: p.modelo, KmRodado: p.km, SulcoMM: p.sulco,
+    CPK: p.cpk, VidaUtilPct: vidaUtilPct(p), Status: statusLabel(p.status)
+  }));
+  exportCSV(rows, 'controle_pneus');
 }
 </script>
 </body>
