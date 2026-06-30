@@ -329,45 +329,69 @@ footer a{color:var(--accent);text-decoration:none;}
 .pneu-form-grid label{font-size:.75rem;font-weight:600;color:var(--text-lt);display:block;margin-bottom:.2rem;}
 .pneu-form-grid input,.pneu-form-grid select{width:100%;padding:.45rem .65rem;border:1.5px solid var(--gray-200);border-radius:var(--r8);font-size:.83rem;transition:.2s;}
 .pneu-form-grid input:focus,.pneu-form-grid select:focus{outline:none;border-color:var(--accent);}
-</style>
-.gv-slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:5rem 5% 3rem;opacity:0;transform:translateX(60px);transition:opacity .55s cubic-bezier(.4,0,.2,1),transform .55s cubic-bezier(.4,0,.2,1);pointer-events:none;}
-.gv-slide.active{opacity:1;transform:translateX(0);pointer-events:auto;}
-.gv-slide.exit{opacity:0;transform:translateX(-60px);}
-.gv-slide-inner{width:100%;max-width:1100px;}
-.gv-title{font-size:clamp(1.1rem,2.5vw,1.8rem);font-weight:800;color:#fff;margin-bottom:.3rem;letter-spacing:-.02em;}
-.gv-subtitle{font-size:.82rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:1.8rem;}
-.gv-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.9rem;margin-bottom:1.4rem;}
-.gv-kpi{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:1.1rem 1.2rem;text-align:center;transition:.2s;}
-.gv-kpi-val{font-size:2rem;font-weight:800;line-height:1;margin-bottom:.3rem;}
-.gv-kpi-lbl{font-size:.7rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.8px;}
-.gv-kpi-trend{font-size:.72rem;margin-top:.35rem;font-weight:600;}
-.gv-kpi-trend.up{color:#34d399;} .gv-kpi-trend.down{color:#f87171;} .gv-kpi-trend.neutral{color:#fbbf24;}
-.gv-cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.9rem;margin-bottom:1.2rem;}
-.gv-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:1.1rem 1.2rem;}
-.gv-card-header{display:flex;align-items:center;gap:.6rem;margin-bottom:.8rem;}
-.gv-card-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
-.gv-card-title{font-size:.82rem;font-weight:700;color:#fff;}
-.gv-card-sub{font-size:.68rem;color:rgba(255,255,255,.4);margin-top:.05rem;}
-.gv-status-row{display:flex;align-items:center;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.78rem;}
+.gv-slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;padding:6rem 6% 5rem;opacity:0;transform:scale(1.04);filter:blur(6px);transition:opacity 1.1s cubic-bezier(.22,.61,.36,1),transform 1.1s cubic-bezier(.22,.61,.36,1),filter 1.1s cubic-bezier(.22,.61,.36,1);pointer-events:none;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth;}
+.gv-slide::-webkit-scrollbar{width:5px;}
+.gv-slide::-webkit-scrollbar-thumb{background:rgba(139,107,58,.18);border-radius:6px;}
+.gv-slide.active{opacity:1;transform:scale(1);filter:blur(0);pointer-events:auto;z-index:2;}
+.gv-slide.exit{opacity:0;transform:scale(.97);filter:blur(4px);z-index:1;}
+.gv-slide-inner{width:100%;max-width:1120px;margin:auto 0;}
+.gv-slide-inner>*{animation:gv-rise .85s cubic-bezier(.16,1,.3,1) backwards;}
+.gv-slide-inner>*:nth-child(1){animation-delay:.05s}
+.gv-slide-inner>*:nth-child(2){animation-delay:.14s}
+.gv-slide-inner>*:nth-child(3){animation-delay:.22s}
+.gv-slide-inner>*:nth-child(4){animation-delay:.3s}
+.gv-slide-inner>*:nth-child(5){animation-delay:.38s}
+@keyframes gv-rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+.gv-title-row{display:flex;align-items:center;gap:1rem;margin-bottom:.25rem;}
+.gv-title-icon{width:54px;height:54px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;box-shadow:0 8px 24px -8px rgba(0,0,0,.18);}
+.gv-title{font-size:clamp(1.3rem,2.6vw,2rem);font-weight:800;color:#1a2233;letter-spacing:-.02em;line-height:1.15;}
+.gv-subtitle{font-size:.82rem;color:#8a93a6;text-transform:uppercase;letter-spacing:1.4px;font-weight:600;margin-top:.15rem;}
+.gv-divider{height:1px;background:linear-gradient(90deg,rgba(212,175,55,.35),transparent 60%);margin:1.6rem 0 1.8rem;}
+.gv-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1rem;margin-bottom:1.5rem;}
+.gv-kpi{background:#fff;border:1px solid #ece6da;border-radius:18px;padding:1.3rem 1.3rem;text-align:center;box-shadow:0 4px 18px -10px rgba(30,30,40,.12);transition:.3s;}
+.gv-kpi:hover{transform:translateY(-3px);box-shadow:0 10px 28px -10px rgba(30,30,40,.18);}
+.gv-kpi-val{font-size:2.15rem;font-weight:800;line-height:1;margin-bottom:.4rem;letter-spacing:-.02em;}
+.gv-kpi-lbl{font-size:.7rem;color:#9099a8;text-transform:uppercase;letter-spacing:.8px;font-weight:700;}
+.gv-kpi-trend{font-size:.74rem;margin-top:.45rem;font-weight:700;}
+.gv-kpi-trend.up{color:#1ea672;} .gv-kpi-trend.down{color:#e0524a;} .gv-kpi-trend.neutral{color:#c08a1e;}
+.gv-cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1rem;margin-bottom:1.2rem;}
+.gv-card{background:#fff;border:1px solid #ece6da;border-radius:18px;padding:1.3rem 1.4rem;box-shadow:0 4px 18px -10px rgba(30,30,40,.10);}
+.gv-card-header{display:flex;align-items:center;gap:.7rem;margin-bottom:1rem;}
+.gv-card-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;}
+.gv-card-title{font-size:.86rem;font-weight:800;color:#1a2233;}
+.gv-card-sub{font-size:.7rem;color:#9099a8;margin-top:.1rem;font-weight:500;}
+.gv-status-row{display:flex;align-items:center;justify-content:space-between;padding:.55rem 0;border-bottom:1px solid #f0ece2;font-size:.8rem;}
 .gv-status-row:last-child{border:none;}
-.gv-status-lbl{color:rgba(255,255,255,.6);}
-.gv-pill{padding:.18rem .65rem;border-radius:20px;font-size:.68rem;font-weight:700;}
-.gv-pill.ok{background:rgba(52,211,153,.15);color:#34d399;border:1px solid rgba(52,211,153,.25);}
-.gv-pill.warn{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.25);}
-.gv-pill.bad{background:rgba(248,113,113,.15);color:#f87171;border:1px solid rgba(248,113,113,.25);}
-.gv-chart-wrap{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:1.2rem;margin-bottom:1rem;}
-.gv-bar-row{display:flex;align-items:center;gap:.8rem;margin-bottom:.6rem;font-size:.78rem;}
-.gv-bar-label{color:rgba(255,255,255,.55);width:160px;flex-shrink:0;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.gv-bar-track{flex:1;height:8px;background:rgba(255,255,255,.07);border-radius:8px;overflow:hidden;}
-.gv-bar-fill{height:100%;border-radius:8px;transition:width 1s ease;}
-.gv-bar-val{color:#fff;font-weight:700;width:50px;text-align:right;flex-shrink:0;}
-.gv-dot{width:8px;height:8px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:.2s;background:rgba(255,255,255,.2);}
-.gv-dot.active{background:#a78bfa;transform:scale(1.3);}
-.gv-cover{background:linear-gradient(135deg,#0d0f1a 0%,#111827 50%,#0a0d18 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
-.gv-cover-logo{font-size:3.5rem;margin-bottom:1rem;animation:gv-pulse 2s ease-in-out infinite;}
-@keyframes gv-pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.05);opacity:.85}}
-.gv-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
-@media(max-width:700px){.gv-grid-2{grid-template-columns:1fr}.gv-bar-label{width:100px}}
+.gv-status-lbl{color:#5b6373;font-weight:500;}
+.gv-pill{padding:.22rem .7rem;border-radius:20px;font-size:.7rem;font-weight:800;}
+.gv-pill.ok{background:#e6f7ef;color:#1ea672;border:1px solid #c7ecdb;}
+.gv-pill.warn{background:#fdf3dc;color:#b8821a;border:1px solid #f6e2ad;}
+.gv-pill.bad{background:#fcebea;color:#d6453d;border:1px solid #f6cdca;}
+.gv-chart-wrap{background:#fff;border:1px solid #ece6da;border-radius:18px;padding:1.4rem 1.5rem;margin-bottom:1.1rem;box-shadow:0 4px 18px -10px rgba(30,30,40,.10);}
+.gv-bar-row{display:flex;align-items:center;gap:.9rem;margin-bottom:.7rem;font-size:.8rem;}
+.gv-bar-label{color:#5b6373;width:170px;flex-shrink:0;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;}
+.gv-bar-track{flex:1;height:9px;background:#f1ede3;border-radius:9px;overflow:hidden;}
+.gv-bar-fill{height:100%;border-radius:9px;transition:width 1.1s cubic-bezier(.22,.61,.36,1);}
+.gv-bar-val{color:#1a2233;font-weight:800;width:50px;text-align:right;flex-shrink:0;}
+.gv-dot{width:7px;height:7px;border-radius:50%;border:none;cursor:pointer;transition:.3s;background:rgba(26,34,51,.18);}
+.gv-dot.active{background:linear-gradient(135deg,var(--accent),var(--accent-dk));transform:scale(1.6);}
+.gv-cover{background:radial-gradient(circle at 50% 30%,#fffdf7 0%,#f7f3e9 55%,#f0ead9 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
+.gv-cover-logo{font-size:3.6rem;margin-bottom:1.2rem;animation:gv-pulse 2.6s ease-in-out infinite;}
+@keyframes gv-pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.06);opacity:.82}}
+.gv-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;}
+@media(max-width:700px){.gv-grid-2{grid-template-columns:1fr}.gv-bar-label{width:110px}}
+#gv-topbar{background:linear-gradient(180deg,rgba(255,253,247,.96) 0%,rgba(255,253,247,0) 100%)!important;}
+#gv-topbar .gv-tb-logo{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--accent-dk));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.95rem;box-shadow:0 6px 16px -6px rgba(212,175,55,.5);}
+#gv-topbar .gv-tb-title{color:#1a2233;font-weight:800;font-size:.92rem;letter-spacing:-.01em;}
+#gv-topbar .gv-tb-sub{color:#9099a8;font-size:.65rem;text-transform:uppercase;letter-spacing:1px;font-weight:600;}
+#gv-topbar .gv-tb-counter{color:#9099a8;font-size:.75rem;font-weight:600;}
+.gv-tb-btn{background:#fff;border:1px solid #ece6da;color:#3a4252;border-radius:9px;padding:.4rem .85rem;font-size:.76rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px -4px rgba(30,30,40,.12);transition:.2s;}
+.gv-tb-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px -6px rgba(30,30,40,.18);}
+.gv-tb-btn.close{background:#fcebea;border-color:#f6cdca;color:#d6453d;}
+.gv-nav-arrow{position:absolute;top:50%;transform:translateY(-50%);background:#fff;border:1px solid #ece6da;color:#3a4252;border-radius:50%;width:46px;height:46px;font-size:1.15rem;cursor:pointer;z-index:10;transition:.25s;box-shadow:0 6px 20px -8px rgba(30,30,40,.18);}
+.gv-nav-arrow:hover{background:var(--accent);border-color:var(--accent);color:#1a2233;transform:translateY(-50%) scale(1.08);}
+#gv-progress-track{background:rgba(26,34,51,.07)!important;}
+#gv-timer-bar{background:linear-gradient(90deg,var(--accent),var(--accent-dk))!important;}
 </style>
 </head>
 <body>
@@ -1037,22 +1061,22 @@ footer a{color:var(--accent);text-decoration:none;}
 </div>
 
 <!-- ══════════════ GESTÃO A VISTA MODAL ══════════════ -->
-<div id="gestaoVistaModal" style="display:none;position:fixed;inset:0;z-index:9000;background:#080c14;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;">
+<div id="gestaoVistaModal" style="display:none;position:fixed;inset:0;z-index:10000;background:linear-gradient(160deg,#fffdf8 0%,#f9f5ec 45%,#f4efe2 100%);overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;">
 
   <!-- Top bar -->
-  <div id="gv-topbar" style="position:absolute;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:.7rem 1.4rem;background:linear-gradient(180deg,rgba(8,12,20,1) 0%,transparent 100%);transition:opacity .4s">
+  <div id="gv-topbar" style="position:absolute;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.6rem;transition:opacity .4s">
     <div style="display:flex;align-items:center;gap:.8rem">
-      <div style="width:36px;height:36px;background:linear-gradient(135deg,#a78bfa,#7c3aed);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem">📊</div>
+      <div class="gv-tb-logo">📊</div>
       <div>
-        <div style="color:#fff;font-weight:800;font-size:.92rem;letter-spacing:-.01em">GESTÃO A VISTA</div>
-        <div style="color:rgba(255,255,255,.45);font-size:.65rem;text-transform:uppercase;letter-spacing:1px">M-Malacarne Transporte & Logística</div>
+        <div class="gv-tb-title">GESTÃO A VISTA</div>
+        <div class="gv-tb-sub">M-Malacarne Transporte &amp; Logística</div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:.7rem">
-      <div id="gv-slide-dots" style="display:flex;gap:.4rem"></div>
-      <div style="color:rgba(255,255,255,.35);font-size:.75rem;margin-left:.4rem" id="gv-slide-counter">1 / 8</div>
-      <button onclick="pauseGV()" id="gv-play-btn" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:8px;padding:.35rem .75rem;font-size:.75rem;cursor:pointer">⏸ Pausar</button>
-      <button onclick="closeGestaoVista()" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#f87171;border-radius:8px;padding:.35rem .75rem;font-size:.75rem;cursor:pointer">✕ Fechar</button>
+    <div style="display:flex;align-items:center;gap:.8rem">
+      <div id="gv-slide-dots" style="display:flex;gap:.45rem"></div>
+      <div class="gv-tb-counter" id="gv-slide-counter">1 / 8</div>
+      <button onclick="pauseGV()" id="gv-play-btn" class="gv-tb-btn">⏸ Pausar</button>
+      <button onclick="closeGestaoVista()" class="gv-tb-btn close">✕ Fechar</button>
     </div>
   </div>
 
@@ -1060,12 +1084,12 @@ footer a{color:var(--accent);text-decoration:none;}
   <div id="gv-slides" style="width:100%;height:100%;position:relative;"></div>
 
   <!-- Nav arrows -->
-  <button onclick="gvNav(-1)" style="position:absolute;left:16px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:50%;width:44px;height:44px;font-size:1.1rem;cursor:pointer;z-index:10;transition:.2s" onmouseover="this.style.background='rgba(255,255,255,.15)'" onmouseout="this.style.background='rgba(255,255,255,.07)'">‹</button>
-  <button onclick="gvNav(1)"  style="position:absolute;right:16px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:50%;width:44px;height:44px;font-size:1.1rem;cursor:pointer;z-index:10;transition:.2s" onmouseover="this.style.background='rgba(255,255,255,.15)'" onmouseout="this.style.background='rgba(255,255,255,.07)'">›</button>
+  <button onclick="gvNav(-1)" class="gv-nav-arrow" style="left:18px;">‹</button>
+  <button onclick="gvNav(1)"  class="gv-nav-arrow" style="right:18px;">›</button>
 
   <!-- Progress bar -->
-  <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,.06);z-index:10">
-    <div id="gv-timer-bar" style="height:100%;background:linear-gradient(90deg,#a78bfa,#7c3aed);width:0%;transition:none"></div>
+  <div id="gv-progress-track" style="position:absolute;bottom:0;left:0;right:0;height:3px;z-index:10">
+    <div id="gv-timer-bar" style="height:100%;width:0%;transition:none"></div>
   </div>
 </div>
 
@@ -2291,10 +2315,7 @@ function filtrarFrota() {
 // GESTÃO A VISTA — SLIDES FULLSCREEN
 // ═══════════════════════════════════════════════════════════
 let gvCurrent = 0;
-let gvTimer = null;
-let gvTimerBar = null;
 let gvPaused = false;
-const GV_DURATION = 12000; // ms por slide
 const GV_SLIDES_DEF = buildGVSlides();
 
 function buildGVSlides() {
@@ -2303,16 +2324,16 @@ function buildGVSlides() {
     {
       id:'cover',
       render:() => `
-      <div class="gv-slide gv-cover" style="background:linear-gradient(135deg,#080c14 0%,#0f172a 60%,#080c14 100%)">
+      <div class="gv-slide gv-cover" style="background:none">
         <div class="gv-slide-inner" style="text-align:center">
           <div class="gv-cover-logo">📊</div>
-          <div style="font-size:clamp(1.6rem,4vw,2.8rem);font-weight:900;color:#fff;letter-spacing:-.03em;margin-bottom:.5rem">GESTÃO A VISTA</div>
-          <div style="font-size:clamp(.8rem,1.5vw,1rem);color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:2px;margin-bottom:2rem">M-Malacarne Transporte & Logística · 2026</div>
+          <div style="font-size:clamp(1.6rem,4vw,2.8rem);font-weight:900;color:#1a2233;letter-spacing:-.03em;margin-bottom:.5rem">GESTÃO A VISTA</div>
+          <div style="font-size:clamp(.8rem,1.5vw,1rem);color:#9099a8;text-transform:uppercase;letter-spacing:2px;margin-bottom:2rem;font-weight:600">M-Malacarne Transporte &amp; Logística · 2026</div>
           <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:.6rem;margin-bottom:2.5rem">
-            ${['Espelhamento GR','Câmera de Fadiga','Macros de Jornada','Desvios de Jornada','Desvios Telemetria','Config Embarcada','Treinamentos','Tratativas Fadiga'].map(s=>`<span style="background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.25);color:#a78bfa;padding:.3rem .85rem;border-radius:20px;font-size:.75rem;font-weight:600">${s}</span>`).join('')}
+            ${['Espelhamento GR','Câmera de Fadiga','Macros de Jornada','Desvios de Jornada','Desvios Telemetria','Config Embarcada','Treinamentos','Tratativas Fadiga'].map(s=>`<span style="background:#fff;border:1px solid #ece6da;color:var(--primary-dk);padding:.35rem .9rem;border-radius:20px;font-size:.75rem;font-weight:700;box-shadow:0 3px 10px -4px rgba(30,30,40,.12)">${s}</span>`).join('')}
           </div>
-          <div style="display:flex;justify-content:center;gap:2rem;flex-wrap:wrap">
-            ${[['14','Motoristas'],['17','Veículos'],['100%','Frota Fria'],['2026','Auditoria GIF']].map(([v,l])=>`<div style="text-align:center"><div style="font-size:1.8rem;font-weight:800;color:#a78bfa">${v}</div><div style="font-size:.68rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.8px">${l}</div></div>`).join('')}
+          <div style="display:flex;justify-content:center;gap:2.4rem;flex-wrap:wrap">
+            ${[['14','Motoristas'],['17','Veículos'],['100%','Frota Fria'],['2026','Auditoria GIF']].map(([v,l])=>`<div style="text-align:center"><div style="font-size:1.9rem;font-weight:800;background:linear-gradient(135deg,var(--accent-dk),var(--primary-dk));-webkit-background-clip:text;background-clip:text;color:transparent">${v}</div><div style="font-size:.68rem;color:#9099a8;text-transform:uppercase;letter-spacing:.8px;font-weight:700">${l}</div></div>`).join('')}
           </div>
         </div>
       </div>`
@@ -2328,26 +2349,26 @@ function buildGVSlides() {
             <div><div class="gv-title">Espelhamento do Veículo</div><div class="gv-subtitle">GR · Telemetria · Câmera de Fadiga</div></div>
           </div>
           <div class="gv-kpi-grid" style="margin-top:1.2rem">
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#60a5fa">17</div><div class="gv-kpi-lbl">Veículos Cadastrados</div><div class="gv-kpi-trend up">▲ 100% ativos</div></div>
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#34d399">17</div><div class="gv-kpi-lbl">Com GR Configurado</div><div class="gv-kpi-trend up">▲ 100%</div></div>
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#fbbf24">14</div><div class="gv-kpi-lbl">Telemetria Ativa</div><div class="gv-kpi-trend neutral">→ 82%</div></div>
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#a78bfa">12</div><div class="gv-kpi-lbl">Câmera Instalada</div><div class="gv-kpi-trend neutral">→ 71%</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#2563eb">17</div><div class="gv-kpi-lbl">Veículos Cadastrados</div><div class="gv-kpi-trend up">▲ 100% ativos</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#1ea672">17</div><div class="gv-kpi-lbl">Com GR Configurado</div><div class="gv-kpi-trend up">▲ 100%</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#c08a1e">14</div><div class="gv-kpi-lbl">Telemetria Ativa</div><div class="gv-kpi-trend neutral">→ 82%</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#7c5cd6">12</div><div class="gv-kpi-lbl">Câmera Instalada</div><div class="gv-kpi-trend neutral">→ 71%</div></div>
           </div>
           <div class="gv-cards-grid">
             <div class="gv-card">
-              <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(59,130,246,.15)">📡</div><div><div class="gv-card-title">Status por Sistema</div><div class="gv-card-sub">Veículos com cada tecnologia ativa</div></div></div>
+              <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(59,130,246,.13)">📡</div><div><div class="gv-card-title">Status por Sistema</div><div class="gv-card-sub">Veículos com cada tecnologia ativa</div></div></div>
               ${[['GR (Rastreador)','17/17','ok'],['Telemetria','14/17','warn'],['Câmera Fadiga','12/17','warn'],['Parâmetros Corretos','14/17','warn']].map(([l,v,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${v}</span></div>`).join('')}
             </div>
             <div class="gv-card">
-              <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(167,139,250,.15)">🗺️</div><div><div class="gv-card-title">Cobertura por Rota</div><div class="gv-card-sub">Monitoramento em tempo real</div></div></div>
+              <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(167,139,250,.13)">🗺️</div><div><div class="gv-card-title">Cobertura por Rota</div><div class="gv-card-sub">Monitoramento em tempo real</div></div></div>
               ${[['Sul (SC/PR/RS)','100%','ok'],['Sudeste (SP/RJ/MG)','95%','ok'],['Centro-Oeste','88%','warn'],['Nordeste','72%','warn']].map(([l,v,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${v}</span></div>`).join('')}
             </div>
             <div class="gv-card">
-              <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(52,211,153,.15)">✅</div><div><div class="gv-card-title">Conformidade GIF 2026</div><div class="gv-card-sub">Meta: 100% espelhado</div></div></div>
+              <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(52,211,153,.13)">✅</div><div><div class="gv-card-title">Conformidade GIF 2026</div><div class="gv-card-sub">Meta: 100% espelhado</div></div></div>
               <div style="margin-top:.5rem">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem"><span style="color:rgba(255,255,255,.55);font-size:.78rem">Progresso espelhamento</span><span style="color:#34d399;font-weight:700">82%</span></div>
-                <div style="height:10px;background:rgba(255,255,255,.07);border-radius:10px;overflow:hidden"><div style="width:82%;height:100%;background:linear-gradient(90deg,#34d399,#059669);border-radius:10px"></div></div>
-                <div style="font-size:.72rem;color:rgba(255,255,255,.35);margin-top:.5rem">3 veículos pendentes de configuração completa</div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem"><span style="color:#5b6373;font-size:.78rem">Progresso espelhamento</span><span style="color:#1ea672;font-weight:700">82%</span></div>
+                <div style="height:10px;background:#f1ede3;border-radius:10px;overflow:hidden"><div style="width:82%;height:100%;background:linear-gradient(90deg,#1ea672,#059669);border-radius:10px"></div></div>
+                <div style="font-size:.72rem;color:#9099a8;margin-top:.5rem">3 veículos pendentes de configuração completa</div>
               </div>
             </div>
           </div>
@@ -2365,28 +2386,28 @@ function buildGVSlides() {
             <div><div class="gv-title">Funcionamento da Câmera de Fadiga</div><div class="gv-subtitle">Monitoramento de Fadiga · Alertas · Disponibilidade</div></div>
           </div>
           <div class="gv-kpi-grid" style="margin-top:1.2rem">
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#fbbf24">12</div><div class="gv-kpi-lbl">Câmeras Instaladas</div><div class="gv-kpi-trend neutral">→ 71% da frota</div></div>
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#34d399">10</div><div class="gv-kpi-lbl">Operando Normalmente</div><div class="gv-kpi-trend up">▲ 83%</div></div>
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#f87171">2</div><div class="gv-kpi-lbl">Com Falha / Manutenção</div><div class="gv-kpi-trend down">▼ Atenção</div></div>
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#a78bfa">47</div><div class="gv-kpi-lbl">Alertas no Mês</div><div class="gv-kpi-trend neutral">→ jan/2026</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#c08a1e">12</div><div class="gv-kpi-lbl">Câmeras Instaladas</div><div class="gv-kpi-trend neutral">→ 71% da frota</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#1ea672">10</div><div class="gv-kpi-lbl">Operando Normalmente</div><div class="gv-kpi-trend up">▲ 83%</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#dc4a42">2</div><div class="gv-kpi-lbl">Com Falha / Manutenção</div><div class="gv-kpi-trend down">▼ Atenção</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#7c5cd6">47</div><div class="gv-kpi-lbl">Alertas no Mês</div><div class="gv-kpi-trend neutral">→ jan/2026</div></div>
           </div>
           <div class="gv-grid-2">
             <div class="gv-chart-wrap">
-              <div style="font-size:.82rem;font-weight:700;color:#fff;margin-bottom:1rem">Alertas por Motorista (Top 6)</div>
+              <div style="font-size:.82rem;font-weight:700;color:#1a2233;margin-bottom:1rem">Alertas por Motorista (Top 6)</div>
               ${[['Motorista 1',22],['Motorista 2',18],['Motorista 3',15],['Motorista 4',11],['Motorista 5',8],['Motorista 6',5]].map(([n,v])=>`
               <div class="gv-bar-row">
                 <span class="gv-bar-label">${n}</span>
-                <div class="gv-bar-track"><div class="gv-bar-fill" style="width:${(v/22*100).toFixed(0)}%;background:linear-gradient(90deg,#fbbf24,#f59e0b)"></div></div>
+                <div class="gv-bar-track"><div class="gv-bar-fill" style="width:${(v/22*100).toFixed(0)}%;background:linear-gradient(90deg,#c08a1e,#f59e0b)"></div></div>
                 <span class="gv-bar-val">${v}</span>
               </div>`).join('')}
             </div>
             <div>
               <div class="gv-card" style="margin-bottom:.9rem">
-                <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(248,113,113,.15)">⚠️</div><div><div class="gv-card-title">Tipos de Alerta</div></div></div>
+                <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(248,113,113,.13)">⚠️</div><div><div class="gv-card-title">Tipos de Alerta</div></div></div>
                 ${[['Sonolência detectada',19,'bad'],['Distração / desvio olhar',15,'warn'],['Uso de celular',8,'bad'],['Outros',5,'neutral']].map(([l,v,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${v}x</span></div>`).join('')}
               </div>
               <div class="gv-card">
-                <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(52,211,153,.15)">🔧</div><div><div class="gv-card-title">Status das Câmeras</div></div></div>
+                <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(52,211,153,.13)">🔧</div><div><div class="gv-card-title">Status das Câmeras</div></div></div>
                 ${[['OK / Operando','10','ok'],['Manutenção pendente','2','bad'],['Sem câmera instalada','5','warn']].map(([l,v,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${v} veíc.</span></div>`).join('')}
               </div>
             </div>
@@ -2405,25 +2426,25 @@ function buildGVSlides() {
             <div><div class="gv-title">Envio de Macros</div><div class="gv-subtitle">Início · Paradas · Pernoite · Reinício · Fim de Jornada</div></div>
           </div>
           <div class="gv-kpi-grid" style="margin-top:1.2rem">
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#34d399">94%</div><div class="gv-kpi-lbl">Conformidade Macros</div><div class="gv-kpi-trend up">▲ meta 90%</div></div>
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#60a5fa">312</div><div class="gv-kpi-lbl">Viagens no Mês</div><div class="gv-kpi-trend up">▲ jan/2026</div></div>
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#f87171">19</div><div class="gv-kpi-lbl">Macros Não Enviados</div><div class="gv-kpi-trend down">▼ Atenção</div></div>
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#fbbf24">5</div><div class="gv-kpi-lbl">Motoristas com Falha</div><div class="gv-kpi-trend neutral">→ treinamento</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#1ea672">94%</div><div class="gv-kpi-lbl">Conformidade Macros</div><div class="gv-kpi-trend up">▲ meta 90%</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#2563eb">312</div><div class="gv-kpi-lbl">Viagens no Mês</div><div class="gv-kpi-trend up">▲ jan/2026</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#dc4a42">19</div><div class="gv-kpi-lbl">Macros Não Enviados</div><div class="gv-kpi-trend down">▼ Atenção</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#c08a1e">5</div><div class="gv-kpi-lbl">Motoristas com Falha</div><div class="gv-kpi-trend neutral">→ treinamento</div></div>
           </div>
           <div class="gv-cards-grid">
             <div class="gv-chart-wrap" style="grid-column:span 1">
-              <div style="font-size:.82rem;font-weight:700;color:#fff;margin-bottom:1rem">Conformidade por Tipo de Macro</div>
+              <div style="font-size:.82rem;font-weight:700;color:#1a2233;margin-bottom:1rem">Conformidade por Tipo de Macro</div>
               ${[['Início de Jornada',98],['Parada Obrigatória (30min)',91],['Parada Refeição (1h)',89],['Pernoite',96],['Reinício de Jornada',93],['Fim de Jornada',97]].map(([n,v])=>`
               <div class="gv-bar-row">
                 <span class="gv-bar-label">${n}</span>
-                <div class="gv-bar-track"><div class="gv-bar-fill" style="width:${v}%;background:linear-gradient(90deg,${v>=95?'#34d399,#059669':v>=88?'#fbbf24,#f59e0b':'#f87171,#dc2626'})"></div></div>
-                <span class="gv-bar-val" style="color:${v>=95?'#34d399':v>=88?'#fbbf24':'#f87171'}">${v}%</span>
+                <div class="gv-bar-track"><div class="gv-bar-fill" style="width:${v}%;background:linear-gradient(90deg,${v>=95?'#1ea672,#059669':v>=88?'#c08a1e,#f59e0b':'#dc4a42,#dc2626'})"></div></div>
+                <span class="gv-bar-val" style="color:${v>=95?'#1ea672':v>=88?'#c08a1e':'#dc4a42'}">${v}%</span>
               </div>`).join('')}
             </div>
             <div class="gv-card">
-              <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(16,185,129,.15)">📊</div><div><div class="gv-card-title">Ranking — Motoristas</div><div class="gv-card-sub">Conformidade no envio</div></div></div>
+              <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(16,185,129,.13)">📊</div><div><div class="gv-card-title">Ranking — Motoristas</div><div class="gv-card-sub">Conformidade no envio</div></div></div>
               ${[['Top 3 conformes','100%','ok'],['Média da frota','94%','ok'],['3 com alertas','-3 ocorr.','warn'],['5 com falhas','<85%','bad']].map(([l,v,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${v}</span></div>`).join('')}
-              <div style="margin-top:.8rem;font-size:.72rem;color:rgba(255,255,255,.35)">Ação: motoristas com falha encaminhados para reforço de treinamento em macro GR.</div>
+              <div style="margin-top:.8rem;font-size:.72rem;color:#9099a8">Ação: motoristas com falha encaminhados para reforço de treinamento em macro GR.</div>
             </div>
           </div>
         </div>
@@ -2440,25 +2461,25 @@ function buildGVSlides() {
             <div><div class="gv-title">Desvios de Jornada</div><div class="gv-subtitle">Horas Extras · Pausa Obrigatória · Tempo ao Volante</div></div>
           </div>
           <div class="gv-kpi-grid" style="margin-top:1.2rem">
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#f87171">28</div><div class="gv-kpi-lbl">Desvios no Mês</div><div class="gv-kpi-trend down">▼ jan/2026</div></div>
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#fbbf24">8</div><div class="gv-kpi-lbl">Jornada Excedida</div><div class="gv-kpi-trend down">▼ >8h seguidas</div></div>
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#f87171">12</div><div class="gv-kpi-lbl">Pausa Não Cumprida</div><div class="gv-kpi-trend down">▼ Crítico</div></div>
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#34d399">8</div><div class="gv-kpi-lbl">Tratativas Geradas</div><div class="gv-kpi-trend up">▲ 29% dos desvios</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#dc4a42">28</div><div class="gv-kpi-lbl">Desvios no Mês</div><div class="gv-kpi-trend down">▼ jan/2026</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#c08a1e">8</div><div class="gv-kpi-lbl">Jornada Excedida</div><div class="gv-kpi-trend down">▼ >8h seguidas</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#dc4a42">12</div><div class="gv-kpi-lbl">Pausa Não Cumprida</div><div class="gv-kpi-trend down">▼ Crítico</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#1ea672">8</div><div class="gv-kpi-lbl">Tratativas Geradas</div><div class="gv-kpi-trend up">▲ 29% dos desvios</div></div>
           </div>
           <div class="gv-grid-2">
             <div class="gv-chart-wrap">
-              <div style="font-size:.82rem;font-weight:700;color:#fff;margin-bottom:1rem">Desvios por Categoria</div>
+              <div style="font-size:.82rem;font-weight:700;color:#1a2233;margin-bottom:1rem">Desvios por Categoria</div>
               ${[['Pausa obrigatória não feita',12],['Jornada excedida (>8h)',8],['Dirigindo sem pausa 4h+',5],['Reinício sem descanso mínimo',3]].map(([n,v])=>`
               <div class="gv-bar-row">
                 <span class="gv-bar-label">${n}</span>
-                <div class="gv-bar-track"><div class="gv-bar-fill" style="width:${(v/12*100).toFixed(0)}%;background:linear-gradient(90deg,#f87171,#dc2626)"></div></div>
-                <span class="gv-bar-val" style="color:#f87171">${v}</span>
+                <div class="gv-bar-track"><div class="gv-bar-fill" style="width:${(v/12*100).toFixed(0)}%;background:linear-gradient(90deg,#dc4a42,#dc2626)"></div></div>
+                <span class="gv-bar-val" style="color:#dc4a42">${v}</span>
               </div>`).join('')}
             </div>
             <div class="gv-card">
-              <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(239,68,68,.15)">📉</div><div><div class="gv-card-title">Evolução Mensal 2026</div><div class="gv-card-sub">Desvios acumulados</div></div></div>
+              <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(239,68,68,.13)">📉</div><div><div class="gv-card-title">Evolução Mensal 2026</div><div class="gv-card-sub">Desvios acumulados</div></div></div>
               ${[['Janeiro/2026',28,'bad'],['Meta mensal','≤ 10','ok'],['Redução necessária','-64%','warn'],['Prazo tratativa','48h','ok']].map(([l,v,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${v}</span></div>`).join('')}
-              <div style="margin-top:.8rem;font-size:.72rem;color:rgba(255,255,255,.35)">Plano de ação: reforço de treinamento e bloqueio por telemetria para os 5 motoristas com mais ocorrências.</div>
+              <div style="margin-top:.8rem;font-size:.72rem;color:#9099a8">Plano de ação: reforço de treinamento e bloqueio por telemetria para os 5 motoristas com mais ocorrências.</div>
             </div>
           </div>
         </div>
@@ -2475,28 +2496,28 @@ function buildGVSlides() {
             <div><div class="gv-title">Desvios de Telemetria</div><div class="gv-subtitle">&gt;80 km/h pista seca · &gt;72 km/h chuva · Freadas Bruscas · Aceleração</div></div>
           </div>
           <div class="gv-kpi-grid" style="margin-top:1.2rem">
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#f87171">63</div><div class="gv-kpi-lbl">Desvios Velocidade</div><div class="gv-kpi-trend down">▼ jan/2026</div></div>
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#fbbf24">41</div><div class="gv-kpi-lbl">&gt;80 km/h Seco</div><div class="gv-kpi-trend down">▼ 65%</div></div>
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#f87171">22</div><div class="gv-kpi-lbl">&gt;72 km/h Chuva</div><div class="gv-kpi-trend down">▼ Crítico</div></div>
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#a78bfa">38</div><div class="gv-kpi-lbl">Freadas Bruscas</div><div class="gv-kpi-trend neutral">→ monit.</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#dc4a42">63</div><div class="gv-kpi-lbl">Desvios Velocidade</div><div class="gv-kpi-trend down">▼ jan/2026</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#c08a1e">41</div><div class="gv-kpi-lbl">&gt;80 km/h Seco</div><div class="gv-kpi-trend down">▼ 65%</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#dc4a42">22</div><div class="gv-kpi-lbl">&gt;72 km/h Chuva</div><div class="gv-kpi-trend down">▼ Crítico</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#7c5cd6">38</div><div class="gv-kpi-lbl">Freadas Bruscas</div><div class="gv-kpi-trend neutral">→ monit.</div></div>
           </div>
           <div class="gv-grid-2">
             <div class="gv-chart-wrap">
-              <div style="font-size:.82rem;font-weight:700;color:#fff;margin-bottom:1rem">Top Motoristas — Ocorrências</div>
+              <div style="font-size:.82rem;font-weight:700;color:#1a2233;margin-bottom:1rem">Top Motoristas — Ocorrências</div>
               ${[['M01 — Scania R450',18],['M07 — Volvo FH',15],['M03 — Scania R410',12],['M11 — Mercedes 2651',10],['M05 — Scania R450',8]].map(([n,v])=>`
               <div class="gv-bar-row">
                 <span class="gv-bar-label">${n}</span>
-                <div class="gv-bar-track"><div class="gv-bar-fill" style="width:${(v/18*100).toFixed(0)}%;background:linear-gradient(90deg,#a78bfa,#7c3aed)"></div></div>
-                <span class="gv-bar-val" style="color:#a78bfa">${v}</span>
+                <div class="gv-bar-track"><div class="gv-bar-fill" style="width:${(v/18*100).toFixed(0)}%;background:linear-gradient(90deg,#7c5cd6,#7c3aed)"></div></div>
+                <span class="gv-bar-val" style="color:#7c5cd6">${v}</span>
               </div>`).join('')}
             </div>
             <div>
               <div class="gv-card" style="margin-bottom:.9rem">
-                <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(139,92,246,.15)">🚦</div><div><div class="gv-card-title">Limites BRF</div><div class="gv-card-sub">Parâmetros auditados</div></div></div>
+                <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(139,92,246,.13)">🚦</div><div><div class="gv-card-title">Limites BRF</div><div class="gv-card-sub">Parâmetros auditados</div></div></div>
                 ${[['Pista seca (máx)','80 km/h','ok'],['Pista molhada (máx)','72 km/h','ok'],['Freada brusca (g)','> 0.4g','warn'],['Aceleração brusca','monitorado','ok']].map(([l,v,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${v}</span></div>`).join('')}
               </div>
               <div class="gv-card">
-                <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(248,113,113,.15)">📋</div><div><div class="gv-card-title">Ações</div></div></div>
+                <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(248,113,113,.13)">📋</div><div><div class="gv-card-title">Ações</div></div></div>
                 ${[['Advertências emitidas',12,'warn'],['Em plano de ação',5,'warn'],['Sem ocorrência',9,'ok'],['Meta: 0 desvios','jan/fev','ok']].map(([l,v,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${v}</span></div>`).join('')}
               </div>
             </div>
@@ -2515,23 +2536,23 @@ function buildGVSlides() {
             <div><div class="gv-title">Configuração da Tecnologia Embarcada</div><div class="gv-subtitle">Parâmetros de Velocidade · GR · Telemetria · Câmera</div></div>
           </div>
           <div class="gv-kpi-grid" style="margin-top:1.2rem">
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#34d399">14</div><div class="gv-kpi-lbl">Parâmetros Corretos</div><div class="gv-kpi-trend up">▲ 82%</div></div>
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#f87171">3</div><div class="gv-kpi-lbl">Com Pendência</div><div class="gv-kpi-trend down">▼ Ajuste urgente</div></div>
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#fbbf24">80</div><div class="gv-kpi-lbl">km/h Limite Seco</div><div class="gv-kpi-trend ok">→ BRF padrão</div></div>
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#60a5fa">72</div><div class="gv-kpi-lbl">km/h Limite Chuva</div><div class="gv-kpi-trend ok">→ BRF padrão</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#1ea672">14</div><div class="gv-kpi-lbl">Parâmetros Corretos</div><div class="gv-kpi-trend up">▲ 82%</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#dc4a42">3</div><div class="gv-kpi-lbl">Com Pendência</div><div class="gv-kpi-trend down">▼ Ajuste urgente</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#c08a1e">80</div><div class="gv-kpi-lbl">km/h Limite Seco</div><div class="gv-kpi-trend ok">→ BRF padrão</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#2563eb">72</div><div class="gv-kpi-lbl">km/h Limite Chuva</div><div class="gv-kpi-trend ok">→ BRF padrão</div></div>
           </div>
           <div class="gv-cards-grid">
             <div class="gv-card">
-              <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(6,182,212,.15)">🔧</div><div><div class="gv-card-title">Checklist de Parâmetros</div><div class="gv-card-sub">Padrão BRF — GIF 2026</div></div></div>
+              <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(6,182,212,.13)">🔧</div><div><div class="gv-card-title">Checklist de Parâmetros</div><div class="gv-card-sub">Padrão BRF — GIF 2026</div></div></div>
               ${[['Velocidade máxima (seco) = 80','ok'],['Velocidade máxima (chuva) = 72','ok'],['Alerta fadiga configurado','ok'],['Bloqueio automático >85km/h','warn'],['Câmera integrada ao GR','warn'],['Backup sinal offline','ok']].map(([l,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${c==='ok'?'✓ OK':c==='warn'?'⚠ Pendente':'✗ Falha'}</span></div>`).join('')}
             </div>
             <div class="gv-card">
-              <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(251,191,36,.15)">📱</div><div><div class="gv-card-title">Veículos com Ajuste Pendente</div><div class="gv-card-sub">Prazo: 30 dias</div></div></div>
+              <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(251,191,36,.13)">📱</div><div><div class="gv-card-title">Veículos com Ajuste Pendente</div><div class="gv-card-sub">Prazo: 30 dias</div></div></div>
               ${[['Veículo M03 — Scania R410','Câmera','bad'],['Veículo M07 — Volvo FH','Bloqueio vel.','warn'],['Veículo M14 — Scania R450','Integração GR','warn']].map(([l,v,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${v}</span></div>`).join('')}
-              <div style="margin-top:.8rem;font-size:.72rem;color:rgba(255,255,255,.35)">Agendado com fornecedor de tecnologia para ajuste nos próximos 15 dias.</div>
+              <div style="margin-top:.8rem;font-size:.72rem;color:#9099a8">Agendado com fornecedor de tecnologia para ajuste nos próximos 15 dias.</div>
             </div>
             <div class="gv-card">
-              <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(52,211,153,.15)">📈</div><div><div class="gv-card-title">Evolução Configuração</div><div class="gv-card-sub">2024 → 2026</div></div></div>
+              <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(52,211,153,.13)">📈</div><div><div class="gv-card-title">Evolução Configuração</div><div class="gv-card-sub">2024 → 2026</div></div></div>
               ${[['Dez/2024','71%','warn'],['Jun/2025','76%','warn'],['Dez/2025','79%','warn'],['Jan/2026','82%','ok'],['Meta 2026','100%','ok']].map(([l,v,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${v}</span></div>`).join('')}
             </div>
           </div>
@@ -2549,28 +2570,28 @@ function buildGVSlides() {
             <div><div class="gv-title">Treinamento dos Motoristas</div><div class="gv-subtitle">Cursos 3P's · Antitombamento · Capacitações BRF</div></div>
           </div>
           <div class="gv-kpi-grid" style="margin-top:1.2rem">
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#fb923c">14</div><div class="gv-kpi-lbl">Motoristas Ativos</div><div class="gv-kpi-trend neutral">→ base</div></div>
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#34d399">11</div><div class="gv-kpi-lbl">3P's Concluído</div><div class="gv-kpi-trend up">▲ 79%</div></div>
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#34d399">9</div><div class="gv-kpi-lbl">Antitombamento OK</div><div class="gv-kpi-trend up">▲ 64%</div></div>
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#f87171">5</div><div class="gv-kpi-lbl">Pendentes Certificação</div><div class="gv-kpi-trend down">▼ Urgente</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#d9711f">14</div><div class="gv-kpi-lbl">Motoristas Ativos</div><div class="gv-kpi-trend neutral">→ base</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#1ea672">11</div><div class="gv-kpi-lbl">3P's Concluído</div><div class="gv-kpi-trend up">▲ 79%</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#1ea672">9</div><div class="gv-kpi-lbl">Antitombamento OK</div><div class="gv-kpi-trend up">▲ 64%</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#dc4a42">5</div><div class="gv-kpi-lbl">Pendentes Certificação</div><div class="gv-kpi-trend down">▼ Urgente</div></div>
           </div>
           <div class="gv-grid-2">
             <div class="gv-chart-wrap">
-              <div style="font-size:.82rem;font-weight:700;color:#fff;margin-bottom:1rem">Progresso por Curso</div>
+              <div style="font-size:.82rem;font-weight:700;color:#1a2233;margin-bottom:1rem">Progresso por Curso</div>
               ${[['3P\'s (Pessoas/Produto/Processos)',79],['Antitombamento',64],['Direção Defensiva',86],['Uso da Câmera de Fadiga',71],['Macros e GR',93],['Normas BRF / GIF',100]].map(([n,v])=>`
               <div class="gv-bar-row">
                 <span class="gv-bar-label">${n}</span>
-                <div class="gv-bar-track"><div class="gv-bar-fill" style="width:${v}%;background:linear-gradient(90deg,${v>=90?'#34d399,#059669':v>=70?'#fb923c,#ea580c':'#f87171,#dc2626'})"></div></div>
-                <span class="gv-bar-val" style="color:${v>=90?'#34d399':v>=70?'#fb923c':'#f87171'}">${v}%</span>
+                <div class="gv-bar-track"><div class="gv-bar-fill" style="width:${v}%;background:linear-gradient(90deg,${v>=90?'#1ea672,#059669':v>=70?'#d9711f,#ea580c':'#dc4a42,#dc2626'})"></div></div>
+                <span class="gv-bar-val" style="color:${v>=90?'#1ea672':v>=70?'#d9711f':'#dc4a42'}">${v}%</span>
               </div>`).join('')}
             </div>
             <div>
               <div class="gv-card" style="margin-bottom:.9rem">
-                <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(249,115,22,.15)">📅</div><div><div class="gv-card-title">Próximas Turmas 2026</div><div class="gv-card-sub">Agendamento em andamento</div></div></div>
+                <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(249,115,22,.13)">📅</div><div><div class="gv-card-title">Próximas Turmas 2026</div><div class="gv-card-sub">Agendamento em andamento</div></div></div>
                 ${[['3P\'s — Turma Fev/26','3 vagas','warn'],['Antitombamento — Mar/26','5 vagas','bad'],['Reciclagem Anual — Abr/26','14 vagas','warn'],['Câmera Fadiga — Mai/26','3 vagas','warn']].map(([l,v,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${v}</span></div>`).join('')}
               </div>
               <div class="gv-card">
-                <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(52,211,153,.15)">🏆</div><div><div class="gv-card-title">Meta GIF 2026</div></div></div>
+                <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(52,211,153,.13)">🏆</div><div><div class="gv-card-title">Meta GIF 2026</div></div></div>
                 ${[['3P\'s completo','100%','ok'],['Antitombamento','100%','ok'],['Prazo limite','Jun/2026','warn'],['Status atual','71%','warn']].map(([l,v,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${v}</span></div>`).join('')}
               </div>
             </div>
@@ -2589,29 +2610,29 @@ function buildGVSlides() {
             <div><div class="gv-title">Tratativas de Câmera de Fadiga</div><div class="gv-subtitle">Alertas Gerados · Tratativas Abertas · Prazo de Retorno</div></div>
           </div>
           <div class="gv-kpi-grid" style="margin-top:1.2rem">
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#f472b6">47</div><div class="gv-kpi-lbl">Alertas no Período</div><div class="gv-kpi-trend down">▼ jan/2026</div></div>
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#34d399">38</div><div class="gv-kpi-lbl">Tratativas Abertas</div><div class="gv-kpi-trend up">▲ 81%</div></div>
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#fbbf24">9</div><div class="gv-kpi-lbl">Sem Tratativa</div><div class="gv-kpi-trend down">▼ Pendente</div></div>
-            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#f87171">48h</div><div class="gv-kpi-lbl">Prazo Máximo BRF</div><div class="gv-kpi-trend neutral">→ SLA</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#c2418a">47</div><div class="gv-kpi-lbl">Alertas no Período</div><div class="gv-kpi-trend down">▼ jan/2026</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#1ea672">38</div><div class="gv-kpi-lbl">Tratativas Abertas</div><div class="gv-kpi-trend up">▲ 81%</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#c08a1e">9</div><div class="gv-kpi-lbl">Sem Tratativa</div><div class="gv-kpi-trend down">▼ Pendente</div></div>
+            <div class="gv-kpi"><div class="gv-kpi-val" style="color:#dc4a42">48h</div><div class="gv-kpi-lbl">Prazo Máximo BRF</div><div class="gv-kpi-trend neutral">→ SLA</div></div>
           </div>
           <div class="gv-grid-2">
             <div class="gv-chart-wrap">
-              <div style="font-size:.82rem;font-weight:700;color:#fff;margin-bottom:1rem">Tratativas por Status</div>
+              <div style="font-size:.82rem;font-weight:700;color:#1a2233;margin-bottom:1rem">Tratativas por Status</div>
               ${[['Concluída com evidência',24],['Em andamento',14],['Abertas sem retorno',9],['Vencidas (>48h)',3]].map(([n,v],i)=>`
               <div class="gv-bar-row">
                 <span class="gv-bar-label">${n}</span>
-                <div class="gv-bar-track"><div class="gv-bar-fill" style="width:${(v/24*100).toFixed(0)}%;background:linear-gradient(90deg,${['#34d399,#059669','#60a5fa,#2563eb','#fbbf24,#f59e0b','#f87171,#dc2626'][i]})"></div></div>
-                <span class="gv-bar-val" style="color:${['#34d399','#60a5fa','#fbbf24','#f87171'][i]}">${v}</span>
+                <div class="gv-bar-track"><div class="gv-bar-fill" style="width:${(v/24*100).toFixed(0)}%;background:linear-gradient(90deg,${['#1ea672,#059669','#2563eb,#2563eb','#c08a1e,#f59e0b','#dc4a42,#dc2626'][i]})"></div></div>
+                <span class="gv-bar-val" style="color:${['#1ea672','#2563eb','#c08a1e','#dc4a42'][i]}">${v}</span>
               </div>`).join('')}
             </div>
             <div>
               <div class="gv-card" style="margin-bottom:.9rem">
-                <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(236,72,153,.15)">⚡</div><div><div class="gv-card-title">Fluxo de Tratativa</div><div class="gv-card-sub">Protocolo BRF</div></div></div>
+                <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(236,72,153,.13)">⚡</div><div><div class="gv-card-title">Fluxo de Tratativa</div><div class="gv-card-sub">Protocolo BRF</div></div></div>
                 ${[['1. Alerta gerado pela câmera','ok'],['2. Notificação ao gestor','ok'],['3. Contato com motorista (2h)','ok'],['4. Registro da tratativa','warn'],['5. Evidência anexada','warn'],['6. Encerramento em 48h','bad']].map(([l,c])=>`<div class="gv-status-row"><span class="gv-status-lbl">${l}</span><span class="gv-pill ${c}">${c==='ok'?'✓ OK':c==='warn'?'⚠ Parcial':'✗ Gap'}</span></div>`).join('')}
               </div>
               <div class="gv-card">
-                <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(52,211,153,.15)">📌</div><div><div class="gv-card-title">Ação Imediata</div></div></div>
-                <div style="font-size:.78rem;color:rgba(255,255,255,.6);line-height:1.7">
+                <div class="gv-card-header"><div class="gv-card-icon" style="background:rgba(52,211,153,.13)">📌</div><div><div class="gv-card-title">Ação Imediata</div></div></div>
+                <div style="font-size:.78rem;color:#5b6373;line-height:1.7">
                   <div>• 9 alertas sem tratativa — contatar gestor hoje</div>
                   <div>• 3 casos vencidos (>48h) — escalar para BRF</div>
                   <div>• Reforçar protocolo de registro com equipe</div>
@@ -2633,8 +2654,7 @@ function openGestaoVista() {
   gvCurrent = 0;
   gvPaused = false;
   renderAllGVSlides();
-  gvGoTo(0);
-  startGVTimer();
+  gvGoTo(0, true);
   renderGVDots();
 
   // keyboard nav
@@ -2667,71 +2687,138 @@ function renderGVDots() {
   ).join('');
 }
 
-function gvGoTo(idx) {
+// Tempo de leitura: base + extra proporcional ao conteúdo/overflow do slide
+const GV_MIN_DURATION = 9000;   // 9s mínimo por slide
+const GV_MAX_DURATION = 22000;  // 22s máximo por slide
+const GV_READ_PX_PER_SEC = 140; // velocidade de "leitura" do conteúdo extra em px/s
+
+function gvCalcDuration(slideEl) {
+  if (!slideEl) return GV_MIN_DURATION;
+  const overflow = Math.max(0, slideEl.scrollHeight - slideEl.clientHeight);
+  const extra = (overflow / GV_READ_PX_PER_SEC) * 1000;
+  return Math.min(GV_MAX_DURATION, Math.max(GV_MIN_DURATION, GV_MIN_DURATION + extra));
+}
+
+function gvGoTo(idx, isFirst) {
   const slides = document.querySelectorAll('#gv-slides .gv-slide');
   if (!slides.length) return;
-  // exit current
-  if (slides[gvCurrent]) slides[gvCurrent].classList.remove('active');
+  if (slides[gvCurrent]) {
+    slides[gvCurrent].classList.remove('active');
+    slides[gvCurrent].scrollTop = 0;
+  }
   gvCurrent = (idx + GV_SLIDES_DEF.length) % GV_SLIDES_DEF.length;
-  if (slides[gvCurrent]) slides[gvCurrent].classList.add('active');
+  const activeSlide = slides[gvCurrent];
+  if (activeSlide) {
+    activeSlide.classList.add('active');
+    activeSlide.scrollTop = 0;
+    // restart child rise animations
+    activeSlide.querySelectorAll('.gv-slide-inner > *').forEach(el => {
+      el.style.animation = 'none';
+      void el.offsetWidth;
+      el.style.animation = '';
+    });
+  }
   document.getElementById('gv-slide-counter').textContent = `${gvCurrent+1} / ${GV_SLIDES_DEF.length}`;
   renderGVDots();
-  resetGVTimerBar();
+  if (!isFirst) {} // no-op, kept for clarity
+  startGVTimer();
 }
 
 function gvNav(dir) {
   gvGoTo(gvCurrent + dir);
-  if (!gvPaused) { stopGVTimer(); startGVTimer(); }
 }
 
 let gvBarStart = null;
 let gvBarFrame = null;
+let gvScrollFrame = null;
+let gvCurrentDuration = GV_MIN_DURATION;
 
-function resetGVTimerBar() {
+function animateGVBar(duration) {
   const bar = document.getElementById('gv-timer-bar');
-  if (bar) { bar.style.transition = 'none'; bar.style.width = '0%'; }
-  gvBarStart = null;
-  cancelAnimationFrame(gvBarFrame);
-  if (!gvPaused) animateGVBar();
-}
+  const slides = document.querySelectorAll('#gv-slides .gv-slide');
+  const activeSlide = slides[gvCurrent];
+  const maxScroll = activeSlide ? Math.max(0, activeSlide.scrollHeight - activeSlide.clientHeight) : 0;
 
-function animateGVBar() {
-  const bar = document.getElementById('gv-timer-bar');
-  if (!bar) return;
   const tick = (ts) => {
     if (!gvBarStart) gvBarStart = ts;
-    const pct = Math.min(((ts - gvBarStart) / GV_DURATION) * 100, 100);
-    bar.style.transition = 'none';
-    bar.style.width = pct + '%';
-    if (pct < 100 && !gvPaused) gvBarFrame = requestAnimationFrame(tick);
+    const elapsed = ts - gvBarStart;
+    const pct = Math.min((elapsed / duration) * 100, 100);
+    if (bar) { bar.style.transition = 'none'; bar.style.width = pct + '%'; }
+
+    // auto-scroll proporcional ao tempo decorrido, com folga no início/fim para leitura do topo/rodapé
+    if (activeSlide && maxScroll > 0) {
+      const readStart = 0.12, readEnd = 0.88; // janela de scroll dentro do tempo total
+      let scrollProgress = (pct/100 - readStart) / (readEnd - readStart);
+      scrollProgress = Math.min(1, Math.max(0, scrollProgress));
+      activeSlide.scrollTop = scrollProgress * maxScroll;
+    }
+
+    if (pct < 100 && !gvPaused) {
+      gvBarFrame = requestAnimationFrame(tick);
+    } else if (pct >= 100 && !gvPaused) {
+      gvNav(1);
+    }
   };
   gvBarFrame = requestAnimationFrame(tick);
 }
 
 function startGVTimer() {
   stopGVTimer();
-  resetGVTimerBar();
-  gvTimer = setInterval(() => {
-    if (!gvPaused) gvNav(1);
-  }, GV_DURATION);
+  const slides = document.querySelectorAll('#gv-slides .gv-slide');
+  const activeSlide = slides[gvCurrent];
+  gvCurrentDuration = gvCalcDuration(activeSlide);
+  gvBarStart = null;
+  const bar = document.getElementById('gv-timer-bar');
+  if (bar) { bar.style.transition = 'none'; bar.style.width = '0%'; }
+  if (!gvPaused) animateGVBar(gvCurrentDuration);
 }
 
 function stopGVTimer() {
-  clearInterval(gvTimer);
   cancelAnimationFrame(gvBarFrame);
+  cancelAnimationFrame(gvScrollFrame);
 }
 
 function pauseGV() {
   gvPaused = !gvPaused;
   const btn = document.getElementById('gv-play-btn');
   if (gvPaused) {
-    stopGVTimer();
-    if (btn) btn.textContent = '▶ Retomar';
     cancelAnimationFrame(gvBarFrame);
+    if (btn) btn.textContent = '▶ Retomar';
   } else {
-    startGVTimer();
+    gvBarStart = null;
+    // recompute remaining time roughly by resuming from current bar width
+    const bar = document.getElementById('gv-timer-bar');
+    const currentPct = bar ? parseFloat(bar.style.width) || 0 : 0;
+    const remaining = gvCurrentDuration * (1 - currentPct/100);
+    animateGVBarResume(Math.max(1000, remaining), currentPct);
     if (btn) btn.textContent = '⏸ Pausar';
   }
+}
+
+function animateGVBarResume(remaining, startPct) {
+  const bar = document.getElementById('gv-timer-bar');
+  const slides = document.querySelectorAll('#gv-slides .gv-slide');
+  const activeSlide = slides[gvCurrent];
+  const maxScroll = activeSlide ? Math.max(0, activeSlide.scrollHeight - activeSlide.clientHeight) : 0;
+  const resumeStart = performance.now();
+
+  const tick = (ts) => {
+    const elapsed = ts - resumeStart;
+    const pct = Math.min(startPct + (elapsed / remaining) * (100 - startPct), 100);
+    if (bar) { bar.style.transition = 'none'; bar.style.width = pct + '%'; }
+    if (activeSlide && maxScroll > 0) {
+      const readStart = 0.12, readEnd = 0.88;
+      let scrollProgress = (pct/100 - readStart) / (readEnd - readStart);
+      scrollProgress = Math.min(1, Math.max(0, scrollProgress));
+      activeSlide.scrollTop = scrollProgress * maxScroll;
+    }
+    if (pct < 100 && !gvPaused) {
+      gvBarFrame = requestAnimationFrame(tick);
+    } else if (pct >= 100 && !gvPaused) {
+      gvNav(1);
+    }
+  };
+  gvBarFrame = requestAnimationFrame(tick);
 }
 
 // topbar auto-hide
