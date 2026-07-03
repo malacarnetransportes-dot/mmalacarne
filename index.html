@@ -115,6 +115,38 @@ footer a{color:var(--accent);text-decoration:none;}
 .login-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(212,175,55,.2);}
 .login-btn{width:100%;padding:.85rem;background:linear-gradient(135deg,var(--accent),var(--accent-dk));border:none;border-radius:60px;font-weight:700;font-size:.95rem;margin-top:1.2rem;cursor:pointer;color:#111;}
 
+/* ── LINKS ÚTEIS ── */
+.links-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;}
+.link-card{background:#fff;border:1px solid rgba(0,0,0,.05);border-radius:var(--r12);padding:1.1rem 1.2rem;display:flex;align-items:center;gap:.9rem;text-decoration:none;color:var(--text);box-shadow:var(--shadow-sm);transition:.2s;}
+.link-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:rgba(212,175,55,.4);}
+.link-card-icon{width:44px;height:44px;flex:none;border-radius:var(--r12);background:linear-gradient(135deg,var(--accent),var(--accent-dk));color:#111;display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
+.link-card-body{flex:1;min-width:0;}
+.link-card-body h3{font-size:.92rem;font-weight:700;color:#1e2a3a;margin-bottom:.15rem;}
+.link-card-body p{font-size:.78rem;color:var(--text-lt);}
+.link-card-go{color:var(--text-lt);font-size:.85rem;}
+
+/* ── GESTÃO À VISTA / MODO SLIDE ── */
+.slide-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#1e2a3a 0%,#0f1620 100%);z-index:3000;display:none;flex-direction:column;color:#fff;}
+.slide-overlay.active{display:flex;}
+.slide-topbar{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 2.2rem;border-bottom:1px solid rgba(255,255,255,.1);}
+.slide-brand{display:flex;align-items:center;gap:.7rem;font-weight:800;font-size:1.1rem;letter-spacing:.5px;}
+.slide-brand i{color:var(--accent);}
+.slide-clock{font-size:1.3rem;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums;}
+.slide-close{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:1rem;}
+.slide-close:hover{background:rgba(255,255,255,.18);}
+.slide-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;}
+.slide-section-title{font-size:1.5rem;font-weight:800;margin-bottom:2rem;color:#fff;}
+.slide-section-title .fa,.slide-section-title i{color:var(--accent);margin-right:.5rem;}
+.slide-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.6rem;max-width:1100px;width:100%;}
+.slide-kpi-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:var(--r16);padding:1.8rem 1.4rem;}
+.slide-kpi-val{font-size:2.3rem;font-weight:800;color:var(--accent);margin-bottom:.4rem;}
+.slide-kpi-lbl{font-size:.9rem;color:#cbd5e1;text-transform:uppercase;letter-spacing:.6px;}
+.slide-dots{display:flex;gap:.5rem;justify-content:center;padding:1.4rem 0;}
+.slide-dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.25);transition:.2s;}
+.slide-dot.active{background:var(--accent);width:22px;border-radius:5px;}
+.slide-progress{height:3px;background:rgba(255,255,255,.1);}
+.slide-progress-bar{height:100%;background:var(--accent);width:0%;}
+
 /* ═══════════════════════════════════════
    ÁREA PRIVADA
 ═══════════════════════════════════════ */
@@ -300,6 +332,18 @@ footer a{color:var(--accent);text-decoration:none;}
 
 <!-- TOAST -->
 <div id="toast" class="toast"></div>
+
+<!-- GESTÃO À VISTA — MODO SLIDE -->
+<div id="slideOverlay" class="slide-overlay">
+  <div class="slide-topbar">
+    <div class="slide-brand"><i class="fas fa-truck"></i> M-MALACARNE · Gestão à Vista</div>
+    <div class="slide-clock" id="slideClock">--:--:--</div>
+    <button class="slide-close" id="slideCloseBtn" title="Fechar (Esc)"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="slide-body" id="slideBody"></div>
+  <div class="slide-dots" id="slideDots"></div>
+  <div class="slide-progress"><div class="slide-progress-bar" id="slideProgressBar"></div></div>
+</div>
 
 <!-- ══════════════ SITE PÚBLICO ══════════════ -->
 <div id="publicSite">
@@ -505,8 +549,10 @@ footer a{color:var(--accent);text-decoration:none;}
         <button class="pa-nav-item" data-tab="tabFrota"><i class="fas fa-id-card"></i> Frota / Motoristas</button>
         <button class="pa-nav-item" data-tab="tabAuditoria"><i class="fas fa-clipboard-check"></i> Auditoria</button>
         <button class="pa-nav-item" data-tab="tabNfe"><i class="fas fa-file-invoice"></i> NF-e / Abast.</button>
+        <button class="pa-nav-item" data-tab="tabLinks"><i class="fas fa-link"></i> Links Úteis</button>
       </nav>
       <div class="pa-sidebar-footer">
+        <button class="pa-nav-item" id="openSlideModeBtn" style="font-size:.8rem;color:var(--accent)"><i class="fas fa-tv"></i> Gestão à Vista (Slide)</button>
         <button class="pa-nav-item" id="openUrlConfig" style="font-size:.8rem"><i class="fas fa-cog"></i> Config URLs</button>
         <button class="pa-nav-item" id="logoutPrivateBtn" style="font-size:.8rem;color:#ef4444"><i class="fas fa-sign-out-alt"></i> Sair</button>
       </div>
@@ -850,6 +896,40 @@ footer a{color:var(--accent);text-decoration:none;}
 
         </div><!-- /tabNfe -->
 
+        <!-- ── TAB LINKS ÚTEIS ── -->
+        <div id="tabLinks" class="tab-pane">
+          <div class="dash-card" style="margin-bottom:1.2rem">
+            <div style="font-weight:700;font-size:.92rem;color:#1e2a3a;margin-bottom:.3rem"><i class="fas fa-map-marked-alt" style="color:var(--accent)"></i> Locais e Sistemas de Apoio</div>
+            <div style="font-size:.8rem;color:var(--text-lt)">Acesso rápido a mapas, estacionamento e ao sistema de fretes.</div>
+          </div>
+          <div class="links-grid" id="linksGrid">
+            <a class="link-card" href="https://maps.app.goo.gl/mgfqFUj6xszixUXJ7?g_st=aw" target="_blank" rel="noopener">
+              <div class="link-card-icon"><i class="fas fa-map-marker-alt"></i></div>
+              <div class="link-card-body">
+                <h3>Localização</h3>
+                <p>Abrir ponto no Google Maps</p>
+              </div>
+              <i class="fas fa-external-link-alt link-card-go"></i>
+            </a>
+            <a class="link-card" href="https://maps.app.goo.gl/riRFfRPhEpAFTLA49?g_st=aw" target="_blank" rel="noopener">
+              <div class="link-card-icon"><i class="fas fa-square-parking"></i></div>
+              <div class="link-card-body">
+                <h3>Estacionamento 28</h3>
+                <p>Próximo a Embu das Artes</p>
+              </div>
+              <i class="fas fa-external-link-alt link-card-go"></i>
+            </a>
+            <a class="link-card" href="https://web.movtrans.com.br/" target="_blank" rel="noopener">
+              <div class="link-card-icon"><i class="fas fa-truck-fast"></i></div>
+              <div class="link-card-body">
+                <h3>MovTrans</h3>
+                <p>Sistema web de fretes / rastreio</p>
+              </div>
+              <i class="fas fa-external-link-alt link-card-go"></i>
+            </a>
+          </div>
+        </div><!-- /tabLinks -->
+
       </div><!-- /pa-main -->
     </div><!-- /pa-content -->
   </div><!-- /pa-layout -->
@@ -1072,7 +1152,8 @@ const pageTitles = {
   tabSenhas: '<i class="fas fa-key" style="color:var(--accent)"></i> Senhas',
   tabFrota: '<i class="fas fa-id-card" style="color:var(--accent)"></i> Frota / Motoristas',
   tabAuditoria: '<i class="fas fa-clipboard-check" style="color:var(--accent)"></i> Auditoria Operacional',
-  tabNfe: '<i class="fas fa-file-invoice" style="color:var(--accent)"></i> NF-e / Abastecimentos'
+  tabNfe: '<i class="fas fa-file-invoice" style="color:var(--accent)"></i> NF-e / Abastecimentos',
+  tabLinks: '<i class="fas fa-link" style="color:var(--accent)"></i> Links Úteis'
 };
 
 document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
@@ -1087,6 +1168,119 @@ document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
     if (btn.dataset.tab === 'tabAuditoria') setTimeout(audInit, 50);
     if (btn.dataset.tab === 'tabNfe')       setTimeout(nfeInit, 50);
   });
+});
+
+// ═══════════════════════════════════════════════════════════
+// GESTÃO À VISTA — MODO SLIDE
+// Painel em tela cheia (TV/monitor) que roda automaticamente
+// pelos principais indicadores, atendendo ao item de auditoria
+// "Possui quadro de gestão à vista? (Painel Impresso / TV / Telas)"
+// ═══════════════════════════════════════════════════════════
+let slideTimer = null, slideProgressTimer = null, slideIdx = 0;
+const SLIDE_DURATION = 8000; // ms por slide
+
+function slideText(id, fallback){
+  const el = document.getElementById(id);
+  return el ? el.textContent : fallback;
+}
+
+function slideBuildSlides(){
+  return [
+    { title: '<i class="fas fa-chart-line"></i> Financeiro', kpis: [
+        { val: slideText('fin-receita','R$ —'), lbl: 'Receita Total' },
+        { val: slideText('fin-despesa','R$ —'), lbl: 'Despesa Total' },
+        { val: slideText('fin-saldo','R$ —'), lbl: 'Saldo' },
+        { val: slideText('fin-registros','—'), lbl: 'Registros' },
+    ]},
+    { title: '<i class="fas fa-truck"></i> Faturamento', kpis: [
+        { val: slideText('fat-total','R$ —'), lbl: 'Total a Receber' },
+        { val: slideText('fat-viagens','—'), lbl: 'Lançamentos' },
+        { val: slideText('fat-motoristas','—'), lbl: 'Motoristas' },
+        { val: slideText('fat-pdfs','—'), lbl: 'PDFs Lidos' },
+    ]},
+    { title: '<i class="fas fa-battery-three-quarters"></i> Baterias', kpis: [
+        { val: slideText('bat-total','—'), lbl: 'Total Baterias' },
+        { val: slideText('bat-vencidas','—'), lbl: 'Vencidas' },
+        { val: slideText('bat-proximas','—'), lbl: 'Próx. 30 dias' },
+        { val: slideText('bat-ok','—'), lbl: 'Em Dia' },
+    ]},
+    { title: '<i class="fas fa-file-invoice"></i> NF-e / Abastecimentos', kpis: [
+        { val: slideText('nfe-abast','—'), lbl: 'Abastecimentos' },
+        { val: slideText('nfe-valor','R$ —'), lbl: 'Total Combustível' },
+        { val: slideText('nfe-litros','— L'), lbl: 'Litros Total' },
+        { val: slideText('nfe-precomedio','R$ —'), lbl: 'Preço Médio/L' },
+    ]},
+    { title: '<i class="fas fa-id-card"></i> Frota / Motoristas', kpis: [
+        { val: slideText('frota-total','—'), lbl: 'Motoristas' },
+        { val: slideText('frota-placas','—'), lbl: 'Veículos Cadastrados' },
+        { val: '28–30', lbl: 'Paletes por Viagem' },
+    ]},
+  ];
+}
+
+function slideRender(){
+  const slides = slideBuildSlides();
+  const s = slides[slideIdx % slides.length];
+  const body = document.getElementById('slideBody');
+  body.innerHTML = `
+    <div class="slide-section-title">${s.title}</div>
+    <div class="slide-kpi-grid">
+      ${s.kpis.map(k => `<div class="slide-kpi-card"><div class="slide-kpi-val">${k.val}</div><div class="slide-kpi-lbl">${k.lbl}</div></div>`).join('')}
+    </div>`;
+  const dots = document.getElementById('slideDots');
+  dots.innerHTML = slides.map((_,i) => `<div class="slide-dot${i===(slideIdx%slides.length)?' active':''}"></div>`).join('');
+}
+
+function slideStartProgress(){
+  clearInterval(slideProgressTimer);
+  const bar = document.getElementById('slideProgressBar');
+  let pct = 0;
+  bar.style.width = '0%';
+  slideProgressTimer = setInterval(() => {
+    pct += 100 / (SLIDE_DURATION/100);
+    bar.style.width = Math.min(pct,100) + '%';
+  }, 100);
+}
+
+function slideNext(){
+  slideIdx++;
+  slideRender();
+  slideStartProgress();
+}
+
+function slideUpdateClock(){
+  const el = document.getElementById('slideClock');
+  if (el) el.textContent = new Date().toLocaleTimeString('pt-BR');
+}
+
+function openSlideMode(){
+  slideIdx = 0;
+  document.getElementById('slideOverlay').classList.add('active');
+  slideRender();
+  slideStartProgress();
+  slideUpdateClock();
+  slideTimer = setInterval(slideNext, SLIDE_DURATION);
+  slideClockTimer = setInterval(slideUpdateClock, 1000);
+  if (document.documentElement.requestFullscreen) {
+    document.documentElement.requestFullscreen().catch(()=>{});
+  }
+}
+
+function closeSlideMode(){
+  document.getElementById('slideOverlay').classList.remove('active');
+  clearInterval(slideTimer);
+  clearInterval(slideProgressTimer);
+  clearInterval(slideClockTimer);
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch(()=>{});
+  }
+}
+
+let slideClockTimer = null;
+document.getElementById('openSlideModeBtn').addEventListener('click', openSlideMode);
+document.getElementById('slideCloseBtn').addEventListener('click', closeSlideMode);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.getElementById('slideOverlay').classList.contains('active')) closeSlideMode();
 });
 
 // ═══════════════════════════════════════════════════════════
