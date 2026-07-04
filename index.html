@@ -126,26 +126,36 @@ footer a{color:var(--accent);text-decoration:none;}
 .link-card-go{color:var(--text-lt);font-size:.85rem;}
 
 /* ── GESTÃO À VISTA / MODO SLIDE ── */
-.slide-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#1e2a3a 0%,#0f1620 100%);z-index:3000;display:none;flex-direction:column;color:#fff;}
+.slide-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#ffffff 0%,#f6f7fb 100%);z-index:3000;display:none;flex-direction:column;color:#1e2a3a;}
 .slide-overlay.active{display:flex;}
-.slide-topbar{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 2.2rem;border-bottom:1px solid rgba(255,255,255,.1);}
-.slide-brand{display:flex;align-items:center;gap:.7rem;font-weight:800;font-size:1.1rem;letter-spacing:.5px;}
-.slide-brand i{color:var(--accent);}
-.slide-clock{font-size:1.3rem;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums;}
-.slide-close{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:1rem;}
-.slide-close:hover{background:rgba(255,255,255,.18);}
-.slide-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;}
-.slide-section-title{font-size:1.5rem;font-weight:800;margin-bottom:2rem;color:#fff;}
-.slide-section-title .fa,.slide-section-title i{color:var(--accent);margin-right:.5rem;}
+.slide-topbar{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 2.2rem;border-bottom:1px solid rgba(0,0,0,.07);}
+.slide-brand{display:flex;align-items:center;gap:.7rem;font-weight:800;font-size:1.1rem;letter-spacing:.5px;color:#1e2a3a;}
+.slide-brand i{color:var(--accent-dk);}
+.slide-clock{font-size:1.3rem;font-weight:700;color:var(--accent-dk);font-variant-numeric:tabular-nums;}
+.slide-close{background:rgba(0,0,0,.04);border:1px solid rgba(0,0,0,.08);color:#1e2a3a;width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:1rem;}
+.slide-close:hover{background:rgba(0,0,0,.08);}
+.slide-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease;}
+.slide-body.show{opacity:1;transform:translateY(0);}
+.slide-section-title{font-size:1.6rem;font-weight:800;margin-bottom:2rem;color:#1e2a3a;}
+.slide-section-title .fa,.slide-section-title i{color:var(--accent-dk);margin-right:.5rem;}
 .slide-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.6rem;max-width:1100px;width:100%;}
-.slide-kpi-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:var(--r16);padding:1.8rem 1.4rem;}
-.slide-kpi-val{font-size:2.3rem;font-weight:800;color:var(--accent);margin-bottom:.4rem;}
-.slide-kpi-lbl{font-size:.9rem;color:#cbd5e1;text-transform:uppercase;letter-spacing:.6px;}
+.slide-kpi-card{background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:var(--r16);padding:1.8rem 1.4rem;box-shadow:0 6px 24px rgba(30,42,58,.06);transition:transform .3s ease;}
+.slide-kpi-card:hover{transform:translateY(-4px);}
+.slide-kpi-val{font-size:2.3rem;font-weight:800;color:var(--accent-dk);margin-bottom:.4rem;}
+.slide-kpi-lbl{font-size:.9rem;color:var(--text-lt);text-transform:uppercase;letter-spacing:.6px;}
+.slide-links-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.2rem;max-width:1000px;width:100%;}
 .slide-dots{display:flex;gap:.5rem;justify-content:center;padding:1.4rem 0;}
-.slide-dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.25);transition:.2s;}
-.slide-dot.active{background:var(--accent);width:22px;border-radius:5px;}
-.slide-progress{height:3px;background:rgba(255,255,255,.1);}
-.slide-progress-bar{height:100%;background:var(--accent);width:0%;}
+.slide-dot{width:9px;height:9px;border-radius:50%;background:rgba(0,0,0,.12);transition:.2s;}
+.slide-dot.active{background:var(--accent-dk);width:22px;border-radius:5px;}
+.slide-progress{height:3px;background:rgba(0,0,0,.06);}
+.slide-progress-bar{height:100%;background:var(--accent-dk);width:0%;transition:width .1s linear;}
+
+.pneu-legend{display:flex;flex-wrap:wrap;gap:1.1rem;justify-content:center;margin-top:1rem;font-size:.78rem;color:var(--text-lt);}
+.pneu-legend span{display:flex;align-items:center;gap:.4rem;}
+.pneu-dot{display:inline-block;width:10px;height:10px;border-radius:50%;}
+.pneu-tire{cursor:pointer;transition:.15s;}
+.pneu-tire:hover{opacity:.8;transform:scale(1.06);}
+.pneu-tire-label{font-size:9px;font-weight:700;fill:#1e2a3a;pointer-events:none;}
 
 /* ═══════════════════════════════════════
    ÁREA PRIVADA
@@ -422,6 +432,9 @@ footer a{color:var(--accent);text-decoration:none;}
     <a href="https://www.nfe.fazenda.gov.br/portal/consultaRecaptcha.aspx?tipoConsulta=completa" target="_blank" class="antt-card"><i class="fas fa-file-invoice"></i><div><div style="font-weight:700">Consulta NF-e</div><div style="font-size:.78rem;color:var(--text-lt)">Situação na SEFAZ</div></div></a>
     <a href="https://detran.sc.gov.br/" target="_blank" class="antt-card"><i class="fas fa-car"></i><div><div style="font-weight:700">DETRAN SC</div><div style="font-size:.78rem;color:var(--text-lt)">CNH, Multas e Veículos</div></div></a>
     <a href="https://www.newrastreamentoonline.com.br/new/login" target="_blank" class="antt-card"><i class="fas fa-satellite-dish"></i><div><div style="font-weight:700">Rastreamento Online</div><div style="font-size:.78rem;color:var(--text-lt)">Monitoramento da Frota</div></div></a>
+    <a href="https://maps.app.goo.gl/mgfqFUj6xszixUXJ7?g_st=aw" target="_blank" class="antt-card"><i class="fas fa-map-marker-alt"></i><div><div style="font-weight:700">Localização</div><div style="font-size:.78rem;color:var(--text-lt)">Abrir no Google Maps</div></div></a>
+    <a href="https://maps.app.goo.gl/riRFfRPhEpAFTLA49?g_st=aw" target="_blank" class="antt-card"><i class="fas fa-square-parking"></i><div><div style="font-weight:700">Estacionamento Regis Renovo Park</div><div style="font-size:.78rem;color:var(--text-lt)">Próximo a Embu das Artes</div></div></a>
+    <a href="https://web.movtrans.com.br/" target="_blank" class="antt-card"><i class="fas fa-truck-fast"></i><div><div style="font-weight:700">MovTrans</div><div style="font-size:.78rem;color:var(--text-lt)">Sistema Web de Fretes</div></div></a>
   </div>
 </div>
 
@@ -547,6 +560,7 @@ footer a{color:var(--accent);text-decoration:none;}
         <button class="pa-nav-item" data-tab="tabCalculadora"><i class="fas fa-calculator"></i> Calculadora</button>
         <button class="pa-nav-item" data-tab="tabSenhas"><i class="fas fa-key"></i> Senhas</button>
         <button class="pa-nav-item" data-tab="tabFrota"><i class="fas fa-id-card"></i> Frota / Motoristas</button>
+        <button class="pa-nav-item" data-tab="tabPneus"><i class="fas fa-circle-dot"></i> Pneus</button>
         <button class="pa-nav-item" data-tab="tabAuditoria"><i class="fas fa-clipboard-check"></i> Auditoria</button>
         <button class="pa-nav-item" data-tab="tabNfe"><i class="fas fa-file-invoice"></i> NF-e / Abast.</button>
         <button class="pa-nav-item" data-tab="tabLinks"><i class="fas fa-link"></i> Links Úteis</button>
@@ -896,6 +910,48 @@ footer a{color:var(--accent);text-decoration:none;}
 
         </div><!-- /tabNfe -->
 
+        <!-- ── TAB PNEUS ── -->
+        <div id="tabPneus" class="tab-pane">
+          <div class="dash-card" style="margin-bottom:1.2rem">
+            <div style="font-weight:700;font-size:.92rem;color:#1e2a3a;margin-bottom:.3rem"><i class="fas fa-circle-dot" style="color:var(--accent)"></i> Controle de Pneus por Veículo</div>
+            <div style="font-size:.8rem;color:var(--text-lt)">Selecione a placa e clique em cada pneu do esqueleto para ver detalhes e histórico.</div>
+          </div>
+
+          <div class="dash-card" style="margin-bottom:1.2rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+            <label style="font-size:.82rem;font-weight:700;color:#1e2a3a">Placa:</label>
+            <select id="pneuVeiculoSelect" style="max-width:260px;padding:.45rem .75rem;border-radius:var(--r8);border:1.5px solid var(--gray-200);font-size:.85rem;height:36px;cursor:pointer"></select>
+          </div>
+
+          <div class="dash-card" style="margin-bottom:1.2rem">
+            <div id="pneuSvgWrap"></div>
+            <div class="pneu-legend">
+              <span><i class="pneu-dot" style="background:#22c55e"></i> Novo</span>
+              <span><i class="pneu-dot" style="background:#3b82f6"></i> Recapado / Reaproveitado</span>
+              <span><i class="pneu-dot" style="background:#f59e0b"></i> Atenção / Vulcanizar</span>
+              <span><i class="pneu-dot" style="background:#ef4444"></i> Alerta / Pendente</span>
+              <span><i class="pneu-dot" style="background:#cbd5e1"></i> Sem dados</span>
+            </div>
+          </div>
+
+          <div class="dash-card">
+            <div style="font-weight:700;font-size:.9rem;color:#1e2a3a;margin-bottom:.6rem"><i class="fas fa-receipt" style="color:var(--accent)"></i> Borracharia Canadá — Abril/2026</div>
+            <div class="tbl-wrap">
+              <table class="data-table">
+                <thead><tr><th>Placa</th><th>Valor</th></tr></thead>
+                <tbody id="pneuCustosBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div><!-- /tabPneus -->
+
+        <!-- MODAL DETALHE DO PNEU -->
+        <div id="pneuModalOverlay" class="login-overlay" style="z-index:2500">
+          <div class="login-card" style="max-width:460px;text-align:left;position:relative">
+            <button id="pneuModalClose" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--text-lt)"><i class="fas fa-times"></i></button>
+            <div id="pneuModalContent"></div>
+          </div>
+        </div>
+
         <!-- ── TAB LINKS ÚTEIS ── -->
         <div id="tabLinks" class="tab-pane">
           <div class="dash-card" style="margin-bottom:1.2rem">
@@ -914,7 +970,7 @@ footer a{color:var(--accent);text-decoration:none;}
             <a class="link-card" href="https://maps.app.goo.gl/riRFfRPhEpAFTLA49?g_st=aw" target="_blank" rel="noopener">
               <div class="link-card-icon"><i class="fas fa-square-parking"></i></div>
               <div class="link-card-body">
-                <h3>Estacionamento 28</h3>
+                <h3>Estacionamento Regis Renovo Park</h3>
                 <p>Próximo a Embu das Artes</p>
               </div>
               <i class="fas fa-external-link-alt link-card-go"></i>
@@ -1153,6 +1209,7 @@ const pageTitles = {
   tabFrota: '<i class="fas fa-id-card" style="color:var(--accent)"></i> Frota / Motoristas',
   tabAuditoria: '<i class="fas fa-clipboard-check" style="color:var(--accent)"></i> Auditoria Operacional',
   tabNfe: '<i class="fas fa-file-invoice" style="color:var(--accent)"></i> NF-e / Abastecimentos',
+  tabPneus: '<i class="fas fa-circle-dot" style="color:var(--accent)"></i> Controle de Pneus',
   tabLinks: '<i class="fas fa-link" style="color:var(--accent)"></i> Links Úteis'
 };
 
@@ -1167,6 +1224,7 @@ document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
     if (btn.dataset.tab === 'tabFrota')     setTimeout(filtrarFrota, 50);
     if (btn.dataset.tab === 'tabAuditoria') setTimeout(audInit, 50);
     if (btn.dataset.tab === 'tabNfe')       setTimeout(nfeInit, 50);
+    if (btn.dataset.tab === 'tabPneus')     setTimeout(pneuInit, 50);
   });
 });
 
@@ -1215,6 +1273,11 @@ function slideBuildSlides(){
         { val: slideText('frota-placas','—'), lbl: 'Veículos Cadastrados' },
         { val: '28–30', lbl: 'Paletes por Viagem' },
     ]},
+    { title: '<i class="fas fa-link"></i> Links Úteis', links: [
+        { icon:'fa-map-marker-alt', name:'Localização', desc:'Google Maps' },
+        { icon:'fa-square-parking', name:'Estacionamento Regis Renovo Park', desc:'Próximo a Embu das Artes' },
+        { icon:'fa-truck-fast', name:'MovTrans', desc:'Sistema Web de Fretes' },
+    ]},
   ];
 }
 
@@ -1222,11 +1285,19 @@ function slideRender(){
   const slides = slideBuildSlides();
   const s = slides[slideIdx % slides.length];
   const body = document.getElementById('slideBody');
-  body.innerHTML = `
-    <div class="slide-section-title">${s.title}</div>
-    <div class="slide-kpi-grid">
-      ${s.kpis.map(k => `<div class="slide-kpi-card"><div class="slide-kpi-val">${k.val}</div><div class="slide-kpi-lbl">${k.lbl}</div></div>`).join('')}
-    </div>`;
+  body.classList.remove('show');
+  setTimeout(() => {
+    body.innerHTML = s.links
+      ? `<div class="slide-section-title">${s.title}</div>
+         <div class="slide-links-grid">
+           ${s.links.map(l => `<div class="link-card" style="cursor:default"><div class="link-card-icon"><i class="fas ${l.icon}"></i></div><div class="link-card-body"><h3>${l.name}</h3><p>${l.desc}</p></div></div>`).join('')}
+         </div>`
+      : `<div class="slide-section-title">${s.title}</div>
+         <div class="slide-kpi-grid">
+           ${s.kpis.map(k => `<div class="slide-kpi-card"><div class="slide-kpi-val">${k.val}</div><div class="slide-kpi-lbl">${k.lbl}</div></div>`).join('')}
+         </div>`;
+    requestAnimationFrame(() => body.classList.add('show'));
+  }, 220);
   const dots = document.getElementById('slideDots');
   dots.innerHTML = slides.map((_,i) => `<div class="slide-dot${i===(slideIdx%slides.length)?' active':''}"></div>`).join('');
 }
@@ -1256,6 +1327,7 @@ function slideUpdateClock(){
 function openSlideMode(){
   slideIdx = 0;
   document.getElementById('slideOverlay').classList.add('active');
+  document.getElementById('slideBody').classList.remove('show');
   slideRender();
   slideStartProgress();
   slideUpdateClock();
@@ -1282,6 +1354,177 @@ document.getElementById('slideCloseBtn').addEventListener('click', closeSlideMod
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && document.getElementById('slideOverlay').classList.contains('active')) closeSlideMode();
 });
+
+// ═══════════════════════════════════════════════════════════
+// CONTROLE DE PNEUS — esqueleto do conjunto + histórico por placa
+// ═══════════════════════════════════════════════════════════
+const PNEU_POS = [
+  { key:'dianteiro-fe', grupo:'Eixo Dianteiro', label:'FE', x:150, y:40 },
+  { key:'dianteiro-fd', grupo:'Eixo Dianteiro', label:'FD', x:210, y:40 },
+  { key:'tracao-lef',   grupo:'Eixo Tração',     label:'LEF', x:130, y:150 },
+  { key:'tracao-led',   grupo:'Eixo Tração',     label:'LED', x:130, y:190 },
+  { key:'tracao-ldf',   grupo:'Eixo Tração',     label:'LDF', x:230, y:150 },
+  { key:'tracao-ldd',   grupo:'Eixo Tração',     label:'LDD', x:230, y:190 },
+  { key:'truque-fe',    grupo:'Eixo Truque / Carreta', label:'FE', x:130, y:300 },
+  { key:'truque-te',    grupo:'Eixo Truque / Carreta', label:'TE', x:130, y:340 },
+  { key:'truque-fd',    grupo:'Eixo Truque / Carreta', label:'FD', x:230, y:300 },
+  { key:'truque-td',    grupo:'Eixo Truque / Carreta', label:'TD', x:230, y:340 },
+];
+
+const PNEU_DATA = {
+  'RYE7J36': {
+    posicoes: {
+      'tracao-ldf': { numeroFogo:'032', marca:'BOR XBRi Forza', status:'novo' },
+      'tracao-ldd': { numeroFogo:'031', marca:'BOR XBRi Forza', status:'novo' },
+      'tracao-lef': { numeroFogo:'030', marca:'BOR XBRi Forza', status:'novo' },
+      'tracao-led': { numeroFogo:'029', marca:'BOR XBRi Forza', status:'novo' },
+    },
+    historico: [
+      { data:'01/04/2026', km:'372.870', desc:'Eixo tração – 4 pneus novos BOR XBRi Forza (top de linha)' },
+      { data:'Abril/2026', desc:'Borracharia Canadá — serviço/ajuste', custo:38.00 },
+    ]
+  },
+  'RYE7J76': {
+    posicoes: {
+      'tracao-ldf': { numeroFogo:'57', marca:'Iron Head Borrachudo', status:'novo' },
+      'tracao-ldd': { numeroFogo:'58', marca:'Iron Head Borrachudo', status:'novo' },
+      'tracao-lef': { numeroFogo:'59', marca:'Iron Head Borrachudo', status:'novo' },
+      'tracao-led': { numeroFogo:'60', marca:'Iron Head Borrachudo', status:'novo' },
+    },
+    historico: [
+      { km:'356.080', desc:'4 pneus tração Iron Head Borrachudo novos' },
+      { desc:'4 pneus retirados da tração foram para o truck' },
+      { desc:'2 Apollo Borrachudo (primeira vida) enviados para recapagem' },
+      { desc:'2 recapados foram para o eixo do meio' },
+      { desc:'2 Goodyear (primeira vida) enviados para recapagem' },
+      { desc:'Ficou 1 pneu com pouca borracha — encaminhado para vulcanizar' },
+    ]
+  },
+  'QJY0640': {
+    alerta: true,
+    numeroFogo: '495735',
+    posicoes: {
+      'tracao-ldf': { status:'alerta', obs:'Hildo precisa pneu tração' },
+    },
+    historico: [
+      { desc:'Número fogo registrado: 495735' },
+      { desc:'Hildo precisa pneu tração — PENDENTE', alerta:true },
+    ]
+  },
+  'RLB3C26': {
+    posicoes: {
+      'dianteiro-fe': { marca:'Bridgestone', lado:'Motorista', status:'novo' },
+      'dianteiro-fd': { marca:'Bridgestone', lado:'Carona', status:'novo' },
+      'truque-fd': { status:'recapado', obs:'Recebeu pneu dianteiro usado retirado desta placa' },
+      'truque-td': { status:'recapado', obs:'Recebeu pneu dianteiro usado retirado desta placa' },
+    },
+    historico: [
+      { data:'27/02/2026', km:'337.517', desc:'2 pneus dianteiros Bridgestone novos', motorista:'Adriano Vaz' },
+      { desc:'2 dianteiros antigos retirados e montados no truque lado direito' },
+      { data:'Abril/2026', desc:'Borracharia Canadá — serviço/ajuste', custo:116.00 },
+    ]
+  },
+  'RLB3E46': { historico: [{ data:'Abril/2026', desc:'Borracharia Canadá — serviço/ajuste', custo:190.00 }] },
+  'RYE7J26': { historico: [{ data:'Abril/2026', desc:'Borracharia Canadá — serviço/ajuste', custo:146.00 }] },
+  'QJM1350': { historico: [{ data:'Abril/2026', desc:'Borracharia Canadá — serviço/ajuste', custo:286.00 }] },
+  'QJC0B40': { historico: [{ data:'Abril/2026', desc:'Borracharia Canadá — serviço/ajuste', custo:206.00 }] },
+};
+
+const PNEU_CUSTOS = [
+  { placa:'RYE7J36', valor:38.00 },
+  { placa:'RLB3E46', valor:190.00 },
+  { placa:'RYE7J26', valor:146.00 },
+  { placa:'QJM1350', valor:286.00 },
+  { placa:'QJC0B40', valor:206.00 },
+  { placa:'RLB3C26', valor:116.00 },
+];
+
+const PNEU_STATUS_COLOR = { novo:'#22c55e', recapado:'#3b82f6', atencao:'#f59e0b', alerta:'#ef4444', semdados:'#cbd5e1' };
+let pneuInited = false;
+
+function pneuFmtMoney(v){ return 'R$ ' + v.toFixed(2).replace('.',','); }
+
+function pneuBuildSVG(placa){
+  const dados = PNEU_DATA[placa] || {};
+  const pos = dados.posicoes || {};
+  const grupos = [...new Set(PNEU_POS.map(p => p.grupo))];
+  let svg = `<svg viewBox="0 0 360 400" style="width:100%;max-width:360px;display:block;margin:0 auto">
+    <rect x="120" y="20" width="120" height="360" rx="14" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="6 5"/>`;
+  grupos.forEach(g => {
+    const ys = PNEU_POS.filter(p => p.grupo === g).map(p => p.y);
+    const minY = Math.min(...ys) - 22;
+    svg += `<text x="180" y="${minY}" text-anchor="middle" font-size="10" font-weight="700" fill="#94a3b8">${g.toUpperCase()}</text>`;
+    svg += `<line x1="115" y1="${(Math.min(...ys)+Math.max(...ys))/2}" x2="245" y2="${(Math.min(...ys)+Math.max(...ys))/2}" stroke="#e2e8f0" stroke-width="4"/>`;
+  });
+  PNEU_POS.forEach(p => {
+    const info = pos[p.key];
+    const color = info ? PNEU_STATUS_COLOR[info.status] || PNEU_STATUS_COLOR.semdados : PNEU_STATUS_COLOR.semdados;
+    svg += `<g class="pneu-tire" data-key="${p.key}" data-placa="${placa}">
+      <rect x="${p.x-16}" y="${p.y-11}" width="32" height="22" rx="6" fill="${color}" stroke="#1e2a3a" stroke-width="1.5"/>
+      <text x="${p.x}" y="${p.y+3}" text-anchor="middle" class="pneu-tire-label" fill="#fff">${p.label}</text>
+    </g>`;
+  });
+  svg += `</svg>`;
+  return svg;
+}
+
+function pneuAttachHandlers(){
+  document.querySelectorAll('#pneuSvgWrap .pneu-tire').forEach(el => {
+    el.addEventListener('click', () => pneuOpenModal(el.dataset.placa, el.dataset.key));
+  });
+}
+
+function pneuRenderVeiculo(placa){
+  document.getElementById('pneuSvgWrap').innerHTML = pneuBuildSVG(placa);
+  pneuAttachHandlers();
+}
+
+function pneuOpenModal(placa, posKey){
+  const dados = PNEU_DATA[placa] || {};
+  const info = (dados.posicoes || {})[posKey];
+  const posLabel = PNEU_POS.find(p => p.key === posKey);
+  let html = `<h3 style="margin-bottom:.4rem"><i class="fas fa-circle-dot" style="color:var(--accent)"></i> ${placa} — ${posLabel ? posLabel.grupo + ' (' + posLabel.label + ')' : ''}</h3>`;
+  if (info) {
+    html += `<div style="font-size:.85rem;color:var(--text-lt);margin-bottom:.8rem;line-height:1.6">
+      ${info.marca ? `<div><b>Marca/Modelo:</b> ${info.marca}</div>` : ''}
+      ${info.numeroFogo ? `<div><b>Número Fogo:</b> ${info.numeroFogo}</div>` : ''}
+      ${info.lado ? `<div><b>Lado:</b> ${info.lado}</div>` : ''}
+      ${info.status ? `<div><b>Status:</b> ${info.status}</div>` : ''}
+      ${info.obs ? `<div><b>Obs.:</b> ${info.obs}</div>` : ''}
+    </div>`;
+  } else {
+    html += `<div style="font-size:.85rem;color:var(--text-lt);margin-bottom:.8rem">Sem dados cadastrados para esta posição.</div>`;
+  }
+  html += `<div style="font-weight:700;font-size:.85rem;margin-bottom:.4rem">Histórico da Placa</div>
+    <div style="max-height:220px;overflow:auto;display:flex;flex-direction:column;gap:.5rem">
+    ${(dados.historico||[]).map(h => `
+      <div style="background:#f8fafc;border-radius:10px;padding:.6rem .8rem;font-size:.8rem;${h.alerta ? 'border-left:3px solid #ef4444' : 'border-left:3px solid var(--accent)'}">
+        ${h.data ? `<b>${h.data}</b>${h.km ? ' · KM ' + h.km : ''}<br>` : ''}
+        ${h.desc}
+        ${h.motorista ? `<br><span style="color:var(--text-lt)">Motorista: ${h.motorista}</span>` : ''}
+        ${h.custo ? `<br><span style="color:var(--text-lt)">Custo: ${pneuFmtMoney(h.custo)}</span>` : ''}
+      </div>`).join('') || '<div style="font-size:.8rem;color:var(--text-lt)">Sem histórico registrado.</div>'}
+    </div>`;
+  document.getElementById('pneuModalContent').innerHTML = html;
+  document.getElementById('pneuModalOverlay').classList.add('active');
+}
+
+function pneuInit(){
+  const select = document.getElementById('pneuVeiculoSelect');
+  if (!pneuInited) {
+    select.innerHTML = Object.keys(PNEU_DATA).map(p => `<option value="${p}">${p}</option>`).join('');
+    select.addEventListener('change', () => pneuRenderVeiculo(select.value));
+    document.getElementById('pneuModalClose').addEventListener('click', () => {
+      document.getElementById('pneuModalOverlay').classList.remove('active');
+    });
+    const custosBody = document.getElementById('pneuCustosBody');
+    custosBody.innerHTML = PNEU_CUSTOS.map(c => `<tr><td>${c.placa}</td><td>${pneuFmtMoney(c.valor)}</td></tr>`).join('')
+      + `<tr style="font-weight:700"><td>Total</td><td>${pneuFmtMoney(PNEU_CUSTOS.reduce((a,c)=>a+c.valor,0))}</td></tr>`
+      + `<tr style="color:var(--text-lt)"><td>Acertado por</td><td>${pneuFmtMoney(950.00)}</td></tr>`;
+    pneuInited = true;
+  }
+  pneuRenderVeiculo(select.value);
+}
 
 // ═══════════════════════════════════════════════════════════
 // URL CONFIG
