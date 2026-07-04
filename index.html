@@ -126,7 +126,7 @@ footer a{color:var(--accent);text-decoration:none;}
 .link-card-go{color:var(--text-lt);font-size:.85rem;}
 
 /* ── GESTÃO À VISTA / MODO SLIDE ── */
-.slide-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#ffffff 0%,#f6f7fb 100%);z-index:3000;display:none;flex-direction:column;color:#1e2a3a;}
+.slide-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#ffffff 0%,#f6f7fb 100%);z-index:3000;display:none;flex-direction:column;color:#1e2a3a;overflow:hidden;}
 .slide-overlay.active{display:flex;}
 .slide-topbar{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 2.2rem;border-bottom:1px solid rgba(0,0,0,.07);}
 .slide-brand{display:flex;align-items:center;gap:.7rem;font-weight:800;font-size:1.1rem;letter-spacing:.5px;color:#1e2a3a;}
@@ -138,10 +138,10 @@ footer a{color:var(--accent);text-decoration:none;}
 .slide-body.show{opacity:1;transform:translateY(0);}
 .slide-section-title{font-size:1.6rem;font-weight:800;margin-bottom:2rem;color:#1e2a3a;}
 .slide-section-title .fa,.slide-section-title i{color:var(--accent-dk);margin-right:.5rem;}
-.slide-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.6rem;max-width:1100px;width:100%;}
-.slide-kpi-card{background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:var(--r16);padding:1.8rem 1.4rem;box-shadow:0 6px 24px rgba(30,42,58,.06);transition:transform .3s ease;}
+.slide-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.6rem;max-width:1100px;width:100%;}
+.slide-kpi-card{background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:var(--r16);padding:1.8rem 1.2rem;box-shadow:0 6px 24px rgba(30,42,58,.06);transition:transform .3s ease;min-width:0;overflow:hidden;}
 .slide-kpi-card:hover{transform:translateY(-4px);}
-.slide-kpi-val{font-size:2.3rem;font-weight:800;color:var(--accent-dk);margin-bottom:.4rem;}
+.slide-kpi-val{font-size:clamp(1.15rem,2.3vw,2rem);font-weight:800;color:var(--accent-dk);margin-bottom:.4rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.3px;}
 .slide-kpi-lbl{font-size:.9rem;color:var(--text-lt);text-transform:uppercase;letter-spacing:.6px;}
 .slide-links-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.2rem;max-width:1000px;width:100%;}
 .slide-dots{display:flex;gap:.5rem;justify-content:center;padding:1.4rem 0;}
@@ -154,8 +154,25 @@ footer a{color:var(--accent);text-decoration:none;}
 .pneu-legend span{display:flex;align-items:center;gap:.4rem;}
 .pneu-dot{display:inline-block;width:10px;height:10px;border-radius:50%;}
 .pneu-tire{cursor:pointer;transition:.15s;}
-.pneu-tire:hover{opacity:.8;transform:scale(1.06);}
+.pneu-tire:hover{opacity:.85;transform:scale(1.08);}
+.pneu-tire.dimmed{opacity:.18;}
+.pneu-tire.selected rect{stroke:var(--accent-dk);stroke-width:3;}
 .pneu-tire-label{font-size:9px;font-weight:700;fill:#1e2a3a;pointer-events:none;}
+.pneu-diagram-layout{display:flex;gap:1.6rem;align-items:flex-start;flex-wrap:wrap;}
+.pneu-diagram-col{flex:1;min-width:280px;max-width:360px;}
+.pneu-detail-panel{flex:1.3;min-width:280px;background:#f8fafc;border:1px solid rgba(0,0,0,.06);border-radius:var(--r16);padding:1.3rem 1.4rem;max-height:640px;overflow:auto;transition:.25s;}
+.pneu-detail-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;min-height:220px;text-align:center;color:var(--text-lt);gap:.6rem;}
+.pneu-detail-empty i{font-size:1.8rem;color:var(--gray-200);}
+.pneu-detail-empty p{font-size:.82rem;max-width:220px;}
+.pneu-detail-panel h3{font-size:1rem;font-weight:800;color:#1e2a3a;margin-bottom:.7rem;display:flex;align-items:center;gap:.5rem;}
+.pneu-detail-panel .pneu-detail-field{font-size:.82rem;color:var(--text);line-height:1.7;}
+.pneu-detail-panel .pneu-detail-field b{color:#1e2a3a;}
+.pneu-detail-hist-title{font-weight:700;font-size:.84rem;margin:1rem 0 .5rem;color:#1e2a3a;}
+.pneu-detail-hist-item{background:#fff;border-radius:10px;padding:.6rem .8rem;font-size:.8rem;margin-bottom:.5rem;border-left:3px solid var(--accent);}
+.pneu-detail-hist-item.alerta{border-left-color:#ef4444;}
+.pneu-tooltip{position:fixed;pointer-events:none;background:#1e2a3a;color:#fff;padding:.5rem .7rem;border-radius:8px;font-size:.75rem;line-height:1.5;box-shadow:0 8px 20px rgba(0,0,0,.25);z-index:4000;opacity:0;transition:opacity .12s;max-width:220px;}
+.pneu-tooltip.show{opacity:1;}
+.pneu-tooltip b{color:var(--accent);}
 
 /* ═══════════════════════════════════════
    ÁREA PRIVADA
@@ -914,22 +931,67 @@ footer a{color:var(--accent);text-decoration:none;}
         <div id="tabPneus" class="tab-pane">
           <div class="dash-card" style="margin-bottom:1.2rem">
             <div style="font-weight:700;font-size:.92rem;color:#1e2a3a;margin-bottom:.3rem"><i class="fas fa-circle-dot" style="color:var(--accent)"></i> Controle de Pneus por Veículo</div>
-            <div style="font-size:.8rem;color:var(--text-lt)">Selecione a placa e clique em cada pneu do esqueleto para ver detalhes e histórico.</div>
+            <div style="font-size:.8rem;color:var(--text-lt)">Selecione a placa, use os filtros, passe o mouse sobre um pneu para ver o resumo e clique para abrir o detalhe completo ao lado.</div>
           </div>
 
-          <div class="dash-card" style="margin-bottom:1.2rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
-            <label style="font-size:.82rem;font-weight:700;color:#1e2a3a">Placa:</label>
-            <select id="pneuVeiculoSelect" style="max-width:260px;padding:.45rem .75rem;border-radius:var(--r8);border:1.5px solid var(--gray-200);font-size:.85rem;height:36px;cursor:pointer"></select>
+          <div class="dash-card" style="margin-bottom:1.2rem;display:flex;gap:1rem;align-items:end;flex-wrap:wrap">
+            <div class="flt-grp"><label>Placa</label><select id="pneuVeiculoSelect"></select></div>
+            <div class="flt-grp"><label>Status</label>
+              <select id="pneuFiltroStatus">
+                <option value="">Todos</option>
+                <option value="novo">Novo</option>
+                <option value="recapado">Recapado / Reaproveitado</option>
+                <option value="atencao">Atenção / Vulcanizar</option>
+                <option value="alerta">Alerta / Pendente</option>
+                <option value="semdados">Sem dados</option>
+              </select>
+            </div>
+            <div class="flt-grp"><label>Conjunto</label>
+              <select id="pneuFiltroAssembly">
+                <option value="">Todos</option>
+                <option value="cavalo">Cavalo</option>
+                <option value="carreta">Carreta</option>
+              </select>
+            </div>
+            <div class="flt-grp"><label>Eixo</label><select id="pneuFiltroGrupo"><option value="">Todos</option></select></div>
           </div>
 
           <div class="dash-card" style="margin-bottom:1.2rem">
-            <div id="pneuSvgWrap"></div>
-            <div class="pneu-legend">
-              <span><i class="pneu-dot" style="background:#22c55e"></i> Novo</span>
-              <span><i class="pneu-dot" style="background:#3b82f6"></i> Recapado / Reaproveitado</span>
-              <span><i class="pneu-dot" style="background:#f59e0b"></i> Atenção / Vulcanizar</span>
-              <span><i class="pneu-dot" style="background:#ef4444"></i> Alerta / Pendente</span>
-              <span><i class="pneu-dot" style="background:#cbd5e1"></i> Sem dados</span>
+            <div class="pneu-diagram-layout">
+              <div class="pneu-diagram-col">
+                <div id="pneuSvgWrap"></div>
+                <div class="pneu-legend">
+                  <span><i class="pneu-dot" style="background:#22c55e"></i> Novo</span>
+                  <span><i class="pneu-dot" style="background:#3b82f6"></i> Recapado / Reaproveitado</span>
+                  <span><i class="pneu-dot" style="background:#f59e0b"></i> Atenção / Vulcanizar</span>
+                  <span><i class="pneu-dot" style="background:#ef4444"></i> Alerta / Pendente</span>
+                  <span><i class="pneu-dot" style="background:#cbd5e1"></i> Sem dados</span>
+                </div>
+              </div>
+              <div id="pneuDetailPanel" class="pneu-detail-panel">
+                <div class="pneu-detail-empty"><i class="fas fa-hand-pointer"></i><p>Clique em um pneu no desenho para ver todos os detalhes e o histórico aqui.</p></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dash-card" style="margin-bottom:1.2rem">
+            <div style="font-weight:700;font-size:.9rem;color:#1e2a3a;margin-bottom:.6rem"><i class="fas fa-clipboard-list" style="color:var(--accent)"></i> Cadastro Geral de Pneus (Item de Auditoria 1.u / 1.v / 1.x)</div>
+            <div class="tbl-wrap">
+              <table class="data-table">
+                <thead><tr><th>Placa</th><th>Posição</th><th>Marca</th><th>Tipo</th><th>Nº Fogo</th><th>KM Instalado</th><th>Status</th></tr></thead>
+                <tbody id="pneuCadastroBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="dash-card" style="margin-bottom:1.2rem">
+            <div style="font-weight:700;font-size:.9rem;color:#1e2a3a;margin-bottom:.6rem"><i class="fas fa-chart-pie" style="color:var(--accent)"></i> Vida Útil / CPK por Marca (Item de Auditoria 1.w / 1.y)</div>
+            <div style="font-size:.76rem;color:var(--text-lt);margin-bottom:.6rem">CPK (custo por km) e vida útil média exigem o KM atual do veículo para cada pneu; assim que essa leitura for lançada, os valores abaixo passam a calcular automaticamente.</div>
+            <div class="tbl-wrap">
+              <table class="data-table">
+                <thead><tr><th>Marca</th><th>Qtde Cadastrada</th><th>KM Instalação (médio)</th><th>CPK / Vida Útil</th></tr></thead>
+                <tbody id="pneuVidaUtilBody"></tbody>
+              </table>
             </div>
           </div>
 
@@ -944,13 +1006,7 @@ footer a{color:var(--accent);text-decoration:none;}
           </div>
         </div><!-- /tabPneus -->
 
-        <!-- MODAL DETALHE DO PNEU -->
-        <div id="pneuModalOverlay" class="login-overlay" style="z-index:2500">
-          <div class="login-card" style="max-width:460px;text-align:left;position:relative">
-            <button id="pneuModalClose" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--text-lt)"><i class="fas fa-times"></i></button>
-            <div id="pneuModalContent"></div>
-          </div>
-        </div>
+        <div id="pneuTooltip" class="pneu-tooltip"></div>
 
         <!-- ── TAB LINKS ÚTEIS ── -->
         <div id="tabLinks" class="tab-pane">
@@ -1359,25 +1415,39 @@ document.addEventListener('keydown', (e) => {
 // CONTROLE DE PNEUS — esqueleto do conjunto + histórico por placa
 // ═══════════════════════════════════════════════════════════
 const PNEU_POS = [
-  { key:'dianteiro-fe', grupo:'Eixo Dianteiro', label:'FE', x:150, y:40 },
-  { key:'dianteiro-fd', grupo:'Eixo Dianteiro', label:'FD', x:210, y:40 },
-  { key:'tracao-lef',   grupo:'Eixo Tração',     label:'LEF', x:130, y:150 },
-  { key:'tracao-led',   grupo:'Eixo Tração',     label:'LED', x:130, y:190 },
-  { key:'tracao-ldf',   grupo:'Eixo Tração',     label:'LDF', x:230, y:150 },
-  { key:'tracao-ldd',   grupo:'Eixo Tração',     label:'LDD', x:230, y:190 },
-  { key:'truque-fe',    grupo:'Eixo Truque / Carreta', label:'FE', x:130, y:300 },
-  { key:'truque-te',    grupo:'Eixo Truque / Carreta', label:'TE', x:130, y:340 },
-  { key:'truque-fd',    grupo:'Eixo Truque / Carreta', label:'FD', x:230, y:300 },
-  { key:'truque-td',    grupo:'Eixo Truque / Carreta', label:'TD', x:230, y:340 },
+  // ── CAVALO (6x2): Direção + Tração + Truck/Auxiliar ──
+  { key:'dianteiro-fe', grupo:'Eixo Dianteiro (Direção)', assembly:'cavalo', label:'FE', x:150, y:40 },
+  { key:'dianteiro-fd', grupo:'Eixo Dianteiro (Direção)', assembly:'cavalo', label:'FD', x:210, y:40 },
+  { key:'tracao-lef',   grupo:'Eixo Tração',              assembly:'cavalo', label:'LEF', x:130, y:150 },
+  { key:'tracao-led',   grupo:'Eixo Tração',              assembly:'cavalo', label:'LED', x:130, y:190 },
+  { key:'tracao-ldf',   grupo:'Eixo Tração',              assembly:'cavalo', label:'LDF', x:230, y:150 },
+  { key:'tracao-ldd',   grupo:'Eixo Tração',              assembly:'cavalo', label:'LDD', x:230, y:190 },
+  { key:'truck-lef',    grupo:'Eixo Truck (Auxiliar)',    assembly:'cavalo', label:'LEF', x:130, y:260 },
+  { key:'truck-led',    grupo:'Eixo Truck (Auxiliar)',    assembly:'cavalo', label:'LED', x:130, y:300 },
+  { key:'truck-ldf',    grupo:'Eixo Truck (Auxiliar)',    assembly:'cavalo', label:'LDF', x:230, y:260 },
+  { key:'truck-ldd',    grupo:'Eixo Truck (Auxiliar)',    assembly:'cavalo', label:'LDD', x:230, y:300 },
+  // ── CARRETA: 3 eixos (dianteiro / meio / traseiro) ──
+  { key:'carreta1-lef', grupo:'Eixo Carreta 1 (Dianteiro)', assembly:'carreta', label:'LEF', x:130, y:430 },
+  { key:'carreta1-led', grupo:'Eixo Carreta 1 (Dianteiro)', assembly:'carreta', label:'LED', x:130, y:470 },
+  { key:'carreta1-ldf', grupo:'Eixo Carreta 1 (Dianteiro)', assembly:'carreta', label:'LDF', x:230, y:430 },
+  { key:'carreta1-ldd', grupo:'Eixo Carreta 1 (Dianteiro)', assembly:'carreta', label:'LDD', x:230, y:470 },
+  { key:'carreta2-lef', grupo:'Eixo Carreta 2 (Meio)',      assembly:'carreta', label:'LEF', x:130, y:540 },
+  { key:'carreta2-led', grupo:'Eixo Carreta 2 (Meio)',      assembly:'carreta', label:'LED', x:130, y:580 },
+  { key:'carreta2-ldf', grupo:'Eixo Carreta 2 (Meio)',      assembly:'carreta', label:'LDF', x:230, y:540 },
+  { key:'carreta2-ldd', grupo:'Eixo Carreta 2 (Meio)',      assembly:'carreta', label:'LDD', x:230, y:580 },
+  { key:'carreta3-lef', grupo:'Eixo Carreta 3 (Traseiro)',  assembly:'carreta', label:'LEF', x:130, y:650 },
+  { key:'carreta3-led', grupo:'Eixo Carreta 3 (Traseiro)',  assembly:'carreta', label:'LED', x:130, y:690 },
+  { key:'carreta3-ldf', grupo:'Eixo Carreta 3 (Traseiro)',  assembly:'carreta', label:'LDF', x:230, y:650 },
+  { key:'carreta3-ldd', grupo:'Eixo Carreta 3 (Traseiro)',  assembly:'carreta', label:'LDD', x:230, y:690 },
 ];
 
 const PNEU_DATA = {
   'RYE7J36': {
     posicoes: {
-      'tracao-ldf': { numeroFogo:'032', marca:'BOR XBRi Forza', status:'novo' },
-      'tracao-ldd': { numeroFogo:'031', marca:'BOR XBRi Forza', status:'novo' },
-      'tracao-lef': { numeroFogo:'030', marca:'BOR XBRi Forza', status:'novo' },
-      'tracao-led': { numeroFogo:'029', marca:'BOR XBRi Forza', status:'novo' },
+      'tracao-ldf': { numeroFogo:'032', marca:'BOR', tipo:'Radial', modelo:'XBRi Forza (top de linha)', status:'novo', kmInstalado:372870 },
+      'tracao-ldd': { numeroFogo:'031', marca:'BOR', tipo:'Radial', modelo:'XBRi Forza (top de linha)', status:'novo', kmInstalado:372870 },
+      'tracao-lef': { numeroFogo:'030', marca:'BOR', tipo:'Radial', modelo:'XBRi Forza (top de linha)', status:'novo', kmInstalado:372870 },
+      'tracao-led': { numeroFogo:'029', marca:'BOR', tipo:'Radial', modelo:'XBRi Forza (top de linha)', status:'novo', kmInstalado:372870 },
     },
     historico: [
       { data:'01/04/2026', km:'372.870', desc:'Eixo tração – 4 pneus novos BOR XBRi Forza (top de linha)' },
@@ -1386,25 +1456,29 @@ const PNEU_DATA = {
   },
   'RYE7J76': {
     posicoes: {
-      'tracao-ldf': { numeroFogo:'57', marca:'Iron Head Borrachudo', status:'novo' },
-      'tracao-ldd': { numeroFogo:'58', marca:'Iron Head Borrachudo', status:'novo' },
-      'tracao-lef': { numeroFogo:'59', marca:'Iron Head Borrachudo', status:'novo' },
-      'tracao-led': { numeroFogo:'60', marca:'Iron Head Borrachudo', status:'novo' },
+      'tracao-ldf': { numeroFogo:'57', marca:'Iron Head', tipo:'Radial', modelo:'Borrachudo', status:'novo', kmInstalado:356080 },
+      'tracao-ldd': { numeroFogo:'58', marca:'Iron Head', tipo:'Radial', modelo:'Borrachudo', status:'novo', kmInstalado:356080 },
+      'tracao-lef': { numeroFogo:'59', marca:'Iron Head', tipo:'Radial', modelo:'Borrachudo', status:'novo', kmInstalado:356080 },
+      'tracao-led': { numeroFogo:'60', marca:'Iron Head', tipo:'Radial', modelo:'Borrachudo', status:'novo', kmInstalado:356080 },
+      'truck-ldf':  { marca:'Apollo/Goodyear', status:'recapado', obs:'Recebeu pneu retirado da tração' },
+      'truck-ldd':  { marca:'Apollo/Goodyear', status:'recapado', obs:'Recebeu pneu retirado da tração' },
+      'carreta2-lef': { marca:'Apollo/Goodyear', status:'recapado', obs:'2 pneus recapados enviados ao eixo do meio da carreta' },
+      'carreta2-led': { marca:'Apollo/Goodyear', status:'recapado', obs:'2 pneus recapados enviados ao eixo do meio da carreta' },
     },
     historico: [
       { km:'356.080', desc:'4 pneus tração Iron Head Borrachudo novos' },
-      { desc:'4 pneus retirados da tração foram para o truck' },
+      { desc:'4 pneus retirados da tração foram para o eixo truck (auxiliar) do cavalo' },
       { desc:'2 Apollo Borrachudo (primeira vida) enviados para recapagem' },
-      { desc:'2 recapados foram para o eixo do meio' },
+      { desc:'2 recapados foram para o eixo do meio da carreta' },
       { desc:'2 Goodyear (primeira vida) enviados para recapagem' },
-      { desc:'Ficou 1 pneu com pouca borracha — encaminhado para vulcanizar' },
+      { desc:'Ficou 1 pneu com pouca borracha — encaminhado para vulcanizar', alerta:true },
     ]
   },
   'QJY0640': {
     alerta: true,
     numeroFogo: '495735',
     posicoes: {
-      'tracao-ldf': { status:'alerta', obs:'Hildo precisa pneu tração' },
+      'tracao-ldf': { numeroFogo:'495735', status:'alerta', obs:'Hildo precisa pneu tração' },
     },
     historico: [
       { desc:'Número fogo registrado: 495735' },
@@ -1413,14 +1487,14 @@ const PNEU_DATA = {
   },
   'RLB3C26': {
     posicoes: {
-      'dianteiro-fe': { marca:'Bridgestone', lado:'Motorista', status:'novo' },
-      'dianteiro-fd': { marca:'Bridgestone', lado:'Carona', status:'novo' },
-      'truque-fd': { status:'recapado', obs:'Recebeu pneu dianteiro usado retirado desta placa' },
-      'truque-td': { status:'recapado', obs:'Recebeu pneu dianteiro usado retirado desta placa' },
+      'dianteiro-fe': { marca:'Bridgestone', tipo:'Radial', lado:'Motorista', status:'novo', kmInstalado:337517 },
+      'dianteiro-fd': { marca:'Bridgestone', tipo:'Radial', lado:'Carona', status:'novo', kmInstalado:337517 },
+      'truck-ldf': { status:'recapado', obs:'Recebeu pneu dianteiro usado retirado desta placa (lado direito)' },
+      'truck-ldd': { status:'recapado', obs:'Recebeu pneu dianteiro usado retirado desta placa (lado direito)' },
     },
     historico: [
       { data:'27/02/2026', km:'337.517', desc:'2 pneus dianteiros Bridgestone novos', motorista:'Adriano Vaz' },
-      { desc:'2 dianteiros antigos retirados e montados no truque lado direito' },
+      { desc:'2 dianteiros antigos retirados e montados no eixo truck, lado direito' },
       { data:'Abril/2026', desc:'Borracharia Canadá — serviço/ajuste', custo:116.00 },
     ]
   },
@@ -1440,26 +1514,35 @@ const PNEU_CUSTOS = [
 ];
 
 const PNEU_STATUS_COLOR = { novo:'#22c55e', recapado:'#3b82f6', atencao:'#f59e0b', alerta:'#ef4444', semdados:'#cbd5e1' };
+const PNEU_STATUS_LABEL = { novo:'Novo', recapado:'Recapado / Reaproveitado', atencao:'Atenção / Vulcanizar', alerta:'Alerta / Pendente', semdados:'Sem dados' };
 let pneuInited = false;
+let pneuSelecionado = null; // {placa, key}
 
 function pneuFmtMoney(v){ return 'R$ ' + v.toFixed(2).replace('.',','); }
+function pneuFmtKm(v){ return v ? v.toLocaleString('pt-BR') + ' km' : '—'; }
 
 function pneuBuildSVG(placa){
-  const dados = PNEU_DATA[placa] || {};
-  const pos = dados.posicoes || {};
   const grupos = [...new Set(PNEU_POS.map(p => p.grupo))];
-  let svg = `<svg viewBox="0 0 360 400" style="width:100%;max-width:360px;display:block;margin:0 auto">
-    <rect x="120" y="20" width="120" height="360" rx="14" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="6 5"/>`;
+  let svg = `<svg viewBox="0 0 360 740" style="width:100%;max-width:340px;display:block;margin:0 auto">
+    <rect x="120" y="18" width="120" height="300" rx="14" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="6 5"/>
+    <text x="180" y="12" text-anchor="middle" font-size="11" font-weight="800" fill="#1e2a3a" letter-spacing="1">CAVALO 6x2</text>
+    <circle cx="180" cy="365" r="9" fill="#94a3b8"/>
+    <text x="180" y="392" text-anchor="middle" font-size="8" fill="#94a3b8">5ª RODA</text>
+    <rect x="120" y="408" width="120" height="300" rx="14" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="6 5"/>
+    <text x="180" y="402" text-anchor="middle" font-size="11" font-weight="800" fill="#1e2a3a" letter-spacing="1">CARRETA</text>`;
   grupos.forEach(g => {
     const ys = PNEU_POS.filter(p => p.grupo === g).map(p => p.y);
     const minY = Math.min(...ys) - 22;
-    svg += `<text x="180" y="${minY}" text-anchor="middle" font-size="10" font-weight="700" fill="#94a3b8">${g.toUpperCase()}</text>`;
+    svg += `<text x="180" y="${minY}" text-anchor="middle" font-size="9" font-weight="700" fill="#94a3b8">${g.toUpperCase()}</text>`;
     svg += `<line x1="115" y1="${(Math.min(...ys)+Math.max(...ys))/2}" x2="245" y2="${(Math.min(...ys)+Math.max(...ys))/2}" stroke="#e2e8f0" stroke-width="4"/>`;
   });
+  const dados = PNEU_DATA[placa] || {};
+  const pos = dados.posicoes || {};
   PNEU_POS.forEach(p => {
     const info = pos[p.key];
-    const color = info ? PNEU_STATUS_COLOR[info.status] || PNEU_STATUS_COLOR.semdados : PNEU_STATUS_COLOR.semdados;
-    svg += `<g class="pneu-tire" data-key="${p.key}" data-placa="${placa}">
+    const status = info ? (info.status || 'semdados') : 'semdados';
+    const color = PNEU_STATUS_COLOR[status] || PNEU_STATUS_COLOR.semdados;
+    svg += `<g class="pneu-tire" data-key="${p.key}" data-placa="${placa}" data-status="${status}" data-grupo="${p.grupo}" data-assembly="${p.assembly}">
       <rect x="${p.x-16}" y="${p.y-11}" width="32" height="22" rx="6" fill="${color}" stroke="#1e2a3a" stroke-width="1.5"/>
       <text x="${p.x}" y="${p.y+3}" text-anchor="middle" class="pneu-tire-label" fill="#fff">${p.label}</text>
     </g>`;
@@ -1468,45 +1551,132 @@ function pneuBuildSVG(placa){
   return svg;
 }
 
+function pneuTireInfo(placa, key){
+  const dados = PNEU_DATA[placa] || {};
+  return (dados.posicoes || {})[key];
+}
+
+function pneuShowTooltip(e, placa, key){
+  const posLabel = PNEU_POS.find(p => p.key === key);
+  const info = pneuTireInfo(placa, key);
+  const tip = document.getElementById('pneuTooltip');
+  const status = info ? (info.status || 'semdados') : 'semdados';
+  tip.innerHTML = `<b>${posLabel.grupo} · ${posLabel.label}</b><br>
+    ${info && info.marca ? info.marca + (info.modelo ? ' ' + info.modelo : '') + '<br>' : ''}
+    ${info && info.numeroFogo ? 'Fogo: ' + info.numeroFogo + '<br>' : ''}
+    Status: ${PNEU_STATUS_LABEL[status]}`;
+  tip.classList.add('show');
+  pneuMoveTooltip(e);
+}
+function pneuMoveTooltip(e){
+  const tip = document.getElementById('pneuTooltip');
+  tip.style.left = (e.clientX + 16) + 'px';
+  tip.style.top = (e.clientY + 12) + 'px';
+}
+function pneuHideTooltip(){
+  document.getElementById('pneuTooltip').classList.remove('show');
+}
+
+function pneuApplyFilters(){
+  const fStatus = document.getElementById('pneuFiltroStatus').value;
+  const fAssembly = document.getElementById('pneuFiltroAssembly').value;
+  const fGrupo = document.getElementById('pneuFiltroGrupo').value;
+  document.querySelectorAll('#pneuSvgWrap .pneu-tire').forEach(el => {
+    const match = (!fStatus || el.dataset.status === fStatus)
+      && (!fAssembly || el.dataset.assembly === fAssembly)
+      && (!fGrupo || el.dataset.grupo === fGrupo);
+    el.classList.toggle('dimmed', !match);
+  });
+}
+
 function pneuAttachHandlers(){
   document.querySelectorAll('#pneuSvgWrap .pneu-tire').forEach(el => {
-    el.addEventListener('click', () => pneuOpenModal(el.dataset.placa, el.dataset.key));
+    el.addEventListener('mouseenter', (e) => pneuShowTooltip(e, el.dataset.placa, el.dataset.key));
+    el.addEventListener('mousemove', pneuMoveTooltip);
+    el.addEventListener('mouseleave', pneuHideTooltip);
+    el.addEventListener('click', () => pneuShowDetail(el.dataset.placa, el.dataset.key));
   });
+  pneuApplyFilters();
 }
 
 function pneuRenderVeiculo(placa){
   document.getElementById('pneuSvgWrap').innerHTML = pneuBuildSVG(placa);
   pneuAttachHandlers();
+  pneuSelecionado = null;
+  document.getElementById('pneuDetailPanel').innerHTML = `<div class="pneu-detail-empty"><i class="fas fa-hand-pointer"></i><p>Clique em um pneu no desenho para ver todos os detalhes e o histórico aqui.</p></div>`;
 }
 
-function pneuOpenModal(placa, posKey){
+function pneuShowDetail(placa, posKey){
+  document.querySelectorAll('#pneuSvgWrap .pneu-tire').forEach(el => el.classList.remove('selected'));
+  const tireEl = document.querySelector(`#pneuSvgWrap .pneu-tire[data-key="${posKey}"]`);
+  if (tireEl) tireEl.classList.add('selected');
+
   const dados = PNEU_DATA[placa] || {};
   const info = (dados.posicoes || {})[posKey];
   const posLabel = PNEU_POS.find(p => p.key === posKey);
-  let html = `<h3 style="margin-bottom:.4rem"><i class="fas fa-circle-dot" style="color:var(--accent)"></i> ${placa} — ${posLabel ? posLabel.grupo + ' (' + posLabel.label + ')' : ''}</h3>`;
+  let html = `<h3><i class="fas fa-circle-dot" style="color:var(--accent)"></i> ${placa} — ${posLabel.grupo} (${posLabel.label})</h3>`;
   if (info) {
-    html += `<div style="font-size:.85rem;color:var(--text-lt);margin-bottom:.8rem;line-height:1.6">
-      ${info.marca ? `<div><b>Marca/Modelo:</b> ${info.marca}</div>` : ''}
-      ${info.numeroFogo ? `<div><b>Número Fogo:</b> ${info.numeroFogo}</div>` : ''}
+    html += `<div class="pneu-detail-field">
+      ${info.marca ? `<div><b>Marca:</b> ${info.marca}</div>` : ''}
+      ${info.tipo ? `<div><b>Tipo:</b> ${info.tipo}</div>` : ''}
+      ${info.modelo ? `<div><b>Modelo:</b> ${info.modelo}</div>` : ''}
+      ${info.numeroFogo ? `<div><b>Número Fogo / Série:</b> ${info.numeroFogo}</div>` : ''}
       ${info.lado ? `<div><b>Lado:</b> ${info.lado}</div>` : ''}
-      ${info.status ? `<div><b>Status:</b> ${info.status}</div>` : ''}
-      ${info.obs ? `<div><b>Obs.:</b> ${info.obs}</div>` : ''}
+      ${info.kmInstalado ? `<div><b>KM na Instalação:</b> ${pneuFmtKm(info.kmInstalado)}</div>` : ''}
+      <div><b>Status:</b> ${PNEU_STATUS_LABEL[info.status || 'semdados']}</div>
+      ${info.obs ? `<div><b>Observação:</b> ${info.obs}</div>` : ''}
     </div>`;
   } else {
-    html += `<div style="font-size:.85rem;color:var(--text-lt);margin-bottom:.8rem">Sem dados cadastrados para esta posição.</div>`;
+    html += `<div class="pneu-detail-field" style="color:var(--text-lt)">Sem dados cadastrados para esta posição ainda.</div>`;
   }
-  html += `<div style="font-weight:700;font-size:.85rem;margin-bottom:.4rem">Histórico da Placa</div>
-    <div style="max-height:220px;overflow:auto;display:flex;flex-direction:column;gap:.5rem">
+  html += `<div class="pneu-detail-hist-title">Histórico da Placa</div>
     ${(dados.historico||[]).map(h => `
-      <div style="background:#f8fafc;border-radius:10px;padding:.6rem .8rem;font-size:.8rem;${h.alerta ? 'border-left:3px solid #ef4444' : 'border-left:3px solid var(--accent)'}">
+      <div class="pneu-detail-hist-item${h.alerta ? ' alerta' : ''}">
         ${h.data ? `<b>${h.data}</b>${h.km ? ' · KM ' + h.km : ''}<br>` : ''}
         ${h.desc}
         ${h.motorista ? `<br><span style="color:var(--text-lt)">Motorista: ${h.motorista}</span>` : ''}
         ${h.custo ? `<br><span style="color:var(--text-lt)">Custo: ${pneuFmtMoney(h.custo)}</span>` : ''}
-      </div>`).join('') || '<div style="font-size:.8rem;color:var(--text-lt)">Sem histórico registrado.</div>'}
-    </div>`;
-  document.getElementById('pneuModalContent').innerHTML = html;
-  document.getElementById('pneuModalOverlay').classList.add('active');
+      </div>`).join('') || '<div style="font-size:.8rem;color:var(--text-lt)">Sem histórico registrado.</div>'}`;
+  document.getElementById('pneuDetailPanel').innerHTML = html;
+}
+
+function pneuBuildCadastroGeral(){
+  const rows = [];
+  Object.keys(PNEU_DATA).forEach(placa => {
+    const pos = PNEU_DATA[placa].posicoes || {};
+    Object.keys(pos).forEach(key => {
+      const info = pos[key];
+      const posLabel = PNEU_POS.find(p => p.key === key);
+      rows.push(`<tr>
+        <td>${placa}</td>
+        <td>${posLabel ? posLabel.grupo + ' (' + posLabel.label + ')' : key}</td>
+        <td>${info.marca || '—'}</td>
+        <td>${info.tipo || '—'}</td>
+        <td>${info.numeroFogo || '—'}</td>
+        <td>${pneuFmtKm(info.kmInstalado)}</td>
+        <td><span style="color:${PNEU_STATUS_COLOR[info.status]||'#94a3b8'};font-weight:700">${PNEU_STATUS_LABEL[info.status||'semdados']}</span></td>
+      </tr>`);
+    });
+  });
+  document.getElementById('pneuCadastroBody').innerHTML = rows.join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text-lt)">Nenhum pneu cadastrado.</td></tr>';
+}
+
+function pneuBuildVidaUtil(){
+  const porMarca = {};
+  Object.values(PNEU_DATA).forEach(v => {
+    Object.values(v.posicoes || {}).forEach(info => {
+      if (!info.marca) return;
+      if (!porMarca[info.marca]) porMarca[info.marca] = { qtd:0, kmSoma:0, kmQtd:0 };
+      porMarca[info.marca].qtd++;
+      if (info.kmInstalado) { porMarca[info.marca].kmSoma += info.kmInstalado; porMarca[info.marca].kmQtd++; }
+    });
+  });
+  const rows = Object.keys(porMarca).map(marca => {
+    const m = porMarca[marca];
+    const kmMedio = m.kmQtd ? Math.round(m.kmSoma / m.kmQtd) : null;
+    return `<tr><td>${marca}</td><td>${m.qtd}</td><td>${pneuFmtKm(kmMedio)}</td><td style="color:var(--text-lt)">Aguardando KM atual</td></tr>`;
+  });
+  document.getElementById('pneuVidaUtilBody').innerHTML = rows.join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-lt)">Sem dados suficientes.</td></tr>';
 }
 
 function pneuInit(){
@@ -1514,13 +1684,22 @@ function pneuInit(){
   if (!pneuInited) {
     select.innerHTML = Object.keys(PNEU_DATA).map(p => `<option value="${p}">${p}</option>`).join('');
     select.addEventListener('change', () => pneuRenderVeiculo(select.value));
-    document.getElementById('pneuModalClose').addEventListener('click', () => {
-      document.getElementById('pneuModalOverlay').classList.remove('active');
+
+    const grupoSel = document.getElementById('pneuFiltroGrupo');
+    [...new Set(PNEU_POS.map(p => p.grupo))].forEach(g => {
+      grupoSel.insertAdjacentHTML('beforeend', `<option value="${g}">${g}</option>`);
     });
+    document.getElementById('pneuFiltroStatus').addEventListener('change', pneuApplyFilters);
+    document.getElementById('pneuFiltroAssembly').addEventListener('change', pneuApplyFilters);
+    document.getElementById('pneuFiltroGrupo').addEventListener('change', pneuApplyFilters);
+
     const custosBody = document.getElementById('pneuCustosBody');
     custosBody.innerHTML = PNEU_CUSTOS.map(c => `<tr><td>${c.placa}</td><td>${pneuFmtMoney(c.valor)}</td></tr>`).join('')
       + `<tr style="font-weight:700"><td>Total</td><td>${pneuFmtMoney(PNEU_CUSTOS.reduce((a,c)=>a+c.valor,0))}</td></tr>`
       + `<tr style="color:var(--text-lt)"><td>Acertado por</td><td>${pneuFmtMoney(950.00)}</td></tr>`;
+
+    pneuBuildCadastroGeral();
+    pneuBuildVidaUtil();
     pneuInited = true;
   }
   pneuRenderVeiculo(select.value);
