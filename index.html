@@ -153,8 +153,9 @@ footer a{color:var(--accent);text-decoration:none;}
 .pneu-legend{display:flex;flex-wrap:wrap;gap:1.1rem;justify-content:center;margin-top:1rem;font-size:.78rem;color:var(--text-lt);}
 .pneu-legend span{display:flex;align-items:center;gap:.4rem;}
 .pneu-dot{display:inline-block;width:10px;height:10px;border-radius:50%;}
-.pneu-tire{cursor:pointer;transition:.15s;}
-.pneu-tire:hover{opacity:.85;transform:scale(1.08);}
+.pneu-tire{cursor:pointer;}
+.pneu-tire rect{transition:stroke-width .12s ease, filter .12s ease;}
+.pneu-tire:hover rect{stroke-width:3;filter:brightness(1.08);}
 .pneu-tire.dimmed{opacity:.18;}
 .pneu-tire.selected rect{stroke:var(--accent-dk);stroke-width:3;}
 .pneu-tire-label{font-size:9px;font-weight:700;fill:#1e2a3a;pointer-events:none;}
@@ -173,6 +174,21 @@ footer a{color:var(--accent);text-decoration:none;}
 .pneu-tooltip{position:fixed;pointer-events:none;background:#1e2a3a;color:#fff;padding:.5rem .7rem;border-radius:8px;font-size:.75rem;line-height:1.5;box-shadow:0 8px 20px rgba(0,0,0,.25);z-index:4000;opacity:0;transition:opacity .12s;max-width:220px;}
 .pneu-tooltip.show{opacity:1;}
 .pneu-tooltip b{color:var(--accent);}
+.pneu-leitura-form{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin:.6rem 0;}
+.pneu-leitura-form label{font-size:.72rem;color:var(--text-lt);display:flex;flex-direction:column;gap:.25rem;}
+.pneu-leitura-form input{padding:.4rem .6rem;border-radius:8px;border:1.5px solid var(--gray-200);font-size:.8rem;}
+.pneu-leitura-btn{grid-column:1/-1;background:var(--accent-dk);color:#fff;border:none;border-radius:8px;padding:.5rem;font-weight:700;font-size:.8rem;cursor:pointer;transition:.2s;}
+.pneu-leitura-btn:hover{opacity:.88;}
+.pneu-calc-result{background:#fff;border-radius:10px;padding:.7rem .9rem;font-size:.8rem;line-height:1.7;margin-bottom:.8rem;border:1px solid rgba(0,0,0,.06);}
+.pneu-ranking-cols{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;}
+.pneu-ranking-title{font-weight:700;font-size:.82rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem;}
+.pneu-ranking-title.good{color:#16a34a;}
+.pneu-ranking-title.bad{color:#dc2626;}
+@media (max-width:720px){ .pneu-ranking-cols{grid-template-columns:1fr;} .pneu-leitura-form{grid-template-columns:1fr;} }
+
+.venc-badge{position:absolute;top:6px;right:10px;background:#ef4444;color:#fff;font-size:.68rem;font-weight:800;padding:1px 6px;border-radius:10px;line-height:1.4;}
+.venc-alert-banner{display:flex;align-items:center;gap:.8rem;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:var(--r16);padding:1rem 1.3rem;margin-bottom:1.2rem;font-size:.85rem;}
+.venc-alert-banner i{font-size:1.3rem;color:#dc2626;}
 
 /* ═══════════════════════════════════════
    ÁREA PRIVADA
@@ -578,6 +594,7 @@ footer a{color:var(--accent);text-decoration:none;}
         <button class="pa-nav-item" data-tab="tabSenhas"><i class="fas fa-key"></i> Senhas</button>
         <button class="pa-nav-item" data-tab="tabFrota"><i class="fas fa-id-card"></i> Frota / Motoristas</button>
         <button class="pa-nav-item" data-tab="tabPneus"><i class="fas fa-circle-dot"></i> Pneus</button>
+        <button class="pa-nav-item" data-tab="tabVencimentos" style="position:relative"><i class="fas fa-triangle-exclamation"></i> Vencimentos</button>
         <button class="pa-nav-item" data-tab="tabAuditoria"><i class="fas fa-clipboard-check"></i> Auditoria</button>
         <button class="pa-nav-item" data-tab="tabNfe"><i class="fas fa-file-invoice"></i> NF-e / Abast.</button>
         <button class="pa-nav-item" data-tab="tabLinks"><i class="fas fa-link"></i> Links Úteis</button>
@@ -934,6 +951,26 @@ footer a{color:var(--accent);text-decoration:none;}
             <div style="font-size:.8rem;color:var(--text-lt)">Selecione a placa, use os filtros, passe o mouse sobre um pneu para ver o resumo e clique para abrir o detalhe completo ao lado.</div>
           </div>
 
+          <div class="dash-card" style="margin-bottom:1.2rem">
+            <div style="font-weight:700;font-size:.9rem;color:#1e2a3a;margin-bottom:.3rem"><i class="fab fa-whatsapp" style="color:#25D366"></i> Importar Mensagem do Grupo (WhatsApp)</div>
+            <div style="font-size:.76rem;color:var(--text-lt);margin-bottom:.7rem">Cole aqui o texto copiado do grupo (formato "📌 Placa..." ou lista de custos da borracharia) e clique em Importar. Não é uma conexão automática com o WhatsApp — é leitura do texto colado.</div>
+            <textarea id="pneuWaTexto" rows="5" style="width:100%;border-radius:10px;border:1.5px solid var(--gray-200);padding:.7rem .9rem;font-size:.82rem;font-family:inherit;resize:vertical" placeholder="Cole aqui a mensagem do grupo..."></textarea>
+            <div style="display:flex;gap:1rem;align-items:end;flex-wrap:wrap;margin-top:.7rem">
+              <div class="flt-grp"><label>Aplicar códigos (LDF/LDD/LEF/LED) ao eixo</label>
+                <select id="pneuWaEixo">
+                  <option value="tracao">Eixo Tração</option>
+                  <option value="dianteiro">Eixo Dianteiro</option>
+                  <option value="truck">Eixo Truck (Auxiliar)</option>
+                  <option value="carreta1">Eixo Carreta 1 (Dianteiro)</option>
+                  <option value="carreta2">Eixo Carreta 2 (Meio)</option>
+                  <option value="carreta3">Eixo Carreta 3 (Traseiro)</option>
+                </select>
+              </div>
+              <button class="pneu-leitura-btn" id="pneuWaImportar" style="width:auto;padding:.6rem 1.4rem"><i class="fas fa-file-import"></i> Importar</button>
+            </div>
+            <div id="pneuWaResultado" style="margin-top:.8rem"></div>
+          </div>
+
           <div class="dash-card" style="margin-bottom:1.2rem;display:flex;gap:1rem;align-items:end;flex-wrap:wrap">
             <div class="flt-grp"><label>Placa</label><select id="pneuVeiculoSelect"></select></div>
             <div class="flt-grp"><label>Status</label>
@@ -976,22 +1013,38 @@ footer a{color:var(--accent);text-decoration:none;}
 
           <div class="dash-card" style="margin-bottom:1.2rem">
             <div style="font-weight:700;font-size:.9rem;color:#1e2a3a;margin-bottom:.6rem"><i class="fas fa-clipboard-list" style="color:var(--accent)"></i> Cadastro Geral de Pneus (Item de Auditoria 1.u / 1.v / 1.x)</div>
+            <div style="font-size:.76rem;color:var(--text-lt);margin-bottom:.6rem">Clique num pneu no desenho acima para lançar KM atual, sulco e custo unitário — o CPK e o custo por mm de sulco desta tabela atualizam sozinhos.</div>
             <div class="tbl-wrap">
               <table class="data-table">
-                <thead><tr><th>Placa</th><th>Posição</th><th>Marca</th><th>Tipo</th><th>Nº Fogo</th><th>KM Instalado</th><th>Status</th></tr></thead>
+                <thead><tr><th>Placa</th><th>Posição</th><th>Marca</th><th>Tipo</th><th>Nº Fogo</th><th>KM Instalado</th><th>KM Rodado</th><th>CPK</th><th>R$/mm Sulco</th><th>Status</th></tr></thead>
                 <tbody id="pneuCadastroBody"></tbody>
               </table>
             </div>
           </div>
 
           <div class="dash-card" style="margin-bottom:1.2rem">
-            <div style="font-weight:700;font-size:.9rem;color:#1e2a3a;margin-bottom:.6rem"><i class="fas fa-chart-pie" style="color:var(--accent)"></i> Vida Útil / CPK por Marca (Item de Auditoria 1.w / 1.y)</div>
-            <div style="font-size:.76rem;color:var(--text-lt);margin-bottom:.6rem">CPK (custo por km) e vida útil média exigem o KM atual do veículo para cada pneu; assim que essa leitura for lançada, os valores abaixo passam a calcular automaticamente.</div>
+            <div style="font-weight:700;font-size:.9rem;color:#1e2a3a;margin-bottom:.6rem"><i class="fas fa-chart-pie" style="color:var(--accent)"></i> Vida Útil Média por Marca e Tipo (Item de Auditoria 1.w / 1.y)</div>
+            <div style="font-size:.76rem;color:var(--text-lt);margin-bottom:.6rem">Calculado a partir das leituras de KM atual lançadas para cada pneu.</div>
             <div class="tbl-wrap">
               <table class="data-table">
-                <thead><tr><th>Marca</th><th>Qtde Cadastrada</th><th>KM Instalação (médio)</th><th>CPK / Vida Útil</th></tr></thead>
+                <thead><tr><th>Marca</th><th>Tipo</th><th>Qtde Cadastrada</th><th>Qtde c/ Leitura</th><th>Vida Útil Média (KM Rodado)</th><th>CPK Médio</th></tr></thead>
                 <tbody id="pneuVidaUtilBody"></tbody>
               </table>
+            </div>
+          </div>
+
+          <div class="dash-card" style="margin-bottom:1.2rem">
+            <div style="font-weight:700;font-size:.9rem;color:#1e2a3a;margin-bottom:.6rem"><i class="fas fa-ranking-star" style="color:var(--accent)"></i> Ranking de Pneus — Melhores e Piores (CPK)</div>
+            <div style="font-size:.76rem;color:var(--text-lt);margin-bottom:.6rem">Ordenado pelo menor/maior custo por km rodado. Só entram pneus com leitura de KM atual e custo unitário lançados.</div>
+            <div class="pneu-ranking-cols">
+              <div>
+                <div class="pneu-ranking-title good"><i class="fas fa-arrow-trend-up"></i> Melhores (menor CPK)</div>
+                <div class="tbl-wrap"><table class="data-table"><thead><tr><th>#</th><th>Placa / Posição</th><th>Marca</th><th>CPK</th></tr></thead><tbody id="pneuRankingBom"></tbody></table></div>
+              </div>
+              <div>
+                <div class="pneu-ranking-title bad"><i class="fas fa-arrow-trend-down"></i> Piores (maior CPK)</div>
+                <div class="tbl-wrap"><table class="data-table"><thead><tr><th>#</th><th>Placa / Posição</th><th>Marca</th><th>CPK</th></tr></thead><tbody id="pneuRankingRuim"></tbody></table></div>
+              </div>
             </div>
           </div>
 
@@ -1007,6 +1060,26 @@ footer a{color:var(--accent);text-decoration:none;}
         </div><!-- /tabPneus -->
 
         <div id="pneuTooltip" class="pneu-tooltip"></div>
+
+        <!-- ── TAB VENCIMENTOS ── -->
+        <div id="tabVencimentos" class="tab-pane">
+          <div class="dash-card" style="margin-bottom:1.2rem">
+            <div style="font-weight:700;font-size:.92rem;color:#1e2a3a;margin-bottom:.3rem"><i class="fas fa-triangle-exclamation" style="color:var(--accent)"></i> Controle de Vencimentos — Documentos e Certificações</div>
+            <div style="font-size:.8rem;color:var(--text-lt)">Licenciamento/IPVA, ASO, Toxicológico e Direção Defensiva — atualizado direto das planilhas, com alerta na tela e aviso pronto para enviar no WhatsApp.</div>
+          </div>
+
+          <div id="vencAlertBanner" class="venc-alert-banner" style="display:none"></div>
+
+          <div class="dash-card" style="margin-bottom:1.2rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap;justify-content:space-between">
+            <div id="vencResumoKpis" style="display:flex;gap:.6rem;flex-wrap:wrap"></div>
+            <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+              <button class="pneu-leitura-btn" id="vencAtualizarBtn" style="width:auto;padding:.55rem 1.2rem"><i class="fas fa-rotate"></i> Atualizar Dados</button>
+              <button class="pneu-leitura-btn" id="vencEnviarWhatsBtn" style="width:auto;padding:.55rem 1.2rem;background:#25D366"><i class="fab fa-whatsapp"></i> Enviar Aviso no WhatsApp</button>
+            </div>
+          </div>
+
+          <div id="vencCategoriasWrap"></div>
+        </div><!-- /tabVencimentos -->
 
         <!-- ── TAB LINKS ÚTEIS ── -->
         <div id="tabLinks" class="tab-pane">
@@ -1266,6 +1339,7 @@ const pageTitles = {
   tabAuditoria: '<i class="fas fa-clipboard-check" style="color:var(--accent)"></i> Auditoria Operacional',
   tabNfe: '<i class="fas fa-file-invoice" style="color:var(--accent)"></i> NF-e / Abastecimentos',
   tabPneus: '<i class="fas fa-circle-dot" style="color:var(--accent)"></i> Controle de Pneus',
+  tabVencimentos: '<i class="fas fa-triangle-exclamation" style="color:var(--accent)"></i> Controle de Vencimentos',
   tabLinks: '<i class="fas fa-link" style="color:var(--accent)"></i> Links Úteis'
 };
 
@@ -1281,6 +1355,7 @@ document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
     if (btn.dataset.tab === 'tabAuditoria') setTimeout(audInit, 50);
     if (btn.dataset.tab === 'tabNfe')       setTimeout(nfeInit, 50);
     if (btn.dataset.tab === 'tabPneus')     setTimeout(pneuInit, 50);
+    if (btn.dataset.tab === 'tabVencimentos') setTimeout(vencInit, 50);
   });
 });
 
@@ -1328,6 +1403,10 @@ function slideBuildSlides(){
         { val: slideText('frota-total','—'), lbl: 'Motoristas' },
         { val: slideText('frota-placas','—'), lbl: 'Veículos Cadastrados' },
         { val: '28–30', lbl: 'Paletes por Viagem' },
+    ]},
+    { title: '<i class="fas fa-triangle-exclamation"></i> Vencimentos', kpis: [
+        { val: (vencAlertasAtuais.filter(a=>a.vencido).length).toString(), lbl: 'Vencidos' },
+        { val: (vencAlertasAtuais.filter(a=>!a.vencido).length).toString(), lbl: 'Próx. 30 dias' },
     ]},
     { title: '<i class="fas fa-link"></i> Links Úteis', links: [
         { icon:'fa-map-marker-alt', name:'Localização', desc:'Google Maps' },
@@ -1518,6 +1597,68 @@ const PNEU_STATUS_LABEL = { novo:'Novo', recapado:'Recapado / Reaproveitado', at
 let pneuInited = false;
 let pneuSelecionado = null; // {placa, key}
 
+// ── Overrides (dados importados do WhatsApp/planilha) — persistem no navegador ──
+function pneuLoadOverrides(){
+  try { return JSON.parse(localStorage.getItem('pneuOverrides') || '{}'); } catch(e){ return {}; }
+}
+function pneuSaveOverrides(overrides){
+  try { localStorage.setItem('pneuOverrides', JSON.stringify(overrides)); } catch(e){}
+}
+function pneuAllPlacas(){
+  const base = Object.keys(PNEU_DATA);
+  const ov = Object.keys(pneuLoadOverrides());
+  return [...new Set([...base, ...ov])].sort();
+}
+function pneuGetVeiculo(placa){
+  const base = PNEU_DATA[placa] || {};
+  const ov = pneuLoadOverrides()[placa] || {};
+  return {
+    alerta: ov.alerta ?? base.alerta,
+    numeroFogo: ov.numeroFogo ?? base.numeroFogo,
+    posicoes: { ...(base.posicoes||{}), ...(ov.posicoes||{}) },
+    historico: [ ...(base.historico||[]), ...(ov.historico||[]) ]
+  };
+}
+function pneuBuildCustosTable(){
+  const extras = JSON.parse(localStorage.getItem('pneuCustosOverrides') || '[]');
+  const todos = [...PNEU_CUSTOS, ...extras];
+  document.getElementById('pneuCustosBody').innerHTML = todos.map(c => `<tr><td>${c.placa}</td><td>${pneuFmtMoney(c.valor)}</td></tr>`).join('')
+    + `<tr style="font-weight:700"><td>Total</td><td>${pneuFmtMoney(todos.reduce((a,c)=>a+c.valor,0))}</td></tr>`
+    + `<tr style="color:var(--text-lt)"><td>Acertado (Abril/2026, informado)</td><td>${pneuFmtMoney(950.00)}</td></tr>`;
+}
+function pneuRefreshAll(placaParaSelecionar){
+  const select = document.getElementById('pneuVeiculoSelect');
+  const atual = select.value;
+  select.innerHTML = pneuAllPlacas().map(p => `<option value="${p}">${p}</option>`).join('');
+  const alvo = placaParaSelecionar && pneuAllPlacas().includes(placaParaSelecionar) ? placaParaSelecionar : atual;
+  select.value = alvo;
+  pneuRenderVeiculo(alvo);
+  pneuBuildCadastroGeral();
+  pneuBuildVidaUtil();
+  pneuBuildRanking();
+  pneuBuildCustosTable();
+}
+function pneuAplicarImportacao(parsed){
+  const overrides = pneuLoadOverrides();
+  (parsed.veiculos || []).forEach(v => {
+    if (!v.placa) return;
+    const placa = v.placa.toUpperCase().replace(/\s+/g,'');
+    if (!overrides[placa]) overrides[placa] = { posicoes:{}, historico:[] };
+    if (v.alerta) overrides[placa].alerta = true;
+    if (v.numeroFogo) overrides[placa].numeroFogo = v.numeroFogo;
+    overrides[placa].posicoes = { ...(overrides[placa].posicoes||{}), ...(v.posicoes || {}) };
+    overrides[placa].historico = [ ...(overrides[placa].historico||[]), ...(v.historico || []) ];
+  });
+  pneuSaveOverrides(overrides);
+  if (parsed.custos && parsed.custos.length) {
+    const custosOv = JSON.parse(localStorage.getItem('pneuCustosOverrides') || '[]');
+    parsed.custos.forEach(c => { if (c.placa && c.valor) custosOv.push(c); });
+    localStorage.setItem('pneuCustosOverrides', JSON.stringify(custosOv));
+  }
+  const primeiraPlaca = (parsed.veiculos && parsed.veiculos[0]) ? parsed.veiculos[0].placa.toUpperCase() : null;
+  pneuRefreshAll(primeiraPlaca);
+}
+
 function pneuFmtMoney(v){ return 'R$ ' + v.toFixed(2).replace('.',','); }
 function pneuFmtKm(v){ return v ? v.toLocaleString('pt-BR') + ' km' : '—'; }
 
@@ -1536,7 +1677,7 @@ function pneuBuildSVG(placa){
     svg += `<text x="180" y="${minY}" text-anchor="middle" font-size="9" font-weight="700" fill="#94a3b8">${g.toUpperCase()}</text>`;
     svg += `<line x1="115" y1="${(Math.min(...ys)+Math.max(...ys))/2}" x2="245" y2="${(Math.min(...ys)+Math.max(...ys))/2}" stroke="#e2e8f0" stroke-width="4"/>`;
   });
-  const dados = PNEU_DATA[placa] || {};
+  const dados = pneuGetVeiculo(placa);
   const pos = dados.posicoes || {};
   PNEU_POS.forEach(p => {
     const info = pos[p.key];
@@ -1552,7 +1693,7 @@ function pneuBuildSVG(placa){
 }
 
 function pneuTireInfo(placa, key){
-  const dados = PNEU_DATA[placa] || {};
+  const dados = pneuGetVeiculo(placa);
   return (dados.posicoes || {})[key];
 }
 
@@ -1606,14 +1747,39 @@ function pneuRenderVeiculo(placa){
   document.getElementById('pneuDetailPanel').innerHTML = `<div class="pneu-detail-empty"><i class="fas fa-hand-pointer"></i><p>Clique em um pneu no desenho para ver todos os detalhes e o histórico aqui.</p></div>`;
 }
 
+// ── Leituras (KM atual / sulco / custo unitário) — persistem no navegador ──
+function pneuLoadLeituras(){
+  try { return JSON.parse(localStorage.getItem('pneuLeituras') || '{}'); } catch(e){ return {}; }
+}
+function pneuSaveLeitura(placa, key, data){
+  const all = pneuLoadLeituras();
+  all[placa + '|' + key] = data;
+  try { localStorage.setItem('pneuLeituras', JSON.stringify(all)); } catch(e){}
+}
+function pneuGetLeitura(placa, key){
+  return pneuLoadLeituras()[placa + '|' + key] || {};
+}
+const PNEU_SULCO_INICIAL = 15; // mm, padrão de pneu radial novo
+
+function pneuCalcTire(placa, key, info){
+  const leitura = pneuGetLeitura(placa, key);
+  const kmRodado = (leitura.kmAtual && info && info.kmInstalado) ? (leitura.kmAtual - info.kmInstalado) : null;
+  const custo = leitura.custoUnit ? parseFloat(leitura.custoUnit) : null;
+  const cpk = (kmRodado && kmRodado > 0 && custo) ? custo / kmRodado : null;
+  const mmConsumido = leitura.sulcoAtual ? (PNEU_SULCO_INICIAL - leitura.sulcoAtual) : null;
+  const custoPorMm = (mmConsumido && mmConsumido > 0 && custo) ? custo / mmConsumido : null;
+  return { leitura, kmRodado, cpk, custoPorMm };
+}
+
 function pneuShowDetail(placa, posKey){
   document.querySelectorAll('#pneuSvgWrap .pneu-tire').forEach(el => el.classList.remove('selected'));
   const tireEl = document.querySelector(`#pneuSvgWrap .pneu-tire[data-key="${posKey}"]`);
   if (tireEl) tireEl.classList.add('selected');
 
-  const dados = PNEU_DATA[placa] || {};
+  const dados = pneuGetVeiculo(placa);
   const info = (dados.posicoes || {})[posKey];
   const posLabel = PNEU_POS.find(p => p.key === posKey);
+  const calc = pneuCalcTire(placa, posKey, info);
   let html = `<h3><i class="fas fa-circle-dot" style="color:var(--accent)"></i> ${placa} — ${posLabel.grupo} (${posLabel.label})</h3>`;
   if (info) {
     html += `<div class="pneu-detail-field">
@@ -1625,6 +1791,19 @@ function pneuShowDetail(placa, posKey){
       ${info.kmInstalado ? `<div><b>KM na Instalação:</b> ${pneuFmtKm(info.kmInstalado)}</div>` : ''}
       <div><b>Status:</b> ${PNEU_STATUS_LABEL[info.status || 'semdados']}</div>
       ${info.obs ? `<div><b>Observação:</b> ${info.obs}</div>` : ''}
+    </div>`;
+
+    html += `<div class="pneu-detail-hist-title">KM Rodado, CPK e Custo por Sulco</div>
+    <div class="pneu-leitura-form">
+      <label>KM Atual <input type="number" id="pneuInputKm" value="${calc.leitura.kmAtual || ''}" placeholder="ex: 380000"></label>
+      <label>Sulco Atual (mm) <input type="number" id="pneuInputSulco" value="${calc.leitura.sulcoAtual || ''}" placeholder="ex: 9"></label>
+      <label>Custo Unitário (R$) <input type="number" id="pneuInputCusto" value="${calc.leitura.custoUnit || ''}" placeholder="ex: 2200"></label>
+      <button class="pneu-leitura-btn" id="pneuSalvarLeitura" data-placa="${placa}" data-key="${posKey}"><i class="fas fa-save"></i> Salvar Leitura</button>
+    </div>
+    <div class="pneu-calc-result">
+      <div><b>KM Rodado:</b> ${calc.kmRodado ? pneuFmtKm(calc.kmRodado) : 'Aguardando KM atual'}</div>
+      <div><b>CPK (custo por km):</b> ${calc.cpk ? 'R$ ' + calc.cpk.toFixed(4) + '/km' : 'Aguardando KM atual + custo'}</div>
+      <div><b>Custo por mm de sulco:</b> ${calc.custoPorMm ? pneuFmtMoney(calc.custoPorMm) + '/mm' : 'Aguardando sulco atual + custo'}</div>
     </div>`;
   } else {
     html += `<div class="pneu-detail-field" style="color:var(--text-lt)">Sem dados cadastrados para esta posição ainda.</div>`;
@@ -1638,15 +1817,30 @@ function pneuShowDetail(placa, posKey){
         ${h.custo ? `<br><span style="color:var(--text-lt)">Custo: ${pneuFmtMoney(h.custo)}</span>` : ''}
       </div>`).join('') || '<div style="font-size:.8rem;color:var(--text-lt)">Sem histórico registrado.</div>'}`;
   document.getElementById('pneuDetailPanel').innerHTML = html;
+
+  const btnSalvar = document.getElementById('pneuSalvarLeitura');
+  if (btnSalvar) {
+    btnSalvar.addEventListener('click', () => {
+      const kmAtual = parseFloat(document.getElementById('pneuInputKm').value) || null;
+      const sulcoAtual = parseFloat(document.getElementById('pneuInputSulco').value) || null;
+      const custoUnit = parseFloat(document.getElementById('pneuInputCusto').value) || null;
+      pneuSaveLeitura(placa, posKey, { kmAtual, sulcoAtual, custoUnit });
+      pneuShowDetail(placa, posKey);
+      pneuBuildCadastroGeral();
+      pneuBuildVidaUtil();
+      pneuBuildRanking();
+    });
+  }
 }
 
 function pneuBuildCadastroGeral(){
   const rows = [];
-  Object.keys(PNEU_DATA).forEach(placa => {
-    const pos = PNEU_DATA[placa].posicoes || {};
+  pneuAllPlacas().forEach(placa => {
+    const pos = pneuGetVeiculo(placa).posicoes || {};
     Object.keys(pos).forEach(key => {
       const info = pos[key];
       const posLabel = PNEU_POS.find(p => p.key === key);
+      const calc = pneuCalcTire(placa, key, info);
       rows.push(`<tr>
         <td>${placa}</td>
         <td>${posLabel ? posLabel.grupo + ' (' + posLabel.label + ')' : key}</td>
@@ -1654,35 +1848,115 @@ function pneuBuildCadastroGeral(){
         <td>${info.tipo || '—'}</td>
         <td>${info.numeroFogo || '—'}</td>
         <td>${pneuFmtKm(info.kmInstalado)}</td>
+        <td>${calc.kmRodado ? pneuFmtKm(calc.kmRodado) : '—'}</td>
+        <td>${calc.cpk ? 'R$ ' + calc.cpk.toFixed(4) : '—'}</td>
+        <td>${calc.custoPorMm ? pneuFmtMoney(calc.custoPorMm) : '—'}</td>
         <td><span style="color:${PNEU_STATUS_COLOR[info.status]||'#94a3b8'};font-weight:700">${PNEU_STATUS_LABEL[info.status||'semdados']}</span></td>
       </tr>`);
     });
   });
-  document.getElementById('pneuCadastroBody').innerHTML = rows.join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text-lt)">Nenhum pneu cadastrado.</td></tr>';
+  document.getElementById('pneuCadastroBody').innerHTML = rows.join('') || '<tr><td colspan="10" style="text-align:center;color:var(--text-lt)">Nenhum pneu cadastrado.</td></tr>';
 }
 
 function pneuBuildVidaUtil(){
-  const porMarca = {};
-  Object.values(PNEU_DATA).forEach(v => {
-    Object.values(v.posicoes || {}).forEach(info => {
+  const porGrupo = {};
+  pneuAllPlacas().forEach(placa => {
+    const pos = pneuGetVeiculo(placa).posicoes || {};
+    Object.keys(pos).forEach(key => {
+      const info = pos[key];
       if (!info.marca) return;
-      if (!porMarca[info.marca]) porMarca[info.marca] = { qtd:0, kmSoma:0, kmQtd:0 };
-      porMarca[info.marca].qtd++;
-      if (info.kmInstalado) { porMarca[info.marca].kmSoma += info.kmInstalado; porMarca[info.marca].kmQtd++; }
+      const tipo = info.tipo || '—';
+      const gKey = info.marca + '||' + tipo;
+      if (!porGrupo[gKey]) porGrupo[gKey] = { marca:info.marca, tipo, qtd:0, comLeitura:0, kmRodadoSoma:0, cpkSoma:0, cpkQtd:0 };
+      const calc = pneuCalcTire(placa, key, info);
+      porGrupo[gKey].qtd++;
+      if (calc.kmRodado) { porGrupo[gKey].comLeitura++; porGrupo[gKey].kmRodadoSoma += calc.kmRodado; }
+      if (calc.cpk) { porGrupo[gKey].cpkSoma += calc.cpk; porGrupo[gKey].cpkQtd++; }
     });
   });
-  const rows = Object.keys(porMarca).map(marca => {
-    const m = porMarca[marca];
-    const kmMedio = m.kmQtd ? Math.round(m.kmSoma / m.kmQtd) : null;
-    return `<tr><td>${marca}</td><td>${m.qtd}</td><td>${pneuFmtKm(kmMedio)}</td><td style="color:var(--text-lt)">Aguardando KM atual</td></tr>`;
+  const rows = Object.values(porGrupo).map(g => {
+    const vidaMedia = g.comLeitura ? Math.round(g.kmRodadoSoma / g.comLeitura) : null;
+    const cpkMedio = g.cpkQtd ? (g.cpkSoma / g.cpkQtd) : null;
+    return `<tr><td>${g.marca}</td><td>${g.tipo}</td><td>${g.qtd}</td><td>${g.comLeitura}</td><td>${vidaMedia ? pneuFmtKm(vidaMedia) : 'Aguardando leitura'}</td><td>${cpkMedio ? 'R$ ' + cpkMedio.toFixed(4) + '/km' : 'Aguardando leitura'}</td></tr>`;
   });
-  document.getElementById('pneuVidaUtilBody').innerHTML = rows.join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-lt)">Sem dados suficientes.</td></tr>';
+  document.getElementById('pneuVidaUtilBody').innerHTML = rows.join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-lt)">Sem dados suficientes.</td></tr>';
+}
+
+function pneuBuildRanking(){
+  const lista = [];
+  pneuAllPlacas().forEach(placa => {
+    const pos = pneuGetVeiculo(placa).posicoes || {};
+    Object.keys(pos).forEach(key => {
+      const info = pos[key];
+      const calc = pneuCalcTire(placa, key, info);
+      if (calc.cpk) {
+        const posLabel = PNEU_POS.find(p => p.key === key);
+        lista.push({ placa, posicao: posLabel ? posLabel.label : key, marca: info.marca || '—', cpk: calc.cpk });
+      }
+    });
+  });
+  const bons = [...lista].sort((a,b) => a.cpk - b.cpk).slice(0,5);
+  const ruins = [...lista].sort((a,b) => b.cpk - a.cpk).slice(0,5);
+  const linha = (l,i) => `<tr><td>${i+1}º</td><td>${l.placa} / ${l.posicao}</td><td>${l.marca}</td><td>R$ ${l.cpk.toFixed(4)}/km</td></tr>`;
+  document.getElementById('pneuRankingBom').innerHTML = bons.map(linha).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-lt)">Sem leituras suficientes ainda.</td></tr>';
+  document.getElementById('pneuRankingRuim').innerHTML = ruins.map(linha).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-lt)">Sem leituras suficientes ainda.</td></tr>';
+}
+
+async function pneuImportarTexto(){
+  const texto = document.getElementById('pneuWaTexto').value.trim();
+  const resultEl = document.getElementById('pneuWaResultado');
+  if (!texto) { resultEl.innerHTML = '<div style="color:#dc2626;font-size:.8rem">Cole o texto antes de importar.</div>'; return; }
+  const eixoPadrao = document.getElementById('pneuWaEixo').value;
+  resultEl.innerHTML = '<div style="font-size:.8rem;color:var(--text-lt)"><i class="fas fa-spinner fa-spin"></i> Lendo e organizando os dados...</div>';
+  try {
+    const chavesValidas = PNEU_POS.map(p => p.key).join(', ');
+    const prompt = `Extraia dados de controle de pneus do texto abaixo. O texto pode vir de uma mensagem de grupo de WhatsApp (bullets "*", marcador "📌 Placa X") OU de uma planilha colada como texto puro (colunas separadas por TAB, vírgula ou ponto-e-vírgula). Reconheça qualquer um dos dois formatos.
+
+TEXTO:
+"""
+${texto}
+"""
+
+Chaves de posição válidas (cada uma representa um pneu do conjunto cavalo 6x2 + carreta): ${chavesValidas}
+Mapeamento usual: "LDF" ou "Lado direito F" = lado direito frente; "LDD" ou "Lado direito D" = lado direito detrás/trás; "LEF" ou "Lado esquerdo F" = lado esquerdo frente; "LED" ou "Lado esquerdo D" = lado esquerdo detrás/trás.
+Se o texto citar um eixo genérico (ex: "Tração:", "Dianteiro:") sem indicar se é do cavalo ou da carreta, use como prefixo padrão: "${eixoPadrao}".
+
+Retorne APENAS um JSON válido, sem markdown e sem texto fora do JSON, neste formato:
+{
+  "veiculos": [
+    { "placa": "XXX0000", "posicoes": { "<chave_valida>": { "numeroFogo": "", "marca": "", "modelo": "", "tipo": "", "status": "novo|recapado|atencao|alerta|semdados", "kmInstalado": 0 } }, "historico": [ { "data": "", "km": "", "desc": "", "custo": 0, "motorista": "", "alerta": false } ], "alerta": false, "numeroFogo": "" }
+  ],
+  "custos": [ { "placa": "XXX0000", "valor": 0 } ]
+}
+Não invente informação que não esteja no texto — omita o campo se não existir. Se não houver veículos, use "veiculos": []. Se não houver lista de custos, use "custos": [].`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await response.json();
+    const saida = (data.content || []).map(c => c.text || '').join('');
+    const clean = saida.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    pneuAplicarImportacao(parsed);
+    resultEl.innerHTML = `<div style="color:#16a34a;font-size:.8rem"><i class="fas fa-check-circle"></i> Importado: ${(parsed.veiculos||[]).length} placa(s) e ${(parsed.custos||[]).length} lançamento(s) de custo.</div>`;
+    document.getElementById('pneuWaTexto').value = '';
+  } catch(err) {
+    console.error(err);
+    resultEl.innerHTML = '<div style="color:#dc2626;font-size:.8rem">Não consegui interpretar o texto colado. Confira o formato e tente novamente.</div>';
+  }
 }
 
 function pneuInit(){
   const select = document.getElementById('pneuVeiculoSelect');
   if (!pneuInited) {
-    select.innerHTML = Object.keys(PNEU_DATA).map(p => `<option value="${p}">${p}</option>`).join('');
+    select.innerHTML = pneuAllPlacas().map(p => `<option value="${p}">${p}</option>`).join('');
     select.addEventListener('change', () => pneuRenderVeiculo(select.value));
 
     const grupoSel = document.getElementById('pneuFiltroGrupo');
@@ -1693,13 +1967,12 @@ function pneuInit(){
     document.getElementById('pneuFiltroAssembly').addEventListener('change', pneuApplyFilters);
     document.getElementById('pneuFiltroGrupo').addEventListener('change', pneuApplyFilters);
 
-    const custosBody = document.getElementById('pneuCustosBody');
-    custosBody.innerHTML = PNEU_CUSTOS.map(c => `<tr><td>${c.placa}</td><td>${pneuFmtMoney(c.valor)}</td></tr>`).join('')
-      + `<tr style="font-weight:700"><td>Total</td><td>${pneuFmtMoney(PNEU_CUSTOS.reduce((a,c)=>a+c.valor,0))}</td></tr>`
-      + `<tr style="color:var(--text-lt)"><td>Acertado por</td><td>${pneuFmtMoney(950.00)}</td></tr>`;
+    document.getElementById('pneuWaImportar').addEventListener('click', pneuImportarTexto);
 
+    pneuBuildCustosTable();
     pneuBuildCadastroGeral();
     pneuBuildVidaUtil();
+    pneuBuildRanking();
     pneuInited = true;
   }
   pneuRenderVeiculo(select.value);
@@ -1767,7 +2040,8 @@ async function refreshAllData() {
   await Promise.allSettled([
     loadFinanceiroData(),
     loadFaturamentoData(),
-    loadBateriasData()
+    loadBateriasData(),
+    vencInit()
   ]);
   atualizarSelectMotoristasCalculadora();
   updateLastUpdate();
@@ -2442,6 +2716,159 @@ function resetBatFilters() {
   document.getElementById('batDataInicio').value='';
   document.getElementById('batDataFim').value='';
   aplicarFiltrosBaterias();
+}
+
+// ═══════════════════════════════════════════════════════════
+// VENCIMENTOS — Licenciamento/IPVA, ASO, Toxicológico, Direção Defensiva
+// Alerta na página + aviso pronto para enviar no WhatsApp (49 99967-5448)
+// ═══════════════════════════════════════════════════════════
+const VENC_WHATS_NUMERO = '5549999675448';
+const VENC_CATEGORIAS = [
+  { key:'licenciamento', label:'Licenciamento / IPVA', icon:'fa-car', urlDefault:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQGsLDGp-_EDMmRgTZsSWdWdnJCEZWMRTTrHiEWXWNLwf2ZpdBd3Pjz9VUX_CldBQ/pub?output=csv' },
+  { key:'aso', label:'ASO', icon:'fa-notes-medical', urlDefault:'https://docs.google.com/spreadsheets/d/e/2PACX-1vS4W3MHzy-SobIO-07RcblSucM3Q3h553Z9RhTniAATdX3WXk-du13fNbu4lNUnBA/pub?output=csv' },
+  { key:'toxicologico', label:'Toxicológico', icon:'fa-flask', urlDefault:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQp1LDO7J1XrZmKfAM_UZ09i54FA7lhC3PMtosMQzLO7AHSF4Ipvh-6zsnW6YdmHg/pub?output=csv' },
+  { key:'defensiva', label:'Direção Defensiva', icon:'fa-id-badge', urlDefault:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQw35oMQBJ6UDetP0JCtgDfIzJ77avujBIWtD0YWx8WH0ZkrSTx2I_C4p_cRMHPvA/pub?output=csv' },
+];
+let vencData = {};
+let vencAlertasAtuais = [];
+let vencInited = false;
+
+function vencGetUrl(cat){ return localStorage.getItem('url_venc_' + cat.key) || cat.urlDefault; }
+
+function vencBuildSkeleton(){
+  document.getElementById('vencCategoriasWrap').innerHTML = VENC_CATEGORIAS.map(cat => `
+    <div class="dash-card" style="margin-bottom:1.2rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;flex-wrap:wrap;gap:.6rem">
+        <div style="font-weight:700;font-size:.9rem;color:#1e2a3a"><i class="fas ${cat.icon}" style="color:var(--accent)"></i> ${cat.label}</div>
+        <div style="display:flex;gap:.6rem;font-size:.76rem;flex-wrap:wrap">
+          <span class="badge badge-danger" id="venc-${cat.key}-vencidos">0 vencidos</span>
+          <span class="badge badge-warning" id="venc-${cat.key}-proximos">0 próx. 30d</span>
+          <span class="badge badge-success" id="venc-${cat.key}-ok">0 em dia</span>
+        </div>
+      </div>
+      <div id="venc-${cat.key}-loading" style="font-size:.8rem;color:var(--text-lt)"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>
+      <div class="tbl-wrap" id="venc-${cat.key}-wrap" style="display:none">
+        <table class="data-table"><thead id="venc-${cat.key}-head"></thead><tbody id="venc-${cat.key}-body"></tbody></table>
+      </div>
+    </div>`).join('');
+}
+
+async function vencCarregarCategoria(cat){
+  const loadingEl = document.getElementById(`venc-${cat.key}-loading`);
+  loadingEl.style.display = 'flex';
+  loadingEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...';
+  try {
+    vencData[cat.key] = await fetchCSV(vencGetUrl(cat));
+    vencRenderCategoria(cat);
+  } catch(e) {
+    loadingEl.innerHTML = `<span style="color:var(--danger)"><i class="fas fa-exclamation-circle"></i> Erro: ${e.message}</span>`;
+  }
+}
+
+function vencRenderCategoria(cat){
+  const rows = vencData[cat.key] || [];
+  const loadingEl = document.getElementById(`venc-${cat.key}-loading`);
+  const wrapEl = document.getElementById(`venc-${cat.key}-wrap`);
+  if (!rows.length) { loadingEl.innerHTML = 'Sem dados nesta planilha.'; wrapEl.style.display = 'none'; return; }
+
+  const headers = Object.keys(rows[0]);
+  const colId = findCol(headers, ['placa','veiculo','motorista','nome','funcionario','colaborador']);
+  const colData = findCol(headers, ['vencimento','validade','data','venc']);
+  const now = new Date(); now.setHours(0,0,0,0);
+  const em30 = new Date(now); em30.setDate(em30.getDate() + 30);
+
+  let vencidos = 0, proximos = 0, ok = 0;
+  rows.forEach(row => {
+    const d = colData ? parseDate(row[colData]) : null;
+    if (d) { if (d < now) vencidos++; else if (d <= em30) proximos++; else ok++; } else ok++;
+    if (d && d <= em30) {
+      vencAlertasAtuais.push({ categoria: cat.label, id: colId ? (row[colId] || '—') : '—', data: d, vencido: d < now });
+    }
+  });
+
+  document.getElementById(`venc-${cat.key}-vencidos`).textContent = vencidos + ' vencidos';
+  document.getElementById(`venc-${cat.key}-proximos`).textContent = proximos + ' próx. 30d';
+  document.getElementById(`venc-${cat.key}-ok`).textContent = ok + ' em dia';
+
+  document.getElementById(`venc-${cat.key}-head`).innerHTML = '<tr>' + [...headers, 'Status'].map(h => `<th>${h}</th>`).join('') + '</tr>';
+  document.getElementById(`venc-${cat.key}-body`).innerHTML = rows.slice(0, 500).map(row => {
+    const d = colData ? parseDate(row[colData]) : null;
+    let statusLabel = '✓ Em Dia', badgeClass = 'badge-success';
+    if (d) {
+      if (d < now) { statusLabel = '⚠ Vencido'; badgeClass = 'badge-danger'; }
+      else if (d <= em30) { statusLabel = '⏰ Próx. 30d'; badgeClass = 'badge-warning'; }
+    }
+    const cells = headers.map(h => {
+      const val = row[h] || '';
+      const hl = h.toLowerCase();
+      if (hl.includes('data') || hl.includes('venc') || hl.includes('valid')) {
+        const dd = parseDate(val);
+        return `<td>${dd ? fmtDate(dd) : val}</td>`;
+      }
+      return `<td>${val}</td>`;
+    }).join('');
+    return `<tr>${cells}<td><span class="badge ${badgeClass}">${statusLabel}</span></td></tr>`;
+  }).join('');
+
+  loadingEl.style.display = 'none';
+  wrapEl.style.display = 'block';
+}
+
+async function vencCarregarTudo(){
+  vencAlertasAtuais = [];
+  for (const cat of VENC_CATEGORIAS) { await vencCarregarCategoria(cat); }
+  vencAtualizarResumoEAlerta();
+}
+
+function vencAtualizarResumoEAlerta(){
+  const vencidosTotal = vencAlertasAtuais.filter(a => a.vencido).length;
+  const proximosTotal = vencAlertasAtuais.filter(a => !a.vencido).length;
+  const totalAlertas = vencidosTotal + proximosTotal;
+
+  const navBtn = document.querySelector('.pa-nav-item[data-tab="tabVencimentos"]');
+  if (navBtn) {
+    let badge = navBtn.querySelector('.venc-badge');
+    if (totalAlertas > 0) {
+      if (!badge) { badge = document.createElement('span'); badge.className = 'venc-badge'; navBtn.appendChild(badge); }
+      badge.textContent = totalAlertas;
+    } else if (badge) { badge.remove(); }
+  }
+
+  const banner = document.getElementById('vencAlertBanner');
+  if (banner) {
+    if (totalAlertas > 0) {
+      banner.style.display = 'flex';
+      banner.innerHTML = `<i class="fas fa-triangle-exclamation"></i> <div><b>${vencidosTotal} vencido(s)</b> e <b>${proximosTotal}</b> vencendo nos próximos 30 dias. Confira as categorias abaixo ou envie um aviso agora.</div>`;
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+  const resumoEl = document.getElementById('vencResumoKpis');
+  if (resumoEl) {
+    resumoEl.innerHTML = `
+      <span class="badge badge-danger" style="font-size:.85rem;padding:.4rem .8rem">${vencidosTotal} Vencidos</span>
+      <span class="badge badge-warning" style="font-size:.85rem;padding:.4rem .8rem">${proximosTotal} Próx. 30 dias</span>`;
+  }
+}
+
+function vencMontarMensagemWhatsApp(){
+  if (!vencAlertasAtuais.length) return 'Nenhum documento vencido ou vencendo nos próximos 30 dias no momento. ✅';
+  const linhas = [...vencAlertasAtuais].sort((a,b) => a.data - b.data)
+    .map(a => `${a.vencido ? '🔴 VENCIDO' : '🟡 Vence em breve'} — ${a.categoria} — ${a.id} — ${fmtDate(a.data)}`);
+  return `*Aviso de Vencimentos — M-Malacarne*\n\n${linhas.join('\n')}`;
+}
+
+function vencInit(){
+  if (!vencInited) {
+    vencBuildSkeleton();
+    document.getElementById('vencAtualizarBtn').addEventListener('click', vencCarregarTudo);
+    document.getElementById('vencEnviarWhatsBtn').addEventListener('click', () => {
+      const msg = vencMontarMensagemWhatsApp();
+      window.open('https://wa.me/' + VENC_WHATS_NUMERO + '?text=' + encodeURIComponent(msg), '_blank');
+    });
+    vencInited = true;
+  }
+  return vencCarregarTudo();
 }
 
 // ═══════════════════════════════════════════════════════════
