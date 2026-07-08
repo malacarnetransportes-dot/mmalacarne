@@ -1109,6 +1109,7 @@ footer a{color:var(--accent);text-decoration:none;}
             <div id="vencResumoKpis" style="display:flex;gap:.6rem;flex-wrap:wrap"></div>
             <div style="display:flex;gap:.6rem;flex-wrap:wrap">
               <button class="pneu-leitura-btn" id="vencAtualizarBtn" style="width:auto;padding:.55rem 1.2rem"><i class="fas fa-rotate"></i> Atualizar Dados</button>
+              <button class="pneu-leitura-btn" id="vencResetInvertBtn" style="width:auto;padding:.55rem 1.2rem;background:#64748b" title="Limpa qualquer configuração de inversão de datas salva"><i class="fas fa-calendar-xmark"></i> Resetar Datas</button>
               <button class="pneu-leitura-btn" id="vencEnviarWhatsBtn" style="width:auto;padding:.55rem 1.2rem;background:#25D366"><i class="fab fa-whatsapp"></i> Enviar Aviso no WhatsApp</button>
             </div>
           </div>
@@ -2940,7 +2941,12 @@ let vencInited = false;
 let vencCharts = {};
 
 function vencGetUrl(cat){ return localStorage.getItem('url_venc_' + cat.key) || cat.urlDefault; }
-function vencGetInverter(cat){ return localStorage.getItem('venc_invert_' + cat.key) === '1'; }
+function vencGetInverter(cat){
+  // Por padrão NÃO invertemos — o parseDate já trata M/D/YYYY do Google Sheets corretamente
+  // Só inverte se o usuário explicitamente marcou o checkbox para essa categoria
+  const stored = localStorage.getItem('venc_invert_' + cat.key);
+  return stored === '1'; // null ou '0' = não inverte
+}
 function vencParseDataCat(val, cat){
   let d = parseDate(val);
   if (d && vencGetInverter(cat)) {
@@ -3036,8 +3042,10 @@ function vencRenderCategoria(cat){
 
   const headers = Object.keys(rows[0]);
   const colId = findCol(headers, ['placa','veiculo','motorista','nome','funcionario','colaborador']);
-  const colData = findCol(headers, ['vencimento','validade','data','venc']);
-  const colParcelas = findCol(headers, ['parcela','parcelamento','parcelas','prestacao','instalamento']);
+  const colData = cat.key === 'licenciamento'
+    ? findCol(headers, ['vencimento','validade','data','venc','jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez','situacao','sit.','sit '])
+    : findCol(headers, ['vencimento','validade','data','venc']);
+  const colParcelas = findCol(headers, ['parcela','parcelamento','parcelas','prestacao','instalamento','parc']);
   const now = new Date(); now.setHours(0,0,0,0);
   const em30 = new Date(now); em30.setDate(em30.getDate() + 30);
   const busca = (document.getElementById(`venc-${cat.key}-busca`).value || '').toLowerCase();
@@ -3063,46 +3071,85 @@ function vencRenderCategoria(cat){
 
   // ── LICENCIAMENTO/IPVA: layout por mês + parcelas ──
   if (cat.key === 'licenciamento') {
+    // Para licenciamento, renderizamos em um div separado (não na table padrão)
+    // para evitar conflito com os IDs thead/tbody usados pelas outras categorias
+    loadingEl.style.display = 'none';
+    // Esconde a table padrão e limpa seus IDs para não dar erro
+    wrapEl.style.display = 'none';
+    const headEl = document.getElementById(`venc-${cat.key}-head`);
+    const bodyEl = document.getElementById(`venc-${cat.key}-body`);
+    if (headEl) headEl.innerHTML = '';
+    if (bodyEl) bodyEl.innerHTML = '';
+
+    // Container dedicado — cria se não existir
+    const containerId = `venc-lic-container`;
+    let container = document.getElementById(containerId);
+    if (!container) {
+      container = document.createElement('div');
+      container.id = containerId;
+      wrapEl.parentNode.insertBefore(container, wrapEl);
+    }
+    container.style.display = 'block';
+
+    // Agrupa por mês (último dígito da placa → mês IPVA SC)
     const porMes = {};
     filtradas.forEach(({row, d, status}) => {
       const placa = colId ? (row[colId] || '') : '';
       const ultimoDigito = placa.replace(/[^0-9]/g,'').slice(-1);
       const mesCal = IPVA_SC_MES[ultimoDigito];
-      const chave = mesCal ? `${now.getFullYear()}-${String(mesCal).padStart(2,'0')}` : (d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` : 'sem-data');
+      const chave = mesCal
+        ? `${now.getFullYear()}-${String(mesCal).padStart(2,'0')}`
+        : (d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` : 'sem-data');
       if (!porMes[chave]) porMes[chave] = [];
-      porMes[chave].push({row, d, status, placa, mesCal});
+      porMes[chave].push({row, d, status, placa});
     });
+
+    const colsDisplay = headers.filter(h => h !== colParcelas);
     const mesesOrdenados = Object.keys(porMes).sort();
-    document.getElementById(`venc-${cat.key}-head`).innerHTML = '';
-    document.getElementById(`venc-${cat.key}-body`).innerHTML = '';
-    wrapEl.style.display = 'block';
-    loadingEl.style.display = 'none';
-    wrapEl.querySelector('table').innerHTML = mesesOrdenados.map(mes => {
+
+    container.innerHTML = mesesOrdenados.map(mes => {
       const grupo = porMes[mes];
-      const nomeMes = mes === 'sem-data' ? 'Sem data' : MESES_NOME[parseInt(mes.split('-')[1])-1] + '/' + mes.split('-')[0];
-      const cabRows = grupo.map(({row, d, status}) => {
+      const nomeMes = mes === 'sem-data'
+        ? 'Sem data / Dígito não identificado'
+        : MESES_NOME[parseInt(mes.split('-')[1])-1] + '/' + mes.split('-')[0];
+
+      const rows_html = grupo.map(({row, d, status}) => {
         const map = { vencido:['⚠ Vencido','badge-danger'], proximo:['⏰ Próx. 30d','badge-warning'], ok:['✓ Em Dia','badge-success'] };
         const [statusLabel, badgeClass] = map[status];
-        const parcela = colParcelas ? row[colParcelas] : null;
-        const parcelaHtml = parcela ? `<td><span class="badge badge-warning">${parcela}</span></td>` : '<td>—</td>';
-        const cells = headers.filter(h=>h!==colParcelas).map(h => {
+        const parcela = colParcelas ? (row[colParcelas] || '') : '';
+        const cells = colsDisplay.map(h => {
           const val = row[h] || '';
           const hl = h.toLowerCase();
-          if (hl.includes('data')||hl.includes('venc')||hl.includes('valid')) {
+          if (hl.includes('data')||hl.includes('venc')||hl.includes('valid')||hl.includes('situa')) {
             const dd = vencParseDataCat(val, cat);
             return `<td>${dd ? fmtDate(dd) : val}</td>`;
           }
           return `<td>${val}</td>`;
         }).join('');
-        return `<tr>${cells}${parcelaHtml}<td><span class="badge ${badgeClass}">${statusLabel}</span></td></tr>`;
+        const parcelaCell = colParcelas ? `<td>${parcela ? `<span class="badge badge-warning">${parcela}</span>` : '—'}</td>` : '';
+        return `<tr>${cells}${parcelaCell}<td><span class="badge ${badgeClass}">${statusLabel}</span></td></tr>`;
       }).join('');
-      const thead = `<tr style="background:var(--accent-dk);color:#fff"><th colspan="${headers.length+2}" style="padding:.6rem .9rem;font-size:.82rem;font-weight:800;border-radius:0">${nomeMes} — ${grupo.length} veículo(s)</th></tr>
-        <tr>${headers.filter(h=>h!==colParcelas).map(h=>`<th>${h}</th>`).join('')}${colParcelas?'<th>Parcelas</th>':'<th>—</th>'}<th>Status</th></tr>`;
-      return `<thead>${thead}</thead><tbody>${cabRows}</tbody>`;
-    }).join('') || `<thead></thead><tbody><tr><td colspan="5" style="text-align:center;color:var(--text-lt)">Nenhum registro.</td></tr></tbody>`;
+
+      return `<div style="margin-bottom:1.2rem">
+        <div style="background:var(--accent-dk);color:#fff;padding:.55rem 1rem;border-radius:var(--r12) var(--r12) 0 0;font-weight:800;font-size:.85rem;display:flex;justify-content:space-between">
+          <span>📅 ${nomeMes}</span><span>${grupo.length} veículo(s)</span>
+        </div>
+        <div class="tbl-wrap" style="border-radius:0 0 var(--r12) var(--r12);overflow:hidden">
+          <table class="data-table">
+            <thead><tr>${colsDisplay.map(h=>`<th>${h}</th>`).join('')}${colParcelas?'<th>Parcelas</th>':''}<th>Status</th></tr></thead>
+            <tbody>${rows_html}</tbody>
+          </table>
+        </div>
+      </div>`;
+    }).join('') || '<div style="font-size:.82rem;color:var(--text-lt);padding:.8rem">Nenhum registro com esse filtro.</div>';
+
     vencRenderChart(cat, { vencidos, proximos, ok });
     return;
   }
+
+  // Para as outras categorias: esconde o container de licenciamento se existir
+  const licContainer = document.getElementById('venc-lic-container');
+  if (licContainer) licContainer.style.display = 'none';
 
   document.getElementById(`venc-${cat.key}-head`).innerHTML = '<tr>' + [...headers, 'Status'].map(h => `<th>${h}</th>`).join('') + '</tr>';
   document.getElementById(`venc-${cat.key}-body`).innerHTML = filtradas.slice(0, 500).map(({row, d, status}) => {
@@ -3226,6 +3273,15 @@ function vencInit(){
   if (!vencInited) {
     vencBuildSkeleton();
     document.getElementById('vencAtualizarBtn').addEventListener('click', vencCarregarTudo);
+    document.getElementById('vencResetInvertBtn').addEventListener('click', () => {
+      VENC_CATEGORIAS.forEach(cat => {
+        localStorage.removeItem('venc_invert_' + cat.key);
+        const cb = document.getElementById(`venc-${cat.key}-inverter`);
+        if (cb) cb.checked = false;
+      });
+      showToast('Configurações de inversão limpas — atualizando...');
+      vencCarregarTudo();
+    });
     document.getElementById('vencEnviarWhatsBtn').addEventListener('click', () => {
       window.open('https://wa.me/' + VENC_WHATS_NUMERO + '?text=' + encodeURIComponent(vencMontarMensagemWhatsApp()), '_blank');
     });
