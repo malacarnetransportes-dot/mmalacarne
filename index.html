@@ -1314,15 +1314,12 @@ function parseDate(v) {
   if (v === null || v === undefined || v === '') return null;
   const s = String(v).trim();
   let m;
-  // Google Sheets CSV exporta SEMPRE como M/D/YYYY (ex: 6/28/2026 = 28 de junho)
-  // Portanto: primeiro número = mês, segundo = dia
+  // Planilhas exportam em DD/MM/YYYY — primeiro número = dia, segundo = mês.
   if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/))) {
     let year = +m[3];
     if (year < 100) year += 2000;
     const hh = m[4] ? +m[4] : 0, mi = m[5] ? +m[5] : 0, ss = m[6] ? +m[6] : 0;
-    let mes = +m[1], dia = +m[2];
-    // Se primeiro número > 12, só pode ser dia — formato BR DD/MM/YYYY
-    if (mes > 12) { const tmp = mes; mes = dia; dia = tmp; }
+    const dia = +m[1], mes = +m[2];
     const d = new Date(year, mes - 1, dia, hh, mi, ss);
     return isNaN(d) ? null : d;
   }
@@ -2942,20 +2939,13 @@ let vencCharts = {};
 
 function vencGetUrl(cat){ return localStorage.getItem('url_venc_' + cat.key) || cat.urlDefault; }
 function vencGetInverter(cat){
-  // Por padrão NÃO invertemos — o parseDate já trata M/D/YYYY do Google Sheets corretamente
-  // Só inverte se o usuário explicitamente marcou o checkbox para essa categoria
+  // Por padrão NÃO invertemos — o parseDate trata DD/MM/YYYY como formato BR (padrão).
+  // Use o checkbox "Datas invertidas" apenas se a planilha exportar em formato americano M/D/YYYY
+  // e os valores de dia e mês forem ambos ≤ 12 (não detectáveis automaticamente).
   const stored = localStorage.getItem('venc_invert_' + cat.key);
   return stored === '1'; // null ou '0' = não inverte
 }
-function vencParseDataCat(val, cat){
-  let d = parseDate(val);
-  if (d && vencGetInverter(cat)) {
-    // Troca dia/mês quando ambos são válidos como dia (<=12), corrigindo planilhas com formato invertido
-    const dia = d.getDate(), mes = d.getMonth()+1;
-    if (dia <= 12) d = new Date(d.getFullYear(), dia-1, mes);
-  }
-  return d;
-}
+function vencParseDataCat(val, cat){ return parseDate(val); }
 
 function vencBuildSkeleton(){
   const subnav = document.getElementById('vencSubnav');
@@ -2984,9 +2974,7 @@ function vencBuildSkeleton(){
               <option value="">Todos</option><option value="vencido">Vencidos</option><option value="proximo">Próx. 30 dias</option><option value="ok">Em dia</option>
             </select>
           </div>
-          <label style="font-size:.76rem;color:var(--text-lt);display:flex;align-items:center;gap:.4rem;cursor:pointer">
-            <input type="checkbox" id="venc-${cat.key}-inverter" ${vencGetInverter(cat) ? 'checked' : ''}> Datas invertidas (trocar DD/MM)
-          </label>
+
         </div>
         <div class="venc-chart-layout">
           <div class="venc-chart-col"><canvas id="venc-${cat.key}-chart" height="180"></canvas></div>
@@ -3003,10 +2991,7 @@ function vencBuildSkeleton(){
   VENC_CATEGORIAS.forEach(cat => {
     document.getElementById(`venc-${cat.key}-busca`).addEventListener('input', () => vencRenderCategoria(cat));
     document.getElementById(`venc-${cat.key}-filtro-status`).addEventListener('change', () => vencRenderCategoria(cat));
-    document.getElementById(`venc-${cat.key}-inverter`).addEventListener('change', (e) => {
-      localStorage.setItem('venc_invert_' + cat.key, e.target.checked ? '1' : '0');
-      vencCarregarCategoria(cat).then(() => { vencRecalcularTodosOsAlertas(); vencAtualizarResumoEAlerta(); });
-    });
+
   });
 }
 
