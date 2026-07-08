@@ -1313,27 +1313,27 @@ function parseDate(v) {
   if (v === null || v === undefined || v === '') return null;
   const s = String(v).trim();
   let m;
-  // DD/MM/YYYY ou MM/DD/YYYY (Google Sheets CSV exporta M/D/YYYY)
+  // Google Sheets CSV exporta SEMPRE como M/D/YYYY (ex: 6/28/2026 = 28 de junho)
+  // Portanto: primeiro número = mês, segundo = dia
   if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/))) {
     let year = +m[3];
     if (year < 100) year += 2000;
     const hh = m[4] ? +m[4] : 0, mi = m[5] ? +m[5] : 0, ss = m[6] ? +m[6] : 0;
-    let dia = +m[1], mes = +m[2];
-    // Se m[2] > 12, só pode ser dia — formato americano M/D/YYYY (ex: 5/28/2024)
-    if (mes > 12) { const tmp = dia; dia = mes; mes = tmp; }
+    let mes = +m[1], dia = +m[2];
+    // Se primeiro número > 12, só pode ser dia — formato BR DD/MM/YYYY
+    if (mes > 12) { const tmp = mes; mes = dia; dia = tmp; }
     const d = new Date(year, mes - 1, dia, hh, mi, ss);
     return isNaN(d) ? null : d;
   }
-  // YYYY-MM-DD ou YYYY-MM-DDTHH:MM:SS (ISO)
+  // YYYY-MM-DD ou ISO
   if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})/))) {
     const d = new Date(s);
     if (!isNaN(d)) return d;
     return new Date(+m[1], +m[2]-1, +m[3]);
   }
-  // Número serial do Google Sheets/Excel (dias desde 30/12/1899)
+  // Serial do Google Sheets/Excel
   if (/^\d+(\.\d+)?$/.test(s) && +s > 20000 && +s < 80000) {
-    const epoch = new Date(1899, 11, 30);
-    return new Date(epoch.getTime() + (+s) * 86400000);
+    return new Date(new Date(1899,11,30).getTime() + (+s)*86400000);
   }
   const d = new Date(s);
   return isNaN(d) ? null : d;
@@ -1545,6 +1545,8 @@ function slideBuildSlides(){
         { val: c.ok.toString(), lbl: 'Em Dia' },
     ]};
   });
+  const frota = FROTA_DATA.filter(f => f.motorista && f.motorista !== '—');
+  const frotaList = frota.slice(0,8).map(f => `${f.motorista.split(' ')[0]} — ${f.placa}`);
   return [
     { title: '<i class="fas fa-chart-line"></i> Financeiro — Resumo por Mês', type: 'fin-chart' },
     { title: '<i class="fas fa-truck"></i> Faturamento', kpis: [
@@ -1559,23 +1561,15 @@ function slideBuildSlides(){
         { val: slideText('bat-proximas','—'), lbl: 'Próx. 30 dias' },
         { val: slideText('bat-ok','—'), lbl: 'Em Dia' },
     ]},
-    { title: '<i class="fas fa-file-invoice"></i> NF-e / Abastecimentos', kpis: [
-        { val: slideText('nfe-abast','—'), lbl: 'Abastecimentos' },
-        { val: slideText('nfe-valor','R$ —'), lbl: 'Total Combustível' },
-        { val: slideText('nfe-litros','— L'), lbl: 'Litros Total' },
-        { val: slideText('nfe-precomedio','R$ —'), lbl: 'Preço Médio/L' },
-    ]},
-    { title: '<i class="fas fa-id-card"></i> Frota / Motoristas', kpis: [
-        { val: slideText('frota-total','—'), lbl: 'Motoristas' },
-        { val: slideText('frota-placas','—'), lbl: 'Veículos Cadastrados' },
-        { val: '28–30', lbl: 'Paletes por Viagem' },
-    ]},
+    { title: '<i class="fas fa-id-card"></i> Frota / Motoristas', type: 'frota-list',
+      kpis: [
+        { val: String(frota.length), lbl: 'Motoristas Ativos' },
+        { val: String(FROTA_DATA.length), lbl: 'Veículos Cadastrados' },
+        { val: String(FROTA_DATA.filter(f=>f.paletes==='30').length), lbl: 'Veículos 30 Paletes (Van)' },
+      ],
+      lista: frotaList
+    },
     ...vencSlides,
-    { title: '<i class="fas fa-link"></i> Links Úteis', links: [
-        { icon:'fa-map-marker-alt', name:'Localização', desc:'Google Maps' },
-        { icon:'fa-square-parking', name:'Estacionamento Regis Renovo Park', desc:'Próximo a Embu das Artes' },
-        { icon:'fa-truck-fast', name:'MovTrans', desc:'Sistema Web de Fretes' },
-    ]},
   ];
 }
 
@@ -1589,11 +1583,12 @@ function slideRender(){
     if (s.type === 'fin-chart') {
       const d = slideFinMonthlyData();
       body.innerHTML = `<div class="slide-section-title">${s.title}</div>
-        <div class="slide-kpi-grid" style="margin-bottom:1.6rem;max-width:640px">
+        <div class="slide-kpi-grid" style="margin-bottom:1.4rem;max-width:640px">
           <div class="slide-kpi-card"><div class="slide-kpi-val">${fmtMoney(d.totalReceita)}</div><div class="slide-kpi-lbl">Receita (6 meses)</div></div>
           <div class="slide-kpi-card"><div class="slide-kpi-val">${fmtMoney(d.totalDespesa)}</div><div class="slide-kpi-lbl">Despesa (6 meses)</div></div>
+          <div class="slide-kpi-card"><div class="slide-kpi-val">${fmtMoney(d.totalReceita-d.totalDespesa)}</div><div class="slide-kpi-lbl">Saldo (6 meses)</div></div>
         </div>
-        <div style="max-width:680px;width:100%"><canvas id="slideFinCanvas" height="220"></canvas></div>`;
+        <div style="max-width:680px;width:100%"><canvas id="slideFinCanvas" height="200"></canvas></div>`;
       requestAnimationFrame(() => {
         body.classList.add('show');
         if (slideFinChartInstance) slideFinChartInstance.destroy();
@@ -1605,18 +1600,24 @@ function slideRender(){
               { label:'Receitas', data: d.receita, backgroundColor:'rgba(212,175,55,.85)', borderRadius:6 },
               { label:'Despesas', data: d.despesa, backgroundColor:'rgba(220,38,38,.75)', borderRadius:6 }
             ]},
-            options: { responsive:true, animation:{ duration:1100, easing:'easeOutQuart' }, plugins:{ legend:{ position:'bottom' } }, scales:{ y:{ ticks:{ callback:v=>fmtMoney(v) } } } }
+            options: { responsive:true, animation:{ duration:1100, easing:'easeOutQuart' }, plugins:{ legend:{ position:'bottom', labels:{color:'#1e2a3a'} } }, scales:{ y:{ ticks:{ callback:v=>fmtMoney(v), color:'#64748b' }, grid:{color:'#f1f5f9'} }, x:{ticks:{color:'#64748b'}, grid:{display:false}} } }
           });
         }
       });
       return;
     }
-    body.innerHTML = s.links
-      ? `<div class="slide-section-title">${s.title}</div>
-         <div class="slide-links-grid">
-           ${s.links.map(l => `<div class="link-card" style="cursor:default"><div class="link-card-icon"><i class="fas ${l.icon}"></i></div><div class="link-card-body"><h3>${l.name}</h3><p>${l.desc}</p></div></div>`).join('')}
-         </div>`
-      : `<div class="slide-section-title">${s.title}</div>
+    if (s.type === 'frota-list') {
+      body.innerHTML = `<div class="slide-section-title">${s.title}</div>
+        <div class="slide-kpi-grid" style="margin-bottom:1.4rem;max-width:700px">
+          ${s.kpis.map(k=>`<div class="slide-kpi-card"><div class="slide-kpi-val">${k.val}</div><div class="slide-kpi-lbl">${k.lbl}</div></div>`).join('')}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.6rem;max-width:900px;width:100%">
+          ${(s.lista||[]).map(l=>`<div style="background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:10px;padding:.6rem 1rem;font-size:.82rem;font-weight:600;color:#1e2a3a">${l}</div>`).join('')}
+        </div>`;
+      requestAnimationFrame(() => body.classList.add('show'));
+      return;
+    }
+    body.innerHTML = `<div class="slide-section-title">${s.title}</div>
          <div class="slide-kpi-grid">
            ${s.kpis.map(k => `<div class="slide-kpi-card"><div class="slide-kpi-val">${k.val}</div><div class="slide-kpi-lbl">${k.lbl}</div></div>`).join('')}
          </div>`;
@@ -1994,6 +1995,18 @@ function pneuShowDetail(placa, posKey){
       <div><b>KM Rodado:</b> ${calc.kmRodado ? pneuFmtKm(calc.kmRodado) : 'Aguardando KM atual'}</div>
       <div><b>CPK (custo por km):</b> ${calc.cpk ? 'R$ ' + calc.cpk.toFixed(4) + '/km' : 'Aguardando KM atual + custo'}</div>
       <div><b>Custo por mm de sulco:</b> ${calc.custoPorMm ? pneuFmtMoney(calc.custoPorMm) + '/mm' : 'Aguardando sulco atual + custo'}</div>
+      <div><b>Previsão de troca:</b> ${(() => {
+        const VIDA_UTIL_RADIAL = 200000;
+        const kmInst = info ? info.kmInstalado : null;
+        const kmAtual = calc.leitura.kmAtual;
+        if (kmInst && kmAtual) {
+          const kmRestante = VIDA_UTIL_RADIAL - (kmAtual - kmInst);
+          if (kmRestante <= 0) return '<span style="color:#dc2626">⚠ Troca recomendada agora</span>';
+          return `~${pneuFmtKm(Math.max(0,kmRestante))} restantes (estimativa p/ 200.000 km de vida útil)`;
+        }
+        if (kmInst) return `Base: instalado em ${pneuFmtKm(kmInst)} — lance o KM atual para calcular`;
+        return 'Aguardando KM de instalação e KM atual';
+      })()}</div>
     </div>`;
   } else {
     html += `<div class="pneu-detail-field" style="color:var(--text-lt)">Sem dados cadastrados para esta posição ainda.</div>`;
@@ -3011,6 +3024,10 @@ async function vencCarregarCategoria(cat){
   }
 }
 
+// Calendário IPVA SC 2026 — último dígito da placa → mês de vencimento
+const IPVA_SC_MES = {'0':1,'1':2,'2':3,'3':4,'4':5,'5':6,'6':7,'7':8,'8':9,'9':10};
+const MESES_NOME = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
 function vencRenderCategoria(cat){
   const rows = vencData[cat.key] || [];
   const loadingEl = document.getElementById(`venc-${cat.key}-loading`);
@@ -3020,6 +3037,7 @@ function vencRenderCategoria(cat){
   const headers = Object.keys(rows[0]);
   const colId = findCol(headers, ['placa','veiculo','motorista','nome','funcionario','colaborador']);
   const colData = findCol(headers, ['vencimento','validade','data','venc']);
+  const colParcelas = findCol(headers, ['parcela','parcelamento','parcelas','prestacao','instalamento']);
   const now = new Date(); now.setHours(0,0,0,0);
   const em30 = new Date(now); em30.setDate(em30.getDate() + 30);
   const busca = (document.getElementById(`venc-${cat.key}-busca`).value || '').toLowerCase();
@@ -3043,6 +3061,49 @@ function vencRenderCategoria(cat){
   if (filtroStatus) filtradas = filtradas.filter(l => l.status === filtroStatus);
   if (busca) filtradas = filtradas.filter(l => Object.values(l.row).some(v => String(v||'').toLowerCase().includes(busca)));
 
+  // ── LICENCIAMENTO/IPVA: layout por mês + parcelas ──
+  if (cat.key === 'licenciamento') {
+    const porMes = {};
+    filtradas.forEach(({row, d, status}) => {
+      const placa = colId ? (row[colId] || '') : '';
+      const ultimoDigito = placa.replace(/[^0-9]/g,'').slice(-1);
+      const mesCal = IPVA_SC_MES[ultimoDigito];
+      const chave = mesCal ? `${now.getFullYear()}-${String(mesCal).padStart(2,'0')}` : (d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` : 'sem-data');
+      if (!porMes[chave]) porMes[chave] = [];
+      porMes[chave].push({row, d, status, placa, mesCal});
+    });
+    const mesesOrdenados = Object.keys(porMes).sort();
+    document.getElementById(`venc-${cat.key}-head`).innerHTML = '';
+    document.getElementById(`venc-${cat.key}-body`).innerHTML = '';
+    wrapEl.style.display = 'block';
+    loadingEl.style.display = 'none';
+    wrapEl.querySelector('table').innerHTML = mesesOrdenados.map(mes => {
+      const grupo = porMes[mes];
+      const nomeMes = mes === 'sem-data' ? 'Sem data' : MESES_NOME[parseInt(mes.split('-')[1])-1] + '/' + mes.split('-')[0];
+      const cabRows = grupo.map(({row, d, status}) => {
+        const map = { vencido:['⚠ Vencido','badge-danger'], proximo:['⏰ Próx. 30d','badge-warning'], ok:['✓ Em Dia','badge-success'] };
+        const [statusLabel, badgeClass] = map[status];
+        const parcela = colParcelas ? row[colParcelas] : null;
+        const parcelaHtml = parcela ? `<td><span class="badge badge-warning">${parcela}</span></td>` : '<td>—</td>';
+        const cells = headers.filter(h=>h!==colParcelas).map(h => {
+          const val = row[h] || '';
+          const hl = h.toLowerCase();
+          if (hl.includes('data')||hl.includes('venc')||hl.includes('valid')) {
+            const dd = vencParseDataCat(val, cat);
+            return `<td>${dd ? fmtDate(dd) : val}</td>`;
+          }
+          return `<td>${val}</td>`;
+        }).join('');
+        return `<tr>${cells}${parcelaHtml}<td><span class="badge ${badgeClass}">${statusLabel}</span></td></tr>`;
+      }).join('');
+      const thead = `<tr style="background:var(--accent-dk);color:#fff"><th colspan="${headers.length+2}" style="padding:.6rem .9rem;font-size:.82rem;font-weight:800;border-radius:0">${nomeMes} — ${grupo.length} veículo(s)</th></tr>
+        <tr>${headers.filter(h=>h!==colParcelas).map(h=>`<th>${h}</th>`).join('')}${colParcelas?'<th>Parcelas</th>':'<th>—</th>'}<th>Status</th></tr>`;
+      return `<thead>${thead}</thead><tbody>${cabRows}</tbody>`;
+    }).join('') || `<thead></thead><tbody><tr><td colspan="5" style="text-align:center;color:var(--text-lt)">Nenhum registro.</td></tr></tbody>`;
+    vencRenderChart(cat, { vencidos, proximos, ok });
+    return;
+  }
+
   document.getElementById(`venc-${cat.key}-head`).innerHTML = '<tr>' + [...headers, 'Status'].map(h => `<th>${h}</th>`).join('') + '</tr>';
   document.getElementById(`venc-${cat.key}-body`).innerHTML = filtradas.slice(0, 500).map(({row, d, status}) => {
     const map = { vencido:['⚠ Vencido','badge-danger'], proximo:['⏰ Próx. 30d','badge-warning'], ok:['✓ Em Dia','badge-success'] };
@@ -3061,7 +3122,6 @@ function vencRenderCategoria(cat){
 
   loadingEl.style.display = 'none';
   wrapEl.style.display = 'block';
-
   vencRenderChart(cat, { vencidos, proximos, ok });
 }
 
