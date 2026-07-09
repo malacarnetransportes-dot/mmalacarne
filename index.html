@@ -677,7 +677,7 @@ footer a{color:var(--accent);text-decoration:none;}
             </div>
           </div>
           <div class="charts-grid">
-            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-bar"></i> Receitas vs Despesas</div><canvas id="finChart" height="180"></canvas></div>
+            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-ranking-star"></i> Ranking por Categoria</div><ol class="rank-list" id="finRankCategoria"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
             <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-pie"></i> Por Categoria</div><canvas id="finPieChart" height="180"></canvas></div>
           </div>
           <div class="dash-card">
@@ -1109,7 +1109,6 @@ footer a{color:var(--accent);text-decoration:none;}
             <div id="vencResumoKpis" style="display:flex;gap:.6rem;flex-wrap:wrap"></div>
             <div style="display:flex;gap:.6rem;flex-wrap:wrap">
               <button class="pneu-leitura-btn" id="vencAtualizarBtn" style="width:auto;padding:.55rem 1.2rem"><i class="fas fa-rotate"></i> Atualizar Dados</button>
-              <button class="pneu-leitura-btn" id="vencResetInvertBtn" style="width:auto;padding:.55rem 1.2rem;background:#64748b" title="Limpa qualquer configuração de inversão de datas salva"><i class="fas fa-calendar-xmark"></i> Resetar Datas</button>
               <button class="pneu-leitura-btn" id="vencEnviarWhatsBtn" style="width:auto;padding:.55rem 1.2rem;background:#25D366"><i class="fab fa-whatsapp"></i> Enviar Aviso no WhatsApp</button>
             </div>
           </div>
@@ -1285,7 +1284,7 @@ let currentFinanceiroFiltered = [], currentFaturamentoFiltered = [], currentBate
 let calcHistoricoArr = [];
 
 // charts
-let finBarChart = null, finPieChartObj = null, fatLineChart = null;
+let finPieChartObj = null, fatLineChart = null;
 
 // ═══════════════════════════════════════════════════════════
 // UTILITÁRIOS
@@ -1313,27 +1312,38 @@ function parseMoney(v) {
 function parseDate(v) {
   if (v === null || v === undefined || v === '') return null;
   const s = String(v).trim();
+  if (!s) return null;
   let m;
-  // Planilhas exportam em DD/MM/YYYY — primeiro número = dia, segundo = mês.
-  if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/))) {
+
+  // 1) DD/MM/YYYY ou D/M/YYYY (formato BR — planilhas PT-BR)
+  //    Aceita separador / ou - ou . entre dia, mês e ano
+  if ((m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})(?:[T\s](\d{1,2}):(\d{2})(?::(\d{2}))?)?/))) {
     let year = +m[3];
     if (year < 100) year += 2000;
     const hh = m[4] ? +m[4] : 0, mi = m[5] ? +m[5] : 0, ss = m[6] ? +m[6] : 0;
     const dia = +m[1], mes = +m[2];
-    const d = new Date(year, mes - 1, dia, hh, mi, ss);
+    // Valida: dia 1-31, mês 1-12
+    if (mes >= 1 && mes <= 12 && dia >= 1 && dia <= 31) {
+      const d = new Date(year, mes - 1, dia, hh, mi, ss);
+      return isNaN(d) ? null : d;
+    }
+  }
+
+  // 2) YYYY-MM-DD ou ISO (formato internacional)
+  if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})/))) {
+    const d = new Date(+m[1], +m[2]-1, +m[3]);
     return isNaN(d) ? null : d;
   }
-  // YYYY-MM-DD ou ISO
-  if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})/))) {
-    const d = new Date(s);
-    if (!isNaN(d)) return d;
-    return new Date(+m[1], +m[2]-1, +m[3]);
+
+  // 3) Serial numérico do Google Sheets / Excel
+  //    Google Sheets usa base 30/12/1899; faixa razoável: 30000–60000 (~1982–2064)
+  if (/^\d+(\.\d+)?$/.test(s)) {
+    const serial = +s;
+    if (serial > 30000 && serial < 60000) {
+      return new Date(new Date(1899, 11, 30).getTime() + serial * 86400000);
+    }
   }
-  // Serial do Google Sheets/Excel
-  if (/^\d+(\.\d+)?$/.test(s) && +s > 20000 && +s < 80000) {
-    return new Date(new Date(1899,11,30).getTime() + (+s)*86400000);
-  }
-  // Fallback: NÃO usa new Date(s) pois interpreta strings no formato americano
+
   return null;
 }
 
@@ -2389,36 +2399,22 @@ function renderFinTable(data, headers, colData, colDesc, colValor, colTipo) {
 }
 
 function renderFinCharts(data, colData, colValor, colTipo) {
-  // Agrega por mês
-  const mensal = {};
+  // Agrega por categoria (para o ranking e o gráfico de pizza)
   const cats = {};
   data.forEach(row => {
-    const d = colData ? parseDate(row[colData]) : null;
     const v = colValor ? parseMoney(row[colValor]) : 0;
     const t = colTipo ? String(row[colTipo] || '') : '';
-    if (d) {
-      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-      if (!mensal[key]) mensal[key] = {rec:0, desp:0};
-      if (v >= 0) mensal[key].rec += v; else mensal[key].desp += Math.abs(v);
-    }
     if (t) cats[t] = (cats[t] || 0) + Math.abs(v);
   });
 
-  const meses = Object.keys(mensal).sort().slice(-12);
-  // Bar chart
-  if (finBarChart) finBarChart.destroy();
-  const ctxBar = document.getElementById('finChart').getContext('2d');
-  finBarChart = new Chart(ctxBar, {
-    type: 'bar',
-    data: {
-      labels: meses,
-      datasets: [
-        {label:'Receitas', data: meses.map(m => mensal[m].rec), backgroundColor:'rgba(16,185,129,.7)', borderRadius:4},
-        {label:'Despesas', data: meses.map(m => mensal[m].desp), backgroundColor:'rgba(239,68,68,.7)', borderRadius:4}
-      ]
-    },
-    options: {responsive:true, plugins:{legend:{position:'top'}}, scales:{y:{ticks:{callback:v=>fmtMoney(v)}}}}
-  });
+  // Ranking por Categoria — lista ordenada da maior para a menor
+  const rankEl = document.getElementById('finRankCategoria');
+  if (rankEl) {
+    const ranking = Object.entries(cats).sort((a, b) => b[1] - a[1]);
+    rankEl.innerHTML = ranking.length
+      ? ranking.map(([nome, valor]) => `<li><span style="font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px" title="${nome}">${nome}</span><span style="font-weight:800;color:var(--accent)">${fmtMoney(valor)}</span></li>`).join('')
+      : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li>';
+  }
 
   // Pie
   if (finPieChartObj) finPieChartObj.destroy();
@@ -2931,10 +2927,10 @@ function resetBatFilters() {
 // ═══════════════════════════════════════════════════════════
 const VENC_WHATS_NUMERO = '5549999675448';
 const VENC_CATEGORIAS = [
-  { key:'licenciamento', label:'Licenciamento / IPVA', icon:'fa-car', urlDefault:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQGsLDGp-_EDMmRgTZsSWdWdnJCEZWMRTTrHiEWXWNLwf2ZpdBd3Pjz9VUX_CldBQ/pub?output=csv' },
-  { key:'aso', label:'ASO', icon:'fa-notes-medical', urlDefault:'https://docs.google.com/spreadsheets/d/e/2PACX-1vS4W3MHzy-SobIO-07RcblSucM3Q3h553Z9RhTniAATdX3WXk-du13fNbu4lNUnBA/pub?output=csv' },
-  { key:'toxicologico', label:'Toxicológico', icon:'fa-flask', urlDefault:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQp1LDO7J1XrZmKfAM_UZ09i54FA7lhC3PMtosMQzLO7AHSF4Ipvh-6zsnW6YdmHg/pub?output=csv' },
-  { key:'defensiva', label:'Direção Defensiva', icon:'fa-id-badge', urlDefault:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQw35oMQBJ6UDetP0JCtgDfIzJ77avujBIWtD0YWx8WH0ZkrSTx2I_C4p_cRMHPvA/pub?output=csv' },
+  { key:'licenciamento', label:'Licenciamento / IPVA', icon:'fa-car',        urlDefault:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQGsLDGp-_EDMmRgTZsSWdWdnJCEZWMRTTrHiEWXWNLwf2ZpdBd3Pjz9VUX_CldBQ/pub?output=csv' },
+  { key:'aso',           label:'ASO',                icon:'fa-notes-medical',urlDefault:'https://docs.google.com/spreadsheets/d/e/2PACX-1vS4W3MHzy-SobIO-07RcblSucM3Q3h553Z9RhTniAATdX3WXk-du13fNbu4lNUnBA/pub?output=csv' },
+  { key:'toxicologico',  label:'Toxicológico',       icon:'fa-flask',        urlDefault:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQp1LDO7J1XrZmKfAM_UZ09i54FA7lhC3PMtosMQzLO7AHSF4Ipvh-6zsnW6YdmHg/pub?output=csv' },
+  { key:'defensiva',     label:'Direção Defensiva',  icon:'fa-id-badge',     urlDefault:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQw35oMQBJ6UDetP0JCtgDfIzJ77avujBIWtD0YWx8WH0ZkrSTx2I_C4p_cRMHPvA/pub?output=csv' },
 ];
 let vencData = {};
 let vencCounts = {};
@@ -2943,14 +2939,51 @@ let vencInited = false;
 let vencCharts = {};
 
 function vencGetUrl(cat){ return localStorage.getItem('url_venc_' + cat.key) || cat.urlDefault; }
-function vencGetInverter(cat){
-  // Por padrão NÃO invertemos — o parseDate trata DD/MM/YYYY como formato BR (padrão).
-  // Use o checkbox "Datas invertidas" apenas se a planilha exportar em formato americano M/D/YYYY
-  // e os valores de dia e mês forem ambos ≤ 12 (não detectáveis automaticamente).
-  const stored = localStorage.getItem('venc_invert_' + cat.key);
-  return stored === '1'; // null ou '0' = não inverte
+
+// ── Detecção automática do formato de data (corrige mês/dia trocados) ──
+// Algumas planilhas do Google exportam datas em formato americano (M/D/AAAA)
+// mesmo com o conteúdo em português, o que fazia o sistema ler uma data
+// como se fosse D/M e trocar o vencimento real. Em vez de depender de um
+// botão manual, cada categoria agora analisa TODOS os valores da coluna de
+// data: se algum valor só é possível como M/D (ex.: "05/17/2026", onde 17
+// não pode ser mês), a planilha inteira é tratada como formato americano.
+// Se algum valor só é possível como D/M (ex.: "17/05/2026"), mantemos o
+// padrão brasileiro. Sem nenhuma evidência (dia e mês sempre ≤ 12), o
+// padrão brasileiro (DD/MM) é usado.
+function vencDetectarFormato(rows, colData){
+  if (!colData) return 'DMY';
+  let evidenciaMDY = false, evidenciaDMY = false;
+  for (const row of rows) {
+    const v = row[colData];
+    if (v === null || v === undefined || v === '') continue;
+    const m = String(v).trim().match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/);
+    if (!m) continue;
+    const a = +m[1], b = +m[2];
+    if (a > 12 && a <= 31) evidenciaDMY = true;
+    if (b > 12 && b <= 31) evidenciaMDY = true;
+  }
+  return (evidenciaMDY && !evidenciaDMY) ? 'MDY' : 'DMY';
 }
-function vencParseDataCat(val, cat){ return parseDate(val); }
+
+function vencParseDataCat(val, cat, formato){
+  if (val === null || val === undefined || val === '') return null;
+  const s = String(val).trim();
+  if (!s) return null;
+  const m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})(?:[T\s](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if (m) {
+    let year = +m[3]; if (year < 100) year += 2000;
+    const hh = m[4] ? +m[4] : 0, mi = m[5] ? +m[5] : 0, ss = m[6] ? +m[6] : 0;
+    let dia = +m[1], mes = +m[2];
+    if (formato === 'MDY') { const tmp = dia; dia = mes; mes = tmp; }
+    if (mes >= 1 && mes <= 12 && dia >= 1 && dia <= 31) {
+      const d = new Date(year, mes - 1, dia, hh, mi, ss);
+      return isNaN(d) ? null : d;
+    }
+    return null;
+  }
+  // ISO (AAAA-MM-DD) ou serial numérico — não é ambíguo, usa o parser padrão
+  return parseDate(val);
+}
 
 function vencBuildSkeleton(){
   const subnav = document.getElementById('vencSubnav');
@@ -2972,6 +3005,12 @@ function vencBuildSkeleton(){
             <span class="badge badge-success" id="venc-${cat.key}-ok">0 em dia</span>
           </div>
         </div>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:end;margin-bottom:.6rem">
+          <div class="flt-grp" style="flex:1;min-width:220px"><label>URL da Planilha</label>
+            <input type="text" id="venc-${cat.key}-url" placeholder="Cole o link CSV publicado do Google Sheets..." value="${vencGetUrl(cat)}" style="font-size:.72rem">
+          </div>
+          <button class="pneu-leitura-btn" id="venc-${cat.key}-salvar-url" style="width:auto;padding:.4rem .9rem;font-size:.76rem"><i class="fas fa-floppy-disk"></i> Salvar e Carregar</button>
+        </div>
         <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:end;margin-bottom:1rem">
           <div class="flt-grp"><label>Buscar</label><input type="text" id="venc-${cat.key}-busca" placeholder="Placa, nome..."></div>
           <div class="flt-grp"><label>Status</label>
@@ -2979,7 +3018,6 @@ function vencBuildSkeleton(){
               <option value="">Todos</option><option value="vencido">Vencidos</option><option value="proximo">Próx. 30 dias</option><option value="ok">Em dia</option>
             </select>
           </div>
-
         </div>
         <div class="venc-chart-layout">
           <div class="venc-chart-col"><canvas id="venc-${cat.key}-chart" height="180"></canvas></div>
@@ -2996,7 +3034,13 @@ function vencBuildSkeleton(){
   VENC_CATEGORIAS.forEach(cat => {
     document.getElementById(`venc-${cat.key}-busca`).addEventListener('input', () => vencRenderCategoria(cat));
     document.getElementById(`venc-${cat.key}-filtro-status`).addEventListener('change', () => vencRenderCategoria(cat));
-
+    document.getElementById(`venc-${cat.key}-salvar-url`).addEventListener('click', () => {
+      const url = document.getElementById(`venc-${cat.key}-url`).value.trim();
+      if (!url) { showToast('Cole a URL da planilha publicada'); return; }
+      localStorage.setItem('url_venc_' + cat.key, url);
+      showToast('URL salva! Carregando dados...');
+      vencCarregarCategoria(cat).then(() => { vencRecalcularTodosOsAlertas(); vencAtualizarResumoEAlerta(); });
+    });
   });
 }
 
@@ -3040,10 +3084,11 @@ function vencRenderCategoria(cat){
   const em30 = new Date(now); em30.setDate(em30.getDate() + 30);
   const busca = (document.getElementById(`venc-${cat.key}-busca`).value || '').toLowerCase();
   const filtroStatus = document.getElementById(`venc-${cat.key}-filtro-status`).value;
+  const formato = vencDetectarFormato(rows, colData);
 
   let vencidos = 0, proximos = 0, ok = 0;
   const linhasComStatus = rows.map(row => {
-    const d = colData ? vencParseDataCat(row[colData], cat) : null;
+    const d = colData ? vencParseDataCat(row[colData], cat, formato) : null;
     let status = 'ok';
     if (d) { if (d < now) status = 'vencido'; else if (d <= em30) status = 'proximo'; }
     if (status === 'vencido') vencidos++; else if (status === 'proximo') proximos++; else ok++;
@@ -3094,7 +3139,12 @@ function vencRenderCategoria(cat){
       porMes[chave].push({row, d, status, placa});
     });
 
-    const colsDisplay = headers.filter(h => h !== colParcelas);
+    // Organiza as colunas: Placa/Veículo e Vencimento primeiro (mais importantes),
+    // depois o restante dos dados da planilha, sem repetir a coluna de parcelas.
+    const colsPrioritarias = [colId, colData].filter(Boolean);
+    const colsDisplay = colsPrioritarias.concat(
+      headers.filter(h => h !== colParcelas && !colsPrioritarias.includes(h))
+    );
     const mesesOrdenados = Object.keys(porMes).sort();
 
     container.innerHTML = mesesOrdenados.map(mes => {
@@ -3111,7 +3161,7 @@ function vencRenderCategoria(cat){
           const val = row[h] || '';
           const hl = h.toLowerCase();
           if (hl.includes('data')||hl.includes('venc')||hl.includes('valid')||hl.includes('situa')) {
-            const dd = vencParseDataCat(val, cat);
+            const dd = vencParseDataCat(val, cat, formato);
             return `<td>${dd ? fmtDate(dd) : val}</td>`;
           }
           return `<td>${val}</td>`;
@@ -3141,15 +3191,21 @@ function vencRenderCategoria(cat){
   const licContainer = document.getElementById('venc-lic-container');
   if (licContainer) licContainer.style.display = 'none';
 
-  document.getElementById(`venc-${cat.key}-head`).innerHTML = '<tr>' + [...headers, 'Status'].map(h => `<th>${h}</th>`).join('') + '</tr>';
+  // Organiza as colunas: Nome/Placa e Vencimento primeiro, sem duplicar colunas.
+  const colsPrioritariasPadrao = [colId, colData].filter(Boolean);
+  const headersOrdenados = colsPrioritariasPadrao.concat(
+    headers.filter(h => !colsPrioritariasPadrao.includes(h))
+  );
+
+  document.getElementById(`venc-${cat.key}-head`).innerHTML = '<tr>' + [...headersOrdenados, 'Status'].map(h => `<th>${h}</th>`).join('') + '</tr>';
   document.getElementById(`venc-${cat.key}-body`).innerHTML = filtradas.slice(0, 500).map(({row, d, status}) => {
     const map = { vencido:['⚠ Vencido','badge-danger'], proximo:['⏰ Próx. 30d','badge-warning'], ok:['✓ Em Dia','badge-success'] };
     const [statusLabel, badgeClass] = map[status];
-    const cells = headers.map(h => {
+    const cells = headersOrdenados.map(h => {
       const val = row[h] || '';
       const hl = h.toLowerCase();
       if (hl.includes('data') || hl.includes('venc') || hl.includes('valid')) {
-        const dd = vencParseDataCat(val, cat);
+        const dd = vencParseDataCat(val, cat, formato);
         return `<td>${dd ? fmtDate(dd) : val}</td>`;
       }
       return `<td>${val}</td>`;
@@ -3190,9 +3246,12 @@ function vencRecalcularTodosOsAlertas(){
     if (!rows.length) return;
     const headers = Object.keys(rows[0]);
     const colId = findCol(headers, ['placa','veiculo','motorista','nome','funcionario','colaborador']);
-    const colData = findCol(headers, ['vencimento','validade','data','venc']);
+    const colData = cat.key === 'licenciamento'
+      ? findCol(headers, ['vencimento','validade','data','venc','jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez','situacao','sit.','sit '])
+      : findCol(headers, ['vencimento','validade','data','venc']);
+    const formato = vencDetectarFormato(rows, colData);
     rows.forEach(row => {
-      const d = colData ? vencParseDataCat(row[colData], cat) : null;
+      const d = colData ? vencParseDataCat(row[colData], cat, formato) : null;
       if (d && d <= em30) {
         vencAlertasAtuais.push({ categoria: cat.label, id: colId ? (row[colId] || '—') : '—', data: d, vencido: d < now });
       }
@@ -3263,15 +3322,6 @@ function vencInit(){
   if (!vencInited) {
     vencBuildSkeleton();
     document.getElementById('vencAtualizarBtn').addEventListener('click', vencCarregarTudo);
-    document.getElementById('vencResetInvertBtn').addEventListener('click', () => {
-      VENC_CATEGORIAS.forEach(cat => {
-        localStorage.removeItem('venc_invert_' + cat.key);
-        const cb = document.getElementById(`venc-${cat.key}-inverter`);
-        if (cb) cb.checked = false;
-      });
-      showToast('Configurações de inversão limpas — atualizando...');
-      vencCarregarTudo();
-    });
     document.getElementById('vencEnviarWhatsBtn').addEventListener('click', () => {
       window.open('https://wa.me/' + VENC_WHATS_NUMERO + '?text=' + encodeURIComponent(vencMontarMensagemWhatsApp()), '_blank');
     });
