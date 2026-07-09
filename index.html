@@ -1333,8 +1333,8 @@ function parseDate(v) {
   if (/^\d+(\.\d+)?$/.test(s) && +s > 20000 && +s < 80000) {
     return new Date(new Date(1899,11,30).getTime() + (+s)*86400000);
   }
-  const d = new Date(s);
-  return isNaN(d) ? null : d;
+  // Fallback: NÃO usa new Date(s) pois interpreta strings no formato americano
+  return null;
 }
 
 function fmtMoney(v) {
@@ -1853,13 +1853,13 @@ function pneuFmtKm(v){ return v ? v.toLocaleString('pt-BR') + ' km' : '—'; }
 
 function pneuBuildSVG(placa){
   const grupos = [...new Set(PNEU_POS.map(p => p.grupo))];
-  let svg = `<svg viewBox="0 0 360 740" style="width:100%;max-width:340px;display:block;margin:0 auto">
+  let svg = `<svg viewBox="0 0 360 780" style="width:100%;max-width:340px;display:block;margin:0 auto">
     <rect x="120" y="18" width="120" height="300" rx="14" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="6 5"/>
     <text x="180" y="12" text-anchor="middle" font-size="11" font-weight="800" fill="#1e2a3a" letter-spacing="1">CAVALO 6x2</text>
     <circle cx="180" cy="365" r="9" fill="#94a3b8"/>
     <text x="180" y="392" text-anchor="middle" font-size="8" fill="#94a3b8">5ª RODA</text>
-    <rect x="120" y="408" width="120" height="300" rx="14" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="6 5"/>
-    <text x="180" y="402" text-anchor="middle" font-size="11" font-weight="800" fill="#1e2a3a" letter-spacing="1">CARRETA</text>`;
+    <rect x="120" y="408" width="120" height="340" rx="14" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="6 5"/>
+    <text x="180" y="402" text-anchor="middle" font-size="11" font-weight="800" fill="#1e2a3a" letter-spacing="1">CARRETA (12 pneus)</text>`;
   grupos.forEach(g => {
     const ys = PNEU_POS.filter(p => p.grupo === g).map(p => p.y);
     const minY = Math.min(...ys) - 22;
@@ -2037,9 +2037,14 @@ function pneuShowDetail(placa, posKey){
 function pneuBuildCadastroGeral(){
   const rows = [];
   pneuAllPlacas().forEach(placa => {
-    const pos = pneuGetVeiculo(placa).posicoes || {};
-    Object.keys(pos).forEach(key => {
-      const info = pos[key];
+    const posBase = pneuGetVeiculo(placa).posicoes || {};
+    // Inclui todas as 22 posições do conjunto (cavalo + carreta), mesmo sem dados
+    const pos = {};
+    PNEU_POS.forEach(p => { pos[p.key] = posBase[p.key] || {}; });
+    Object.assign(pos, posBase); // mantém extras se houver
+    PNEU_POS.forEach(p => { if (!pos[p.key]) pos[p.key] = {}; });
+    PNEU_POS.map(p => p.key).forEach(key => {
+      const info = pos[key] || {};
       const posLabel = PNEU_POS.find(p => p.key === key);
       const calc = pneuCalcTire(placa, key, info);
       rows.push(`<tr>
