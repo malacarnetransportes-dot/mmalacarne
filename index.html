@@ -217,6 +217,10 @@ footer a{color:var(--accent);text-decoration:none;}
 .venc-subnav-item{background:#fff;border:1.5px solid var(--gray-200);border-radius:999px;padding:.5rem 1.1rem;font-size:.8rem;font-weight:600;color:var(--text-lt);cursor:pointer;transition:.2s;display:flex;align-items:center;gap:.4rem;}
 .venc-subnav-item:hover{border-color:var(--accent);color:#1e2a3a;}
 .venc-subnav-item.active{background:var(--accent-dk);border-color:var(--accent-dk);color:#fff;}
+.venc-subnav-count{background:var(--gray-100);color:var(--text-lt);font-size:.7rem;font-weight:800;padding:.1rem .5rem;border-radius:20px;min-width:1.4em;text-align:center;}
+.venc-subnav-item.active .venc-subnav-count{background:rgba(255,255,255,.25);color:#fff;}
+.venc-subnav-count.is-error{background:#fee2e2;color:#b91c1c;}
+.venc-subnav-item.active .venc-subnav-count.is-error{background:#fecaca;color:#7f1d1d;}
 .venc-sub-pane{display:none;}
 .venc-sub-pane.active{display:block;}
 .venc-chart-layout{display:flex;gap:1.4rem;flex-wrap:wrap;align-items:flex-start;}
@@ -3059,6 +3063,11 @@ let vencCharts = {};
 
 function vencGetUrl(cat){ return localStorage.getItem('url_venc_' + cat.key) || cat.urlDefault; }
 
+const VENC_MESES_PT = {
+  jan:1, fev:2, mar:3, abr:4, mai:5, jun:6, jul:7, ago:8, set:9, out:10, nov:11, dez:12,
+  janeiro:1, fevereiro:2, marco:3, abril:4, maio:5, junho:6, julho:7, agosto:8, setembro:9, outubro:10, novembro:11, dezembro:12
+};
+
 // ── Detecção automática do formato de data (corrige mês/dia trocados) ──
 // Algumas planilhas do Google exportam datas em formato americano (M/D/AAAA)
 // mesmo com o conteúdo em português, o que fazia o sistema ler uma data
@@ -3084,11 +3093,15 @@ function vencDetectarFormato(rows, colData){
   return (evidenciaMDY && !evidenciaDMY) ? 'MDY' : 'DMY';
 }
 
+// Interpreta um valor de célula como data, aceitando DD/MM/AAAA (ou MM/DD se
+// `formato` for 'MDY'), AAAA-MM-DD, serial do Sheets/Excel, e datas por
+// extenso em português ("9 de julho de 2026", "09-jul-2026").
 function vencParseDataCat(val, cat, formato){
   if (val === null || val === undefined || val === '') return null;
   const s = String(val).trim();
   if (!s) return null;
-  const m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})(?:[T\s](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+
+  let m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})(?:[T\s](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
   if (m) {
     let year = +m[3]; if (year < 100) year += 2000;
     const hh = m[4] ? +m[4] : 0, mi = m[5] ? +m[5] : 0, ss = m[6] ? +m[6] : 0;
@@ -3100,14 +3113,71 @@ function vencParseDataCat(val, cat, formato){
     }
     return null;
   }
+
+  // Data por extenso em português: "9 de julho de 2026", "09-jul-2026", "9 jul 2026"
+  const sn = s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if ((m = sn.match(/^(\d{1,2})\s*(?:de|-|\/)?\s*([a-z]{3,})\.?\s*(?:de|-|\/)?\s*(\d{2,4})/))) {
+    const dia = +m[1];
+    const mes = VENC_MESES_PT[m[2].slice(0, 3)] || VENC_MESES_PT[m[2]];
+    let year = +m[3]; if (year < 100) year += 2000;
+    if (mes) { const d = new Date(year, mes - 1, dia); return isNaN(d) ? null : d; }
+  }
+
   // ISO (AAAA-MM-DD) ou serial numérico — não é ambíguo, usa o parser padrão
   return parseDate(val);
+}
+
+// Lista TODAS as colunas cujo cabeçalho bate com alguma palavra-chave,
+// ordenadas por prioridade (na ordem das keywords), sem repetir.
+function findColCandidates(headers, keywords){
+  const lower = headers.map(h => String(h).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+  const achadas = [];
+  keywords.forEach(kw => {
+    const kwn = kw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    lower.forEach((h, i) => { if (h.includes(kwn) && !achadas.includes(headers[i])) achadas.push(headers[i]); });
+  });
+  return achadas;
+}
+
+// Escolhe a coluna de data com base em EVIDÊNCIA real dos valores, não só
+// no nome do cabeçalho. Isso corrige o caso em que a coluna encontrada pelo
+// nome (ex.: uma coluna "Jan" que na verdade é status/checkbox do mês, não
+// uma data) fazia as datas saírem erradas e nenhum alerta ser gerado.
+function vencMelhorColunaData(rows, headers, candidatosPrioritarios){
+  if (!rows.length) return candidatosPrioritarios[0] || null;
+  const amostra = rows.slice(0, 60);
+
+  function taxaAcerto(header){
+    let preenchidos = 0, validos = 0;
+    for (const row of amostra) {
+      const v = row[header];
+      if (v === null || v === undefined || String(v).trim() === '') continue;
+      preenchidos++;
+      if (vencParseDataCat(v, null, 'DMY') || vencParseDataCat(v, null, 'MDY')) validos++;
+    }
+    return preenchidos ? validos / preenchidos : 0;
+  }
+
+  // 1) Testa os candidatos que batem pelo nome, na ordem de prioridade
+  for (const h of candidatosPrioritarios) {
+    if (h && taxaAcerto(h) >= 0.4) return h;
+  }
+  // 2) Nenhum candidato por nome realmente continha datas — procura em TODAS
+  //    as colunas da planilha a que mais parece conter datas de verdade
+  let melhor = null, melhorTaxa = 0;
+  for (const h of headers) {
+    const taxa = taxaAcerto(h);
+    if (taxa > melhorTaxa) { melhorTaxa = taxa; melhor = h; }
+  }
+  if (melhor && melhorTaxa >= 0.5) return melhor;
+  // 3) Nada convincente — mantém o comportamento anterior (primeiro candidato por nome)
+  return candidatosPrioritarios[0] || null;
 }
 
 function vencBuildSkeleton(){
   const subnav = document.getElementById('vencSubnav');
   VENC_CATEGORIAS.forEach(cat => {
-    subnav.insertAdjacentHTML('beforeend', `<button class="venc-subnav-item" data-sub="${cat.key}"><i class="fas ${cat.icon}"></i> ${cat.label}</button>`);
+    subnav.insertAdjacentHTML('beforeend', `<button class="venc-subnav-item" data-sub="${cat.key}"><i class="fas ${cat.icon}"></i> ${cat.label} <span class="venc-subnav-count" id="venc-${cat.key}-count">—</span></button>`);
   });
   subnav.querySelectorAll('.venc-subnav-item').forEach(btn => {
     btn.addEventListener('click', () => vencMostrarSub(btn.dataset.sub));
@@ -3173,13 +3243,17 @@ function vencMostrarSub(sub){
 
 async function vencCarregarCategoria(cat){
   const loadingEl = document.getElementById(`venc-${cat.key}-loading`);
+  const countEl = document.getElementById(`venc-${cat.key}-count`);
   loadingEl.style.display = 'flex';
   loadingEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...';
+  if (countEl) { countEl.textContent = '…'; countEl.classList.remove('is-error'); countEl.removeAttribute('title'); }
   try {
     vencData[cat.key] = await fetchCSV(vencGetUrl(cat));
     vencRenderCategoria(cat);
+    if (countEl) countEl.textContent = String(vencData[cat.key].length);
   } catch(e) {
     loadingEl.innerHTML = `<span style="color:var(--danger)"><i class="fas fa-exclamation-circle"></i> Erro: ${e.message}</span>`;
+    if (countEl) { countEl.textContent = '!'; countEl.classList.add('is-error'); countEl.title = 'Erro ao carregar: ' + e.message; }
   }
 }
 
@@ -3195,9 +3269,10 @@ function vencRenderCategoria(cat){
 
   const headers = Object.keys(rows[0]);
   const colId = findCol(headers, ['placa','veiculo','motorista','nome','funcionario','colaborador']);
-  const colData = cat.key === 'licenciamento'
-    ? findCol(headers, ['vencimento','validade','data','venc','jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez','situacao','sit.','sit '])
-    : findCol(headers, ['vencimento','validade','data','venc']);
+  const colDataCandidatos = cat.key === 'licenciamento'
+    ? findColCandidates(headers, ['vencimento','validade','data','venc','jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez','situacao','sit.','sit '])
+    : findColCandidates(headers, ['vencimento','validade','data','venc']);
+  const colData = vencMelhorColunaData(rows, headers, colDataCandidatos);
   const colParcelas = findCol(headers, ['parcela','parcelamento','parcelas','prestacao','instalamento','parc']);
   const now = new Date(); now.setHours(0,0,0,0);
   const em30 = new Date(now); em30.setDate(em30.getDate() + 30);
@@ -3235,7 +3310,10 @@ function vencRenderCategoria(cat){
     if (headEl) headEl.innerHTML = '';
     if (bodyEl) bodyEl.innerHTML = '';
 
-    // Container dedicado — cria se não existir
+    // Container dedicado — cria se não existir. A visibilidade é controlada
+    // pela aba (.venc-sub-pane.active), então não mexemos em style.display aqui:
+    // isso é o que causava o efeito de "aparece e some" quando outra categoria
+    // terminava de carregar depois desta.
     const containerId = `venc-lic-container`;
     let container = document.getElementById(containerId);
     if (!container) {
@@ -3243,7 +3321,6 @@ function vencRenderCategoria(cat){
       container.id = containerId;
       wrapEl.parentNode.insertBefore(container, wrapEl);
     }
-    container.style.display = 'block';
 
     // Agrupa por mês (último dígito da placa → mês IPVA SC)
     const porMes = {};
@@ -3306,9 +3383,8 @@ function vencRenderCategoria(cat){
     return;
   }
 
-  // Para as outras categorias: esconde o container de licenciamento se existir
-  const licContainer = document.getElementById('venc-lic-container');
-  if (licContainer) licContainer.style.display = 'none';
+  // Nota: a visibilidade do painel de Licenciamento/IPVA é controlada pela
+  // aba (.venc-sub-pane.active) — nada a fazer aqui ao renderizar as outras categorias.
 
   // Organiza as colunas: Nome/Placa e Vencimento primeiro, sem duplicar colunas.
   const colsPrioritariasPadrao = [colId, colData].filter(Boolean);
@@ -3365,9 +3441,10 @@ function vencRecalcularTodosOsAlertas(){
     if (!rows.length) return;
     const headers = Object.keys(rows[0]);
     const colId = findCol(headers, ['placa','veiculo','motorista','nome','funcionario','colaborador']);
-    const colData = cat.key === 'licenciamento'
-      ? findCol(headers, ['vencimento','validade','data','venc','jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez','situacao','sit.','sit '])
-      : findCol(headers, ['vencimento','validade','data','venc']);
+    const colDataCandidatos = cat.key === 'licenciamento'
+      ? findColCandidates(headers, ['vencimento','validade','data','venc','jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez','situacao','sit.','sit '])
+      : findColCandidates(headers, ['vencimento','validade','data','venc']);
+    const colData = vencMelhorColunaData(rows, headers, colDataCandidatos);
     const formato = vencDetectarFormato(rows, colData);
     rows.forEach(row => {
       const d = colData ? vencParseDataCat(row[colData], cat, formato) : null;
