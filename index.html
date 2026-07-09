@@ -149,6 +149,30 @@ footer a{color:var(--accent);text-decoration:none;}
 .slide-dot.active{background:var(--accent-dk);width:22px;border-radius:5px;}
 .slide-progress{height:3px;background:rgba(0,0,0,.06);}
 .slide-progress-bar{height:100%;background:var(--accent-dk);width:0%;transition:width .1s linear;}
+.slide-counter{font-size:.8rem;font-weight:700;color:var(--text-lt);letter-spacing:.5px;}
+.slide-datetime{display:flex;flex-direction:column;align-items:flex-end;gap:.15rem;line-height:1.2;}
+.slide-date{font-size:.8rem;font-weight:700;color:var(--text-lt);letter-spacing:.3px;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.slide-date b{color:#1e2a3a;font-weight:700;}
+
+/* ── Visão consolidada de status (vencimentos, alertas) ── */
+.slide-kpi-card.is-danger .slide-kpi-val{color:var(--danger)!important;}
+.slide-kpi-card.is-warning .slide-kpi-val{color:var(--warning)!important;}
+.slide-kpi-card.is-ok .slide-kpi-val{color:var(--success)!important;}
+.slide-status-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.4rem;max-width:1140px;width:100%;}
+.slide-status-card{background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:var(--r16);padding:1.3rem 1.4rem;box-shadow:0 6px 24px rgba(30,42,58,.06);text-align:left;}
+.slide-status-card-head{display:flex;align-items:center;gap:.6rem;font-weight:800;font-size:.95rem;color:#1e2a3a;margin-bottom:1rem;padding-bottom:.7rem;border-bottom:1px solid rgba(0,0,0,.05);}
+.slide-status-card-head i{color:var(--accent-dk);font-size:1.1rem;}
+.slide-status-rows{display:flex;flex-direction:column;gap:.55rem;}
+.slide-status-row{display:flex;justify-content:space-between;align-items:center;font-size:.83rem;color:var(--text-lt);}
+.slide-status-row .n{font-weight:800;font-size:1.1rem;}
+.slide-status-row.danger .n{color:var(--danger);}
+.slide-status-row.warning .n{color:var(--warning);}
+.slide-status-row.ok .n{color:var(--success);}
+.slide-status-bar{height:7px;border-radius:6px;background:var(--gray-100);overflow:hidden;margin-top:.9rem;display:flex;}
+.slide-status-bar span{height:100%;}
+.slide-hero-banner{display:flex;align-items:center;justify-content:center;gap:.6rem;font-size:1.05rem;font-weight:700;padding:.9rem 1.6rem;border-radius:60px;margin-bottom:2rem;}
+.slide-hero-banner.is-ok{background:#ecfdf5;color:#047857;}
+.slide-hero-banner.is-alert{background:#fef2f2;color:#b91c1c;}
 
 .pneu-legend{display:flex;flex-wrap:wrap;gap:1.1rem;justify-content:center;margin-top:1rem;font-size:.78rem;color:var(--text-lt);}
 .pneu-legend span{display:flex;align-items:center;gap:.4rem;}
@@ -401,7 +425,13 @@ footer a{color:var(--accent);text-decoration:none;}
 <div id="slideOverlay" class="slide-overlay">
   <div class="slide-topbar">
     <div class="slide-brand"><i class="fas fa-truck"></i> <span style="font-weight:900;letter-spacing:1px">M-MALACARNE</span><span style="font-weight:400;color:var(--text-lt);margin:0 .3rem">·</span>Gestão à Vista</div>
-    <div class="slide-clock" id="slideClock">--:--:--</div>
+    <div style="display:flex;align-items:center;gap:1.4rem">
+      <div class="slide-datetime">
+        <div class="slide-date" id="slideDateLine">—, --/--/----</div>
+        <div class="slide-clock" id="slideClock">--:--:--</div>
+      </div>
+      <div class="slide-counter" id="slideCounter"></div>
+    </div>
     <button class="slide-close" id="slideCloseBtn" title="Fechar (Esc)"><i class="fas fa-times"></i></button>
   </div>
   <div class="slide-body" id="slideBody"></div>
@@ -1545,30 +1575,45 @@ function slideFinMonthlyData(){
 }
 
 function slideBuildSlides(){
-  const vencSlides = VENC_CATEGORIAS.map(cat => {
-    const c = (typeof vencCounts !== 'undefined' && vencCounts[cat.key]) ? vencCounts[cat.key] : { vencidos:0, proximos:0, ok:0 };
-    return { title: `<i class="fas ${cat.icon}"></i> ${cat.label}`, kpis: [
-        { val: c.vencidos.toString(), lbl: 'Vencidos' },
-        { val: c.proximos.toString(), lbl: 'Próx. 30 dias' },
-        { val: c.ok.toString(), lbl: 'Em Dia' },
-    ]};
-  });
   const frota = FROTA_DATA.filter(f => f.motorista && f.motorista !== '—');
   const frotaList = frota.slice(0,8).map(f => `${f.motorista.split(' ')[0]} — ${f.placa}`);
+
+  // Resumo de cada categoria de vencimento (Licenciamento/IPVA, ASO, Toxicológico, Defensiva)
+  const vencResumo = VENC_CATEGORIAS.map(cat => {
+    const c = (typeof vencCounts !== 'undefined' && vencCounts[cat.key]) ? vencCounts[cat.key] : { vencidos:0, proximos:0, ok:0 };
+    return { label: cat.label, icon: cat.icon, ...c };
+  });
+  const totalVencidos = vencResumo.reduce((s,v)=>s+v.vencidos,0);
+  const totalProximos = vencResumo.reduce((s,v)=>s+v.proximos,0);
+
+  const fin = slideFinMonthlyData();
+  const saldo = fin.totalReceita - fin.totalDespesa;
+  const batVencidas = parseInt(slideText('bat-vencidas','0')) || 0;
+
   return [
-    { title: '<i class="fas fa-chart-line"></i> Financeiro — Resumo por Mês', type: 'fin-chart' },
+    // 1) Visão Geral — o que todo gestor precisa ver primeiro: saúde financeira e alertas críticos
+    { title: '<i class="fas fa-gauge-high"></i> Visão Geral da Operação', type: 'overview', resumo: {
+        saldo, faturamento: slideText('fat-total','R$ —'),
+        frotaAtiva: frota.length, totalVeiculos: FROTA_DATA.length,
+        totalVencidos, totalProximos, batVencidas
+    }},
+    // 2) Financeiro — detalhe do fluxo de caixa
+    { title: '<i class="fas fa-chart-line"></i> Financeiro — Receitas x Despesas (6 meses)', type: 'fin-chart' },
+    // 3) Faturamento
     { title: '<i class="fas fa-truck"></i> Faturamento', kpis: [
         { val: slideText('fat-total','R$ —'), lbl: 'Total a Receber' },
         { val: slideText('fat-viagens','—'), lbl: 'Lançamentos' },
         { val: slideText('fat-motoristas','—'), lbl: 'Motoristas' },
         { val: slideText('fat-pdfs','—'), lbl: 'PDFs Lidos' },
     ]},
+    // 4) Baterias — destaca em vermelho se houver vencidas
     { title: '<i class="fas fa-battery-three-quarters"></i> Baterias', kpis: [
         { val: slideText('bat-total','—'), lbl: 'Total Baterias' },
-        { val: slideText('bat-vencidas','—'), lbl: 'Vencidas' },
-        { val: slideText('bat-proximas','—'), lbl: 'Próx. 30 dias' },
-        { val: slideText('bat-ok','—'), lbl: 'Em Dia' },
+        { val: slideText('bat-vencidas','—'), lbl: 'Vencidas', danger: true },
+        { val: slideText('bat-proximas','—'), lbl: 'Próx. 30 dias', warning: true },
+        { val: slideText('bat-ok','—'), lbl: 'Em Dia', ok: true },
     ]},
+    // 5) Frota / Motoristas
     { title: '<i class="fas fa-id-card"></i> Frota / Motoristas', type: 'frota-list',
       kpis: [
         { val: String(frota.length), lbl: 'Motoristas Ativos' },
@@ -1577,24 +1622,63 @@ function slideBuildSlides(){
       ],
       lista: frotaList
     },
-    ...vencSlides,
+    // 6) Vencimentos — as 4 categorias juntas em um único painel, em vez de 4 telas repetidas
+    { title: '<i class="fas fa-triangle-exclamation"></i> Vencimentos — Documentos e Certificações', type: 'venc-overview',
+      categorias: vencResumo, totalVencidos, totalProximos },
   ];
 }
 
 let slideFinChartInstance = null;
+
+// Retorna a classe de destaque do card de KPI conforme o status (vencido/próximo/ok)
+function slideKpiClass(k){
+  if (k.danger && parseInt(k.val) > 0) return ' is-danger';
+  if (k.warning && parseInt(k.val) > 0) return ' is-warning';
+  if (k.ok) return ' is-ok';
+  return '';
+}
+function slideKpiCard(k){
+  return `<div class="slide-kpi-card${slideKpiClass(k)}"><div class="slide-kpi-val">${k.val}</div><div class="slide-kpi-lbl">${k.lbl}</div></div>`;
+}
+
 function slideRender(){
   const slides = slideBuildSlides();
-  const s = slides[slideIdx % slides.length];
+  const idx = slideIdx % slides.length;
+  const s = slides[idx];
   const body = document.getElementById('slideBody');
   body.classList.remove('show');
+  const counterEl = document.getElementById('slideCounter');
+  if (counterEl) counterEl.textContent = `${idx + 1} / ${slides.length}`;
+
   setTimeout(() => {
+    if (s.type === 'overview') {
+      const r = s.resumo;
+      const temAlerta = r.totalVencidos > 0 || r.batVencidas > 0;
+      const banner = temAlerta
+        ? `<div class="slide-hero-banner is-alert"><i class="fas fa-triangle-exclamation"></i> ${r.totalVencidos + r.batVencidas} pendência(s) vencida(s) exigem atenção imediata</div>`
+        : `<div class="slide-hero-banner is-ok"><i class="fas fa-circle-check"></i> Nenhum documento ou item vencido no momento</div>`;
+      body.innerHTML = `<div class="slide-section-title">${s.title}</div>
+        ${banner}
+        <div class="slide-kpi-grid" style="max-width:1000px">
+          ${slideKpiCard({ val: fmtMoney(r.saldo), lbl: 'Saldo Financeiro (6 meses)', danger: r.saldo < 0 })}
+          ${slideKpiCard({ val: r.faturamento, lbl: 'Faturamento a Receber' })}
+          ${slideKpiCard({ val: `${r.frotaAtiva} / ${r.totalVeiculos}`, lbl: 'Motoristas Ativos / Veículos' })}
+          ${slideKpiCard({ val: String(r.totalVencidos), lbl: 'Documentos Vencidos', danger: true })}
+          ${slideKpiCard({ val: String(r.totalProximos), lbl: 'Vencendo em 30 dias', warning: true })}
+          ${slideKpiCard({ val: String(r.batVencidas), lbl: 'Baterias Vencidas', danger: true })}
+        </div>`;
+      requestAnimationFrame(() => body.classList.add('show'));
+      slideRenderDots(slides, idx);
+      return;
+    }
     if (s.type === 'fin-chart') {
       const d = slideFinMonthlyData();
+      const saldo = d.totalReceita - d.totalDespesa;
       body.innerHTML = `<div class="slide-section-title">${s.title}</div>
         <div class="slide-kpi-grid" style="margin-bottom:1.4rem;max-width:640px">
-          <div class="slide-kpi-card"><div class="slide-kpi-val">${fmtMoney(d.totalReceita)}</div><div class="slide-kpi-lbl">Receita (6 meses)</div></div>
-          <div class="slide-kpi-card"><div class="slide-kpi-val">${fmtMoney(d.totalDespesa)}</div><div class="slide-kpi-lbl">Despesa (6 meses)</div></div>
-          <div class="slide-kpi-card"><div class="slide-kpi-val">${fmtMoney(d.totalReceita-d.totalDespesa)}</div><div class="slide-kpi-lbl">Saldo (6 meses)</div></div>
+          <div class="slide-kpi-card is-ok"><div class="slide-kpi-val">${fmtMoney(d.totalReceita)}</div><div class="slide-kpi-lbl">Receita (6 meses)</div></div>
+          <div class="slide-kpi-card is-danger"><div class="slide-kpi-val">${fmtMoney(d.totalDespesa)}</div><div class="slide-kpi-lbl">Despesa (6 meses)</div></div>
+          <div class="slide-kpi-card${saldo < 0 ? ' is-danger' : ' is-ok'}"><div class="slide-kpi-val">${fmtMoney(saldo)}</div><div class="slide-kpi-lbl">Saldo (6 meses)</div></div>
         </div>
         <div style="max-width:680px;width:100%"><canvas id="slideFinCanvas" height="200"></canvas></div>`;
       requestAnimationFrame(() => {
@@ -1605,34 +1689,61 @@ function slideRender(){
           slideFinChartInstance = new Chart(ctx, {
             type: 'bar',
             data: { labels: d.labels, datasets: [
-              { label:'Receitas', data: d.receita, backgroundColor:'rgba(212,175,55,.85)', borderRadius:6 },
+              { label:'Receitas', data: d.receita, backgroundColor:'rgba(16,163,74,.85)', borderRadius:6 },
               { label:'Despesas', data: d.despesa, backgroundColor:'rgba(220,38,38,.75)', borderRadius:6 }
             ]},
             options: { responsive:true, animation:{ duration:1100, easing:'easeOutQuart' }, plugins:{ legend:{ position:'bottom', labels:{color:'#1e2a3a'} } }, scales:{ y:{ ticks:{ callback:v=>fmtMoney(v), color:'#64748b' }, grid:{color:'#f1f5f9'} }, x:{ticks:{color:'#64748b'}, grid:{display:false}} } }
           });
         }
       });
+      slideRenderDots(slides, idx);
       return;
     }
     if (s.type === 'frota-list') {
       body.innerHTML = `<div class="slide-section-title">${s.title}</div>
         <div class="slide-kpi-grid" style="margin-bottom:1.4rem;max-width:700px">
-          ${s.kpis.map(k=>`<div class="slide-kpi-card"><div class="slide-kpi-val">${k.val}</div><div class="slide-kpi-lbl">${k.lbl}</div></div>`).join('')}
+          ${s.kpis.map(slideKpiCard).join('')}
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.6rem;max-width:900px;width:100%">
           ${(s.lista||[]).map(l=>`<div style="background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:10px;padding:.6rem 1rem;font-size:.82rem;font-weight:600;color:#1e2a3a">${l}</div>`).join('')}
         </div>`;
       requestAnimationFrame(() => body.classList.add('show'));
+      slideRenderDots(slides, idx);
+      return;
+    }
+    if (s.type === 'venc-overview') {
+      body.innerHTML = `<div class="slide-section-title">${s.title}</div>
+        <div class="slide-status-grid">
+          ${s.categorias.map(c => {
+            const total = c.vencidos + c.proximos + c.ok;
+            const pct = n => total ? (n/total*100) : 0;
+            return `<div class="slide-status-card">
+              <div class="slide-status-card-head"><i class="fas ${c.icon}"></i> ${c.label}</div>
+              <div class="slide-status-rows">
+                <div class="slide-status-row danger"><span>Vencidos</span><span class="n">${c.vencidos}</span></div>
+                <div class="slide-status-row warning"><span>Próx. 30 dias</span><span class="n">${c.proximos}</span></div>
+                <div class="slide-status-row ok"><span>Em dia</span><span class="n">${c.ok}</span></div>
+              </div>
+              <div class="slide-status-bar"><span style="width:${pct(c.vencidos)}%;background:var(--danger)"></span><span style="width:${pct(c.proximos)}%;background:var(--warning)"></span><span style="width:${pct(c.ok)}%;background:var(--success)"></span></div>
+            </div>`;
+          }).join('')}
+        </div>`;
+      requestAnimationFrame(() => body.classList.add('show'));
+      slideRenderDots(slides, idx);
       return;
     }
     body.innerHTML = `<div class="slide-section-title">${s.title}</div>
          <div class="slide-kpi-grid">
-           ${s.kpis.map(k => `<div class="slide-kpi-card"><div class="slide-kpi-val">${k.val}</div><div class="slide-kpi-lbl">${k.lbl}</div></div>`).join('')}
+           ${s.kpis.map(slideKpiCard).join('')}
          </div>`;
     requestAnimationFrame(() => body.classList.add('show'));
+    slideRenderDots(slides, idx);
   }, 220);
+}
+
+function slideRenderDots(slides, idx){
   const dots = document.getElementById('slideDots');
-  dots.innerHTML = slides.map((_,i) => `<div class="slide-dot${i===(slideIdx%slides.length)?' active':''}"></div>`).join('');
+  dots.innerHTML = slides.map((_,i) => `<div class="slide-dot${i===idx?' active':''}"></div>`).join('');
 }
 
 function slideStartProgress(){
@@ -1653,8 +1764,16 @@ function slideNext(){
 }
 
 function slideUpdateClock(){
-  const el = document.getElementById('slideClock');
-  if (el) el.textContent = new Date().toLocaleTimeString('pt-BR');
+  const now = new Date();
+  const clockEl = document.getElementById('slideClock');
+  if (clockEl) clockEl.textContent = now.toLocaleTimeString('pt-BR');
+  const dateEl = document.getElementById('slideDateLine');
+  if (dateEl) {
+    let weekday = now.toLocaleDateString('pt-BR', { weekday: 'long' });
+    weekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+    const dataNum = now.toLocaleDateString('pt-BR'); // DD/MM/AAAA
+    dateEl.innerHTML = `<b>${weekday}</b>, ${dataNum}`;
+  }
 }
 
 function openSlideMode(){
