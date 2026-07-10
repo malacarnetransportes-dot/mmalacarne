@@ -147,11 +147,20 @@ footer a{color:var(--accent);text-decoration:none;}
   font-family:'Inter','Segoe UI',system-ui,sans-serif;
 }
 .slide-overlay.active{display:flex;}
+/* Painéis diagonais de fundo — mesma linguagem de "corte" da referência de
+   annual report, só que em tom dourado/marfim para casar com a marca. */
+.slide-overlay::before{content:'';position:absolute;top:0;right:0;width:46%;height:62%;
+  background:linear-gradient(135deg,rgba(212,175,55,.12),rgba(184,148,31,.03));
+  clip-path:polygon(40% 0%,100% 0%,100% 100%,0% 100%);pointer-events:none;z-index:0;}
+.slide-overlay::after{content:'';position:absolute;bottom:0;left:0;width:32%;height:38%;
+  background:linear-gradient(315deg,rgba(139,115,85,.08),transparent);
+  clip-path:polygon(0 100%,100% 100%,0 0);pointer-events:none;z-index:0;}
+.slide-topbar,.slide-body,.slide-dots,.slide-progress{position:relative;z-index:1;}
 .slide-topbar{display:flex;align-items:center;justify-content:space-between;padding:1.5rem 2.8rem;position:relative;}
 .slide-topbar::after{content:'';position:absolute;left:2.8rem;right:2.8rem;bottom:0;height:1px;
   background:linear-gradient(90deg,transparent,rgba(212,175,55,.55) 18%,rgba(184,148,31,.7) 50%,rgba(212,175,55,.55) 82%,transparent);}
 .slide-brand{display:flex;align-items:center;gap:.85rem;font-family:'Fraunces',Georgia,serif;font-size:1.3rem;color:#1c2333;}
-.slide-brand i{color:var(--accent-dk);font-size:1.2rem;}
+.slide-logo{height:40px;width:40px;object-fit:cover;border-radius:10px;box-shadow:0 6px 16px rgba(139,115,85,.28);}
 .slide-brand .brand-mark{font-weight:800;letter-spacing:1.1px;}
 .slide-brand .brand-sep{color:var(--accent);font-weight:400;margin:0 .15rem;font-family:'Inter',sans-serif;}
 .slide-brand .brand-sub{font-family:'Inter',sans-serif;font-weight:500;font-size:.95rem;color:var(--text-lt);letter-spacing:.2px;}
@@ -159,10 +168,22 @@ footer a{color:var(--accent);text-decoration:none;}
 .slide-close:hover{background:#fff;border-color:var(--accent);color:var(--accent-dk);}
 .slide-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease;}
 .slide-body.show{opacity:1;transform:translateY(0);}
-.slide-section-title{font-family:'Fraunces',Georgia,serif;font-size:2rem;font-weight:600;margin-bottom:2.2rem;color:#1c2333;letter-spacing:.2px;}
-.slide-section-title .fa,.slide-section-title i{color:var(--accent-dk);margin-right:.6rem;font-size:1.6rem;vertical-align:-3px;}
+/* Título com emblema circular dourado (referência: selo/ícone do capa) e
+   uma régua diagonal por baixo (o mesmo corte que dá o tom "annual report"). */
+.slide-section-title{font-family:'Fraunces',Georgia,serif;font-size:2rem;font-weight:600;margin-bottom:2.4rem;color:#1c2333;letter-spacing:.2px;position:relative;padding-bottom:1.1rem;}
+.slide-section-title .fa,.slide-section-title i{
+  color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent-dk));
+  width:2.5rem;height:2.5rem;display:inline-flex;align-items:center;justify-content:center;
+  border-radius:50%;font-size:1.05rem;margin-right:.85rem;vertical-align:middle;
+  box-shadow:0 8px 18px rgba(184,148,31,.35);}
+.slide-section-title::after{content:'';position:absolute;left:50%;bottom:0;transform:translateX(-50%) skewX(-16deg);
+  width:64px;height:4px;background:linear-gradient(90deg,var(--accent),var(--accent-dk));border-radius:2px;}
 .slide-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.6rem;max-width:1100px;width:100%;}
-.slide-kpi-card{background:#fffefb;border:1px solid rgba(139,115,85,.14);border-radius:20px;padding:1.9rem 1.3rem;box-shadow:0 10px 30px rgba(30,42,58,.05),0 1px 3px rgba(30,42,58,.04);transition:transform .3s ease;min-width:0;overflow:hidden;}
+/* Canto cortado (diagonal) no topo direito de cada card — o mesmo recurso
+   visual dos painéis "cortados" da referência, em escala pequena. */
+.slide-kpi-card{background:#fffefb;border:1px solid rgba(139,115,85,.14);border-radius:20px;padding:1.9rem 1.3rem;box-shadow:0 10px 30px rgba(30,42,58,.05),0 1px 3px rgba(30,42,58,.04);transition:transform .3s ease;min-width:0;overflow:hidden;position:relative;}
+.slide-kpi-card::after{content:'';position:absolute;top:0;right:0;width:0;height:0;
+  border-style:solid;border-width:0 36px 36px 0;border-color:transparent rgba(212,175,55,.16) transparent transparent;}
 .slide-kpi-card:hover{transform:translateY(-4px);}
 .slide-kpi-val{font-family:'Fraunces',Georgia,serif;font-size:clamp(1.25rem,2.4vw,2.1rem);font-weight:600;color:var(--accent-dk);margin-bottom:.45rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.2px;}
 .slide-kpi-lbl{font-family:'Inter',sans-serif;font-size:.78rem;font-weight:600;color:var(--text-lt);text-transform:uppercase;letter-spacing:1px;}
@@ -183,7 +204,9 @@ footer a{color:var(--accent);text-decoration:none;}
 .slide-kpi-card.is-warning .slide-kpi-val{color:var(--warning)!important;}
 .slide-kpi-card.is-ok .slide-kpi-val{color:var(--success)!important;}
 .slide-status-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.4rem;max-width:1140px;width:100%;}
-.slide-status-card{background:#fffefb;border:1px solid rgba(139,115,85,.14);border-radius:20px;padding:1.3rem 1.4rem;box-shadow:0 10px 30px rgba(30,42,58,.05);text-align:left;}
+.slide-status-card{background:#fffefb;border:1px solid rgba(139,115,85,.14);border-radius:20px;padding:1.3rem 1.4rem;box-shadow:0 10px 30px rgba(30,42,58,.05);text-align:left;position:relative;overflow:hidden;}
+.slide-status-card::after{content:'';position:absolute;top:0;right:0;width:0;height:0;
+  border-style:solid;border-width:0 30px 30px 0;border-color:transparent rgba(212,175,55,.14) transparent transparent;}
 .slide-status-card-head{display:flex;align-items:center;gap:.6rem;font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:1rem;color:#1c2333;margin-bottom:1rem;padding-bottom:.7rem;border-bottom:1px solid rgba(139,115,85,.12);}
 .slide-status-card-head i{color:var(--accent-dk);font-size:1.1rem;}
 .slide-status-rows{display:flex;flex-direction:column;gap:.55rem;}
@@ -478,7 +501,7 @@ footer a{color:var(--accent);text-decoration:none;}
 <!-- GESTÃO À VISTA — MODO SLIDE -->
 <div id="slideOverlay" class="slide-overlay">
   <div class="slide-topbar">
-    <div class="slide-brand"><i class="fas fa-truck"></i> <span class="brand-mark">M-MALACARNE</span><span class="brand-sep">·</span><span class="brand-sub">Gestão à Vista</span></div>
+    <div class="slide-brand"><img class="slide-logo" src="Screenshot_2.jpg" alt="M-Malacarne" onerror="this.style.display='none'"> <span class="brand-mark">M-MALACARNE</span><span class="brand-sep">·</span><span class="brand-sub">Gestão à Vista</span></div>
     <div style="display:flex;align-items:center;gap:1.6rem">
       <div class="slide-datetime">
         <div class="slide-date" id="slideDateLine">—, --/--/----</div>
