@@ -143,22 +143,23 @@ footer a{color:var(--accent);text-decoration:none;}
   background:#ffffff;
   z-index:3000;display:none;flex-direction:column;color:#1c2333;overflow:hidden;
   font-family:'Inter','Segoe UI',system-ui,sans-serif;
+  /* fundo absolutamente branco — sem nenhuma névoa escura */
 }
 .slide-overlay.active{display:flex;}
 /* Fundo branco esfumaçado: nuvens suaves e desfocadas em vez de cortes
    diagonais duros — só um sopro de dourado da marca, nada de bordas. */
 .slide-overlay::before{content:'';position:absolute;inset:-12%;
   background:
-    radial-gradient(32% 26% at 14% 18%, rgba(212,175,55,.11), transparent 70%),
-    radial-gradient(26% 22% at 88% 12%, rgba(139,115,85,.09), transparent 70%),
-    radial-gradient(34% 30% at 78% 88%, rgba(212,175,55,.08), transparent 70%),
-    radial-gradient(26% 24% at 8% 90%, rgba(184,148,31,.07), transparent 70%),
-    radial-gradient(20% 18% at 50% 50%, rgba(139,115,85,.04), transparent 70%);
+    radial-gradient(32% 26% at 14% 18%, rgba(212,175,55,.07), transparent 70%),
+    radial-gradient(26% 22% at 88% 12%, rgba(139,115,85,.05), transparent 70%),
+    radial-gradient(34% 30% at 78% 88%, rgba(212,175,55,.05), transparent 70%),
+    radial-gradient(26% 24% at 8% 90%, rgba(184,148,31,.04), transparent 70%),
+    radial-gradient(20% 18% at 50% 50%, rgba(139,115,85,.02), transparent 70%);
   filter:blur(70px);pointer-events:none;z-index:0;}
 .slide-topbar,.slide-body,.slide-dots,.slide-progress{position:relative;z-index:1;}
-.slide-topbar{display:flex;align-items:center;justify-content:space-between;padding:1.5rem 2.8rem;position:relative;}
-.slide-topbar::after{content:'';position:absolute;left:2.8rem;right:2.8rem;bottom:0;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(212,175,55,.55) 18%,rgba(184,148,31,.7) 50%,rgba(212,175,55,.55) 82%,transparent);}
+.slide-topbar{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 2.8rem;position:relative;background:rgba(255,255,255,.98);}
+.slide-topbar::after{content:'';position:absolute;left:2.8rem;right:2.8rem;bottom:0;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(212,175,55,.8) 18%,rgba(184,148,31,1) 50%,rgba(212,175,55,.8) 82%,transparent);}
 .slide-brand{display:flex;align-items:center;gap:.85rem;font-family:'Poppins',system-ui,sans-serif;font-size:1.3rem;color:#1c2333;}
 .slide-logo{height:40px;width:40px;object-fit:cover;border-radius:10px;box-shadow:0 6px 16px rgba(139,115,85,.28);}
 .slide-brand .brand-mark{font-weight:800;letter-spacing:1.1px;}
@@ -181,7 +182,7 @@ footer a{color:var(--accent);text-decoration:none;}
 .slide-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.6rem;max-width:1100px;width:100%;}
 /* Canto cortado (diagonal) no topo direito de cada card — o mesmo recurso
    visual dos painéis "cortados" da referência, em escala pequena. */
-.slide-kpi-card{background:#fffefb;border:1px solid rgba(139,115,85,.14);border-radius:20px;padding:1.9rem 1.3rem;box-shadow:0 10px 30px rgba(30,42,58,.05),0 1px 3px rgba(30,42,58,.04);transition:transform .3s ease;min-width:0;overflow:hidden;position:relative;}
+.slide-kpi-card{background:#ffffff;border:1px solid rgba(139,115,85,.18);border-radius:20px;padding:1.9rem 1.3rem;box-shadow:0 8px 24px rgba(30,42,58,.07),0 1px 3px rgba(30,42,58,.05);transition:transform .3s ease;min-width:0;overflow:hidden;position:relative;}
 .slide-kpi-card::after{content:'';position:absolute;top:0;right:0;width:0;height:0;
   border-style:solid;border-width:0 36px 36px 0;border-color:transparent rgba(212,175,55,.16) transparent transparent;}
 .slide-kpi-card:hover{transform:translateY(-4px);}
@@ -193,18 +194,18 @@ footer a{color:var(--accent);text-decoration:none;}
 .slide-dot.active{background:var(--accent-dk);width:22px;border-radius:5px;}
 .slide-progress{height:3px;background:rgba(139,115,85,.1);}
 .slide-progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-dk));width:0%;transition:width .1s linear;}
-.slide-counter{font-family:'Inter',sans-serif;font-size:.74rem;font-weight:700;color:var(--text-lt);letter-spacing:1.2px;padding:.35rem .8rem;border:1px solid rgba(139,115,85,.22);border-radius:20px;white-space:nowrap;}
-.slide-datetime{display:flex;flex-direction:column;align-items:flex-end;gap:.1rem;line-height:1;}
-.slide-date{font-family:'Inter',sans-serif;font-size:.8rem;font-weight:600;color:var(--text-lt);letter-spacing:1.3px;text-transform:uppercase;white-space:nowrap;}
-.slide-date b{color:#1c2333;font-weight:700;}
-.slide-clock{font-family:'Poppins',system-ui,sans-serif;font-size:2.2rem;font-weight:600;color:var(--accent-dk);font-variant-numeric:tabular-nums;letter-spacing:.5px;margin-top:.2rem;}
+.slide-counter{font-family:'Inter',sans-serif;font-size:.8rem;font-weight:800;color:#1c2333;letter-spacing:1.2px;padding:.4rem 1rem;border:1.5px solid rgba(184,148,31,.5);border-radius:20px;white-space:nowrap;background:rgba(255,255,255,.9);}
+.slide-datetime{display:flex;flex-direction:column;align-items:flex-end;gap:.15rem;line-height:1;}
+.slide-date{font-family:'Inter',sans-serif;font-size:.88rem;font-weight:700;color:#1c2333;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;}
+.slide-date b{color:var(--accent-dk);font-weight:800;}
+.slide-clock{font-family:'Poppins',system-ui,sans-serif;font-size:2.6rem;font-weight:700;color:#1c2333;font-variant-numeric:tabular-nums;letter-spacing:.5px;margin-top:.1rem;text-shadow:0 1px 3px rgba(0,0,0,.08);}
 
 /* ── Visão consolidada de status (vencimentos, alertas) ── */
 .slide-kpi-card.is-danger .slide-kpi-val{color:var(--danger)!important;}
 .slide-kpi-card.is-warning .slide-kpi-val{color:var(--warning)!important;}
 .slide-kpi-card.is-ok .slide-kpi-val{color:var(--success)!important;}
 .slide-status-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.4rem;max-width:1140px;width:100%;}
-.slide-status-card{background:#fffefb;border:1px solid rgba(139,115,85,.14);border-radius:20px;padding:1.3rem 1.4rem;box-shadow:0 10px 30px rgba(30,42,58,.05);text-align:left;position:relative;overflow:hidden;}
+.slide-status-card{background:#ffffff;border:1px solid rgba(139,115,85,.18);border-radius:20px;padding:1.3rem 1.4rem;box-shadow:0 8px 24px rgba(30,42,58,.07);text-align:left;position:relative;overflow:hidden;}
 .slide-status-card::after{content:'';position:absolute;top:0;right:0;width:0;height:0;
   border-style:solid;border-width:0 30px 30px 0;border-color:transparent rgba(212,175,55,.14) transparent transparent;}
 .slide-status-card-head{display:flex;align-items:center;gap:.6rem;font-family:'Poppins',system-ui,sans-serif;font-weight:600;font-size:1rem;color:#1c2333;margin-bottom:1rem;padding-bottom:.7rem;border-bottom:1px solid rgba(139,115,85,.12);}
@@ -4198,11 +4199,10 @@ function copiarSenha(senha, sistema) {
 // FROTA / MOTORISTAS
 // ═══════════════════════════════════════════════════════════
 const FROTA_DATA = [
+  // ── MOTORISTAS ATIVOS ──
   {motorista:'ADRIANO VAZ DOS SANTOS',     placa:'RYE7J26', carreta:'QJH0591',                  paletes:'28', celular:'46 - 99983-7772', cpf:'023.114.919-03'},
-  {motorista:'ALEXANDRE VENETZEI',          placa:'RLB3E26', carreta:'MGG7C96 — 30 pal. Van',    paletes:'28', celular:'42 - 991414-5266',cpf:'056.205.439-19'},
   {motorista:'ANDERSON VEIGA SANTOS',       placa:'QTM0G30', carreta:'RYQ7I03 — 30 pal. Van',    paletes:'30', celular:'42 - 99832-0501', cpf:'012.273.449-10'},
-  {motorista:'BRUNO EDUARDO RIBEIRO',       placa:'RAC4760', carreta:'RDS9G71',                  paletes:'28', celular:'41 - 99281-3168', cpf:'077.594.359-24'},
-  {motorista:'CRISTIANO DE ALMEIDA',        placa:'QJM1350', carreta:'OKD8A19',                  paletes:'28', celular:'49 - 99110-7517', cpf:'029.395.779-11'},
+  {motorista:'CRISTIANO DE ALMEIDA',        placa:'QJM1350', carreta:'OKD8A19',                  paletes:'28', celular:'49 - 99110-7517', cpf:'029.395.799-11'},
   {motorista:'ERI ORLANDO ROMERO',          placa:'QJC0B40', carreta:'MLB0J76',                  paletes:'28', celular:'92 - 99220-9993', cpf:'706.920.112-50'},
   {motorista:'GILSON MARGOTTI',             placa:'RAC4780', carreta:'RXS3D84',                  paletes:'28', celular:'41 - 99930-9646', cpf:'045.221.079-86'},
   {motorista:'HILDO ANTONIO ALMEIDA',       placa:'QJY0640', carreta:'QHI5B08',                  paletes:'28', celular:'49 - 99913-6578', cpf:'394.955.669-91'},
@@ -4212,9 +4212,12 @@ const FROTA_DATA = [
   {motorista:'MARIANO DE SOUZA',            placa:'QJA0E90', carreta:'QHA1357',                  paletes:'30', celular:'87 - 98134-2532', cpf:'098.235.784-27'},
   {motorista:'RAFAEL DE FRANÇA RAMOS',      placa:'RLB3E46', carreta:'IWV8B19',                  paletes:'28', celular:'42 - 98804-7766', cpf:'065.936.019-50'},
   {motorista:'RODRIGO DA ROSA',             placa:'RYE7J36', carreta:'RDS9H31',                  paletes:'30', celular:'49 - 99922-8442', cpf:'944.742.309-49'},
+  // ── VEÍCULOS PARADOS ──
   {motorista:'—',                           placa:'QJL8F70', carreta:'RXQ4H32',                  paletes:'28', celular:'49 - 99927-1817', cpf:'560.043.389-15'},
-  {motorista:'—',                           placa:'MKQ1A80', carreta:'MME7C92',                  paletes:'28', celular:'49 - 98826-7227', cpf:'065.544.399-19'},
-  {motorista:'—',                           placa:'MKR1080', carreta:'MHF6E75 — 30 pal. Van',    paletes:'28', celular:'42 - 99800-0365', cpf:'079.554.549-52'},
+  {motorista:'—',                           placa:'RLB3E26', carreta:'MGG7C96 — 30 pal. Van',    paletes:'28', celular:'',               cpf:''},
+  {motorista:'—',                           placa:'RAC4760', carreta:'RDS9G71',                  paletes:'28', celular:'',               cpf:''},
+  {motorista:'—',                           placa:'MKQ1A80', carreta:'MME7C92',                  paletes:'28', celular:'',               cpf:''},
+  {motorista:'—',                           placa:'MKR1080', carreta:'MHF6E75 — 30 pal. Van',    paletes:'28', celular:'',               cpf:''},
 ];
 
 function getInitials(name) {
