@@ -3350,12 +3350,15 @@ async function vencCarregarCategoria(cat){
   }
 }
 
-// Calendário IPVA SC 2026 — último dígito da placa → mês de vencimento
-const IPVA_SC_MES = {'0':1,'1':2,'2':3,'3':4,'4':5,'5':6,'6':7,'7':8,'8':9,'9':10};
+// Calendário IPVA SC 2026 — último dígito da placa → mês de vencimento.
+// Placa final 0 vence em outubro (mês 10); os demais dígitos seguem o mês
+// correspondente ao próprio número (final 1 = janeiro ... final 9 = setembro).
+const IPVA_SC_MES = {'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'0':10};
 const MESES_NOME = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
 // Colunas de parcelas (PARCELAS 1/2/3) — usadas pelas placas de cavalo
-// mecânico, que pagam o IPVA parcelado em vez de à vista num único mês.
+// mecânico, que pagam o IPVA sempre parcelado em 3x, dia 10, começando no
+// mês seguinte ao mês-calendário da placa (nunca à vista num único mês).
 function vencColunasParcelas(headers){
   return headers.filter(h => /parcela/i.test(String(h).normalize('NFD').replace(/[\u0300-\u036f]/g,'')));
 }
@@ -3394,14 +3397,15 @@ function vencCalcularStatusLinha(row, cat, headers, colId, colData, colSituacao,
       const colMes = headers.find(h => String(h).trim().toUpperCase() === MESES_NOME[mesCal - 1].toUpperCase());
       if (colMes) dataAnotada = vencExtrairDataEmTexto(row[colMes]);
     }
-    // Placas parceladas (ex.: cavalo mecânico) pagam o IPVA em 3x em vez de
-    // à vista: 1 parcela no mês anterior ao mês-calendário da placa, 1 no
-    // próprio mês, e 1 no mês seguinte. "Parcelado" = qualquer uma das
-    // colunas PARCELAS 1/2/3 vem preenchida (normalmente com "*").
+    // Placas de cavalo (mecânico) pagam o IPVA sempre parcelado em 3x, com
+    // vencimento no dia 10 de cada mês: a 1ª parcela cai no mês SEGUINTE ao
+    // mês-calendário da placa (mesCal), a 2ª no mês seguinte a essa, e a 3ª
+    // no mês seguinte à 2ª. "Parcelado" = qualquer uma das colunas
+    // PARCELAS 1/2/3 vem preenchida (normalmente com "*").
     const colsParcelas = vencColunasParcelas(headers);
     const parcelado = mesCal && colsParcelas.some(c => String(row[c] || '').trim() !== '');
     if (parcelado) {
-      parcelas = [-1, 0, 1].map(off => vencFimDoMes(now.getFullYear(), mesCal, off));
+      parcelas = [1, 2, 3].map(off => new Date(now.getFullYear(), (mesCal - 1) + off, 10));
     }
     // Data usada para o status: a anotada manualmente > a 1ª parcela pendente > o mês único.
     if (dataAnotada) {
@@ -3520,8 +3524,9 @@ function vencRenderCategoria(cat){
           }
           return `<td>${val}</td>`;
         }).join('');
-        // Placa parcelada (3x): mostra as 3 datas reais calculadas, cada
-        // uma com seu próprio status (1 mês antes / mês-base / 1 mês depois).
+        // Placa parcelada (3x, dia 10): mostra as 3 datas reais calculadas,
+        // cada uma com seu próprio status (mês seguinte, +2 e +3 meses após
+        // o mês-calendário da placa).
         let parcelaCell = '—';
         if (parcelas) {
           const pago = colSituacao ? String(row[colSituacao] || '').trim().toLowerCase().includes('ok') : false;
