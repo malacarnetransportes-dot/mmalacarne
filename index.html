@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>M-Malacarne Transporte & Logística</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Fraunces (display serif) + Inter (dados/UI) usadas apenas na tela cheia
+     de Gestão à Vista, para dar um acabamento mais premium sem alterar a
+     tipografia do restante do site. -->
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
@@ -126,51 +133,68 @@ footer a{color:var(--accent);text-decoration:none;}
 .link-card-go{color:var(--text-lt);font-size:.85rem;}
 
 /* ── GESTÃO À VISTA / MODO SLIDE ── */
-.slide-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#ffffff 0%,#f6f7fb 100%);z-index:3000;display:none;flex-direction:column;color:#1e2a3a;overflow:hidden;}
+/* Tela cheia com identidade própria: serifada Fraunces para títulos e
+   marca (peso editorial, premium), Inter para dados/rótulos (limpa,
+   ótima para números tabulares). Fundo marfim quente em vez de cinza
+   frio, para reforçar a paleta dourada já usada no resto do site. */
+.slide-overlay{
+  position:fixed;inset:0;
+  background:
+    radial-gradient(1100px 620px at 10% -8%, rgba(212,175,55,.09), transparent 60%),
+    radial-gradient(900px 520px at 100% 112%, rgba(139,115,85,.07), transparent 55%),
+    linear-gradient(160deg,#fffdf8 0%,#f8f3e8 55%,#f2ebdb 100%);
+  z-index:3000;display:none;flex-direction:column;color:#1c2333;overflow:hidden;
+  font-family:'Inter','Segoe UI',system-ui,sans-serif;
+}
 .slide-overlay.active{display:flex;}
-.slide-topbar{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 2.2rem;border-bottom:1px solid rgba(0,0,0,.07);}
-.slide-brand{display:flex;align-items:center;gap:.7rem;font-weight:800;font-size:1.1rem;letter-spacing:.5px;color:#1e2a3a;}
-.slide-brand i{color:var(--accent-dk);}
-.slide-clock{font-size:1.3rem;font-weight:700;color:var(--accent-dk);font-variant-numeric:tabular-nums;}
-.slide-close{background:rgba(0,0,0,.04);border:1px solid rgba(0,0,0,.08);color:#1e2a3a;width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:1rem;}
-.slide-close:hover{background:rgba(0,0,0,.08);}
+.slide-topbar{display:flex;align-items:center;justify-content:space-between;padding:1.5rem 2.8rem;position:relative;}
+.slide-topbar::after{content:'';position:absolute;left:2.8rem;right:2.8rem;bottom:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(212,175,55,.55) 18%,rgba(184,148,31,.7) 50%,rgba(212,175,55,.55) 82%,transparent);}
+.slide-brand{display:flex;align-items:center;gap:.85rem;font-family:'Fraunces',Georgia,serif;font-size:1.3rem;color:#1c2333;}
+.slide-brand i{color:var(--accent-dk);font-size:1.2rem;}
+.slide-brand .brand-mark{font-weight:800;letter-spacing:1.1px;}
+.slide-brand .brand-sep{color:var(--accent);font-weight:400;margin:0 .15rem;font-family:'Inter',sans-serif;}
+.slide-brand .brand-sub{font-family:'Inter',sans-serif;font-weight:500;font-size:.95rem;color:var(--text-lt);letter-spacing:.2px;}
+.slide-close{background:rgba(255,255,255,.7);border:1px solid rgba(139,115,85,.2);color:#1c2333;width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:1rem;transition:.2s;}
+.slide-close:hover{background:#fff;border-color:var(--accent);color:var(--accent-dk);}
 .slide-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease;}
 .slide-body.show{opacity:1;transform:translateY(0);}
-.slide-section-title{font-size:1.6rem;font-weight:800;margin-bottom:2rem;color:#1e2a3a;}
-.slide-section-title .fa,.slide-section-title i{color:var(--accent-dk);margin-right:.5rem;}
+.slide-section-title{font-family:'Fraunces',Georgia,serif;font-size:2rem;font-weight:600;margin-bottom:2.2rem;color:#1c2333;letter-spacing:.2px;}
+.slide-section-title .fa,.slide-section-title i{color:var(--accent-dk);margin-right:.6rem;font-size:1.6rem;vertical-align:-3px;}
 .slide-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.6rem;max-width:1100px;width:100%;}
-.slide-kpi-card{background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:var(--r16);padding:1.8rem 1.2rem;box-shadow:0 6px 24px rgba(30,42,58,.06);transition:transform .3s ease;min-width:0;overflow:hidden;}
+.slide-kpi-card{background:#fffefb;border:1px solid rgba(139,115,85,.14);border-radius:20px;padding:1.9rem 1.3rem;box-shadow:0 10px 30px rgba(30,42,58,.05),0 1px 3px rgba(30,42,58,.04);transition:transform .3s ease;min-width:0;overflow:hidden;}
 .slide-kpi-card:hover{transform:translateY(-4px);}
-.slide-kpi-val{font-size:clamp(1.15rem,2.3vw,2rem);font-weight:800;color:var(--accent-dk);margin-bottom:.4rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.3px;}
-.slide-kpi-lbl{font-size:.9rem;color:var(--text-lt);text-transform:uppercase;letter-spacing:.6px;}
+.slide-kpi-val{font-family:'Fraunces',Georgia,serif;font-size:clamp(1.25rem,2.4vw,2.1rem);font-weight:600;color:var(--accent-dk);margin-bottom:.45rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.2px;}
+.slide-kpi-lbl{font-family:'Inter',sans-serif;font-size:.78rem;font-weight:600;color:var(--text-lt);text-transform:uppercase;letter-spacing:1px;}
 .slide-links-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.2rem;max-width:1000px;width:100%;}
 .slide-dots{display:flex;gap:.5rem;justify-content:center;padding:1.4rem 0;}
-.slide-dot{width:9px;height:9px;border-radius:50%;background:rgba(0,0,0,.12);transition:.2s;}
+.slide-dot{width:9px;height:9px;border-radius:50%;background:rgba(139,115,85,.18);transition:.2s;}
 .slide-dot.active{background:var(--accent-dk);width:22px;border-radius:5px;}
-.slide-progress{height:3px;background:rgba(0,0,0,.06);}
-.slide-progress-bar{height:100%;background:var(--accent-dk);width:0%;transition:width .1s linear;}
-.slide-counter{font-size:.8rem;font-weight:700;color:var(--text-lt);letter-spacing:.5px;}
-.slide-datetime{display:flex;flex-direction:column;align-items:flex-end;gap:.15rem;line-height:1.2;}
-.slide-date{font-size:.8rem;font-weight:700;color:var(--text-lt);letter-spacing:.3px;font-variant-numeric:tabular-nums;white-space:nowrap;}
-.slide-date b{color:#1e2a3a;font-weight:700;}
+.slide-progress{height:3px;background:rgba(139,115,85,.1);}
+.slide-progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-dk));width:0%;transition:width .1s linear;}
+.slide-counter{font-family:'Inter',sans-serif;font-size:.74rem;font-weight:700;color:var(--text-lt);letter-spacing:1.2px;padding:.35rem .8rem;border:1px solid rgba(139,115,85,.22);border-radius:20px;white-space:nowrap;}
+.slide-datetime{display:flex;flex-direction:column;align-items:flex-end;gap:.1rem;line-height:1;}
+.slide-date{font-family:'Inter',sans-serif;font-size:.8rem;font-weight:600;color:var(--text-lt);letter-spacing:1.3px;text-transform:uppercase;white-space:nowrap;}
+.slide-date b{color:#1c2333;font-weight:700;}
+.slide-clock{font-family:'Fraunces',Georgia,serif;font-size:2.2rem;font-weight:600;color:var(--accent-dk);font-variant-numeric:tabular-nums;letter-spacing:.5px;margin-top:.2rem;}
 
 /* ── Visão consolidada de status (vencimentos, alertas) ── */
 .slide-kpi-card.is-danger .slide-kpi-val{color:var(--danger)!important;}
 .slide-kpi-card.is-warning .slide-kpi-val{color:var(--warning)!important;}
 .slide-kpi-card.is-ok .slide-kpi-val{color:var(--success)!important;}
 .slide-status-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.4rem;max-width:1140px;width:100%;}
-.slide-status-card{background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:var(--r16);padding:1.3rem 1.4rem;box-shadow:0 6px 24px rgba(30,42,58,.06);text-align:left;}
-.slide-status-card-head{display:flex;align-items:center;gap:.6rem;font-weight:800;font-size:.95rem;color:#1e2a3a;margin-bottom:1rem;padding-bottom:.7rem;border-bottom:1px solid rgba(0,0,0,.05);}
+.slide-status-card{background:#fffefb;border:1px solid rgba(139,115,85,.14);border-radius:20px;padding:1.3rem 1.4rem;box-shadow:0 10px 30px rgba(30,42,58,.05);text-align:left;}
+.slide-status-card-head{display:flex;align-items:center;gap:.6rem;font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:1rem;color:#1c2333;margin-bottom:1rem;padding-bottom:.7rem;border-bottom:1px solid rgba(139,115,85,.12);}
 .slide-status-card-head i{color:var(--accent-dk);font-size:1.1rem;}
 .slide-status-rows{display:flex;flex-direction:column;gap:.55rem;}
-.slide-status-row{display:flex;justify-content:space-between;align-items:center;font-size:.83rem;color:var(--text-lt);}
+.slide-status-row{display:flex;justify-content:space-between;align-items:center;font-family:'Inter',sans-serif;font-size:.83rem;color:var(--text-lt);}
 .slide-status-row .n{font-weight:800;font-size:1.1rem;}
 .slide-status-row.danger .n{color:var(--danger);}
 .slide-status-row.warning .n{color:var(--warning);}
 .slide-status-row.ok .n{color:var(--success);}
 .slide-status-bar{height:7px;border-radius:6px;background:var(--gray-100);overflow:hidden;margin-top:.9rem;display:flex;}
 .slide-status-bar span{height:100%;}
-.slide-hero-banner{display:flex;align-items:center;justify-content:center;gap:.6rem;font-size:1.05rem;font-weight:700;padding:.9rem 1.6rem;border-radius:60px;margin-bottom:2rem;}
+.slide-hero-banner{display:flex;align-items:center;justify-content:center;gap:.6rem;font-family:'Inter',sans-serif;font-size:1.05rem;font-weight:700;padding:.9rem 1.6rem;border-radius:60px;margin-bottom:2rem;}
 .slide-hero-banner.is-ok{background:#ecfdf5;color:#047857;}
 .slide-hero-banner.is-alert{background:#fef2f2;color:#b91c1c;}
 
@@ -454,8 +478,8 @@ footer a{color:var(--accent);text-decoration:none;}
 <!-- GESTÃO À VISTA — MODO SLIDE -->
 <div id="slideOverlay" class="slide-overlay">
   <div class="slide-topbar">
-    <div class="slide-brand"><i class="fas fa-truck"></i> <span style="font-weight:900;letter-spacing:1px">M-MALACARNE</span><span style="font-weight:400;color:var(--text-lt);margin:0 .3rem">·</span>Gestão à Vista</div>
-    <div style="display:flex;align-items:center;gap:1.4rem">
+    <div class="slide-brand"><i class="fas fa-truck"></i> <span class="brand-mark">M-MALACARNE</span><span class="brand-sep">·</span><span class="brand-sub">Gestão à Vista</span></div>
+    <div style="display:flex;align-items:center;gap:1.6rem">
       <div class="slide-datetime">
         <div class="slide-date" id="slideDateLine">—, --/--/----</div>
         <div class="slide-clock" id="slideClock">--:--:--</div>
@@ -1642,9 +1666,45 @@ function slideFinMonthlyData(){
   return { labels, receita, despesa, totalReceita: receita.reduce((a,b)=>a+b,0), totalDespesa: despesa.reduce((a,b)=>a+b,0) };
 }
 
+// Resumo do painel Financeiro do modo slide: total geral, últimos 6 meses,
+// mês vigente, e o ranking por categoria só do mês vigente. Tudo tratado
+// como despesa (saída) — esta planilha ainda não tem a receita de entrada
+// lançada, então somamos o valor absoluto em vez de separar por sinal
+// (assunto a ser resolvido depois, quando a receita for informada à parte).
+function slideFinResumo(){
+  if (!financeiroData.length) return { totalGeral:0, total6m:0, totalMes:0, rankingMes:[] };
+  const headers = Object.keys(financeiroData[0]);
+  const colData  = findCol(headers, ['data','date','vencimento','competencia','lancamento']);
+  const colValor = findCol(headers, ['valor','value','montante','total','vl ','vlr','preco','price']);
+  const colCat   = findCol(headers, ['categoria','tipo lancamento','natureza','tipo','descricao','classificacao']);
+  const now = new Date();
+  const mesAtualKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const seisMesesAtras = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+
+  let totalGeral = 0, total6m = 0, totalMes = 0;
+  const catMes = {};
+  financeiroData.forEach(row => {
+    const d = colData ? parseDate(row[colData]) : null;
+    const v = colValor ? Math.abs(parseMoney(row[colValor])) : 0;
+    totalGeral += v;
+    if (!d) return;
+    if (d >= seisMesesAtras) total6m += v;
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    if (key === mesAtualKey) {
+      totalMes += v;
+      const cat = colCat ? (String(row[colCat] || '').trim() || 'Sem categoria') : 'Sem categoria';
+      catMes[cat] = (catMes[cat] || 0) + v;
+    }
+  });
+  const rankingMes = Object.entries(catMes).sort((a,b) => b[1]-a[1]);
+  return { totalGeral, total6m, totalMes, rankingMes };
+}
+
 function slideBuildSlides(){
+  // Conjunto completo: motorista + placa (cavalo) + carreta, sem cortar em 8 —
+  // a tela cheia tem espaço de sobra e o pedido foi mostrar tudo de uma vez.
   const frota = FROTA_DATA.filter(f => f.motorista && f.motorista !== '—');
-  const frotaList = frota.slice(0,8).map(f => `${f.motorista.split(' ')[0]} — ${f.placa}`);
+  const conjuntos = frota.map(f => ({ motorista: f.motorista, placa: f.placa, carreta: f.carreta || '—' }));
 
   // Resumo de cada categoria de vencimento (Licenciamento/IPVA, ASO, Toxicológico, Defensiva)
   const vencResumo = VENC_CATEGORIAS.map(cat => {
@@ -1654,43 +1714,26 @@ function slideBuildSlides(){
   const totalVencidos = vencResumo.reduce((s,v)=>s+v.vencidos,0);
   const totalProximos = vencResumo.reduce((s,v)=>s+v.proximos,0);
 
-  const fin = slideFinMonthlyData();
-  const saldo = fin.totalReceita - fin.totalDespesa;
-  const batVencidas = parseInt(slideText('bat-vencidas','0')) || 0;
-
   return [
-    // 1) Visão Geral — o que todo gestor precisa ver primeiro: saúde financeira e alertas críticos
-    { title: '<i class="fas fa-gauge-high"></i> Visão Geral da Operação', type: 'overview', resumo: {
-        saldo, faturamento: slideText('fat-total','R$ —'),
-        frotaAtiva: frota.length, totalVeiculos: FROTA_DATA.length,
-        totalVencidos, totalProximos, batVencidas
-    }},
-    // 2) Financeiro — detalhe do fluxo de caixa
-    { title: '<i class="fas fa-chart-line"></i> Financeiro — Receitas x Despesas (6 meses)', type: 'fin-chart' },
-    // 3) Faturamento
-    { title: '<i class="fas fa-truck"></i> Faturamento', kpis: [
-        { val: slideText('fat-total','R$ —'), lbl: 'Total a Receber' },
-        { val: slideText('fat-viagens','—'), lbl: 'Lançamentos' },
-        { val: slideText('fat-motoristas','—'), lbl: 'Motoristas' },
-        { val: slideText('fat-pdfs','—'), lbl: 'PDFs Lidos' },
-    ]},
-    // 4) Baterias — destaca em vermelho se houver vencidas
+    // 1) Financeiro — resumo (total geral, 6 meses, mês vigente) + ranking do mês por categoria
+    { title: '<i class="fas fa-chart-line"></i> Financeiro — Despesas', type: 'fin-resumo' },
+    // 2) Baterias — destaca em vermelho se houver vencidas
     { title: '<i class="fas fa-battery-three-quarters"></i> Baterias', kpis: [
         { val: slideText('bat-total','—'), lbl: 'Total Baterias' },
         { val: slideText('bat-vencidas','—'), lbl: 'Vencidas', danger: true },
         { val: slideText('bat-proximas','—'), lbl: 'Próx. 30 dias', warning: true },
         { val: slideText('bat-ok','—'), lbl: 'Em Dia', ok: true },
     ]},
-    // 5) Frota / Motoristas
+    // 3) Frota / Motoristas — resumo + o conjunto completo (cavalo + carreta) por motorista
     { title: '<i class="fas fa-id-card"></i> Frota / Motoristas', type: 'frota-list',
       kpis: [
         { val: String(frota.length), lbl: 'Motoristas Ativos' },
         { val: String(FROTA_DATA.length), lbl: 'Veículos Cadastrados' },
         { val: String(FROTA_DATA.filter(f=>f.paletes==='30').length), lbl: 'Veículos 30 Paletes (Van)' },
       ],
-      lista: frotaList
+      lista: conjuntos
     },
-    // 6) Vencimentos — as 4 categorias juntas em um único painel, em vez de 4 telas repetidas
+    // 4) Vencimentos — as 7 categorias juntas em um único painel, em vez de telas repetidas
     { title: '<i class="fas fa-triangle-exclamation"></i> Vencimentos — Documentos e Certificações', type: 'venc-overview',
       categorias: vencResumo, totalVencidos, totalProximos },
   ];
@@ -1719,51 +1762,23 @@ function slideRender(){
   if (counterEl) counterEl.textContent = `${idx + 1} / ${slides.length}`;
 
   setTimeout(() => {
-    if (s.type === 'overview') {
-      const r = s.resumo;
-      const temAlerta = r.totalVencidos > 0 || r.batVencidas > 0;
-      const banner = temAlerta
-        ? `<div class="slide-hero-banner is-alert"><i class="fas fa-triangle-exclamation"></i> ${r.totalVencidos + r.batVencidas} pendência(s) vencida(s) exigem atenção imediata</div>`
-        : `<div class="slide-hero-banner is-ok"><i class="fas fa-circle-check"></i> Nenhum documento ou item vencido no momento</div>`;
+    if (s.type === 'fin-resumo') {
+      const d = slideFinResumo();
       body.innerHTML = `<div class="slide-section-title">${s.title}</div>
-        ${banner}
-        <div class="slide-kpi-grid" style="max-width:1000px">
-          ${slideKpiCard({ val: fmtMoney(r.saldo), lbl: 'Saldo Financeiro (6 meses)', danger: r.saldo < 0 })}
-          ${slideKpiCard({ val: r.faturamento, lbl: 'Faturamento a Receber' })}
-          ${slideKpiCard({ val: `${r.frotaAtiva} / ${r.totalVeiculos}`, lbl: 'Motoristas Ativos / Veículos' })}
-          ${slideKpiCard({ val: String(r.totalVencidos), lbl: 'Documentos Vencidos', danger: true })}
-          ${slideKpiCard({ val: String(r.totalProximos), lbl: 'Vencendo em 30 dias', warning: true })}
-          ${slideKpiCard({ val: String(r.batVencidas), lbl: 'Baterias Vencidas', danger: true })}
+        <div class="slide-kpi-grid" style="margin-bottom:1.6rem;max-width:800px">
+          <div class="slide-kpi-card"><div class="slide-kpi-val">${fmtMoney(d.totalGeral)}</div><div class="slide-kpi-lbl">Total Geral</div></div>
+          <div class="slide-kpi-card"><div class="slide-kpi-val">${fmtMoney(d.total6m)}</div><div class="slide-kpi-lbl">Últimos 6 Meses</div></div>
+          <div class="slide-kpi-card is-warning"><div class="slide-kpi-val">${fmtMoney(d.totalMes)}</div><div class="slide-kpi-lbl">Mês Vigente</div></div>
+        </div>
+        <div class="slide-status-card" style="max-width:620px;width:100%;text-align:left">
+          <div class="slide-status-card-head"><i class="fas fa-ranking-star"></i> Ranking do Mês por Categoria</div>
+          <div class="slide-status-rows">
+            ${d.rankingMes.length ? d.rankingMes.slice(0,8).map(([nome,valor]) => `
+              <div class="slide-status-row"><span style="max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${nome}">${nome}</span><span class="n" style="color:var(--accent-dk)">${fmtMoney(valor)}</span></div>
+            `).join('') : `<div class="slide-status-row"><span>Sem lançamentos neste mês</span></div>`}
+          </div>
         </div>`;
       requestAnimationFrame(() => body.classList.add('show'));
-      slideRenderDots(slides, idx);
-      return;
-    }
-    if (s.type === 'fin-chart') {
-      const d = slideFinMonthlyData();
-      const saldo = d.totalReceita - d.totalDespesa;
-      body.innerHTML = `<div class="slide-section-title">${s.title}</div>
-        <div class="slide-kpi-grid" style="margin-bottom:1.4rem;max-width:640px">
-          <div class="slide-kpi-card is-ok"><div class="slide-kpi-val">${fmtMoney(d.totalReceita)}</div><div class="slide-kpi-lbl">Receita (6 meses)</div></div>
-          <div class="slide-kpi-card is-danger"><div class="slide-kpi-val">${fmtMoney(d.totalDespesa)}</div><div class="slide-kpi-lbl">Despesa (6 meses)</div></div>
-          <div class="slide-kpi-card${saldo < 0 ? ' is-danger' : ' is-ok'}"><div class="slide-kpi-val">${fmtMoney(saldo)}</div><div class="slide-kpi-lbl">Saldo (6 meses)</div></div>
-        </div>
-        <div style="max-width:680px;width:100%"><canvas id="slideFinCanvas" height="200"></canvas></div>`;
-      requestAnimationFrame(() => {
-        body.classList.add('show');
-        if (slideFinChartInstance) slideFinChartInstance.destroy();
-        const ctx = document.getElementById('slideFinCanvas');
-        if (ctx && d.labels.length) {
-          slideFinChartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: { labels: d.labels, datasets: [
-              { label:'Receitas', data: d.receita, backgroundColor:'rgba(16,163,74,.85)', borderRadius:6 },
-              { label:'Despesas', data: d.despesa, backgroundColor:'rgba(220,38,38,.75)', borderRadius:6 }
-            ]},
-            options: { responsive:true, animation:{ duration:1100, easing:'easeOutQuart' }, plugins:{ legend:{ position:'bottom', labels:{color:'#1e2a3a'} } }, scales:{ y:{ ticks:{ callback:v=>fmtMoney(v), color:'#64748b' }, grid:{color:'#f1f5f9'} }, x:{ticks:{color:'#64748b'}, grid:{display:false}} } }
-          });
-        }
-      });
       slideRenderDots(slides, idx);
       return;
     }
@@ -1772,8 +1787,14 @@ function slideRender(){
         <div class="slide-kpi-grid" style="margin-bottom:1.4rem;max-width:700px">
           ${s.kpis.map(slideKpiCard).join('')}
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.6rem;max-width:900px;width:100%">
-          ${(s.lista||[]).map(l=>`<div style="background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:10px;padding:.6rem 1rem;font-size:.82rem;font-weight:600;color:#1e2a3a">${l}</div>`).join('')}
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:.7rem;max-width:1200px;width:100%">
+          ${(s.lista||[]).map(c=>`<div style="background:#fffefb;border:1px solid rgba(139,115,85,.14);border-radius:14px;padding:.75rem 1rem;text-align:left;box-shadow:0 6px 18px rgba(30,42,58,.04)">
+            <div style="font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:.92rem;color:#1c2333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.motorista}</div>
+            <div style="font-family:'Inter',sans-serif;font-size:.75rem;color:var(--text-lt);margin-top:.3rem;display:flex;gap:.9rem">
+              <span><i class="fas fa-truck" style="color:var(--accent-dk)"></i> ${c.placa}</span>
+              <span><i class="fas fa-truck-ramp-box" style="color:var(--accent-dk)"></i> ${c.carreta}</span>
+            </div>
+          </div>`).join('')}
         </div>`;
       requestAnimationFrame(() => body.classList.add('show'));
       slideRenderDots(slides, idx);
@@ -3531,8 +3552,17 @@ function vencRenderCategoria(cat){
         if (parcelas) {
           const pago = colSituacao ? String(row[colSituacao] || '').trim().toLowerCase().includes('ok') : false;
           const labels = parcelas.map((pd, i) => {
-            let cls = 'badge-success';
-            if (!pago) { if (pd < now) cls = 'badge-danger'; else if (pd <= em30) cls = 'badge-warning'; }
+            // Respeita a data de cada parcela individualmente: uma parcela cuja
+            // data ainda não chegou NUNCA fica verde, mesmo que a "Situação"
+            // geral da placa esteja OK (esse OK não significa que a parcela
+            // futura já foi paga). Só fica verde quando a data já passou E
+            // está marcada como paga; se já passou e não está paga, é vencido.
+            let cls;
+            if (pd > now) {
+              cls = pd <= em30 ? 'badge-warning' : 'badge-gray';
+            } else {
+              cls = pago ? 'badge-success' : 'badge-danger';
+            }
             return `<span class="badge ${cls}" style="margin:1px;display:inline-block">${i+1}ª: ${fmtDate(pd)}</span>`;
           });
           parcelaCell = labels.join(' ');
