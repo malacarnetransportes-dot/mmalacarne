@@ -1134,7 +1134,7 @@ footer a{color:var(--accent);text-decoration:none;}
         <div id="tabVencimentos" class="tab-pane">
           <div class="dash-card" style="margin-bottom:1.2rem">
             <div style="font-weight:700;font-size:.92rem;color:#1e2a3a;margin-bottom:.3rem"><i class="fas fa-triangle-exclamation" style="color:var(--accent)"></i> Controle de Vencimentos — Documentos e Certificações</div>
-            <div style="font-size:.8rem;color:var(--text-lt)">Licenciamento/IPVA, ASO, Toxicológico e Direção Defensiva — atualizado direto das planilhas, com alerta na tela e aviso pronto para enviar no WhatsApp.</div>
+            <div style="font-size:.8rem;color:var(--text-lt)">Licenciamento/IPVA, CNH, ASO, Toxicológico, Direção Defensiva, Percepção de Riscos e Prevenção de Tombamentos — atualizado direto das planilhas, com alerta na tela e aviso pronto para enviar no WhatsApp.</div>
           </div>
 
           <div id="vencAlertBanner" class="venc-alert-banner" style="display:none"></div>
@@ -1436,6 +1436,31 @@ function exportCSV(data, name) {
   a.click();
 }
 
+// Muitas planilhas do usuário têm uma linha de título (ex.: "CRONOGRAMA
+// LICENCIAMENTO, IPVA 2026") acima do cabeçalho de verdade — às vezes com
+// linhas em branco ou rótulos extras (ex.: "PARCELADO") no meio. Se o
+// sistema ler a linha de título como cabeçalho, PLACA/VENCIMENTO/SITUAÇÃO
+// nunca são encontrados e nada funciona. Esta função testa remover 0..6
+// linhas não-vazias do topo e escolhe a versão cujo cabeçalho tem mais
+// colunas nomeadas de verdade (heurística: a linha de título vira uma
+// única coluna preenchida; o cabeçalho real tem várias).
+function csvParseSmart(text){
+  const linhas = text.split(/\r\n|\n|\r/).filter(l => l.trim() !== '');
+  let melhorDados = null, melhorPontuacao = -1;
+  const maxSkip = Math.min(6, Math.max(0, linhas.length - 1));
+  for (let skip = 0; skip <= maxSkip; skip++) {
+    const texto = linhas.slice(skip).join('\n');
+    if (!texto.trim()) continue;
+    const r = Papa.parse(texto, { header: true, skipEmptyLines: true });
+    const fields = (r.meta && r.meta.fields) || [];
+    const validos = fields.filter(f => f && f.trim() && f.trim().length <= 40).length;
+    if (!r.data || !r.data.length) continue;
+    if (validos > melhorPontuacao) { melhorPontuacao = validos; melhorDados = r.data; }
+    if (validos >= 3) break; // já achou um cabeçalho com cara de verdadeiro
+  }
+  return melhorDados || [];
+}
+
 async function fetchCSV(url) {
   if (!url) throw new Error('URL não configurada');
   const target = toCsvUrl(url);
@@ -1452,13 +1477,7 @@ async function fetchCSV(url) {
       if (!text || text.trim().length < 2) { lastErr = new Error('Resposta vazia'); continue; }
       // Detecta se voltou HTML (erro de permissão/login) em vez de CSV
       if (/^\s*<(!doctype|html)/i.test(text)) { lastErr = new Error('Planilha não publicada ou sem permissão'); continue; }
-      const parsed = await new Promise((resolve, reject) => {
-        Papa.parse(text, {
-          header: true, skipEmptyLines: true,
-          complete: r => resolve(r.data),
-          error: e => reject(e)
-        });
-      });
+      const parsed = csvParseSmart(text);
       if (!parsed.length) { lastErr = new Error('Planilha sem dados'); continue; }
       return parsed;
     } catch(e) {
@@ -3050,10 +3069,13 @@ function resetBatFilters() {
 // ═══════════════════════════════════════════════════════════
 const VENC_WHATS_NUMERO = '5549999675448';
 const VENC_CATEGORIAS = [
-  { key:'licenciamento', label:'Licenciamento / IPVA', icon:'fa-car',        urlDefault:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQGsLDGp-_EDMmRgTZsSWdWdnJCEZWMRTTrHiEWXWNLwf2ZpdBd3Pjz9VUX_CldBQ/pub?output=csv' },
+  { key:'licenciamento', label:'Licenciamento / IPVA', icon:'fa-car',        urlDefault:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQiG3oi3pi_djYJWP9UqB1aSqSOLD0EDRfk1vuUU3pPl9heFKnhdAH2ACx2gOXZ2w/pub?output=csv' },
+  { key:'cnh',           label:'CNH',                icon:'fa-id-card',      urlDefault:'' },
   { key:'aso',           label:'ASO',                icon:'fa-notes-medical',urlDefault:'https://docs.google.com/spreadsheets/d/e/2PACX-1vS4W3MHzy-SobIO-07RcblSucM3Q3h553Z9RhTniAATdX3WXk-du13fNbu4lNUnBA/pub?output=csv' },
   { key:'toxicologico',  label:'Toxicológico',       icon:'fa-flask',        urlDefault:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQp1LDO7J1XrZmKfAM_UZ09i54FA7lhC3PMtosMQzLO7AHSF4Ipvh-6zsnW6YdmHg/pub?output=csv' },
   { key:'defensiva',     label:'Direção Defensiva',  icon:'fa-id-badge',     urlDefault:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQw35oMQBJ6UDetP0JCtgDfIzJ77avujBIWtD0YWx8WH0ZkrSTx2I_C4p_cRMHPvA/pub?output=csv' },
+  { key:'percepcao',     label:'Percepção de Riscos', icon:'fa-eye',         urlDefault:'' },
+  { key:'tombamento',    label:'Prevenção de Tombamentos', icon:'fa-truck-ramp-box', urlDefault:'' },
 ];
 let vencData = {};
 let vencCounts = {};
@@ -3261,6 +3283,43 @@ async function vencCarregarCategoria(cat){
 const IPVA_SC_MES = {'0':1,'1':2,'2':3,'3':4,'4':5,'5':6,'6':7,'7':8,'8':9,'9':10};
 const MESES_NOME = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
+// Procura uma data DD/MM/AAAA em qualquer parte do texto — útil para células
+// com anotações manuais tipo "S047539035 - VERIFICAR - 28/04/2026", comuns
+// na planilha de Licenciamento/IPVA quando há alguma pendência anotada à mão.
+function vencExtrairDataEmTexto(texto){
+  if (!texto) return null;
+  const m = String(texto).match(/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/);
+  if (!m) return null;
+  let year = +m[3]; if (year < 100) year += 2000;
+  const dia = +m[1], mes = +m[2];
+  if (mes < 1 || mes > 12 || dia < 1 || dia > 31) return null;
+  const d = new Date(year, mes - 1, dia);
+  return isNaN(d) ? null : d;
+}
+
+// Calcula { data, status } de uma linha para uma categoria — usado tanto na
+// tabela quanto no recálculo de alertas, para os dois nunca ficarem diferentes.
+function vencCalcularStatusLinha(row, cat, headers, colId, colData, colSituacao, formato, now, em30){
+  let d = null, status = 'ok';
+  if (cat.key === 'licenciamento') {
+    const pago = colSituacao ? String(row[colSituacao] || '').trim().toLowerCase().includes('ok') : false;
+    const placaTxt = colId ? String(row[colId] || '') : '';
+    const ultimoDigito = placaTxt.replace(/[^0-9]/g, '').slice(-1);
+    const mesCal = IPVA_SC_MES[ultimoDigito];
+    let dataAnotada = null;
+    if (mesCal) {
+      const colMes = headers.find(h => String(h).trim().toUpperCase() === MESES_NOME[mesCal - 1].toUpperCase());
+      if (colMes) dataAnotada = vencExtrairDataEmTexto(row[colMes]);
+    }
+    d = dataAnotada || (mesCal ? new Date(now.getFullYear(), mesCal, 0) : null);
+    if (!pago && d) { if (d < now) status = 'vencido'; else if (d <= em30) status = 'proximo'; }
+  } else {
+    d = colData ? vencParseDataCat(row[colData], cat, formato) : null;
+    if (d) { if (d < now) status = 'vencido'; else if (d <= em30) status = 'proximo'; }
+  }
+  return { d, status };
+}
+
 function vencRenderCategoria(cat){
   const rows = vencData[cat.key] || [];
   const loadingEl = document.getElementById(`venc-${cat.key}-loading`);
@@ -3270,8 +3329,8 @@ function vencRenderCategoria(cat){
   const headers = Object.keys(rows[0]);
   const colId = findCol(headers, ['placa','veiculo','motorista','nome','funcionario','colaborador']);
   const colDataCandidatos = cat.key === 'licenciamento'
-    ? findColCandidates(headers, ['vencimento','validade','data','venc','jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez','situacao','sit.','sit '])
-    : findColCandidates(headers, ['vencimento','validade','data','venc']);
+    ? findColCandidates(headers, ['vencimento','validade','vcto','venc','jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez','situacao','sit.','sit ','data'])
+    : findColCandidates(headers, ['vencimento','vcto','validade','venc','data']);
   const colData = vencMelhorColunaData(rows, headers, colDataCandidatos);
   const colParcelas = findCol(headers, ['parcela','parcelamento','parcelas','prestacao','instalamento','parc']);
   const now = new Date(); now.setHours(0,0,0,0);
@@ -3279,12 +3338,11 @@ function vencRenderCategoria(cat){
   const busca = (document.getElementById(`venc-${cat.key}-busca`).value || '').toLowerCase();
   const filtroStatus = document.getElementById(`venc-${cat.key}-filtro-status`).value;
   const formato = vencDetectarFormato(rows, colData);
+  const colSituacao = cat.key === 'licenciamento' ? findCol(headers, ['situacao','sit.','sit ']) : null;
 
   let vencidos = 0, proximos = 0, ok = 0;
   const linhasComStatus = rows.map(row => {
-    const d = colData ? vencParseDataCat(row[colData], cat, formato) : null;
-    let status = 'ok';
-    if (d) { if (d < now) status = 'vencido'; else if (d <= em30) status = 'proximo'; }
+    const { d, status } = vencCalcularStatusLinha(row, cat, headers, colId, colData, colSituacao, formato, now, em30);
     if (status === 'vencido') vencidos++; else if (status === 'proximo') proximos++; else ok++;
     return { row, d, status };
   });
@@ -3335,9 +3393,10 @@ function vencRenderCategoria(cat){
       porMes[chave].push({row, d, status, placa});
     });
 
-    // Organiza as colunas: Placa/Veículo e Vencimento primeiro (mais importantes),
-    // depois o restante dos dados da planilha, sem repetir a coluna de parcelas.
-    const colsPrioritarias = [colId, colData].filter(Boolean);
+    // Organiza as colunas: Placa e Situação primeiro (são elas que definem o
+    // status nesta planilha — não existe uma coluna única de data aqui),
+    // depois o restante dos dados, sem repetir a coluna de parcelas.
+    const colsPrioritarias = [colId, colSituacao].filter(Boolean);
     const colsDisplay = colsPrioritarias.concat(
       headers.filter(h => h !== colParcelas && !colsPrioritarias.includes(h))
     );
@@ -3442,14 +3501,15 @@ function vencRecalcularTodosOsAlertas(){
     const headers = Object.keys(rows[0]);
     const colId = findCol(headers, ['placa','veiculo','motorista','nome','funcionario','colaborador']);
     const colDataCandidatos = cat.key === 'licenciamento'
-      ? findColCandidates(headers, ['vencimento','validade','data','venc','jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez','situacao','sit.','sit '])
-      : findColCandidates(headers, ['vencimento','validade','data','venc']);
+      ? findColCandidates(headers, ['vencimento','validade','vcto','venc','jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez','situacao','sit.','sit ','data'])
+      : findColCandidates(headers, ['vencimento','vcto','validade','venc','data']);
     const colData = vencMelhorColunaData(rows, headers, colDataCandidatos);
+    const colSituacao = cat.key === 'licenciamento' ? findCol(headers, ['situacao','sit.','sit ']) : null;
     const formato = vencDetectarFormato(rows, colData);
     rows.forEach(row => {
-      const d = colData ? vencParseDataCat(row[colData], cat, formato) : null;
-      if (d && d <= em30) {
-        vencAlertasAtuais.push({ categoria: cat.label, id: colId ? (row[colId] || '—') : '—', data: d, vencido: d < now });
+      const { d, status } = vencCalcularStatusLinha(row, cat, headers, colId, colData, colSituacao, formato, now, em30);
+      if (status === 'vencido' || status === 'proximo') {
+        vencAlertasAtuais.push({ categoria: cat.label, id: colId ? (row[colId] || '—') : '—', data: d, vencido: status === 'vencido' });
       }
     });
   });
