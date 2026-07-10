@@ -1480,9 +1480,15 @@ function csvParseSmart(text){
   for (let skip = 0; skip <= maxSkip; skip++) {
     const texto = linhas.slice(skip).join('\n');
     if (!texto.trim()) continue;
+    // Avalia a "cara" de cabeçalho olhando a linha crua (sem header:true),
+    // porque o Papaparse renomeia colunas em branco repetidas para
+    // "_1", "_2", "_3"... — o que fazia uma linha de TÍTULO (ex.: "CRONOGRAMA
+    // EXAME TOXICOLÓGICO,,,,") parecer um cabeçalho "rico" com vários nomes
+    // válidos, quando na verdade só a primeira célula tinha texto de verdade.
+    const cru = Papa.parse(texto, { header: false, skipEmptyLines: true });
+    const primeiraLinha = (cru.data && cru.data[0]) || [];
+    const validos = primeiraLinha.filter(f => f && String(f).trim() && String(f).trim().length <= 40).length;
     const r = Papa.parse(texto, { header: true, skipEmptyLines: true });
-    const fields = (r.meta && r.meta.fields) || [];
-    const validos = fields.filter(f => f && f.trim() && f.trim().length <= 40).length;
     if (!r.data || !r.data.length) continue;
     if (validos > melhorPontuacao) { melhorPontuacao = validos; melhorDados = r.data; }
     if (validos >= 3) break; // já achou um cabeçalho com cara de verdadeiro
