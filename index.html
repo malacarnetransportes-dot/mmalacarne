@@ -213,14 +213,18 @@ footer a{color:var(--accent);text-decoration:none;}
 .venc-badge{position:absolute;top:6px;right:10px;background:#ef4444;color:#fff;font-size:.68rem;font-weight:800;padding:1px 6px;border-radius:10px;line-height:1.4;}
 .venc-alert-banner{display:flex;align-items:center;gap:.8rem;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:var(--r16);padding:1rem 1.3rem;margin-bottom:1.2rem;font-size:.85rem;}
 
-.venc-subnav{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem;}
-.venc-subnav-item{background:#fff;border:1.5px solid var(--gray-200);border-radius:999px;padding:.5rem 1.1rem;font-size:.8rem;font-weight:600;color:var(--text-lt);cursor:pointer;transition:.2s;display:flex;align-items:center;gap:.4rem;}
-.venc-subnav-item:hover{border-color:var(--accent);color:#1e2a3a;}
-.venc-subnav-item.active{background:var(--accent-dk);border-color:var(--accent-dk);color:#fff;}
-.venc-subnav-count{background:var(--gray-100);color:var(--text-lt);font-size:.7rem;font-weight:800;padding:.1rem .5rem;border-radius:20px;min-width:1.4em;text-align:center;}
-.venc-subnav-item.active .venc-subnav-count{background:rgba(255,255,255,.25);color:#fff;}
+.venc-subnav{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.6rem;margin-bottom:1.2rem;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r16);padding:.7rem;box-shadow:var(--shadow-sm);}
+.venc-subnav-item{background:var(--gray-100);border:1.5px solid transparent;border-radius:var(--r12);padding:.6rem .75rem;font-size:.8rem;font-weight:600;color:var(--text-lt);cursor:pointer;transition:.2s;display:flex;align-items:center;gap:.55rem;text-align:left;min-width:0;}
+.venc-subnav-item i{flex:none;width:30px;height:30px;border-radius:var(--r8);background:#fff;color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:.82rem;box-shadow:var(--shadow-sm);transition:.2s;}
+.venc-subnav-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.venc-subnav-item:hover{border-color:var(--accent);color:#1e2a3a;background:#fff;}
+.venc-subnav-item.active{background:linear-gradient(135deg,var(--accent),var(--accent-dk));border-color:var(--accent-dk);color:#171200;box-shadow:var(--shadow-md);}
+.venc-subnav-item.active i{background:rgba(255,255,255,.45);color:#171200;}
+.venc-subnav-count{flex:none;background:#fff;color:var(--text-lt);font-size:.7rem;font-weight:800;padding:.15rem .55rem;border-radius:20px;min-width:1.6em;text-align:center;box-shadow:var(--shadow-sm);}
+.venc-subnav-item.active .venc-subnav-count{background:rgba(255,255,255,.6);color:#1e2a3a;}
 .venc-subnav-count.is-error{background:#fee2e2;color:#b91c1c;}
 .venc-subnav-item.active .venc-subnav-count.is-error{background:#fecaca;color:#7f1d1d;}
+@media (max-width:560px){ .venc-subnav{grid-template-columns:1fr;} }
 .venc-sub-pane{display:none;}
 .venc-sub-pane.active{display:block;}
 .venc-chart-layout{display:flex;gap:1.4rem;flex-wrap:wrap;align-items:flex-start;}
@@ -1148,7 +1152,7 @@ footer a{color:var(--accent);text-decoration:none;}
           </div>
 
           <div class="venc-subnav" id="vencSubnav">
-            <button class="venc-subnav-item active" data-sub="resumo"><i class="fas fa-list-check"></i> Resumo / Alertas</button>
+            <button class="venc-subnav-item active" data-sub="resumo"><i class="fas fa-list-check"></i> <span class="venc-subnav-label">Resumo / Alertas</span></button>
           </div>
 
           <div id="vencSubResumo" class="venc-sub-pane active">
@@ -3199,7 +3203,7 @@ function vencMelhorColunaData(rows, headers, candidatosPrioritarios){
 function vencBuildSkeleton(){
   const subnav = document.getElementById('vencSubnav');
   VENC_CATEGORIAS.forEach(cat => {
-    subnav.insertAdjacentHTML('beforeend', `<button class="venc-subnav-item" data-sub="${cat.key}"><i class="fas ${cat.icon}"></i> ${cat.label} <span class="venc-subnav-count" id="venc-${cat.key}-count">—</span></button>`);
+    subnav.insertAdjacentHTML('beforeend', `<button class="venc-subnav-item" data-sub="${cat.key}" title="${cat.label}"><i class="fas ${cat.icon}"></i> <span class="venc-subnav-label">${cat.label}</span> <span class="venc-subnav-count" id="venc-${cat.key}-count">—</span></button>`);
   });
   subnav.querySelectorAll('.venc-subnav-item').forEach(btn => {
     btn.addEventListener('click', () => vencMostrarSub(btn.dataset.sub));
