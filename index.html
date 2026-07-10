@@ -210,7 +210,7 @@ footer a{color:var(--accent);text-decoration:none;}
 .pneu-ranking-title.bad{color:#dc2626;}
 @media (max-width:720px){ .pneu-ranking-cols{grid-template-columns:1fr;} .pneu-leitura-form{grid-template-columns:1fr;} }
 
-.venc-badge{position:absolute;top:6px;right:10px;background:#ef4444;color:#fff;font-size:.68rem;font-weight:800;padding:1px 6px;border-radius:10px;line-height:1.4;}
+.venc-badge{position:absolute;top:50%;right:10px;transform:translateY(-50%);background:#ef4444;color:#fff;font-size:.68rem;font-weight:800;padding:1px 7px;border-radius:10px;line-height:1.5;box-shadow:0 0 0 2px #1e2a3a;}
 .venc-alert-banner{display:flex;align-items:center;gap:.8rem;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:var(--r16);padding:1rem 1.3rem;margin-bottom:1.2rem;font-size:.85rem;}
 
 .venc-subnav{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.6rem;margin-bottom:1.2rem;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r16);padding:.7rem;box-shadow:var(--shadow-sm);}
@@ -241,6 +241,25 @@ footer a{color:var(--accent);text-decoration:none;}
 .venc-popup-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem;font-size:.86rem;color:#1e2a3a;}
 .venc-popup-header button{background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--text-lt);}
 .venc-popup-list{overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:.5rem;max-height:260px;}
+
+/* ── Cards de alerta (popup do sino + resumo da aba Vencimentos) ── */
+.venc-alert-card{display:flex;align-items:center;gap:.7rem;width:100%;text-align:left;background:#fff;border:1px solid var(--gray-200);border-left:4px solid var(--warning);border-radius:var(--r12);padding:.55rem .7rem;cursor:pointer;transition:.15s;font-family:inherit;}
+.venc-alert-card:hover{background:var(--gray-100);transform:translateX(2px);box-shadow:var(--shadow-sm);}
+.venc-alert-card.is-vencido{border-left-color:var(--danger);}
+.venc-alert-card.is-proximo{border-left-color:var(--warning);}
+.venc-alert-icon{flex-shrink:0;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;background:rgba(245,158,11,.12);color:var(--warning);}
+.venc-alert-card.is-vencido .venc-alert-icon{background:rgba(239,68,68,.12);color:var(--danger);}
+.venc-alert-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:.15rem;}
+.venc-alert-top{display:flex;align-items:center;justify-content:space-between;gap:.5rem;}
+.venc-alert-id{font-weight:800;font-size:.82rem;color:#1e2a3a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.venc-alert-tag{flex-shrink:0;font-size:.6rem;font-weight:800;letter-spacing:.4px;padding:1px 6px;border-radius:6px;background:rgba(245,158,11,.15);color:#92610a;}
+.venc-alert-card.is-vencido .venc-alert-tag{background:rgba(239,68,68,.15);color:#b91c1c;}
+.venc-alert-cat{font-size:.72rem;color:var(--text-lt);}
+.venc-alert-date{font-size:.7rem;color:var(--text-lt);display:flex;align-items:center;gap:.3rem;}
+.venc-alert-go{flex-shrink:0;color:var(--text-lt);font-size:.75rem;}
+.venc-alert-card:hover .venc-alert-go{color:var(--accent);}
+.venc-alert-empty{font-size:.82rem;color:var(--text-lt);padding:.8rem;text-align:center;display:flex;align-items:center;justify-content:center;gap:.4rem;}
+.venc-alert-empty i{color:var(--success);}
 .venc-alert-banner i{font-size:1.3rem;color:#dc2626;}
 
 /* ═══════════════════════════════════════
@@ -256,11 +275,14 @@ footer a{color:var(--accent);text-decoration:none;}
 .pa-sidebar-logo .brand{color:#fff;font-size:.88rem;font-weight:700;margin-top:.3rem;}
 .pa-sidebar-logo .brand-sub{color:#94a3b8;font-size:.6rem;letter-spacing:1px;text-transform:uppercase;}
 .pa-nav{flex:1;padding:0 .6rem;display:flex;flex-direction:column;gap:.15rem;}
-.pa-nav-item{display:flex;align-items:center;gap:.6rem;padding:.6rem .8rem;border-radius:var(--r8);color:#94a3b8;cursor:pointer;transition:.2s;font-size:.82rem;font-weight:500;border:none;background:none;width:100%;text-align:left;white-space:nowrap;}
+.pa-nav-item{display:flex;align-items:center;gap:.6rem;padding:.6rem 1.9rem .6rem .8rem;border-radius:var(--r8);color:#94a3b8;cursor:pointer;transition:.2s;font-size:.82rem;font-weight:500;border:none;background:none;width:100%;text-align:left;white-space:nowrap;position:relative;}
 .pa-nav-item:hover{background:rgba(255,255,255,.07);color:#fff;}
-.pa-nav-item.active{background:linear-gradient(135deg,rgba(212,175,55,.18),rgba(212,175,55,.08));color:var(--accent);border-left:3px solid var(--accent);}
-.pa-nav-item i{width:16px;text-align:center;font-size:.82rem;}
+.pa-nav-item.active{background:linear-gradient(135deg,rgba(212,175,55,.18),rgba(212,175,55,.08));color:var(--accent);border-left:3px solid var(--accent);padding-left:calc(.8rem - 3px);}
+.pa-nav-item i{width:16px;text-align:center;font-size:.82rem;flex-shrink:0;}
 .pa-sidebar-footer{padding:.7rem 1rem;border-top:1px solid rgba(255,255,255,.08);}
+.pa-sidebar::-webkit-scrollbar{width:6px;}
+.pa-sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:3px;}
+.pa-sidebar{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent;}
 .pa-content{margin-left:210px;flex:1;min-height:100vh;}
 
 /* Top bar */
@@ -1405,11 +1427,14 @@ function findCol(headers, keywords) {
   return null;
 }
 
-// Lista de proxies CORS, tentados em ordem até um funcionar
+// Lista de proxies CORS, tentados em ordem até um funcionar.
+// allorigins e codetabs primeiro (mais estáveis para CSV grande);
+// corsproxy.io por último pois costuma limitar taxa de uso.
 const CORS_PROXIES = [
-  url => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
   url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-  url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+  url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+  url => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+  url => `https://thingproxy.freeboard.io/fetch/${url}`
 ];
 
 function toCsvUrl(url) {
@@ -1465,17 +1490,25 @@ function csvParseSmart(text){
   return melhorDados || [];
 }
 
+// Busca com timeout — evita que um proxy fora do ar deixe a página "travada"
+// esperando por minutos antes de tentar a próxima opção.
+function fetchComTimeout(url, ms = 9000) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { cache: 'no-store', signal: ctrl.signal }).finally(() => clearTimeout(timer));
+}
+
 async function fetchCSV(url) {
   if (!url) throw new Error('URL não configurada');
   const target = toCsvUrl(url);
   let lastErr;
 
-  // 1ª tentativa: direto (caso o Sheet permita CORS)
+  // 1ª tentativa: direto (caso o Sheet permita CORS), depois os proxies em ordem
   const attempts = [target, ...CORS_PROXIES.map(fn => fn(target))];
 
   for (const attemptUrl of attempts) {
     try {
-      const res = await fetch(attemptUrl, {cache:'no-store'});
+      const res = await fetchComTimeout(attemptUrl);
       if (!res.ok) { lastErr = new Error('HTTP ' + res.status); continue; }
       const text = await res.text();
       if (!text || text.trim().length < 2) { lastErr = new Error('Resposta vazia'); continue; }
@@ -1485,7 +1518,7 @@ async function fetchCSV(url) {
       if (!parsed.length) { lastErr = new Error('Planilha sem dados'); continue; }
       return parsed;
     } catch(e) {
-      lastErr = e;
+      lastErr = e.name === 'AbortError' ? new Error('Tempo esgotado ao conectar') : e;
       continue;
     }
   }
@@ -1554,6 +1587,8 @@ document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
     btn.classList.add('active');
     document.getElementById(btn.dataset.tab).classList.add('active');
     document.getElementById('pa-page-title').innerHTML = pageTitles[btn.dataset.tab] || btn.textContent;
+    document.getElementById('paSidebar').classList.remove('open'); // fecha o menu no celular ao escolher uma aba
+    window.scrollTo({top:0, behavior:'instant'});
     if (btn.dataset.tab === 'tabSenhas')    setTimeout(filtrarSenhas, 50);
     if (btn.dataset.tab === 'tabFrota')     setTimeout(filtrarFrota, 50);
     if (btn.dataset.tab === 'tabAuditoria') setTimeout(audInit, 50);
@@ -3513,17 +3548,53 @@ function vencRecalcularTodosOsAlertas(){
     rows.forEach(row => {
       const { d, status } = vencCalcularStatusLinha(row, cat, headers, colId, colData, colSituacao, formato, now, em30);
       if (status === 'vencido' || status === 'proximo') {
-        vencAlertasAtuais.push({ categoria: cat.label, id: colId ? (row[colId] || '—') : '—', data: d, vencido: status === 'vencido' });
+        vencAlertasAtuais.push({ categoria: cat.label, catKey: cat.key, icon: cat.icon, id: colId ? (row[colId] || '—') : '—', data: d, vencido: status === 'vencido' });
       }
     });
   });
 }
 
 async function vencCarregarTudo(){
-  for (const cat of VENC_CATEGORIAS) { await vencCarregarCategoria(cat); }
+  // Carrega todas as categorias em paralelo (antes era uma por vez, o que
+  // deixava a aba "travada" por muito tempo quando algum proxy estava lento).
+  await Promise.allSettled(VENC_CATEGORIAS.map(cat => vencCarregarCategoria(cat)));
   vencRecalcularTodosOsAlertas();
   vencAtualizarResumoEAlerta();
 }
+
+function vencEsc(s){
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// Card de alerta usado tanto no sino flutuante quanto no resumo da aba
+// Vencimentos. Mostra quantos dias faltam/já passaram e, ao clicar, leva
+// direto até o item na categoria correspondente.
+function vencAlertCardHtml(a){
+  const now = new Date(); now.setHours(0,0,0,0);
+  const dias = a.data ? Math.round((a.data - now) / 86400000) : null;
+  const diasTxt = dias === null ? '' : (a.vencido ? `há ${Math.abs(dias)} dia${Math.abs(dias)===1?'':'s'}` : (dias === 0 ? 'vence hoje' : `em ${dias} dia${dias===1?'':'s'}`));
+  return `
+    <button type="button" class="venc-alert-card${a.vencido ? ' is-vencido' : ' is-proximo'}"
+      data-venc-cat="${vencEsc(a.catKey)}" data-venc-id="${vencEsc(a.id)}">
+      <span class="venc-alert-icon"><i class="fas ${a.icon || 'fa-triangle-exclamation'}"></i></span>
+      <span class="venc-alert-body">
+        <span class="venc-alert-top">
+          <span class="venc-alert-id">${vencEsc(a.id)}</span>
+          <span class="venc-alert-tag">${a.vencido ? 'VENCIDO' : 'PRÓXIMO'}</span>
+        </span>
+        <span class="venc-alert-cat">${vencEsc(a.categoria)}</span>
+        <span class="venc-alert-date"><i class="fas fa-calendar"></i> ${fmtDate(a.data)}${diasTxt ? ' · ' + diasTxt : ''}</span>
+      </span>
+      <span class="venc-alert-go"><i class="fas fa-chevron-right"></i></span>
+    </button>`;
+}
+
+// Delegação de clique: funciona tanto para os cards do popup do sino quanto
+// para os do resumo da aba Vencimentos, mesmo depois de re-renderizados.
+document.addEventListener('click', (e) => {
+  const card = e.target.closest('.venc-alert-card');
+  if (card) vencIrParaAlerta(card.dataset.vencCat, card.dataset.vencId);
+});
 
 function vencAtualizarResumoEAlerta(){
   const vencidosTotal = vencAlertasAtuais.filter(a => a.vencido).length;
@@ -3558,17 +3629,34 @@ function vencAtualizarResumoEAlerta(){
   const listaEl = document.getElementById('vencResumoLista');
   if (listaEl) {
     if (!vencAlertasAtuais.length) {
-      listaEl.innerHTML = '<div style="font-size:.82rem;color:var(--text-lt)">Nenhum alerta no momento. Tudo em dia ✅</div>';
+      listaEl.innerHTML = '<div class="venc-alert-empty"><i class="fas fa-circle-check"></i> Nenhum alerta no momento. Tudo em dia!</div>';
     } else {
-      listaEl.innerHTML = [...vencAlertasAtuais].sort((a,b)=>a.data-b.data).map(a => `
-        <div class="pneu-detail-hist-item${a.vencido ? ' alerta' : ''}" style="display:flex;justify-content:space-between;gap:.6rem;flex-wrap:wrap">
-          <span><b>${a.vencido ? '🔴 VENCIDO' : '🟡 Vence em breve'}</b> — ${a.categoria} — ${a.id}</span>
-          <span style="color:var(--text-lt)">${fmtDate(a.data)}</span>
-        </div>`).join('');
+      listaEl.innerHTML = [...vencAlertasAtuais].sort((a,b)=>a.data-b.data).map(a => vencAlertCardHtml(a)).join('');
     }
   }
 
   vencAtualizarBellPopup();
+}
+
+// Leva o usuário direto do alerta (popup ou resumo) até o item vencido:
+// abre a aba Vencimentos, seleciona a categoria certa e já filtra pela
+// placa/nome do alerta clicado.
+function vencIrParaAlerta(catKey, id){
+  document.getElementById('vencPopupPanel')?.classList.remove('active');
+  const navBtn = document.querySelector('.pa-nav-item[data-tab="tabVencimentos"]');
+  if (navBtn) navBtn.click();
+  setTimeout(() => {
+    vencMostrarSub(catKey);
+    const buscaEl = document.getElementById(`venc-${catKey}-busca`);
+    const statusEl = document.getElementById(`venc-${catKey}-filtro-status`);
+    if (buscaEl) buscaEl.value = (id && id !== '—') ? id : '';
+    if (statusEl) statusEl.value = '';
+    if (vencData[catKey] && vencData[catKey].length) {
+      const cat = VENC_CATEGORIAS.find(c => c.key === catKey);
+      if (cat) vencRenderCategoria(cat);
+    }
+    document.getElementById(`vencSub-${catKey}`)?.scrollIntoView({behavior:'smooth', block:'start'});
+  }, 120);
 }
 
 function vencMontarMensagemWhatsApp(){
@@ -3609,12 +3697,9 @@ function vencAtualizarBellPopup(){
   const list = document.getElementById('vencPopupList');
   if (list) {
     if (!vencAlertasAtuais.length) {
-      list.innerHTML = '<div style="font-size:.8rem;color:var(--text-lt);padding:.6rem 0">Nenhum alerta no momento ✅</div>';
+      list.innerHTML = '<div class="venc-alert-empty"><i class="fas fa-circle-check"></i> Nenhum alerta no momento</div>';
     } else {
-      list.innerHTML = [...vencAlertasAtuais].sort((a,b)=>a.data-b.data).map(a => `
-        <div class="pneu-detail-hist-item${a.vencido ? ' alerta' : ''}" style="font-size:.78rem">
-          <b>${a.vencido ? '🔴 VENCIDO' : '🟡 Vence em breve'}</b> — ${a.categoria}<br>${a.id} — ${fmtDate(a.data)}
-        </div>`).join('');
+      list.innerHTML = [...vencAlertasAtuais].sort((a,b)=>a.data-b.data).map(a => vencAlertCardHtml(a)).join('');
     }
   }
 }
