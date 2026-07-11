@@ -1403,7 +1403,18 @@ const DEFAULT_FATURAMENTO = DEFAULT_FATURAMENTO_DOCS.join("\n");
 
 let URL_FIN  = localStorage.getItem("urlFinanceiro")  || DEFAULT_FINANCEIRO;
 let URL_BAT  = localStorage.getItem("urlBaterias")    || DEFAULT_BATERIAS;
-let URL_FAT  = localStorage.getItem("urlFaturamento") || DEFAULT_FATURAMENTO;
+
+// Faturamento passou de 1 planilha única para 6 (uma por motorista). Quem já
+// tinha aberto o site antes e salvo a URL antiga (ou uma URL única qualquer,
+// sem quebra de linha) fica com esse valor velho preso no localStorage e o
+// fetch falha silenciosamente. Se o valor salvo não parecer a nova lista
+// (múltiplas linhas), descartamos e caímos no novo default de 6 planilhas.
+const FAT_URL_ANTIGA_OBSOLETA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRI6KeOkDW3Vc8KhSTaxjKLxeg_38R98Yl7v5rRPUnM2OauNVcLDLiRah6Rnnrduw/pub?output=csv";
+let URL_FAT = localStorage.getItem("urlFaturamento") || DEFAULT_FATURAMENTO;
+if (!URL_FAT || URL_FAT.trim() === FAT_URL_ANTIGA_OBSOLETA || !URL_FAT.includes('\n')) {
+  URL_FAT = DEFAULT_FATURAMENTO;
+  localStorage.removeItem("urlFaturamento");
+}
 
 // Nuvem Fiscal / NF-e
 let NFE_CLIENT_ID     = localStorage.getItem('nfeClientId')     || '';
@@ -3132,13 +3143,13 @@ async function loadFaturamentoData() {
   const todosRegistros = [];
   const erros = [];
 
-  await Promise.all(urls.map(async (url) => {
+  await Promise.all(urls.map(async (url, idx) => {
     try {
       const rows = await fetchCSVRaw(url);
       const registros = parseFaturamentoCSV(rows);
       todosRegistros.push(...registros);
     } catch(e) {
-      erros.push(e.message || String(e));
+      erros.push(`Planilha ${idx + 1}: ${e.message || e}`);
     }
   }));
 
@@ -3146,12 +3157,15 @@ async function loadFaturamentoData() {
 
   if (!fatAllRecords.length) {
     emptyEl.style.display = 'block';
+    emptyEl.innerHTML = `<i class="fas fa-truck" style="font-size:2rem;opacity:.3;display:block;margin-bottom:.5rem"></i>
+      Nenhum lançamento encontrado na planilha de faturamento.<br>
+      <span style="font-size:.78rem">${erros.length ? erros.join('<br>') : 'Verifique a URL em Config URLs.'}</span>`;
     contentEl.style.display = 'none';
-    showToast('Erro ao carregar Faturamento: ' + (erros[0] || 'nenhuma planilha retornou dados'));
+    showToast('Erro ao carregar Faturamento: ' + (erros[0] || 'nenhuma planilha retornou dados'), 6000);
   } else {
     fatPopularFiltros();
     fatApplyFilters();
-    if (erros.length) showToast(`⚠️ ${erros.length} de ${urls.length} planilha(s) de Faturamento falharam ao carregar.`, 5000);
+    if (erros.length) showToast(`⚠️ ${erros.length} de ${urls.length} planilha(s) de Faturamento falharam: ${erros[0]}`, 6000);
   }
   loadEl.style.display = 'none';
 }
