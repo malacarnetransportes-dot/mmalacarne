@@ -680,8 +680,8 @@ footer a{color:var(--accent);text-decoration:none;}
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">💰 Financeiro (CSV)</label>
     <input type="text" id="urlFinanceiro" placeholder="https://docs.google.com/spreadsheets/...">
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">🚛 Faturamento — Uma aba por Motorista (CSV)</label>
-    <textarea id="urlFaturamento" rows="6" style="width:100%;font-family:inherit;font-size:.8rem;padding:.6rem;border-radius:8px;border:1px solid var(--gray-200);resize:vertical" placeholder="Uma URL por linha — uma aba/motorista"></textarea>
-    <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem;margin-bottom:.5rem">Uma URL por linha (CSV). Cada motorista tem sua própria aba no mesmo documento — publique cada aba individualmente (Arquivo → Compartilhar → Publicar na Web → selecione a aba → CSV) e cole todos os links aqui. Todas são combinadas automaticamente no painel de Faturamento.</p>
+    <textarea id="urlFaturamento" rows="6" style="width:100%;font-family:inherit;font-size:.8rem;padding:.6rem;border-radius:8px;border:1px solid var(--gray-200);resize:vertical" placeholder="NOME DO MOTORISTA|https://...  (uma linha por motorista)"></textarea>
+    <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem;margin-bottom:.5rem">Uma URL por linha (CSV). Cada motorista tem sua própria aba no mesmo documento — publique cada aba individualmente (Arquivo → Compartilhar → Publicar na Web → selecione a aba → CSV) e cole os links aqui. <b>Prefixe cada linha com o nome do motorista seguido de "|"</b> (ex.: <code>RODRIGO|https://docs.google.com/...</code>) — assim ele já aparece no filtro mesmo antes de ter lançamentos na planilha. Sem o prefixo, o nome só aparece depois que houver dados na aba.</p>
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">🔋 Baterias (CSV)</label>
     <input type="text" id="urlBaterias" placeholder="https://docs.google.com/spreadsheets/...">
   </div>
@@ -859,6 +859,14 @@ footer a{color:var(--accent);text-decoration:none;}
               <div class="dash-card">
                 <div class="dash-card-title"><i class="fas fa-medal"></i> Ranking — Valor a Receber por Motorista</div>
                 <ul class="rank-list" id="fatRankingReceber"></ul>
+              </div>
+              <div class="dash-card">
+                <div class="dash-card-title"><i class="fas fa-medal"></i> Ranking — Média Cavalo (km/L)</div>
+                <ul class="rank-list" id="fatRankingMediaCavalo"></ul>
+              </div>
+              <div class="dash-card">
+                <div class="dash-card-title"><i class="fas fa-medal"></i> Ranking — Média Carreta (km/L)</div>
+                <ul class="rank-list" id="fatRankingMediaCarreta"></ul>
               </div>
             </div>
 
@@ -3036,6 +3044,7 @@ function adicionarPDFManual() {
 let fatAllRecords = [];      // todos os registros (todos os motoristas/meses)
 let fatFiltered   = [];      // após filtros de Ano/Mês/Motorista
 let fatChartAno = null, fatChartMedia = null, fatChartDiariasVales = null;
+let fatConfigMotoristas = []; // nomes configurados manualmente (prefixo "NOME|URL"), aparecem no filtro mesmo sem dados ainda
 
 async function fetchCSVRaw(url, proxyStartIndex = 0) {
   if (!url) throw new Error('URL não configurada');
@@ -3212,24 +3221,54 @@ async function loadFaturamentoData() {
   const emptyEl = document.getElementById('fatEmpty');
   const contentEl = document.getElementById('fatContent');
   loadEl.style.display = 'flex';
+  loadEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando planilhas de Faturamento...';
   emptyEl.style.display = 'none';
   contentEl.style.display = 'none';
 
-  const urls = String(URL_FAT || '')
-    .split(/[\n,]+/)
-    .map(u => u.trim())
+  // Cada linha pode ser "URL" simples ou "NOME|URL" — o prefixo de nome faz
+  // o motorista aparecer no filtro mesmo antes de a aba ter lançamentos.
+  const linhas = String(URL_FAT || '')
+    .split(/\n+/)
+    .map(l => l.trim())
     .filter(Boolean);
+
+  const itens = linhas.map((linha, idx) => {
+    const pos = linha.indexOf('|');
+    if (pos > -1) return { nome: linha.slice(0, pos).trim(), url: linha.slice(pos + 1).trim(), idx };
+    return { nome: null, url: linha, idx };
+  });
+
+  fatConfigMotoristas = [...new Set(itens.map(it => it.nome).filter(Boolean))];
 
   const todosRegistros = [];
   const erros = [];
+  const total = itens.length;
+  let concluidos = 0;
+  let telaJaVisivel = false;
 
-  // As outras abas (Financeiro, Baterias, Vencimentos) buscam 1 URL cada,
-  // por isso nunca sentem limite de proxy. O Faturamento busca 12 URLs
-  // ("Publicar na Web", sem CORS nativo) — se as 12 começam tentando o
-  // MESMO proxy (allorigins) ao mesmo tempo, o proxy gratuito bloqueia
-  // por rajada e algumas falham. Correção: cada planilha começa por um
-  // proxy diferente (gira entre os 4), então a carga fica espalhada em
-  // vez de concentrada — mas continua tudo em paralelo, sem serializar.
+  function atualizarProgresso() {
+    if (!telaJaVisivel && loadEl) {
+      loadEl.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Carregando planilhas de Faturamento... (${concluidos}/${total})`;
+    }
+  }
+
+  // Mostra a tela assim que a 1ª planilha responder, em vez de esperar as
+  // 12 terminarem — o restante continua chegando e atualizando em segundo
+  // plano. É isso que faz o Faturamento parecer tão rápido quanto os
+  // outros módulos, mesmo com 12 URLs pra buscar.
+  function renderParcial() {
+    fatAllRecords = todosRegistros.slice();
+    if (!fatAllRecords.length) return;
+    if (!telaJaVisivel) {
+      loadEl.style.display = 'none';
+      emptyEl.style.display = 'none';
+      contentEl.style.display = 'block';
+      telaJaVisivel = true;
+    }
+    fatPopularFiltros();
+    fatApplyFilters();
+  }
+
   async function carregarPlanilha(url, proxyStartIndex) {
     try {
       const rows = await fetchCSVRaw(url, proxyStartIndex);
@@ -3239,25 +3278,29 @@ async function loadFaturamentoData() {
     }
   }
 
-  const itens = urls.map((url, idx) => ({ url, idx }));
-  const resultados = await Promise.all(itens.map(it => carregarPlanilha(it.url, it.idx)));
-  const falhas = [];
-  resultados.forEach((r, i) => {
-    if (r.ok) todosRegistros.push(...r.registros);
-    else falhas.push(itens[i]);
-  });
+  async function processarItem(it, proxyStartIndex) {
+    const r = await carregarPlanilha(it.url, proxyStartIndex);
+    concluidos++;
+    atualizarProgresso();
+    if (r.ok) { todosRegistros.push(...r.registros); renderParcial(); return null; }
+    return it;
+  }
 
-  // Retentativa única, também em paralelo, girando o proxy de novo
-  // (começando de um ponto diferente) pra não repetir o mesmo que falhou
+  const falhas = (await Promise.all(itens.map(it => processarItem(it, it.idx)))).filter(Boolean);
+
+  // Retentativa única, em paralelo, girando o proxy de novo — também vai
+  // atualizando a tela assim que cada uma resolver, sem travar as que já
+  // carregaram na 1ª rodada.
   if (falhas.length) {
-    const retry = await Promise.all(falhas.map(it => carregarPlanilha(it.url, it.idx + 2)));
-    retry.forEach((r, i) => {
-      if (r.ok) todosRegistros.push(...r.registros);
-      else erros.push(`Planilha ${falhas[i].idx + 1}: ${r.msg}`);
-    });
+    await Promise.all(falhas.map(async it => {
+      const r = await carregarPlanilha(it.url, it.idx + 2);
+      if (r.ok) { todosRegistros.push(...r.registros); renderParcial(); }
+      else erros.push(`Planilha ${it.idx + 1}${it.nome ? ' (' + it.nome + ')' : ''}: ${r.msg}`);
+    }));
   }
 
   fatAllRecords = todosRegistros;
+  loadEl.style.display = 'none';
 
   if (!fatAllRecords.length) {
     emptyEl.style.display = 'block';
@@ -3269,13 +3312,15 @@ async function loadFaturamentoData() {
   } else {
     fatPopularFiltros();
     fatApplyFilters();
-    if (erros.length) showToast(`⚠️ ${erros.length} de ${urls.length} planilha(s) de Faturamento falharam: ${erros[0]}`, 6000);
+    if (erros.length) showToast(`⚠️ ${erros.length} de ${total} planilha(s) de Faturamento falharam: ${erros[0]}`, 6000);
   }
-  loadEl.style.display = 'none';
 }
 
 function fatPopularFiltros() {
-  const motoristas = [...new Set(fatAllRecords.map(r => r.motorista).filter(Boolean))].sort();
+  const motoristas = [...new Set([
+    ...fatAllRecords.map(r => r.motorista),
+    ...fatConfigMotoristas
+  ].filter(Boolean))].sort();
   const anos = [...new Set(fatAllRecords.map(r => r.ano).filter(Boolean))].sort((a,b) => b-a);
   const selMot = document.getElementById('fatMotorista');
   const valMot = selMot.value;
@@ -3419,6 +3464,18 @@ function fatApplyFilters() {
   });
   const medMotoristas = Object.keys(medMap);
   const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
+
+  // ── Ranking — Média Cavalo e Média Carreta (separados) ──
+  const fmtKmL = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' km/L' : '—';
+  const rankCavaloArr = medMotoristas.map(m => [m, avg(medMap[m].cv)]).filter(([,v]) => v > 0).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  document.getElementById('fatRankingMediaCavalo').innerHTML = rankCavaloArr.length
+    ? rankCavaloArr.map(([m,v]) => `<li><span>${m}</span><span style="font-weight:700;color:#3b82f6">${fmtKmL(v)}</span></li>`).join('')
+    : '<li style="justify-content:center;color:var(--text-lt)">Sem dados.</li>';
+  const rankCarretaArr = medMotoristas.map(m => [m, avg(medMap[m].cr)]).filter(([,v]) => v > 0).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  document.getElementById('fatRankingMediaCarreta').innerHTML = rankCarretaArr.length
+    ? rankCarretaArr.map(([m,v]) => `<li><span>${m}</span><span style="font-weight:700;color:#10b981">${fmtKmL(v)}</span></li>`).join('')
+    : '<li style="justify-content:center;color:var(--text-lt)">Sem dados.</li>';
+
   if (fatChartMedia) fatChartMedia.destroy();
   const ctxMedia = document.getElementById('fatChartMedia').getContext('2d');
   fatChartMedia = new Chart(ctxMedia, {
