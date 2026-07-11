@@ -3401,6 +3401,22 @@ async function vencCarregarCategoria(cat){
 const IPVA_SC_MES = {'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'0':10};
 const MESES_NOME = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
+// ── Identifica se uma placa é cavalo ou carreta usando o FROTA_DATA ──
+// Cavalos pagam IPVA 3x (parcelado); carretas pagam 1x (à vista).
+function vencTipoPlaca(placaTexto) {
+  const p = String(placaTexto || '').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if (!p) return 'desconhecido';
+  // Verifica se a placa bate com um cavalo (campo placa do FROTA_DATA)
+  const isCavalo = FROTA_DATA.some(f => f.placa.replace(/[^A-Z0-9]/g,'') === p);
+  if (isCavalo) return 'cavalo';
+  // Verifica se bate com uma carreta (campo carreta do FROTA_DATA)
+  const isCarreta = FROTA_DATA.some(f => f.carreta.replace(/[^A-Z0-9]/g,'').includes(p) && p.length >= 6);
+  if (isCarreta) return 'carreta';
+  // Heurística pelo formato: placas Mercosul (ABC1D23) e antigas (ABC1234) são cavalos;
+  // carretas geralmente têm formatos menos padronizados na frota desta empresa
+  return 'desconhecido';
+}
+
 // Colunas de parcelas (PARCELAS 1/2/3) — usadas pelas placas de cavalo
 // mecânico, que pagam o IPVA sempre parcelado em 3x, dia 10, começando no
 // mês seguinte ao mês-calendário da placa (nunca à vista num único mês).
@@ -3445,10 +3461,13 @@ function vencCalcularStatusLinha(row, cat, headers, colId, colData, colSituacao,
     // Placas de cavalo (mecânico) pagam o IPVA sempre parcelado em 3x, com
     // vencimento no dia 10 de cada mês: a 1ª parcela cai no mês SEGUINTE ao
     // mês-calendário da placa (mesCal), a 2ª no mês seguinte a essa, e a 3ª
-    // no mês seguinte à 2ª. "Parcelado" = qualquer uma das colunas
-    // PARCELAS 1/2/3 vem preenchida (normalmente com "*").
+    // no mês seguinte à 2ª.
+    // Detecção: pela presença de colunas PARCELA na planilha, OU pela
+    // identificação da placa como cavalo no FROTA_DATA.
     const colsParcelas = vencColunasParcelas(headers);
-    const parcelado = mesCal && colsParcelas.some(c => String(row[c] || '').trim() !== '');
+    const tipoPlaca = vencTipoPlaca(placaTxt);
+    const ehCavaloFrota = tipoPlaca === 'cavalo';
+    const parcelado = mesCal && (colsParcelas.some(c => String(row[c] || '').trim() !== '') || ehCavaloFrota);
     if (parcelado) {
       parcelas = [1, 2, 3].map(off => new Date(now.getFullYear(), (mesCal - 1) + off, 10));
     }
@@ -3528,17 +3547,27 @@ function vencRenderCategoria(cat){
       wrapEl.parentNode.insertBefore(container, wrapEl);
     }
 
+    // Calcula totais para o banner resumo
+    const totalCavalos = filtradas.filter(({row}) => vencTipoPlaca(colId ? row[colId] : '') === 'cavalo').length;
+    const totalCarretas = filtradas.filter(({row}) => vencTipoPlaca(colId ? row[colId] : '') === 'carreta').length;
+    const bannerLic = `<div style="display:flex;flex-wrap:wrap;gap:.7rem;align-items:center;background:linear-gradient(135deg,#1e2a3a,#2d3748);border-radius:var(--r12);padding:.9rem 1.2rem;margin-bottom:1.2rem;font-size:.82rem">
+      <div style="flex:1;min-width:200px;color:#fff;font-weight:600"><i class="fas fa-info-circle" style="color:var(--accent)"></i> Regra IPVA/SC: calendário pelo último dígito da placa</div>
+      <span style="background:rgba(59,130,246,.3);color:#bfdbfe;padding:.3rem .9rem;border-radius:20px;font-weight:700;font-size:.78rem">🚛 ${totalCavalos} Cavalo${totalCavalos!==1?'s':''} — IPVA 3× parcelado (dia 10)</span>
+      <span style="background:rgba(255,255,255,.12);color:#e2e8f0;padding:.3rem .9rem;border-radius:20px;font-weight:700;font-size:.78rem">🚚 ${totalCarretas} Carreta${totalCarretas!==1?'s':''} — IPVA 1× à vista</span>
+    </div>`;
+
     // Agrupa por mês (último dígito da placa → mês IPVA SC)
     const porMes = {};
     filtradas.forEach(({row, d, status, parcelas}) => {
       const placa = colId ? (row[colId] || '') : '';
       const ultimoDigito = placa.replace(/[^0-9]/g,'').slice(-1);
       const mesCal = IPVA_SC_MES[ultimoDigito];
+      const tipoPl = vencTipoPlaca(placa);
       const chave = mesCal
         ? `${now.getFullYear()}-${String(mesCal).padStart(2,'0')}`
         : (d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` : 'sem-data');
       if (!porMes[chave]) porMes[chave] = [];
-      porMes[chave].push({row, d, status, placa, parcelas});
+      porMes[chave].push({row, d, status, placa, parcelas, tipoPl});
     });
 
     // Organiza as colunas: Placa e Situação primeiro (são elas que definem o
@@ -3551,18 +3580,28 @@ function vencRenderCategoria(cat){
     );
     const mesesOrdenados = Object.keys(porMes).sort();
 
-    container.innerHTML = mesesOrdenados.map(mes => {
+    container.innerHTML = bannerLic + mesesOrdenados.map(mes => {
       const grupo = porMes[mes];
       const nomeMes = mes === 'sem-data'
         ? 'Sem data / Dígito não identificado'
         : MESES_NOME[parseInt(mes.split('-')[1])-1] + '/' + mes.split('-')[0];
 
-      const rows_html = grupo.map(({row, d, status, parcelas}) => {
+      const rows_html = grupo.map(({row, d, status, parcelas, tipoPl}) => {
         const map = { vencido:['⚠ Vencido','badge-danger'], proximo:['⏰ Próx. 30d','badge-warning'], ok:['✓ Em Dia','badge-success'] };
         const [statusLabel, badgeClass] = map[status];
+        // Badge visual de tipo: cavalo paga 3x, carreta paga 1x
+        const tipoBadge = tipoPl === 'cavalo'
+          ? `<span class="badge badge-info" style="font-size:.65rem;margin-left:4px" title="Cavalo mecânico — IPVA parcelado 3x">🚛 CAVALO 3x</span>`
+          : tipoPl === 'carreta'
+            ? `<span class="badge badge-gray" style="font-size:.65rem;margin-left:4px" title="Carreta — IPVA à vista 1x">🚚 CARRETA 1x</span>`
+            : '';
         const cells = colsDisplay.map(h => {
           const val = row[h] || '';
           const hl = h.toLowerCase();
+          // Primeira coluna (placa/nome) recebe o badge de tipo
+          if (h === colId) {
+            return `<td style="white-space:nowrap"><b>${val}</b>${tipoBadge}</td>`;
+          }
           if (hl.includes('data')||hl.includes('venc')||hl.includes('valid')||hl.includes('situa')) {
             const dd = vencParseDataCat(val, cat, formato);
             return `<td>${dd ? fmtDate(dd) : val}</td>`;
@@ -3572,36 +3611,43 @@ function vencRenderCategoria(cat){
         // Placa parcelada (3x, dia 10): mostra as 3 datas reais calculadas,
         // cada uma com seu próprio status (mês seguinte, +2 e +3 meses após
         // o mês-calendário da placa).
-        let parcelaCell = '—';
+        let parcelaCell = tipoPl === 'carreta'
+          ? `<span class="badge badge-gray" style="font-size:.72rem">À vista — 1x</span>`
+          : '—';
         if (parcelas) {
           const pago = colSituacao ? String(row[colSituacao] || '').trim().toLowerCase().includes('ok') : false;
           const labels = parcelas.map((pd, i) => {
-            // Respeita a data de cada parcela individualmente: uma parcela cuja
-            // data ainda não chegou NUNCA fica verde, mesmo que a "Situação"
-            // geral da placa esteja OK (esse OK não significa que a parcela
-            // futura já foi paga). Só fica verde quando a data já passou E
-            // está marcada como paga; se já passou e não está paga, é vencido.
+            // Respeita a data de cada parcela individualmente
             let cls;
             if (pd > now) {
               cls = pd <= em30 ? 'badge-warning' : 'badge-gray';
             } else {
               cls = pago ? 'badge-success' : 'badge-danger';
             }
-            return `<span class="badge ${cls}" style="margin:1px;display:inline-block">${i+1}ª: ${fmtDate(pd)}</span>`;
+            return `<span class="badge ${cls}" style="margin:1px;display:inline-block;font-size:.7rem">${i+1}ª: ${fmtDate(pd)}</span>`;
           });
-          parcelaCell = labels.join(' ');
+          parcelaCell = `<div style="display:flex;flex-direction:column;gap:2px">${labels.join('')}</div>`;
         }
-        const parcelaTd = colsParcelasTodas.length ? `<td>${parcelaCell}</td>` : '';
+        // Sempre mostra a coluna de Parcelas/Vencimento, mesmo sem colunas PARCELA na planilha
+        const parcelaTd = `<td>${parcelaCell}</td>`;
         return `<tr>${cells}${parcelaTd}<td><span class="badge ${badgeClass}">${statusLabel}</span></td></tr>`;
       }).join('');
 
+      const nCavaloss = grupo.filter(x => x.tipoPl === 'cavalo').length;
+      const nCarretas = grupo.filter(x => x.tipoPl === 'carreta').length;
+      const nOutros = grupo.length - nCavaloss - nCarretas;
+      const resumoTipos = [
+        nCavaloss ? `<span style="background:rgba(59,130,246,.25);color:#bfdbfe;padding:1px 8px;border-radius:10px;font-size:.72rem">🚛 ${nCavaloss} cavalo${nCavaloss>1?'s':''} 3x</span>` : '',
+        nCarretas ? `<span style="background:rgba(255,255,255,.18);color:#f1f5f9;padding:1px 8px;border-radius:10px;font-size:.72rem">🚚 ${nCarretas} carreta${nCarretas>1?'s':''} 1x</span>` : '',
+        nOutros ? `<span style="background:rgba(255,255,255,.12);color:#f1f5f9;padding:1px 8px;border-radius:10px;font-size:.72rem">❓ ${nOutros}</span>` : '',
+      ].filter(Boolean).join(' ');
       return `<div style="margin-bottom:1.2rem">
-        <div style="background:var(--accent-dk);color:#fff;padding:.55rem 1rem;border-radius:var(--r12) var(--r12) 0 0;font-weight:800;font-size:.85rem;display:flex;justify-content:space-between">
-          <span>📅 ${nomeMes}</span><span>${grupo.length} veículo(s)</span>
+        <div style="background:var(--accent-dk);color:#fff;padding:.55rem 1rem;border-radius:var(--r12) var(--r12) 0 0;font-weight:800;font-size:.85rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.4rem">
+          <span>📅 ${nomeMes} — ${grupo.length} veículo(s)</span><span style="display:flex;gap:.4rem;flex-wrap:wrap">${resumoTipos}</span>
         </div>
         <div class="tbl-wrap" style="border-radius:0 0 var(--r12) var(--r12);overflow:hidden">
           <table class="data-table">
-            <thead><tr>${colsDisplay.map(h=>`<th>${h}</th>`).join('')}${colsParcelasTodas.length?'<th>Parcelas (1x/mês)</th>':''}<th>Status</th></tr></thead>
+            <thead><tr>${colsDisplay.map(h=>`<th>${h}</th>`).join('')}<th>Parcelas / Vencimento</th><th>Status</th></tr></thead>
             <tbody>${rows_html}</tbody>
           </table>
         </div>
