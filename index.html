@@ -1587,7 +1587,7 @@ function csvParseSmart(text){
 
 // Busca com timeout — evita que um proxy fora do ar deixe a página "travada"
 // esperando por minutos antes de tentar a próxima opção.
-function fetchComTimeout(url, ms = 9000) {
+function fetchComTimeout(url, ms = 14000) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), ms);
   return fetch(url, { cache: 'no-store', signal: ctrl.signal }).finally(() => clearTimeout(timer));
@@ -3166,15 +3166,43 @@ async function loadFaturamentoData() {
   const todosRegistros = [];
   const erros = [];
 
-  await Promise.all(urls.map(async (url, idx) => {
+  // Disparar as 12+ planilhas todas de uma vez sobrecarrega os proxies
+  // gratuitos (allorigins/codetabs) e gera "Failed to fetch" em algumas —
+  // não é a planilha que está com problema, é o proxy levando rate-limit.
+  // Correção: processa em lotes pequenos (concorrência limitada) e faz
+  // 1 nova tentativa (com pequena pausa) nas que falharem antes de desistir.
+  async function carregarPlanilha(url) {
     try {
       const rows = await fetchCSVRaw(url);
-      const registros = parseFaturamentoCSV(rows);
-      todosRegistros.push(...registros);
-    } catch(e) {
-      erros.push(`Planilha ${idx + 1}: ${e.message || e}`);
+      return { ok: true, registros: parseFaturamentoCSV(rows) };
+    } catch (e) {
+      return { ok: false, msg: e.message || String(e) };
     }
-  }));
+  }
+
+  async function processarEmLotes(lista, tamanhoLote) {
+    const falhas = []; // {idx, url}
+    for (let i = 0; i < lista.length; i += tamanhoLote) {
+      const lote = lista.slice(i, i + tamanhoLote);
+      const resultados = await Promise.all(lote.map(({ url }) => carregarPlanilha(url)));
+      resultados.forEach((r, j) => {
+        const { idx, url } = lote[j];
+        if (r.ok) todosRegistros.push(...r.registros);
+        else falhas.push({ idx, url, msg: r.msg });
+      });
+    }
+    return falhas;
+  }
+
+  const itens = urls.map((url, idx) => ({ url, idx }));
+  let falhas = await processarEmLotes(itens, 3);
+
+  // Retentativa única para as que falharam na 1ª passada
+  if (falhas.length) {
+    await new Promise(r => setTimeout(r, 1500));
+    const aindaFalhando = await processarEmLotes(falhas, 2);
+    erros.push(...aindaFalhando.map(f => `Planilha ${f.idx + 1}: ${f.msg}`));
+  }
 
   fatAllRecords = todosRegistros;
 
