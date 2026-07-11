@@ -679,9 +679,9 @@ footer a{color:var(--accent);text-decoration:none;}
     <div style="font-size:.72rem;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem">📊 Google Sheets / Drive</div>
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">💰 Financeiro (CSV)</label>
     <input type="text" id="urlFinanceiro" placeholder="https://docs.google.com/spreadsheets/...">
-    <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">🚛 Faturamento — Relatório por Motorista (CSV)</label>
-    <input type="text" id="urlFaturamento" placeholder="https://docs.google.com/spreadsheets/...">
-    <p style="font-size:.72rem;color:var(--text-lt);margin-top:-.3rem;margin-bottom:.5rem">Planilha publicada (Arquivo → Compartilhar → Publicar na Web → CSV) com o relatório de frete, diárias, vales e valor a receber por motorista.</p>
+    <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">🚛 Faturamento — Uma planilha por Motorista (CSV)</label>
+    <textarea id="urlFaturamento" rows="6" style="width:100%;font-family:inherit;font-size:.8rem;padding:.6rem;border-radius:8px;border:1px solid var(--gray-200);resize:vertical" placeholder="Uma URL por linha — uma planilha para cada motorista"></textarea>
+    <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem;margin-bottom:.5rem">Uma URL por linha (CSV). Cada planilha é de um motorista diferente, com meses variados dentro dela — todas são carregadas e combinadas automaticamente no painel de Faturamento.</p>
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">🔋 Baterias (CSV)</label>
     <input type="text" id="urlBaterias" placeholder="https://docs.google.com/spreadsheets/...">
   </div>
@@ -836,8 +836,9 @@ footer a{color:var(--accent);text-decoration:none;}
             <!-- Gráficos -->
             <div class="charts-grid">
               <div class="dash-card" style="grid-column:1/-1">
-                <div class="dash-card-title"><i class="fas fa-chart-column"></i> Faturamento x Valor a Receber por Mês</div>
-                <canvas id="fatChartMes" height="90"></canvas>
+                <div class="dash-card-title"><i class="fas fa-calendar-check"></i> Resumo do Mês Filtrado</div>
+                <div id="fatResumoPeriodo" style="font-size:.82rem;color:var(--text-lt);margin:-.4rem 0 1rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px"></div>
+                <div class="kpi-grid" id="fatResumoGrid" style="margin-bottom:0"></div>
               </div>
               <div class="dash-card">
                 <div class="dash-card-title"><i class="fas fa-calendar"></i> Faturamento por Ano</div>
@@ -1387,7 +1388,18 @@ footer a{color:var(--accent);text-decoration:none;}
 // ═══════════════════════════════════════════════════════════
 const DEFAULT_FINANCEIRO  = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZOvOYa2B9fg5pQuPa54usv9Tl0bRP7EDRBtYrmYnJuXZkK5_A7j4roQZdmiXaaQ/pub?output=csv";
 const DEFAULT_BATERIAS    = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRl21JTtpTiuYLD9QJVV82Hu5GDFwty4vYc-k467PnWyShcOgpXjXb5PnKdHMRCGA/pub?output=csv";
-const DEFAULT_FATURAMENTO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRI6KeOkDW3Vc8KhSTaxjKLxeg_38R98Yl7v5rRPUnM2OauNVcLDLiRah6Rnnrduw/pub?output=csv";
+// Faturamento agora vem de VÁRIAS planilhas (uma por motorista), cada uma
+// contendo blocos de datas/meses diferentes dentro dela. São combinadas em
+// tempo de execução por loadFaturamentoData().
+const DEFAULT_FATURAMENTO_DOCS = [
+  "https://docs.google.com/spreadsheets/d/166wdGYNuZTFRzB__1bTkAhugprLQvYYI/export?format=csv&gid=0",
+  "https://docs.google.com/spreadsheets/d/1mXlL5yqx6ItNfzwiB8VJJckHQzHj7H3X/export?format=csv&gid=0",
+  "https://docs.google.com/spreadsheets/d/1SmxPuBf7duG-BrFPL_qY17PTetvUyuPw/export?format=csv&gid=0",
+  "https://docs.google.com/spreadsheets/d/1nLtEnjZActkMvWBiasSPsmyzWNq4o_Xt/export?format=csv&gid=0",
+  "https://docs.google.com/spreadsheets/d/1bFJVRmmrNCbyov4LGBwLAt8scaZd1v4C/export?format=csv&gid=0",
+  "https://docs.google.com/spreadsheets/d/1Ov3A30VIB-TJWuwWcuQs_9rNcGg8vb7r/export?format=csv&gid=0"
+];
+const DEFAULT_FATURAMENTO = DEFAULT_FATURAMENTO_DOCS.join("\n");
 
 let URL_FIN  = localStorage.getItem("urlFinanceiro")  || DEFAULT_FINANCEIRO;
 let URL_BAT  = localStorage.getItem("urlBaterias")    || DEFAULT_BATERIAS;
@@ -2981,7 +2993,7 @@ function adicionarPDFManual() {
 // ═══════════════════════════════════════════════════════════
 let fatAllRecords = [];      // todos os registros (todos os motoristas/meses)
 let fatFiltered   = [];      // após filtros de Ano/Mês/Motorista
-let fatChartMes = null, fatChartAno = null, fatChartMedia = null, fatChartDiariasVales = null;
+let fatChartAno = null, fatChartMedia = null, fatChartDiariasVales = null;
 
 async function fetchCSVRaw(url) {
   if (!url) throw new Error('URL não configurada');
@@ -3102,7 +3114,8 @@ function parseFaturamentoCSV(rows) {
   return registros;
 }
 
-// Carrega e processa a planilha de Faturamento — usada por refreshAllData()
+// Carrega e processa TODAS as planilhas de Faturamento (uma por motorista)
+// configuradas em URL_FAT (uma URL por linha) — usada por refreshAllData()
 async function loadFaturamentoData() {
   const loadEl = document.getElementById('fatLoading');
   const emptyEl = document.getElementById('fatEmpty');
@@ -3110,19 +3123,37 @@ async function loadFaturamentoData() {
   loadEl.style.display = 'flex';
   emptyEl.style.display = 'none';
   contentEl.style.display = 'none';
-  try {
-    const rows = await fetchCSVRaw(URL_FAT);
-    fatAllRecords = parseFaturamentoCSV(rows);
-    fatPopularFiltros();
-    fatApplyFilters();
-  } catch(e) {
-    fatAllRecords = [];
+
+  const urls = String(URL_FAT || '')
+    .split(/[\n,]+/)
+    .map(u => u.trim())
+    .filter(Boolean);
+
+  const todosRegistros = [];
+  const erros = [];
+
+  await Promise.all(urls.map(async (url) => {
+    try {
+      const rows = await fetchCSVRaw(url);
+      const registros = parseFaturamentoCSV(rows);
+      todosRegistros.push(...registros);
+    } catch(e) {
+      erros.push(e.message || String(e));
+    }
+  }));
+
+  fatAllRecords = todosRegistros;
+
+  if (!fatAllRecords.length) {
     emptyEl.style.display = 'block';
     contentEl.style.display = 'none';
-    showToast('Erro ao carregar Faturamento: ' + e.message);
-  } finally {
-    loadEl.style.display = 'none';
+    showToast('Erro ao carregar Faturamento: ' + (erros[0] || 'nenhuma planilha retornou dados'));
+  } else {
+    fatPopularFiltros();
+    fatApplyFilters();
+    if (erros.length) showToast(`⚠️ ${erros.length} de ${urls.length} planilha(s) de Faturamento falharam ao carregar.`, 5000);
   }
+  loadEl.style.display = 'none';
 }
 
 function fatPopularFiltros() {
@@ -3140,6 +3171,49 @@ function fatPopularFiltros() {
 }
 
 const FAT_MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const FAT_MESES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+// Monta o resumo (KPIs) do período atualmente filtrado em Faturamento,
+// no lugar do antigo gráfico "Faturamento x Valor a Receber por Mês".
+function fatUpdateResumoMes(totalFaturamento, totalReceber, totalDiarias, totalVales, motoristasSet) {
+  const periodoEl = document.getElementById('fatResumoPeriodo');
+  const gridEl = document.getElementById('fatResumoGrid');
+  if (!periodoEl || !gridEl) return;
+
+  const ano = document.getElementById('fatAno').value;
+  const mesSel = document.getElementById('fatMes').value;
+  const mot = document.getElementById('fatMotorista').value;
+
+  // Rótulo do período filtrado
+  let periodoTxt;
+  if (ano && mesSel) periodoTxt = `${FAT_MESES_FULL[+mesSel - 1]} de ${ano}`;
+  else if (ano) periodoTxt = `Ano de ${ano}`;
+  else if (mesSel) periodoTxt = `${FAT_MESES_FULL[+mesSel - 1]} (todos os anos)`;
+  else periodoTxt = 'Todos os períodos';
+  if (mot) periodoTxt += ` · ${mot}`;
+
+  const totalComissao = fatFiltered.reduce((s, r) => s + (r.comissao || 0), 0);
+  const totalDespesas = fatFiltered.reduce((s, r) => s + (r.despesasMot || 0), 0);
+  const saldoLiquido = totalReceber - totalDespesas;
+
+  periodoEl.innerHTML = `<i class="fas fa-filter"></i> ${periodoTxt} — ${fatFiltered.length} lançamento${fatFiltered.length===1?'':'s'}`;
+
+  const itens = [
+    { icon:'fa-sack-dollar', cls:'green', val: fmtMoney(totalFaturamento), lbl:'Faturamento (Frete)' },
+    { icon:'fa-dollar-sign', cls:'yellow', val: fmtMoney(totalReceber), lbl:'Total a Receber' },
+    { icon:'fa-hotel', cls:'blue', val: fmtMoney(totalDiarias), lbl:'Total Diárias' },
+    { icon:'fa-hand-holding-dollar', cls:'red', val: fmtMoney(totalVales), lbl:'Vales / Manobra' },
+    { icon:'fa-percent', cls:'brown', val: fmtMoney(totalComissao), lbl:'Comissão' },
+    { icon:'fa-scale-balanced', cls: saldoLiquido >= 0 ? 'green' : 'red', val: fmtMoney(saldoLiquido), lbl:'Saldo Líquido (Receber − Desp.)' },
+    { icon:'fa-user', cls:'brown', val: motoristasSet.size, lbl:'Motoristas no Período' }
+  ];
+
+  gridEl.innerHTML = itens.map(it => `
+    <div class="kpi-card">
+      <div class="kpi-icon ${it.cls}"><i class="fas ${it.icon}"></i></div>
+      <div><div class="kpi-val">${it.val}</div><div class="kpi-lbl">${it.lbl}</div></div>
+    </div>`).join('');
+}
 
 function fatApplyFilters() {
   const emptyEl = document.getElementById('fatEmpty');
@@ -3202,27 +3276,8 @@ function fatApplyFilters() {
     ? rankRecArr.map(([m,v]) => `<li><span>${m}</span><span style="font-weight:700;color:var(--success)">${fmtMoney(v)}</span></li>`).join('')
     : '<li style="justify-content:center;color:var(--text-lt)">Sem dados.</li>';
 
-  // ── Gráfico: Faturamento x Valor a Receber por Mês ──
-  const porMes = {};
-  fatFiltered.forEach(r => {
-    if (!porMes[r.mesAno]) porMes[r.mesAno] = { frete: 0, receber: 0 };
-    porMes[r.mesAno].frete   += r.frete || 0;
-    porMes[r.mesAno].receber += r.valorReceber || 0;
-  });
-  const mesesChaves = Object.keys(porMes).sort();
-  const mesesLabels = mesesChaves.map(k => { const [y,mo] = k.split('-'); return `${FAT_MESES[+mo-1]}/${y.slice(2)}`; });
-  if (fatChartMes) fatChartMes.destroy();
-  const ctxMes = document.getElementById('fatChartMes').getContext('2d');
-  fatChartMes = new Chart(ctxMes, {
-    data: {
-      labels: mesesLabels,
-      datasets: [
-        { type:'bar',  label:'Faturamento (Frete)', data: mesesChaves.map(k=>porMes[k].frete),   backgroundColor:'rgba(212,175,55,.75)', borderColor:'rgba(212,175,55,1)', borderWidth:1, order:2 },
-        { type:'line', label:'Valor a Receber',      data: mesesChaves.map(k=>porMes[k].receber), borderColor:'#8B7355', backgroundColor:'rgba(139,115,85,.12)', fill:true, tension:.35, pointRadius:4, order:1 }
-      ]
-    },
-    options: {responsive:true, plugins:{legend:{position:'top'}}, scales:{y:{ticks:{callback:v=>fmtMoney(v)}}}}
-  });
+  // ── Resumo do Mês Filtrado (substitui o gráfico Faturamento x Valor a Receber) ──
+  fatUpdateResumoMes(totalFaturamento, totalReceber, totalDiarias, totalVales, motoristasSet);
 
   // ── Gráfico: Faturamento por Ano ──
   const porAno = {};
