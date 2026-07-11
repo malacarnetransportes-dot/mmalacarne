@@ -679,9 +679,9 @@ footer a{color:var(--accent);text-decoration:none;}
     <div style="font-size:.72rem;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem">📊 Google Sheets / Drive</div>
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">💰 Financeiro (CSV)</label>
     <input type="text" id="urlFinanceiro" placeholder="https://docs.google.com/spreadsheets/...">
-    <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">🚛 Faturamento — Uma planilha por Motorista (CSV)</label>
-    <textarea id="urlFaturamento" rows="6" style="width:100%;font-family:inherit;font-size:.8rem;padding:.6rem;border-radius:8px;border:1px solid var(--gray-200);resize:vertical" placeholder="Uma URL por linha — uma planilha para cada motorista"></textarea>
-    <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem;margin-bottom:.5rem">Uma URL por linha (CSV). Cada planilha é de um motorista diferente, com meses variados dentro dela — todas são carregadas e combinadas automaticamente no painel de Faturamento.</p>
+    <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">🚛 Faturamento — Todos os Motoristas (CSV)</label>
+    <textarea id="urlFaturamento" rows="3" style="width:100%;font-family:inherit;font-size:.8rem;padding:.6rem;border-radius:8px;border:1px solid var(--gray-200);resize:vertical" placeholder="https://docs.google.com/spreadsheets/.../pub?output=csv"></textarea>
+    <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem;margin-bottom:.5rem">Planilha publicada (Arquivo → Compartilhar → Publicar na Web → CSV) com todos os motoristas. Se precisar usar mais de uma planilha, cole uma URL por linha — todas serão combinadas.</p>
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">🔋 Baterias (CSV)</label>
     <input type="text" id="urlBaterias" placeholder="https://docs.google.com/spreadsheets/...">
   </div>
@@ -1388,30 +1388,25 @@ footer a{color:var(--accent);text-decoration:none;}
 // ═══════════════════════════════════════════════════════════
 const DEFAULT_FINANCEIRO  = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZOvOYa2B9fg5pQuPa54usv9Tl0bRP7EDRBtYrmYnJuXZkK5_A7j4roQZdmiXaaQ/pub?output=csv";
 const DEFAULT_BATERIAS    = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRl21JTtpTiuYLD9QJVV82Hu5GDFwty4vYc-k467PnWyShcOgpXjXb5PnKdHMRCGA/pub?output=csv";
-// Faturamento agora vem de VÁRIAS planilhas (uma por motorista), cada uma
-// contendo blocos de datas/meses diferentes dentro dela. São combinadas em
-// tempo de execução por loadFaturamentoData().
-const DEFAULT_FATURAMENTO_DOCS = [
-  "https://docs.google.com/spreadsheets/d/166wdGYNuZTFRzB__1bTkAhugprLQvYYI/export?format=csv&gid=0",
-  "https://docs.google.com/spreadsheets/d/1mXlL5yqx6ItNfzwiB8VJJckHQzHj7H3X/export?format=csv&gid=0",
-  "https://docs.google.com/spreadsheets/d/1SmxPuBf7duG-BrFPL_qY17PTetvUyuPw/export?format=csv&gid=0",
-  "https://docs.google.com/spreadsheets/d/1nLtEnjZActkMvWBiasSPsmyzWNq4o_Xt/export?format=csv&gid=0",
-  "https://docs.google.com/spreadsheets/d/1bFJVRmmrNCbyov4LGBwLAt8scaZd1v4C/export?format=csv&gid=0",
-  "https://docs.google.com/spreadsheets/d/1Ov3A30VIB-TJWuwWcuQs_9rNcGg8vb7r/export?format=csv&gid=0"
-];
-const DEFAULT_FATURAMENTO = DEFAULT_FATURAMENTO_DOCS.join("\n");
+// Faturamento: planilha única "Publicar na Web" consolidada com todos os
+// motoristas (blocos de data/mês dentro dela). Voltamos a usar só uma URL
+// pois os links de /export?format=csv direto de planilhas "compartilhadas"
+// (não publicadas) deram erro de CORS/permissão no navegador do usuário —
+// o formato "Publicar na Web" (pub?output=csv) é o único confiável para
+// leitura pública via fetch() do navegador.
+const DEFAULT_FATURAMENTO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTe2DOUBArKJAsVfZ5HWuepUJ8hP2t-Rscv3uFRvBLgAQLXa2VwnGJ45dJkKMromA/pub?output=csv";
 
 let URL_FIN  = localStorage.getItem("urlFinanceiro")  || DEFAULT_FINANCEIRO;
 let URL_BAT  = localStorage.getItem("urlBaterias")    || DEFAULT_BATERIAS;
 
-// Faturamento passou de 1 planilha única para 6 (uma por motorista). Quem já
-// tinha aberto o site antes e salvo a URL antiga (ou uma URL única qualquer,
-// sem quebra de linha) fica com esse valor velho preso no localStorage e o
-// fetch falha silenciosamente. Se o valor salvo não parecer a nova lista
-// (múltiplas linhas), descartamos e caímos no novo default de 6 planilhas.
-const FAT_URL_ANTIGA_OBSOLETA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRI6KeOkDW3Vc8KhSTaxjKLxeg_38R98Yl7v5rRPUnM2OauNVcLDLiRah6Rnnrduw/pub?output=csv";
+// Descarta valores antigos/quebrados que podem ter ficado presos no
+// localStorage de tentativas anteriores (URL antiga de 1 motorista só, ou
+// a lista de 6 planilhas via /export que não funcionava por CORS).
+const FAT_URLS_OBSOLETAS = new Set([
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vRI6KeOkDW3Vc8KhSTaxjKLxeg_38R98Yl7v5rRPUnM2OauNVcLDLiRah6Rnnrduw/pub?output=csv"
+]);
 let URL_FAT = localStorage.getItem("urlFaturamento") || DEFAULT_FATURAMENTO;
-if (!URL_FAT || URL_FAT.trim() === FAT_URL_ANTIGA_OBSOLETA || !URL_FAT.includes('\n')) {
+if (!URL_FAT || FAT_URLS_OBSOLETAS.has(URL_FAT.trim()) || /\/export\?format=csv/i.test(URL_FAT)) {
   URL_FAT = DEFAULT_FATURAMENTO;
   localStorage.removeItem("urlFaturamento");
 }
@@ -3036,24 +3031,47 @@ function fatLinhaVazia(row) {
 // Extrai TODOS os blocos motorista/mês de uma planilha (array de linhas cruas)
 function parseFaturamentoCSV(rows) {
   const registros = [];
-  const reBloco = /^(\d{1,2})\/(\d{1,2})\/(\d{2,4})\s*-\s*(.+)$/;
+  // Aceita dois formatos de cabeçalho de bloco:
+  //   "05/07/2026 - NOME - PLACA1/PLACA2"  (dia/mês/ano)
+  //   "04/2026 - NOME PLACA1/PLACA2"        (mês/ano, sem dia — usado na
+  //                                          planilha consolidada com todos
+  //                                          os motoristas)
+  const reBlocoDMY = /^(\d{1,2})\/(\d{1,2})\/(\d{2,4})\s*-\s*(.+)$/;
+  const reBlocoMY  = /^(\d{1,2})\/(\d{4})\s*-\s*(.+)$/;
+  // Placa formato antigo (ABC1234) ou Mercosul (ABC1D23)
+  const rePlaca = /\b[A-Z]{3}\d[A-Z0-9]\d{2}\b/g;
+
+  function fatMatchBloco(str) {
+    let m = str.match(reBlocoDMY);
+    if (m) return { dia: +m[1], mes: +m[2], ano: +m[3], resto: m[4] };
+    m = str.match(reBlocoMY);
+    if (m) return { dia: 1, mes: +m[1], ano: +m[2], resto: m[3] };
+    return null;
+  }
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i] || [];
-    const col0 = String(row[0] || '').trim();
-    const m = col0.match(reBloco);
-    if (!m) continue;
+    const col0 = String(row[0] || '').trim().toUpperCase();
+    const bloco = fatMatchBloco(col0);
+    if (!bloco) continue;
 
-    let dia = +m[1], mes = +m[2], ano = +m[3];
+    let { dia, mes, ano, resto } = bloco;
     if (ano < 100) ano += 2000;
+    if (mes < 1 || mes > 12) continue; // linha não é realmente um bloco válido
     const dataObj = new Date(ano, mes - 1, dia);
 
-    // "NOME MOTORISTA - PLACA1/PLACA2" (às vezes só o nome, sem placas)
-    const partes = m[4].split(/\s-\s/).map(s => s.trim()).filter(Boolean);
-    let motorista, placasStr;
-    if (partes.length >= 2) { placasStr = partes[partes.length - 1]; motorista = partes.slice(0, -1).join(' - '); }
-    else { motorista = m[4].trim(); placasStr = ''; }
-    const placasArr = placasStr.split('/').map(p => p.trim()).filter(Boolean);
+    // Extrai placas de qualquer lugar do texto (com ou sem traço antes delas)
+    // e usa o restante, limpo, como nome do motorista.
+    resto = resto.trim();
+    const placasArr = (resto.match(rePlaca) || []);
+    let motorista = resto
+      .replace(rePlaca, '')
+      .replace(/\//g, ' ')
+      .replace(/-\s*$/, '')
+      .replace(/^\s*-\s*/, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+    if (!motorista) motorista = resto; // fallback: mantém texto original se nada sobrou
 
     // Linha de sub-cabeçalho (FRETE, COMISSAO, ...) — próxima linha não vazia
     let hi = i + 1;
@@ -3093,12 +3111,12 @@ function parseFaturamentoCSV(rows) {
     let j = vi + 1, litrosVistos = 0;
     while (j < rows.length) {
       const rowJ = rows[j] || [];
-      const c0 = String(rowJ[0] || '').trim();
-      if (c0.match(reBloco)) break;
+      const c0 = String(rowJ[0] || '').trim().toUpperCase();
+      if (fatMatchBloco(c0)) break;
       if (fatLinhaVazia(rowJ)) {
         let k = j + 1;
         while (k < rows.length && fatLinhaVazia(rows[k])) k++;
-        if (k < rows.length && String((rows[k]||[])[0] || '').trim().match(reBloco)) { j = k; break; }
+        if (k < rows.length && fatMatchBloco(String((rows[k]||[])[0] || '').trim().toUpperCase())) { j = k; break; }
         j++; continue;
       }
       rowJ.map(c => String(c || '').trim()).filter(Boolean).forEach(cell => {
