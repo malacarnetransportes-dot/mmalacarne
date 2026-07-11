@@ -1526,6 +1526,20 @@ const CORS_PROXIES = [
   url => `https://thingproxy.freeboard.io/fetch/${url}`
 ];
 
+// Converte um link normal do Sheets (docs.google.com/spreadsheets/d/ID/...)
+// para o endpoint gviz, que responde CSV com CORS nativo — sem precisar de
+// proxy nenhum. NÃO funciona com link "Publicar na Web" (formato /d/e/2PACX...),
+// pois esse ID publicado não é o ID real da planilha; nesse caso retorna null
+// e o código cai automaticamente para a rota de proxy de sempre.
+function toGvizUrl(url) {
+  const m = String(url || '').match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if (!m || m[1] === 'e') return null;
+  const id = m[1];
+  const gidMatch = String(url).match(/[?&#]gid=(\d+)/);
+  const gid = gidMatch ? gidMatch[1] : '0';
+  return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&gid=${gid}`;
+}
+
 function toCsvUrl(url) {
   // Garante que a URL do Google Sheets retorne CSV (mesmo se foi colada como xlsx)
   return url.replace(/output=xlsx/i, 'output=csv');
@@ -1597,6 +1611,23 @@ async function fetchCSV(url) {
   if (!url) throw new Error('URL não configurada');
   const target = toCsvUrl(url);
   let lastErr;
+
+  // 0ª tentativa: gviz do Google (CORS nativo, sem proxy — mais rápido e
+  // não depende de proxy gratuito sobrecarregado). Se não der (link
+  // "Publicar na Web" ou gviz falhar), cai pra rota de sempre.
+  const gvizUrl = toGvizUrl(url);
+  if (gvizUrl) {
+    try {
+      const res = await fetchComTimeout(gvizUrl);
+      if (res.ok) {
+        const text = await res.text();
+        if (text && text.trim().length >= 2 && !/^\s*<(!doctype|html)/i.test(text)) {
+          const parsed = csvParseSmart(text);
+          if (parsed.length) return parsed;
+        }
+      }
+    } catch(e) { /* segue para a rota de proxy */ }
+  }
 
   // 1ª tentativa: direto (caso o Sheet permita CORS), depois os proxies em ordem
   const attempts = [target, ...CORS_PROXIES.map(fn => fn(target))];
@@ -3006,11 +3037,37 @@ let fatAllRecords = [];      // todos os registros (todos os motoristas/meses)
 let fatFiltered   = [];      // após filtros de Ano/Mês/Motorista
 let fatChartAno = null, fatChartMedia = null, fatChartDiariasVales = null;
 
-async function fetchCSVRaw(url) {
+async function fetchCSVRaw(url, proxyStartIndex = 0) {
   if (!url) throw new Error('URL não configurada');
   const target = toCsvUrl(url);
   let lastErr;
-  const attempts = [target, ...CORS_PROXIES.map(fn => fn(target))];
+
+  // 0ª tentativa: gviz (CORS nativo, sem proxy). Só funciona se a URL for
+  // link normal do Sheets — links "Publicar na Web" (o padrão usado nas
+  // 12 abas de Faturamento) têm ID publicado opaco e caem direto pra
+  // rota de proxy abaixo (é o caso normal aqui, não é bug).
+  const gvizUrl = toGvizUrl(url);
+  if (gvizUrl) {
+    try {
+      const res = await fetchComTimeout(gvizUrl);
+      if (res.ok) {
+        const text = await res.text();
+        if (text && text.trim().length >= 2 && !/^\s*<(!doctype|html)/i.test(text)) {
+          const parsed = Papa.parse(text, { header: false, skipEmptyLines: false });
+          if (parsed.data && parsed.data.length) return parsed.data;
+        }
+      }
+    } catch(e) { /* segue para a rota de proxy */ }
+  }
+
+  // Gira a ordem dos proxies conforme proxyStartIndex: assim, quando 12
+  // planilhas disparam juntas, elas não batem todas no MESMO proxy ao
+  // mesmo tempo (o que gera bloqueio por rajada) — ficam espalhadas pelos
+  // 4 proxies desde a 1ª tentativa. Cada URL ainda cai nos outros 3 em
+  // sequência se o seu 1º proxy falhar, então a cobertura continua igual.
+  const proxiesGirados = CORS_PROXIES.slice(proxyStartIndex % CORS_PROXIES.length)
+    .concat(CORS_PROXIES.slice(0, proxyStartIndex % CORS_PROXIES.length));
+  const attempts = [target, ...proxiesGirados.map(fn => fn(target))];
   for (const attemptUrl of attempts) {
     try {
       const res = await fetchComTimeout(attemptUrl);
@@ -3166,16 +3223,16 @@ async function loadFaturamentoData() {
   const todosRegistros = [];
   const erros = [];
 
-  // As outras abas (Financeiro, Baterias, Vencimentos) buscam 1 URL cada e
-  // por isso carregam rápido. Faturamento busca 12 URLs — se fossem em
-  // lotes sequenciais (como numa versão anterior desta função) ficaria
-  // muito mais lento que os outros módulos. Por isso mantém TODAS as 12
-  // em paralelo (igual aos outros módulos) e só soma 1 retentativa em
-  // paralelo para quem falhar de primeira (engasgo momentâneo do proxy),
-  // sem serializar nada.
-  async function carregarPlanilha(url) {
+  // As outras abas (Financeiro, Baterias, Vencimentos) buscam 1 URL cada,
+  // por isso nunca sentem limite de proxy. O Faturamento busca 12 URLs
+  // ("Publicar na Web", sem CORS nativo) — se as 12 começam tentando o
+  // MESMO proxy (allorigins) ao mesmo tempo, o proxy gratuito bloqueia
+  // por rajada e algumas falham. Correção: cada planilha começa por um
+  // proxy diferente (gira entre os 4), então a carga fica espalhada em
+  // vez de concentrada — mas continua tudo em paralelo, sem serializar.
+  async function carregarPlanilha(url, proxyStartIndex) {
     try {
-      const rows = await fetchCSVRaw(url);
+      const rows = await fetchCSVRaw(url, proxyStartIndex);
       return { ok: true, registros: parseFaturamentoCSV(rows) };
     } catch (e) {
       return { ok: false, msg: e.message || String(e) };
@@ -3183,16 +3240,17 @@ async function loadFaturamentoData() {
   }
 
   const itens = urls.map((url, idx) => ({ url, idx }));
-  const resultados = await Promise.all(itens.map(it => carregarPlanilha(it.url)));
+  const resultados = await Promise.all(itens.map(it => carregarPlanilha(it.url, it.idx)));
   const falhas = [];
   resultados.forEach((r, i) => {
     if (r.ok) todosRegistros.push(...r.registros);
     else falhas.push(itens[i]);
   });
 
-  // Retentativa única, também em paralelo, só para quem falhou
+  // Retentativa única, também em paralelo, girando o proxy de novo
+  // (começando de um ponto diferente) pra não repetir o mesmo que falhou
   if (falhas.length) {
-    const retry = await Promise.all(falhas.map(it => carregarPlanilha(it.url)));
+    const retry = await Promise.all(falhas.map(it => carregarPlanilha(it.url, it.idx + 2)));
     retry.forEach((r, i) => {
       if (r.ok) todosRegistros.push(...r.registros);
       else erros.push(`Planilha ${falhas[i].idx + 1}: ${r.msg}`);
