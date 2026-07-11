@@ -679,9 +679,9 @@ footer a{color:var(--accent);text-decoration:none;}
     <div style="font-size:.72rem;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem">📊 Google Sheets / Drive</div>
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">💰 Financeiro (CSV)</label>
     <input type="text" id="urlFinanceiro" placeholder="https://docs.google.com/spreadsheets/...">
-    <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">🚛 Faturamento — Todos os Motoristas (CSV)</label>
-    <textarea id="urlFaturamento" rows="3" style="width:100%;font-family:inherit;font-size:.8rem;padding:.6rem;border-radius:8px;border:1px solid var(--gray-200);resize:vertical" placeholder="https://docs.google.com/spreadsheets/.../pub?output=csv"></textarea>
-    <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem;margin-bottom:.5rem">Planilha publicada (Arquivo → Compartilhar → Publicar na Web → CSV) com todos os motoristas. Se precisar usar mais de uma planilha, cole uma URL por linha — todas serão combinadas.</p>
+    <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">🚛 Faturamento — Uma aba por Motorista (CSV)</label>
+    <textarea id="urlFaturamento" rows="6" style="width:100%;font-family:inherit;font-size:.8rem;padding:.6rem;border-radius:8px;border:1px solid var(--gray-200);resize:vertical" placeholder="Uma URL por linha — uma aba/motorista"></textarea>
+    <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem;margin-bottom:.5rem">Uma URL por linha (CSV). Cada motorista tem sua própria aba no mesmo documento — publique cada aba individualmente (Arquivo → Compartilhar → Publicar na Web → selecione a aba → CSV) e cole todos os links aqui. Todas são combinadas automaticamente no painel de Faturamento.</p>
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">🔋 Baterias (CSV)</label>
     <input type="text" id="urlBaterias" placeholder="https://docs.google.com/spreadsheets/...">
   </div>
@@ -1388,22 +1388,27 @@ footer a{color:var(--accent);text-decoration:none;}
 // ═══════════════════════════════════════════════════════════
 const DEFAULT_FINANCEIRO  = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZOvOYa2B9fg5pQuPa54usv9Tl0bRP7EDRBtYrmYnJuXZkK5_A7j4roQZdmiXaaQ/pub?output=csv";
 const DEFAULT_BATERIAS    = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRl21JTtpTiuYLD9QJVV82Hu5GDFwty4vYc-k467PnWyShcOgpXjXb5PnKdHMRCGA/pub?output=csv";
-// Faturamento: planilha única "Publicar na Web" consolidada com todos os
-// motoristas (blocos de data/mês dentro dela). Voltamos a usar só uma URL
-// pois os links de /export?format=csv direto de planilhas "compartilhadas"
-// (não publicadas) deram erro de CORS/permissão no navegador do usuário —
-// o formato "Publicar na Web" (pub?output=csv) é o único confiável para
-// leitura pública via fetch() do navegador.
-const DEFAULT_FATURAMENTO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTe2DOUBArKJAsVfZ5HWuepUJ8hP2t-Rscv3uFRvBLgAQLXa2VwnGJ45dJkKMromA/pub?output=csv";
+// Faturamento: cada motorista tem sua PRÓPRIA ABA dentro do mesmo documento
+// Google Sheets. Um link "Publicar na Web" em CSV só exporta uma aba por
+// vez, então usamos um link por aba (mesmo documento, gid diferente) e
+// combinamos tudo em loadFaturamentoData().
+const FAT_DOC = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTe2DOUBArKJAsVfZ5HWuepUJ8hP2t-Rscv3uFRvBLgAQLXa2VwnGJ45dJkKMromA/pub";
+const DEFAULT_FATURAMENTO_DOCS = [
+  683524434, 972019708, 1527968389, 1308561928, 93602328, 1313247063,
+  1079171289, 125211003, 2028303270, 1843129283, 850971004, 1461140453
+].map(gid => `${FAT_DOC}?gid=${gid}&single=true&output=csv`);
+const DEFAULT_FATURAMENTO = DEFAULT_FATURAMENTO_DOCS.join("\n");
 
 let URL_FIN  = localStorage.getItem("urlFinanceiro")  || DEFAULT_FINANCEIRO;
 let URL_BAT  = localStorage.getItem("urlBaterias")    || DEFAULT_BATERIAS;
 
 // Descarta valores antigos/quebrados que podem ter ficado presos no
-// localStorage de tentativas anteriores (URL antiga de 1 motorista só, ou
-// a lista de 6 planilhas via /export que não funcionava por CORS).
+// localStorage de tentativas anteriores (URL de 1 motorista só, a lista de
+// 6 planilhas via /export que falhava por CORS, ou o link único que só
+// trazia a aba padrão do documento).
 const FAT_URLS_OBSOLETAS = new Set([
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vRI6KeOkDW3Vc8KhSTaxjKLxeg_38R98Yl7v5rRPUnM2OauNVcLDLiRah6Rnnrduw/pub?output=csv"
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vRI6KeOkDW3Vc8KhSTaxjKLxeg_38R98Yl7v5rRPUnM2OauNVcLDLiRah6Rnnrduw/pub?output=csv",
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTe2DOUBArKJAsVfZ5HWuepUJ8hP2t-Rscv3uFRvBLgAQLXa2VwnGJ45dJkKMromA/pub?output=csv"
 ]);
 let URL_FAT = localStorage.getItem("urlFaturamento") || DEFAULT_FATURAMENTO;
 if (!URL_FAT || FAT_URLS_OBSOLETAS.has(URL_FAT.trim()) || /\/export\?format=csv/i.test(URL_FAT)) {
