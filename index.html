@@ -13,6 +13,7 @@
      tipografia do restante do site. -->
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
 :root{
@@ -3041,6 +3042,37 @@ function adicionarPDFManual() {
 // O parser abaixo varre a planilha inteira e monta 1 registro por bloco,
 // funcionando para qualquer quantidade de motoristas/meses cadastrados.
 // ═══════════════════════════════════════════════════════════
+// Registra o plugin de rótulos numéricos (datalabels) uma única vez e o
+// deixa desligado por padrão — só é ligado explicitamente nos gráficos do
+// módulo Faturamento, pra não "poluir" os outros gráficos do site (pizza
+// financeiro, funil de vagas, checklist, etc.).
+if (typeof ChartDataLabels !== 'undefined' && !Chart.registry.plugins.get('datalabels')) {
+  Chart.register(ChartDataLabels);
+  Chart.defaults.set('plugins.datalabels', { display: false });
+}
+
+// Busca no cadastro da Frota (FROTA_DATA) o registro de um motorista pelo
+// nome já normalizado — usado para exibir a placa (cavalo/carreta) junto
+// das médias de consumo.
+function fatFrotaDoMotorista(nomeMotorista) {
+  return FROTA_DATA.find(f => f.motorista === nomeMotorista) || null;
+}
+
+// Normaliza o nome do motorista lido de um bloco da planilha: se a placa do
+// cavalo daquele lançamento bater com uma placa cadastrada na Frota, usa o
+// nome OFICIAL do cadastro (FROTA_DATA) em vez do texto solto da planilha.
+// Isso evita que o mesmo motorista apareça "fatiado" em vários nomes
+// diferentes nos gráficos/rankings (ex.: "JOSIAS F." vs "JOSIAS FERREIRA
+// DOS SANTOS") só porque foi digitado de um jeito diferente em algum bloco.
+function fatNormalizarMotorista(nomeTexto, placaCavaloTexto) {
+  const p = String(placaCavaloTexto || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (p) {
+    const match = FROTA_DATA.find(f => f.placa.replace(/[^A-Z0-9]/g, '') === p);
+    if (match && match.motorista && match.motorista !== '—') return match.motorista;
+  }
+  return nomeTexto;
+}
+
 let fatAllRecords = [];      // todos os registros (todos os motoristas/meses)
 let fatFiltered   = [];      // após filtros de Ano/Mês/Motorista
 let fatChartAno = null, fatChartMedia = null, fatChartDiariasVales = null;
@@ -3153,6 +3185,12 @@ function parseFaturamentoCSV(rows) {
     let vi = hi + 1;
     while (vi < rows.length && fatLinhaVazia(rows[vi])) vi++;
     const valueRow = rows[vi] || [];
+
+    // Usa o nome OFICIAL do cadastro da Frota sempre que a placa do cavalo
+    // do bloco bater com uma placa conhecida — mantém todos os lançamentos
+    // do mesmo motorista sob um único nome, mesmo que a planilha tenha
+    // grafias diferentes (abreviações, sem sobrenome, etc.).
+    motorista = fatNormalizarMotorista(motorista, placasArr[0]);
 
     const rec = {
       dataStr: `${String(dia).padStart(2,'0')}/${String(mes).padStart(2,'0')}/${ano}`,
@@ -3451,10 +3489,26 @@ function fatApplyFilters() {
   fatChartAno = new Chart(ctxAno, {
     type:'bar',
     data: { labels: anosChaves, datasets: [{ label:'Faturamento', data: anosChaves.map(a=>porAno[a]), backgroundColor:'rgba(139,115,85,.75)', borderColor:'rgba(139,115,85,1)', borderWidth:1 }] },
-    options: {responsive:true, plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:v=>fmtMoney(v)}}}}
+    options: {
+      responsive:true,
+      plugins:{
+        legend:{display:false},
+        datalabels: {
+          display: true, anchor:'end', align:'end', offset: 4,
+          color:'#4a3826', font:{size:12, weight:'700'},
+          formatter: v => fmtMoney(v)
+        }
+      },
+      scales:{y:{ticks:{callback:v=>fmtMoney(v)}, grace:'10%'}}
+    }
   });
 
   // ── Gráfico: Média Cavalo x Carreta por Motorista ──
+  // Lista base = TODOS os motoristas ativos cadastrados na Frota (não só os
+  // que aparecem no período filtrado), pra nenhum motorista "sumir" do
+  // gráfico só por falta de lançamento no mês. Quando um motorista específico
+  // está selecionado no filtro, mostra só ele.
+  const motoristasAtivos = FROTA_DATA.filter(f => f.motorista && f.motorista !== '—').map(f => f.motorista);
   const medMap = {};
   fatFiltered.forEach(r => {
     if (!r.motorista) return;
@@ -3462,32 +3516,57 @@ function fatApplyFilters() {
     if (r.mediaCavalo > 0) medMap[r.motorista].cv.push(r.mediaCavalo);
     if (r.mediaCarreta > 0) medMap[r.motorista].cr.push(r.mediaCarreta);
   });
-  const medMotoristas = Object.keys(medMap);
+  const medMotoristas = [...new Set([...(mot ? [] : motoristasAtivos), ...Object.keys(medMap)])];
   const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
+
+  // Rótulos com o "conjunto" (placa do cavalo / placa da carreta) de cada
+  // motorista, puxado direto do cadastro da Frota — a mesma associação já
+  // usada na tela de Frota/Motoristas e no Controle de Pneus.
+  const medLabels = medMotoristas.map(m => {
+    const f = fatFrotaDoMotorista(m);
+    if (!f) return [m];
+    const carretaCurta = String(f.carreta || '—').split(' —')[0].trim();
+    return [m, `${f.placa} / ${carretaCurta}`];
+  });
 
   // ── Ranking — Média Cavalo e Média Carreta (separados) ──
   const fmtKmL = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' km/L' : '—';
-  const rankCavaloArr = medMotoristas.map(m => [m, avg(medMap[m].cv)]).filter(([,v]) => v > 0).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const rankCavaloArr = medMotoristas.map(m => [m, avg((medMap[m]||{cv:[]}).cv)]).filter(([,v]) => v > 0).sort((a,b)=>b[1]-a[1]).slice(0,10);
   document.getElementById('fatRankingMediaCavalo').innerHTML = rankCavaloArr.length
     ? rankCavaloArr.map(([m,v]) => `<li><span>${m}</span><span style="font-weight:700;color:#3b82f6">${fmtKmL(v)}</span></li>`).join('')
     : '<li style="justify-content:center;color:var(--text-lt)">Sem dados.</li>';
-  const rankCarretaArr = medMotoristas.map(m => [m, avg(medMap[m].cr)]).filter(([,v]) => v > 0).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const rankCarretaArr = medMotoristas.map(m => [m, avg((medMap[m]||{cr:[]}).cr)]).filter(([,v]) => v > 0).sort((a,b)=>b[1]-a[1]).slice(0,10);
   document.getElementById('fatRankingMediaCarreta').innerHTML = rankCarretaArr.length
     ? rankCarretaArr.map(([m,v]) => `<li><span>${m}</span><span style="font-weight:700;color:#10b981">${fmtKmL(v)}</span></li>`).join('')
     : '<li style="justify-content:center;color:var(--text-lt)">Sem dados.</li>';
 
   if (fatChartMedia) fatChartMedia.destroy();
   const ctxMedia = document.getElementById('fatChartMedia').getContext('2d');
+  const datalabelKmL = {
+    display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+    anchor:'end', align:'end', offset: 2,
+    font:{size:10, weight:'700'},
+    formatter: v => v.toLocaleString('pt-BR', {maximumFractionDigits:2})
+  };
   fatChartMedia = new Chart(ctxMedia, {
     type:'bar',
     data: {
-      labels: medMotoristas,
+      labels: medLabels,
       datasets: [
-        { label:'Média Cavalo (km/L)',  data: medMotoristas.map(m=>avg(medMap[m].cv)), backgroundColor:'rgba(59,130,246,.75)' },
-        { label:'Média Carreta (km/L)', data: medMotoristas.map(m=>avg(medMap[m].cr)), backgroundColor:'rgba(16,185,129,.75)' }
+        { label:'Média Cavalo (km/L)',  data: medMotoristas.map(m=>avg((medMap[m]||{cv:[]}).cv)), backgroundColor:'rgba(59,130,246,.75)',
+          datalabels: { ...datalabelKmL, color:'#1d4ed8' } },
+        { label:'Média Carreta (km/L)', data: medMotoristas.map(m=>avg((medMap[m]||{cr:[]}).cr)), backgroundColor:'rgba(16,185,129,.75)',
+          datalabels: { ...datalabelKmL, color:'#047857' } }
       ]
     },
-    options: {responsive:true, plugins:{legend:{position:'top'}}, scales:{y:{beginAtZero:true}}}
+    options: {
+      responsive:true,
+      plugins:{
+        legend:{position:'top'},
+        tooltip:{ callbacks:{ title: items => items[0].label } }
+      },
+      scales:{ y:{beginAtZero:true, grace:'12%'}, x:{ticks:{autoSkip:false}} }
+    }
   });
 
   // ── Gráfico: Diárias e Vales por Motorista ──
@@ -3498,19 +3577,28 @@ function fatApplyFilters() {
     dvMap[r.motorista].diaria += r.diaria || 0;
     dvMap[r.motorista].vale   += (r.valeValor || 0) + (r.manobraValor || 0);
   });
-  const dvMotoristas = Object.keys(dvMap);
+  const dvMotoristas = [...new Set([...(mot ? [] : motoristasAtivos), ...Object.keys(dvMap)])];
   if (fatChartDiariasVales) fatChartDiariasVales.destroy();
   const ctxDv = document.getElementById('fatChartDiariasVales').getContext('2d');
+  const datalabelMoney = {
+    display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+    color:'#fff', font:{size:10, weight:'700'},
+    formatter: v => fmtMoney(v)
+  };
   fatChartDiariasVales = new Chart(ctxDv, {
     type:'bar',
     data: {
       labels: dvMotoristas,
       datasets: [
-        { label:'Diárias', data: dvMotoristas.map(m=>dvMap[m].diaria), backgroundColor:'rgba(212,175,55,.8)', stack:'s' },
-        { label:'Vales/Manobra', data: dvMotoristas.map(m=>dvMap[m].vale), backgroundColor:'rgba(239,68,68,.75)', stack:'s' }
+        { label:'Diárias', data: dvMotoristas.map(m=>(dvMap[m]||{diaria:0}).diaria), backgroundColor:'rgba(212,175,55,.8)', stack:'s', datalabels: datalabelMoney },
+        { label:'Vales/Manobra', data: dvMotoristas.map(m=>(dvMap[m]||{vale:0}).vale), backgroundColor:'rgba(239,68,68,.75)', stack:'s', datalabels: datalabelMoney }
       ]
     },
-    options: {responsive:true, plugins:{legend:{position:'top'}}, scales:{x:{stacked:true}, y:{stacked:true, ticks:{callback:v=>fmtMoney(v)}}}}
+    options: {
+      responsive:true,
+      plugins:{ legend:{position:'top'} },
+      scales:{ x:{stacked:true, ticks:{autoSkip:false}}, y:{stacked:true, ticks:{callback:v=>fmtMoney(v)}, grace:'8%'} }
+    }
   });
 
   // ── Tabela detalhada ──
