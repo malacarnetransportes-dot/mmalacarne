@@ -1407,15 +1407,15 @@ const DEFAULT_BATERIAS    = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRl
 const FAT_SHEET_ID = "1kUAWS_qaUVRteTtHuHMmoRe1HgMcTdlg";
 const DEFAULT_FATURAMENTO_MOTORISTAS = [
   "ADRIANO VAZ DOS SANTOS",
-  "ANDERSON VEIGA SANTOS",
-  "CRISTIANO DE ALMEIDA",
-  "ERI ORLANDO ROMERO",
-  "GILSON MARGOTTI",
-  "HILDO ANTONIO ALMEIDA",
-  "JORGE ODAIR LOPES",
   "JOSIAS FERREIRA DOS SANTOS",
+  "ANDERSON VEIGA SANTOS",
+  "GILSON MARGOTTI",
+  "CRISTIANO  DE ALMEIDA",
+  "ERI ORLANDO ROMERO ",
+  "HILDO ANTONIO ALMEIDA ",
+  "JORGE ODAIR LOPES",
   "LEANDRO L KLEE",
-  "MARIANO DE SOUZA",
+  "MARIANO DE  SOUZA",
   "RAFAEL DE FRANÇA RAMOS",
   "RODRIGO DA ROSA"
 ];
@@ -3097,14 +3097,8 @@ function fatNormalizarMotorista(nomeTexto, placaCavaloTexto) {
     const match = FROTA_DATA.find(f => f.placa.replace(/[^A-Z0-9]/g, '') === p);
     if (match && match.motorista && match.motorista !== '—') return match.motorista;
   }
-  // 2) Fallback: bate pelo nome normalizado (sem espaços duplos/trailing)
-  const nomeNorm = String(nomeTexto || '').replace(/\s{2,}/g, ' ').trim().toUpperCase();
-  const matchNome = FROTA_DATA.find(f =>
-    f.motorista && f.motorista !== '—' &&
-    f.motorista.replace(/\s{2,}/g, ' ').trim().toUpperCase() === nomeNorm
-  );
-  if (matchNome) return matchNome.motorista;
-  return nomeNorm || nomeTexto;
+  // 2) Fallback: devolve o texto original sem alterar (o nome da aba é autoritativo)
+  return String(nomeTexto || '').trim() || nomeTexto;
 }
 
 let fatAllRecords = [];      // todos os registros (todos os motoristas/meses)
@@ -3310,7 +3304,7 @@ async function loadFaturamentoData() {
     return { nome: null, url: linha, idx };
   });
 
-  fatConfigMotoristas = [...new Set(itens.map(it => it.nome ? it.nome.replace(/\s{2,}/g,' ').trim().toUpperCase() : null).filter(Boolean))];
+  fatConfigMotoristas = [...new Set(itens.map(it => it.nome ? it.nome.trim() : null).filter(Boolean))];
 
   const todosRegistros = [];
   const erros = [];
@@ -3578,12 +3572,8 @@ function fatApplyFilters() {
   // Rótulos com o "conjunto" (placa do cavalo / placa da carreta) de cada
   // motorista, puxado direto do cadastro da Frota — a mesma associação já
   // usada na tela de Frota/Motoristas e no Controle de Pneus.
-  const medLabels = medMotoristas.map(m => {
-    const f = fatFrotaDoMotorista(m);
-    if (!f) return [m];
-    const carretaCurta = String(f.carreta || '—').split(' —')[0].trim();
-    return [m, `${f.placa} / ${carretaCurta}`];
-  });
+  // Usa só o primeiro nome para o eixo X (evita sobreposição)
+  const medLabels = medMotoristas.map(m => m.split(' ')[0]);
 
   // ── Ranking — Média Cavalo e Média Carreta (separados) ──
   const fmtKmL = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' km/L' : '—';
@@ -3619,9 +3609,12 @@ function fatApplyFilters() {
       responsive:true,
       plugins:{
         legend:{position:'top'},
-        tooltip:{ callbacks:{ title: items => items[0].label } }
+        tooltip:{ callbacks:{ title: items => medMotoristas[items[0].dataIndex] || items[0].label } }
       },
-      scales:{ y:{beginAtZero:true, grace:'12%'}, x:{ticks:{autoSkip:false}} }
+      scales:{
+        y:{beginAtZero:true, grace:'12%'},
+        x:{ticks:{autoSkip:false, maxRotation:45, minRotation:45, font:{size:10}}}
+      }
     }
   });
 
@@ -3641,10 +3634,11 @@ function fatApplyFilters() {
     color:'#fff', font:{size:10, weight:'700'},
     formatter: v => fmtMoney(v)
   };
+  const dvLabels = dvMotoristas.map(m => m.split(' ')[0]);
   fatChartDiariasVales = new Chart(ctxDv, {
     type:'bar',
     data: {
-      labels: dvMotoristas,
+      labels: dvLabels,
       datasets: [
         { label:'Diárias', data: dvMotoristas.map(m=>(dvMap[m]||{diaria:0}).diaria), backgroundColor:'rgba(212,175,55,.8)', stack:'s', datalabels: datalabelMoney },
         { label:'Vales/Manobra', data: dvMotoristas.map(m=>(dvMap[m]||{vale:0}).vale), backgroundColor:'rgba(239,68,68,.75)', stack:'s', datalabels: datalabelMoney }
@@ -3653,7 +3647,10 @@ function fatApplyFilters() {
     options: {
       responsive:true,
       plugins:{ legend:{position:'top'} },
-      scales:{ x:{stacked:true, ticks:{autoSkip:false}}, y:{stacked:true, ticks:{callback:v=>fmtMoney(v)}, grace:'8%'} }
+      scales:{
+        x:{stacked:true, ticks:{autoSkip:false, maxRotation:45, minRotation:45, font:{size:10}}},
+        y:{stacked:true, ticks:{callback:v=>fmtMoney(v)}, grace:'8%'}
+      }
     }
   });
 
@@ -3672,7 +3669,7 @@ function fatApplyFilters() {
       valesManobra:0, empConsignado:0, depFolha:0, valorReceber:0,
       mediaCavalo:0, mediaCarreta:0, km:0, horas:0, _semDados:true };
   });
-  const todasLinhas = [...fatFiltered].sort((a,b)=>b.data-a.data).concat(rowsSemDados);
+  const todasLinhas = [...fatFiltered].sort((a,b)=>b.data-a.data).concat(rowsSemDados.map(r=>({...r, dataStr:'<span style="font-size:.72rem;background:#e2e8f0;padding:.15rem .5rem;border-radius:20px;color:#64748b">Sem dados</span>'})));
 
   function renderCell(c, row) {
     let val = row[c] ?? '';
@@ -3681,10 +3678,11 @@ function fatApplyFilters() {
     if (c === 'mediaCavalo' || c === 'mediaCarreta') return row[c] ? row[c].toLocaleString('pt-BR',{maximumFractionDigits:2}) : '—';
     if (c === 'km') return row[c] ? row[c].toLocaleString('pt-BR',{maximumFractionDigits:0})+' km' : '—';
     if (c === 'horas') return row[c] ? row[c].toLocaleString('pt-BR',{maximumFractionDigits:0})+' h' : '—';
+    if (c === 'dataStr') return val || '—';
     return val || '—';
   }
   document.getElementById('fatTableBody').innerHTML = todasLinhas.map(row =>
-    `<tr style="${row._semDados ? 'opacity:.55;font-style:italic;background:var(--gray-100)' : ''}">${cols.map(c => `<td>${renderCell(c,row)}</td>`).join('')}</tr>`
+    `<tr style="${row._semDados ? 'background:var(--gray-100);color:#94a3b8' : ''}">${cols.map(c => `<td>${renderCell(c,row)}</td>`).join('')}</tr>`
   ).join('');
 }
 
@@ -4889,14 +4887,14 @@ const FROTA_DATA = [
   // ── MOTORISTAS ATIVOS ──
   {motorista:'ADRIANO VAZ DOS SANTOS',     placa:'RYE7J26', carreta:'QJH0591',                  paletes:'28', celular:'46 - 99983-7772', cpf:'023.114.919-03'},
   {motorista:'ANDERSON VEIGA SANTOS',       placa:'QTM0G30', carreta:'RYQ7I03 — 30 pal. Van',    paletes:'30', celular:'42 - 99832-0501', cpf:'012.273.449-10'},
-  {motorista:'CRISTIANO DE ALMEIDA',        placa:'QJM1350', carreta:'OKD8A19',                  paletes:'28', celular:'49 - 99110-7517', cpf:'029.395.799-11'},
-  {motorista:'ERI ORLANDO ROMERO',          placa:'QJC0B40', carreta:'MLB0J76',                  paletes:'28', celular:'92 - 99220-9993', cpf:'706.920.112-50'},
+  {motorista:'CRISTIANO  DE ALMEIDA',        placa:'QJM1350', carreta:'OKD8A19',                  paletes:'28', celular:'49 - 99110-7517', cpf:'029.395.799-11'},
+  {motorista:'ERI ORLANDO ROMERO ',          placa:'QJC0B40', carreta:'MLB0J76',                  paletes:'28', celular:'92 - 99220-9993', cpf:'706.920.112-50'},
   {motorista:'GILSON MARGOTTI',             placa:'RAC4780', carreta:'RXS3D84',                  paletes:'28', celular:'41 - 99930-9646', cpf:'045.221.079-86'},
-  {motorista:'HILDO ANTONIO ALMEIDA',       placa:'QJY0640', carreta:'QHI5B08',                  paletes:'28', celular:'49 - 99913-6578', cpf:'394.955.669-91'},
+  {motorista:'HILDO ANTONIO ALMEIDA ',       placa:'QJY0640', carreta:'QHI5B08',                  paletes:'28', celular:'49 - 99913-6578', cpf:'394.955.669-91'},
   {motorista:'JORGE ODAIR LOPES',           placa:'RLB3C26', carreta:'MKB0A39 — 30 pal. Van',    paletes:'30', celular:'49 - 99840-9613', cpf:'848.045.729-53'},
   {motorista:'JOSIAS FERREIRA DOS SANTOS',  placa:'QTM0E20', carreta:'QIW2885',                  paletes:'28', celular:'41 - 99782-7246', cpf:'035.686.699-86'},
   {motorista:'LEANDRO L KLEE',              placa:'RYE7J76', carreta:'RLO9G15',                  paletes:'28', celular:'49 - 99910-0398', cpf:'038.197.969-59'},
-  {motorista:'MARIANO DE SOUZA',            placa:'QJA0E90', carreta:'QHA1357',                  paletes:'30', celular:'87 - 98134-2532', cpf:'098.235.784-27'},
+  {motorista:'MARIANO DE  SOUZA',            placa:'QJA0E90', carreta:'QHA1357',                  paletes:'30', celular:'87 - 98134-2532', cpf:'098.235.784-27'},
   {motorista:'RAFAEL DE FRANÇA RAMOS',      placa:'RLB3E46', carreta:'IWV8B19',                  paletes:'28', celular:'42 - 98804-7766', cpf:'065.936.019-50'},
   {motorista:'RODRIGO DA ROSA',             placa:'RYE7J36', carreta:'RDS9H31',                  paletes:'30', celular:'49 - 99922-8442', cpf:'944.742.309-49'},
   // ── VEÍCULOS PARADOS ──
