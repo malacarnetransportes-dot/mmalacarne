@@ -13,7 +13,6 @@
      tipografia do restante do site. -->
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
 :root{
@@ -1398,30 +1397,14 @@ footer a{color:var(--accent);text-decoration:none;}
 const DEFAULT_FINANCEIRO  = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZOvOYa2B9fg5pQuPa54usv9Tl0bRP7EDRBtYrmYnJuXZkK5_A7j4roQZdmiXaaQ/pub?output=csv";
 const DEFAULT_BATERIAS    = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRl21JTtpTiuYLD9QJVV82Hu5GDFwty4vYc-k467PnWyShcOgpXjXb5PnKdHMRCGA/pub?output=csv";
 // Faturamento: cada motorista tem sua PRÓPRIA ABA dentro do mesmo documento
-// Google Sheets (planilha "FATURAMENTO.xlsx", ID abaixo, compartilhada como
-// "Qualquer pessoa com o link pode ver"). Em vez do link "Publicar na Web"
-// antigo (gids fixos que ficavam desatualizados quando alguma aba era
-// renomeada/reordenada/adicionada — causa mais provável de motorista
-// sumir), usamos o endpoint gviz por NOME da aba: CORS nativo (sem proxy)
-// e não depende de gid nenhum, só do nome exato da aba na planilha.
-const FAT_SHEET_ID = "1kUAWS_qaUVRteTtHuHMmoRe1HgMcTdlg";
-const DEFAULT_FATURAMENTO_MOTORISTAS = [
-  "ADRIANO VAZ DOS SANTOS",
-  "JOSIAS FERREIRA DOS SANTOS",
-  "ANDERSON VEIGA SANTOS",
-  "GILSON MARGOTTI",
-  "CRISTIANO  DE ALMEIDA",
-  "ERI ORLANDO ROMERO ",
-  "HILDO ANTONIO ALMEIDA ",
-  "JORGE ODAIR LOPES",
-  "LEANDRO L KLEE",
-  "MARIANO DE  SOUZA",
-  "RAFAEL DE FRANÇA RAMOS",
-  "RODRIGO DA ROSA"
-];
-const DEFAULT_FATURAMENTO_DOCS = DEFAULT_FATURAMENTO_MOTORISTAS.map(nome =>
-  `${nome}|https://docs.google.com/spreadsheets/d/${FAT_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(nome)}`
-);
+// Google Sheets. Um link "Publicar na Web" em CSV só exporta uma aba por
+// vez, então usamos um link por aba (mesmo documento, gid diferente) e
+// combinamos tudo em loadFaturamentoData().
+const FAT_DOC = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTe2DOUBArKJAsVfZ5HWuepUJ8hP2t-Rscv3uFRvBLgAQLXa2VwnGJ45dJkKMromA/pub";
+const DEFAULT_FATURAMENTO_DOCS = [
+  683524434, 972019708, 1527968389, 1308561928, 93602328, 1313247063,
+  1079171289, 125211003, 2028303270, 1843129283, 850971004, 1461140453
+].map(gid => `${FAT_DOC}?gid=${gid}&single=true&output=csv`);
 const DEFAULT_FATURAMENTO = DEFAULT_FATURAMENTO_DOCS.join("\n");
 
 let URL_FIN  = localStorage.getItem("urlFinanceiro")  || DEFAULT_FINANCEIRO;
@@ -1436,11 +1419,7 @@ const FAT_URLS_OBSOLETAS = new Set([
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vTe2DOUBArKJAsVfZ5HWuepUJ8hP2t-Rscv3uFRvBLgAQLXa2VwnGJ45dJkKMromA/pub?output=csv"
 ]);
 let URL_FAT = localStorage.getItem("urlFaturamento") || DEFAULT_FATURAMENTO;
-// Descarta também a config antiga baseada em gids fixos do link "Publicar
-// na Web" (2PACX-...TromA) — ela não pega motorista novo/renomeado na
-// planilha, que era o sintoma relatado ("não está puxando todos os
-// motoristas"). Migra automaticamente para o novo padrão por nome de aba.
-if (!URL_FAT || FAT_URLS_OBSOLETAS.has(URL_FAT.trim()) || /\/export\?format=csv/i.test(URL_FAT) || /2PACX-1vTe2DOUBArKJAsVfZ5HWuepUJ8hP2t-Rscv3uFRvBLgAQLXa2VwnGJ45dJkKMromA/.test(URL_FAT)) {
+if (!URL_FAT || FAT_URLS_OBSOLETAS.has(URL_FAT.trim()) || /\/export\?format=csv/i.test(URL_FAT)) {
   URL_FAT = DEFAULT_FATURAMENTO;
   localStorage.removeItem("urlFaturamento");
 }
@@ -1561,16 +1540,10 @@ const CORS_PROXIES = [
 // pois esse ID publicado não é o ID real da planilha; nesse caso retorna null
 // e o código cai automaticamente para a rota de proxy de sempre.
 function toGvizUrl(url) {
-  const s = String(url || '');
-  // Já é uma URL gviz pronta (ex.: config do Faturamento por nome de aba,
-  // "sheet=NOME") — usa direto, sem reprocessar e sem perder o parâmetro.
-  if (/\/gviz\/tq\?/.test(s)) return s;
-  const m = s.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  const m = String(url || '').match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
   if (!m || m[1] === 'e') return null;
   const id = m[1];
-  const sheetMatch = s.match(/[?&#]sheet=([^&#]+)/);
-  if (sheetMatch) return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&sheet=${sheetMatch[1]}`;
-  const gidMatch = s.match(/[?&#]gid=(\d+)/);
+  const gidMatch = String(url).match(/[?&#]gid=(\d+)/);
   const gid = gidMatch ? gidMatch[1] : '0';
   return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&gid=${gid}`;
 }
@@ -3068,39 +3041,6 @@ function adicionarPDFManual() {
 // O parser abaixo varre a planilha inteira e monta 1 registro por bloco,
 // funcionando para qualquer quantidade de motoristas/meses cadastrados.
 // ═══════════════════════════════════════════════════════════
-// Registra o plugin de rótulos numéricos (datalabels) uma única vez e o
-// deixa desligado por padrão — só é ligado explicitamente nos gráficos do
-// módulo Faturamento, pra não "poluir" os outros gráficos do site (pizza
-// financeiro, funil de vagas, checklist, etc.).
-if (typeof ChartDataLabels !== 'undefined' && !Chart.registry.plugins.get('datalabels')) {
-  Chart.register(ChartDataLabels);
-  Chart.defaults.set('plugins.datalabels', { display: false });
-}
-
-// Busca no cadastro da Frota (FROTA_DATA) o registro de um motorista pelo
-// nome já normalizado — usado para exibir a placa (cavalo/carreta) junto
-// das médias de consumo.
-function fatFrotaDoMotorista(nomeMotorista) {
-  return FROTA_DATA.find(f => f.motorista === nomeMotorista) || null;
-}
-
-// Normaliza o nome do motorista lido de um bloco da planilha: se a placa do
-// cavalo daquele lançamento bater com uma placa cadastrada na Frota, usa o
-// nome OFICIAL do cadastro (FROTA_DATA) em vez do texto solto da planilha.
-// Isso evita que o mesmo motorista apareça "fatiado" em vários nomes
-// diferentes nos gráficos/rankings (ex.: "JOSIAS F." vs "JOSIAS FERREIRA
-// DOS SANTOS") só porque foi digitado de um jeito diferente em algum bloco.
-function fatNormalizarMotorista(nomeTexto, placaCavaloTexto) {
-  // 1) Prioridade: bate pela placa do cavalo (mais confiável)
-  const p = String(placaCavaloTexto || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-  if (p) {
-    const match = FROTA_DATA.find(f => f.placa.replace(/[^A-Z0-9]/g, '') === p);
-    if (match && match.motorista && match.motorista !== '—') return match.motorista;
-  }
-  // 2) Fallback: devolve o texto original sem alterar (o nome da aba é autoritativo)
-  return String(nomeTexto || '').trim() || nomeTexto;
-}
-
 let fatAllRecords = [];      // todos os registros (todos os motoristas/meses)
 let fatFiltered   = [];      // após filtros de Ano/Mês/Motorista
 let fatChartAno = null, fatChartMedia = null, fatChartDiariasVales = null;
@@ -3214,12 +3154,6 @@ function parseFaturamentoCSV(rows) {
     while (vi < rows.length && fatLinhaVazia(rows[vi])) vi++;
     const valueRow = rows[vi] || [];
 
-    // Usa o nome OFICIAL do cadastro da Frota sempre que a placa do cavalo
-    // do bloco bater com uma placa conhecida — mantém todos os lançamentos
-    // do mesmo motorista sob um único nome, mesmo que a planilha tenha
-    // grafias diferentes (abreviações, sem sobrenome, etc.).
-    motorista = fatNormalizarMotorista(motorista, placasArr[0]);
-
     const rec = {
       dataStr: `${String(dia).padStart(2,'0')}/${String(mes).padStart(2,'0')}/${ano}`,
       data: dataObj, ano, mes, mesAno: `${ano}-${String(mes).padStart(2,'0')}`,
@@ -3304,7 +3238,7 @@ async function loadFaturamentoData() {
     return { nome: null, url: linha, idx };
   });
 
-  fatConfigMotoristas = [...new Set(itens.map(it => it.nome ? it.nome.trim() : null).filter(Boolean))];
+  fatConfigMotoristas = [...new Set(itens.map(it => it.nome).filter(Boolean))];
 
   const todosRegistros = [];
   const erros = [];
@@ -3323,14 +3257,7 @@ async function loadFaturamentoData() {
   // plano. É isso que faz o Faturamento parecer tão rápido quanto os
   // outros módulos, mesmo com 12 URLs pra buscar.
   function renderParcial() {
-    // Deduplica também no render parcial (carregamento progressivo)
-    const _seen = new Set();
-    fatAllRecords = todosRegistros.filter(r => {
-      const k = `${r.motorista}|${r.dataStr}|${r.placaCavalo}|${r.frete}|${r.valorReceber}`;
-      if (_seen.has(k)) return false;
-      _seen.add(k);
-      return true;
-    });
+    fatAllRecords = todosRegistros.slice();
     if (!fatAllRecords.length) return;
     if (!telaJaVisivel) {
       loadEl.style.display = 'none';
@@ -3372,39 +3299,25 @@ async function loadFaturamentoData() {
     }));
   }
 
-  // Deduplica registros idênticos (mesmo motorista + data + placa + frete)
-  // que podem surgir quando a planilha tem blocos repetidos ou a mesma aba
-  // é carregada mais de uma vez via proxy diferente.
-  const seenKeys = new Set();
-  fatAllRecords = todosRegistros.filter(r => {
-    const key = `${r.motorista}|${r.dataStr}|${r.placaCavalo}|${r.frete}|${r.valorReceber}`;
-    if (seenKeys.has(key)) return false;
-    seenKeys.add(key);
-    return true;
-  });
+  fatAllRecords = todosRegistros;
   loadEl.style.display = 'none';
 
-  // Sempre mostra a tela com todos os motoristas (com ou sem dados)
-  fatPopularFiltros();
-  fatApplyFilters();
   if (!fatAllRecords.length) {
-    showToast('Nenhum lançamento encontrado nas planilhas — motoristas exibidos com valores zerados.', 6000);
-  }
-  if (erros.length) {
-      const nomesFalha = erros.map(e => {
-        const m = e.match(/\(([^)]+)\)/);
-        return m ? m[1] : e;
-      }).join(', ');
-      showToast(`⚠️ ${erros.length} de ${total} planilha(s) sem dados — ${nomesFalha}`, 10000);
-    }
-  if (false) { // bloco morto
+    emptyEl.style.display = 'block';
+    emptyEl.innerHTML = `<i class="fas fa-truck" style="font-size:2rem;opacity:.3;display:block;margin-bottom:.5rem"></i>
+      Nenhum lançamento encontrado na planilha de faturamento.<br>
+      <span style="font-size:.78rem">${erros.length ? erros.join('<br>') : 'Verifique a URL em Config URLs.'}</span>`;
+    contentEl.style.display = 'none';
+    showToast('Erro ao carregar Faturamento: ' + (erros[0] || 'nenhuma planilha retornou dados'), 6000);
+  } else {
+    fatPopularFiltros();
+    fatApplyFilters();
+    if (erros.length) showToast(`⚠️ ${erros.length} de ${total} planilha(s) de Faturamento falharam: ${erros[0]}`, 6000);
   }
 }
 
 function fatPopularFiltros() {
-  // Sempre inclui os 12 motoristas do cadastro + quem tiver dados
   const motoristas = [...new Set([
-    ...DEFAULT_FATURAMENTO_MOTORISTAS,
     ...fatAllRecords.map(r => r.motorista),
     ...fatConfigMotoristas
   ].filter(Boolean))].sort();
@@ -3469,9 +3382,11 @@ function fatApplyFilters() {
   const emptyEl = document.getElementById('fatEmpty');
   const contentEl = document.getElementById('fatContent');
 
-  // Sempre mostra o conteúdo — motoristas sem lançamentos aparecem zerados
-  emptyEl.style.display = 'none';
-  contentEl.style.display = 'block';
+  if (!fatAllRecords.length) {
+    emptyEl.style.display = 'block';
+    contentEl.style.display = 'none';
+    return;
+  }
 
   const ano = document.getElementById('fatAno').value;
   const mesSel = document.getElementById('fatMes').value;
@@ -3484,18 +3399,16 @@ function fatApplyFilters() {
     return true;
   });
 
+  emptyEl.style.display = 'none';
+  contentEl.style.display = 'block';
+
   // ── KPIs ──
   const soma = campo => fatFiltered.reduce((s, r) => s + (r[campo] || 0), 0);
   const totalFaturamento = soma('frete');
   const totalReceber     = soma('valorReceber');
   const totalDiarias     = soma('diaria');
   const totalVales       = fatFiltered.reduce((s, r) => s + (r.valeValor || 0) + (r.manobraValor || 0), 0);
-  // Inclui TODOS os motoristas cadastrados, mesmo os sem lançamentos no período
-  const todosMotoristas = [...new Set([
-    ...DEFAULT_FATURAMENTO_MOTORISTAS,
-    ...fatFiltered.map(r => r.motorista).filter(Boolean)
-  ])];
-  const motoristasSet    = new Set(todosMotoristas);
+  const motoristasSet    = new Set(fatFiltered.map(r => r.motorista).filter(Boolean));
   const cvVals = fatFiltered.map(r => r.mediaCavalo).filter(v => v > 0);
   const crVals = fatFiltered.map(r => r.mediaCarreta).filter(v => v > 0);
   const mediaCv = cvVals.length ? cvVals.reduce((a,b)=>a+b,0)/cvVals.length : 0;
@@ -3509,7 +3422,6 @@ function fatApplyFilters() {
   document.getElementById('fat-mediacv').textContent      = mediaCv ? mediaCv.toLocaleString('pt-BR',{maximumFractionDigits:2}) : '—';
   document.getElementById('fat-mediacr').textContent      = mediaCr ? mediaCr.toLocaleString('pt-BR',{maximumFractionDigits:2}) : '—';
   document.getElementById('fatCount').textContent = fatFiltered.length + ' lançamentos · ' + motoristasSet.size + ' motoristas';
-  document.getElementById('fat-motoristas').textContent = motoristasSet.size;
 
   // ── Ranking por Faturamento (frete) ──
   const rankFat = {};
@@ -3539,26 +3451,10 @@ function fatApplyFilters() {
   fatChartAno = new Chart(ctxAno, {
     type:'bar',
     data: { labels: anosChaves, datasets: [{ label:'Faturamento', data: anosChaves.map(a=>porAno[a]), backgroundColor:'rgba(139,115,85,.75)', borderColor:'rgba(139,115,85,1)', borderWidth:1 }] },
-    options: {
-      responsive:true,
-      plugins:{
-        legend:{display:false},
-        datalabels: {
-          display: true, anchor:'end', align:'end', offset: 4,
-          color:'#4a3826', font:{size:12, weight:'700'},
-          formatter: v => fmtMoney(v)
-        }
-      },
-      scales:{y:{ticks:{callback:v=>fmtMoney(v)}, grace:'10%'}}
-    }
+    options: {responsive:true, plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:v=>fmtMoney(v)}}}}
   });
 
   // ── Gráfico: Média Cavalo x Carreta por Motorista ──
-  // Lista base = TODOS os motoristas ativos cadastrados na Frota (não só os
-  // que aparecem no período filtrado), pra nenhum motorista "sumir" do
-  // gráfico só por falta de lançamento no mês. Quando um motorista específico
-  // está selecionado no filtro, mostra só ele.
-  const motoristasAtivos = FROTA_DATA.filter(f => f.motorista && f.motorista !== '—').map(f => f.motorista);
   const medMap = {};
   fatFiltered.forEach(r => {
     if (!r.motorista) return;
@@ -3566,56 +3462,32 @@ function fatApplyFilters() {
     if (r.mediaCavalo > 0) medMap[r.motorista].cv.push(r.mediaCavalo);
     if (r.mediaCarreta > 0) medMap[r.motorista].cr.push(r.mediaCarreta);
   });
-  const medMotoristas = [...new Set([...(mot ? [] : motoristasAtivos), ...Object.keys(medMap)])];
+  const medMotoristas = Object.keys(medMap);
   const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
-
-  // Rótulos com o "conjunto" (placa do cavalo / placa da carreta) de cada
-  // motorista, puxado direto do cadastro da Frota — a mesma associação já
-  // usada na tela de Frota/Motoristas e no Controle de Pneus.
-  // Usa só o primeiro nome para o eixo X (evita sobreposição)
-  const medLabels = medMotoristas.map(m => m.split(' ')[0]);
 
   // ── Ranking — Média Cavalo e Média Carreta (separados) ──
   const fmtKmL = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' km/L' : '—';
-  const rankCavaloArr = medMotoristas.map(m => [m, avg((medMap[m]||{cv:[]}).cv)]).filter(([,v]) => v > 0).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const rankCavaloArr = medMotoristas.map(m => [m, avg(medMap[m].cv)]).filter(([,v]) => v > 0).sort((a,b)=>b[1]-a[1]).slice(0,10);
   document.getElementById('fatRankingMediaCavalo').innerHTML = rankCavaloArr.length
     ? rankCavaloArr.map(([m,v]) => `<li><span>${m}</span><span style="font-weight:700;color:#3b82f6">${fmtKmL(v)}</span></li>`).join('')
     : '<li style="justify-content:center;color:var(--text-lt)">Sem dados.</li>';
-  const rankCarretaArr = medMotoristas.map(m => [m, avg((medMap[m]||{cr:[]}).cr)]).filter(([,v]) => v > 0).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const rankCarretaArr = medMotoristas.map(m => [m, avg(medMap[m].cr)]).filter(([,v]) => v > 0).sort((a,b)=>b[1]-a[1]).slice(0,10);
   document.getElementById('fatRankingMediaCarreta').innerHTML = rankCarretaArr.length
     ? rankCarretaArr.map(([m,v]) => `<li><span>${m}</span><span style="font-weight:700;color:#10b981">${fmtKmL(v)}</span></li>`).join('')
     : '<li style="justify-content:center;color:var(--text-lt)">Sem dados.</li>';
 
   if (fatChartMedia) fatChartMedia.destroy();
   const ctxMedia = document.getElementById('fatChartMedia').getContext('2d');
-  const datalabelKmL = {
-    display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
-    anchor:'end', align:'end', offset: 2,
-    font:{size:10, weight:'700'},
-    formatter: v => v.toLocaleString('pt-BR', {maximumFractionDigits:2})
-  };
   fatChartMedia = new Chart(ctxMedia, {
     type:'bar',
     data: {
-      labels: medLabels,
+      labels: medMotoristas,
       datasets: [
-        { label:'Média Cavalo (km/L)',  data: medMotoristas.map(m=>avg((medMap[m]||{cv:[]}).cv)), backgroundColor:'rgba(59,130,246,.75)',
-          datalabels: { ...datalabelKmL, color:'#1d4ed8' } },
-        { label:'Média Carreta (km/L)', data: medMotoristas.map(m=>avg((medMap[m]||{cr:[]}).cr)), backgroundColor:'rgba(16,185,129,.75)',
-          datalabels: { ...datalabelKmL, color:'#047857' } }
+        { label:'Média Cavalo (km/L)',  data: medMotoristas.map(m=>avg(medMap[m].cv)), backgroundColor:'rgba(59,130,246,.75)' },
+        { label:'Média Carreta (km/L)', data: medMotoristas.map(m=>avg(medMap[m].cr)), backgroundColor:'rgba(16,185,129,.75)' }
       ]
     },
-    options: {
-      responsive:true,
-      plugins:{
-        legend:{position:'top'},
-        tooltip:{ callbacks:{ title: items => medMotoristas[items[0].dataIndex] || items[0].label } }
-      },
-      scales:{
-        y:{beginAtZero:true, grace:'12%'},
-        x:{ticks:{autoSkip:false, maxRotation:45, minRotation:45, font:{size:10}}}
-      }
-    }
+    options: {responsive:true, plugins:{legend:{position:'top'}}, scales:{y:{beginAtZero:true}}}
   });
 
   // ── Gráfico: Diárias e Vales por Motorista ──
@@ -3626,32 +3498,19 @@ function fatApplyFilters() {
     dvMap[r.motorista].diaria += r.diaria || 0;
     dvMap[r.motorista].vale   += (r.valeValor || 0) + (r.manobraValor || 0);
   });
-  const dvMotoristas = [...new Set([...(mot ? [] : motoristasAtivos), ...Object.keys(dvMap)])];
+  const dvMotoristas = Object.keys(dvMap);
   if (fatChartDiariasVales) fatChartDiariasVales.destroy();
   const ctxDv = document.getElementById('fatChartDiariasVales').getContext('2d');
-  const datalabelMoney = {
-    display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
-    color:'#fff', font:{size:10, weight:'700'},
-    formatter: v => fmtMoney(v)
-  };
-  const dvLabels = dvMotoristas.map(m => m.split(' ')[0]);
   fatChartDiariasVales = new Chart(ctxDv, {
     type:'bar',
     data: {
-      labels: dvLabels,
+      labels: dvMotoristas,
       datasets: [
-        { label:'Diárias', data: dvMotoristas.map(m=>(dvMap[m]||{diaria:0}).diaria), backgroundColor:'rgba(212,175,55,.8)', stack:'s', datalabels: datalabelMoney },
-        { label:'Vales/Manobra', data: dvMotoristas.map(m=>(dvMap[m]||{vale:0}).vale), backgroundColor:'rgba(239,68,68,.75)', stack:'s', datalabels: datalabelMoney }
+        { label:'Diárias', data: dvMotoristas.map(m=>dvMap[m].diaria), backgroundColor:'rgba(212,175,55,.8)', stack:'s' },
+        { label:'Vales/Manobra', data: dvMotoristas.map(m=>dvMap[m].vale), backgroundColor:'rgba(239,68,68,.75)', stack:'s' }
       ]
     },
-    options: {
-      responsive:true,
-      plugins:{ legend:{position:'top'} },
-      scales:{
-        x:{stacked:true, ticks:{autoSkip:false, maxRotation:45, minRotation:45, font:{size:10}}},
-        y:{stacked:true, ticks:{callback:v=>fmtMoney(v)}, grace:'8%'}
-      }
-    }
+    options: {responsive:true, plugins:{legend:{position:'top'}}, scales:{x:{stacked:true}, y:{stacked:true, ticks:{callback:v=>fmtMoney(v)}}}}
   });
 
   // ── Tabela detalhada ──
@@ -3659,30 +3518,17 @@ function fatApplyFilters() {
   const labels = ['Data','Motorista','Cavalo','Carreta','Frete','Comissão','Diária','Bônus','Vales/Manobra','Consignado','Dep. Folha','Valor a Receber','Média CV','Média CR','KM','Horas'];
   document.getElementById('fatTableHead').innerHTML = labels.map(l=>`<th>${l}</th>`).join('');
   const moneyCols = new Set(['frete','comissao','diaria','bonus','valesManobra','empConsignado','depFolha','valorReceber']);
-  // Motoristas sem lançamentos no período: linha zerada
-  const motoristasComDados = new Set(fatFiltered.map(r => r.motorista).filter(Boolean));
-  const motoristaSemDados = DEFAULT_FATURAMENTO_MOTORISTAS.filter(m => !motoristasComDados.has(m));
-  const rowsSemDados = motoristaSemDados.map(m => {
-    const frota = FROTA_DATA.find(f => f.motorista === m) || {};
-    return { motorista: m, placaCavalo: frota.placa||'—', placaCarreta: frota.carreta||'—',
-      dataStr:'—', data: new Date(0), frete:0, comissao:0, diaria:0, bonus:0,
-      valesManobra:0, empConsignado:0, depFolha:0, valorReceber:0,
-      mediaCavalo:0, mediaCarreta:0, km:0, horas:0, _semDados:true };
-  });
-  const todasLinhas = [...fatFiltered].sort((a,b)=>b.data-a.data).concat(rowsSemDados.map(r=>({...r, dataStr:'<span style="font-size:.72rem;background:#e2e8f0;padding:.15rem .5rem;border-radius:20px;color:#64748b">Sem dados</span>'})));
-
-  function renderCell(c, row) {
-    let val = row[c] ?? '';
-    if (c === 'valorReceber') return `<span style="font-weight:700;color:${(row[c]||0)>0?'var(--success)':'var(--text-lt)'}">${fmtMoney(row[c]||0)}</span>`;
-    if (moneyCols.has(c)) return fmtMoney(row[c]||0);
-    if (c === 'mediaCavalo' || c === 'mediaCarreta') return row[c] ? row[c].toLocaleString('pt-BR',{maximumFractionDigits:2}) : '—';
-    if (c === 'km') return row[c] ? row[c].toLocaleString('pt-BR',{maximumFractionDigits:0})+' km' : '—';
-    if (c === 'horas') return row[c] ? row[c].toLocaleString('pt-BR',{maximumFractionDigits:0})+' h' : '—';
-    if (c === 'dataStr') return val || '—';
-    return val || '—';
-  }
-  document.getElementById('fatTableBody').innerHTML = todasLinhas.map(row =>
-    `<tr style="${row._semDados ? 'background:var(--gray-100);color:#94a3b8' : ''}">${cols.map(c => `<td>${renderCell(c,row)}</td>`).join('')}</tr>`
+  document.getElementById('fatTableBody').innerHTML = [...fatFiltered].sort((a,b)=>b.data-a.data).map(row =>
+    `<tr>${cols.map(c => {
+      let val = row[c] ?? '';
+      if (c === 'valorReceber') val = `<span style="font-weight:700;color:${(row[c]||0)>0?'var(--success)':'var(--text-lt)'}">${fmtMoney(row[c]||0)}</span>`;
+      else if (moneyCols.has(c)) val = fmtMoney(row[c]||0);
+      else if (c === 'mediaCavalo' || c === 'mediaCarreta') val = row[c] ? row[c].toLocaleString('pt-BR',{maximumFractionDigits:2}) : '—';
+      else if (c === 'km') val = row[c] ? row[c].toLocaleString('pt-BR',{maximumFractionDigits:0})+' km' : '—';
+      else if (c === 'horas') val = row[c] ? row[c].toLocaleString('pt-BR',{maximumFractionDigits:0})+' h' : '—';
+      else if (!val) val = '—';
+      return `<td>${val}</td>`;
+    }).join('')}</tr>`
   ).join('');
 }
 
@@ -4887,14 +4733,14 @@ const FROTA_DATA = [
   // ── MOTORISTAS ATIVOS ──
   {motorista:'ADRIANO VAZ DOS SANTOS',     placa:'RYE7J26', carreta:'QJH0591',                  paletes:'28', celular:'46 - 99983-7772', cpf:'023.114.919-03'},
   {motorista:'ANDERSON VEIGA SANTOS',       placa:'QTM0G30', carreta:'RYQ7I03 — 30 pal. Van',    paletes:'30', celular:'42 - 99832-0501', cpf:'012.273.449-10'},
-  {motorista:'CRISTIANO  DE ALMEIDA',        placa:'QJM1350', carreta:'OKD8A19',                  paletes:'28', celular:'49 - 99110-7517', cpf:'029.395.799-11'},
-  {motorista:'ERI ORLANDO ROMERO ',          placa:'QJC0B40', carreta:'MLB0J76',                  paletes:'28', celular:'92 - 99220-9993', cpf:'706.920.112-50'},
+  {motorista:'CRISTIANO DE ALMEIDA',        placa:'QJM1350', carreta:'OKD8A19',                  paletes:'28', celular:'49 - 99110-7517', cpf:'029.395.799-11'},
+  {motorista:'ERI ORLANDO ROMERO',          placa:'QJC0B40', carreta:'MLB0J76',                  paletes:'28', celular:'92 - 99220-9993', cpf:'706.920.112-50'},
   {motorista:'GILSON MARGOTTI',             placa:'RAC4780', carreta:'RXS3D84',                  paletes:'28', celular:'41 - 99930-9646', cpf:'045.221.079-86'},
-  {motorista:'HILDO ANTONIO ALMEIDA ',       placa:'QJY0640', carreta:'QHI5B08',                  paletes:'28', celular:'49 - 99913-6578', cpf:'394.955.669-91'},
+  {motorista:'HILDO ANTONIO ALMEIDA',       placa:'QJY0640', carreta:'QHI5B08',                  paletes:'28', celular:'49 - 99913-6578', cpf:'394.955.669-91'},
   {motorista:'JORGE ODAIR LOPES',           placa:'RLB3C26', carreta:'MKB0A39 — 30 pal. Van',    paletes:'30', celular:'49 - 99840-9613', cpf:'848.045.729-53'},
   {motorista:'JOSIAS FERREIRA DOS SANTOS',  placa:'QTM0E20', carreta:'QIW2885',                  paletes:'28', celular:'41 - 99782-7246', cpf:'035.686.699-86'},
   {motorista:'LEANDRO L KLEE',              placa:'RYE7J76', carreta:'RLO9G15',                  paletes:'28', celular:'49 - 99910-0398', cpf:'038.197.969-59'},
-  {motorista:'MARIANO DE  SOUZA',            placa:'QJA0E90', carreta:'QHA1357',                  paletes:'30', celular:'87 - 98134-2532', cpf:'098.235.784-27'},
+  {motorista:'MARIANO DE SOUZA',            placa:'QJA0E90', carreta:'QHA1357',                  paletes:'30', celular:'87 - 98134-2532', cpf:'098.235.784-27'},
   {motorista:'RAFAEL DE FRANÇA RAMOS',      placa:'RLB3E46', carreta:'IWV8B19',                  paletes:'28', celular:'42 - 98804-7766', cpf:'065.936.019-50'},
   {motorista:'RODRIGO DA ROSA',             placa:'RYE7J36', carreta:'RDS9H31',                  paletes:'30', celular:'49 - 99922-8442', cpf:'944.742.309-49'},
   // ── VEÍCULOS PARADOS ──
