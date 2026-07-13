@@ -1398,14 +1398,30 @@ footer a{color:var(--accent);text-decoration:none;}
 const DEFAULT_FINANCEIRO  = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZOvOYa2B9fg5pQuPa54usv9Tl0bRP7EDRBtYrmYnJuXZkK5_A7j4roQZdmiXaaQ/pub?output=csv";
 const DEFAULT_BATERIAS    = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRl21JTtpTiuYLD9QJVV82Hu5GDFwty4vYc-k467PnWyShcOgpXjXb5PnKdHMRCGA/pub?output=csv";
 // Faturamento: cada motorista tem sua PRÓPRIA ABA dentro do mesmo documento
-// Google Sheets. Um link "Publicar na Web" em CSV só exporta uma aba por
-// vez, então usamos um link por aba (mesmo documento, gid diferente) e
-// combinamos tudo em loadFaturamentoData().
-const FAT_DOC = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTe2DOUBArKJAsVfZ5HWuepUJ8hP2t-Rscv3uFRvBLgAQLXa2VwnGJ45dJkKMromA/pub";
-const DEFAULT_FATURAMENTO_DOCS = [
-  683524434, 972019708, 1527968389, 1308561928, 93602328, 1313247063,
-  1079171289, 125211003, 2028303270, 1843129283, 850971004, 1461140453
-].map(gid => `${FAT_DOC}?gid=${gid}&single=true&output=csv`);
+// Google Sheets (planilha "FATURAMENTO.xlsx", ID abaixo, compartilhada como
+// "Qualquer pessoa com o link pode ver"). Em vez do link "Publicar na Web"
+// antigo (gids fixos que ficavam desatualizados quando alguma aba era
+// renomeada/reordenada/adicionada — causa mais provável de motorista
+// sumir), usamos o endpoint gviz por NOME da aba: CORS nativo (sem proxy)
+// e não depende de gid nenhum, só do nome exato da aba na planilha.
+const FAT_SHEET_ID = "1kUAWS_qaUVRteTtHuHMmoRe1HgMcTdlg";
+const DEFAULT_FATURAMENTO_MOTORISTAS = [
+  "ADRIANO VAZ DOS SANTOS",
+  "ANDERSON VEIGA SANTOS",
+  "CRISTIANO DE ALMEIDA",
+  "ERI ORLANDO ROMERO",
+  "GILSON MARGOTTI",
+  "HILDO ANTONIO ALMEIDA",
+  "JORGE ODAIR LOPES",
+  "JOSIAS FERREIRA DOS SANTOS",
+  "LEANDRO L KLEE",
+  "MARIANO DE SOUZA",
+  "RAFAEL DE FRANÇA RAMOS",
+  "RODRIGO DA ROSA"
+];
+const DEFAULT_FATURAMENTO_DOCS = DEFAULT_FATURAMENTO_MOTORISTAS.map(nome =>
+  `${nome}|https://docs.google.com/spreadsheets/d/${FAT_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(nome)}`
+);
 const DEFAULT_FATURAMENTO = DEFAULT_FATURAMENTO_DOCS.join("\n");
 
 let URL_FIN  = localStorage.getItem("urlFinanceiro")  || DEFAULT_FINANCEIRO;
@@ -1420,7 +1436,11 @@ const FAT_URLS_OBSOLETAS = new Set([
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vTe2DOUBArKJAsVfZ5HWuepUJ8hP2t-Rscv3uFRvBLgAQLXa2VwnGJ45dJkKMromA/pub?output=csv"
 ]);
 let URL_FAT = localStorage.getItem("urlFaturamento") || DEFAULT_FATURAMENTO;
-if (!URL_FAT || FAT_URLS_OBSOLETAS.has(URL_FAT.trim()) || /\/export\?format=csv/i.test(URL_FAT)) {
+// Descarta também a config antiga baseada em gids fixos do link "Publicar
+// na Web" (2PACX-...TromA) — ela não pega motorista novo/renomeado na
+// planilha, que era o sintoma relatado ("não está puxando todos os
+// motoristas"). Migra automaticamente para o novo padrão por nome de aba.
+if (!URL_FAT || FAT_URLS_OBSOLETAS.has(URL_FAT.trim()) || /\/export\?format=csv/i.test(URL_FAT) || /2PACX-1vTe2DOUBArKJAsVfZ5HWuepUJ8hP2t-Rscv3uFRvBLgAQLXa2VwnGJ45dJkKMromA/.test(URL_FAT)) {
   URL_FAT = DEFAULT_FATURAMENTO;
   localStorage.removeItem("urlFaturamento");
 }
@@ -1541,10 +1561,16 @@ const CORS_PROXIES = [
 // pois esse ID publicado não é o ID real da planilha; nesse caso retorna null
 // e o código cai automaticamente para a rota de proxy de sempre.
 function toGvizUrl(url) {
-  const m = String(url || '').match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  const s = String(url || '');
+  // Já é uma URL gviz pronta (ex.: config do Faturamento por nome de aba,
+  // "sheet=NOME") — usa direto, sem reprocessar e sem perder o parâmetro.
+  if (/\/gviz\/tq\?/.test(s)) return s;
+  const m = s.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
   if (!m || m[1] === 'e') return null;
   const id = m[1];
-  const gidMatch = String(url).match(/[?&#]gid=(\d+)/);
+  const sheetMatch = s.match(/[?&#]sheet=([^&#]+)/);
+  if (sheetMatch) return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&sheet=${sheetMatch[1]}`;
+  const gidMatch = s.match(/[?&#]gid=(\d+)/);
   const gid = gidMatch ? gidMatch[1] : '0';
   return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&gid=${gid}`;
 }
@@ -3065,12 +3091,20 @@ function fatFrotaDoMotorista(nomeMotorista) {
 // diferentes nos gráficos/rankings (ex.: "JOSIAS F." vs "JOSIAS FERREIRA
 // DOS SANTOS") só porque foi digitado de um jeito diferente em algum bloco.
 function fatNormalizarMotorista(nomeTexto, placaCavaloTexto) {
+  // 1) Prioridade: bate pela placa do cavalo (mais confiável)
   const p = String(placaCavaloTexto || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (p) {
     const match = FROTA_DATA.find(f => f.placa.replace(/[^A-Z0-9]/g, '') === p);
     if (match && match.motorista && match.motorista !== '—') return match.motorista;
   }
-  return nomeTexto;
+  // 2) Fallback: bate pelo nome normalizado (sem espaços duplos/trailing)
+  const nomeNorm = String(nomeTexto || '').replace(/\s{2,}/g, ' ').trim().toUpperCase();
+  const matchNome = FROTA_DATA.find(f =>
+    f.motorista && f.motorista !== '—' &&
+    f.motorista.replace(/\s{2,}/g, ' ').trim().toUpperCase() === nomeNorm
+  );
+  if (matchNome) return matchNome.motorista;
+  return nomeNorm || nomeTexto;
 }
 
 let fatAllRecords = [];      // todos os registros (todos os motoristas/meses)
@@ -3276,7 +3310,7 @@ async function loadFaturamentoData() {
     return { nome: null, url: linha, idx };
   });
 
-  fatConfigMotoristas = [...new Set(itens.map(it => it.nome).filter(Boolean))];
+  fatConfigMotoristas = [...new Set(itens.map(it => it.nome ? it.nome.replace(/\s{2,}/g,' ').trim().toUpperCase() : null).filter(Boolean))];
 
   const todosRegistros = [];
   const erros = [];
