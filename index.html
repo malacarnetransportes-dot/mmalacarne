@@ -3329,7 +3329,14 @@ async function loadFaturamentoData() {
   // plano. É isso que faz o Faturamento parecer tão rápido quanto os
   // outros módulos, mesmo com 12 URLs pra buscar.
   function renderParcial() {
-    fatAllRecords = todosRegistros.slice();
+    // Deduplica também no render parcial (carregamento progressivo)
+    const _seen = new Set();
+    fatAllRecords = todosRegistros.filter(r => {
+      const k = `${r.motorista}|${r.dataStr}|${r.placaCavalo}|${r.frete}|${r.valorReceber}`;
+      if (_seen.has(k)) return false;
+      _seen.add(k);
+      return true;
+    });
     if (!fatAllRecords.length) return;
     if (!telaJaVisivel) {
       loadEl.style.display = 'none';
@@ -3371,25 +3378,39 @@ async function loadFaturamentoData() {
     }));
   }
 
-  fatAllRecords = todosRegistros;
+  // Deduplica registros idênticos (mesmo motorista + data + placa + frete)
+  // que podem surgir quando a planilha tem blocos repetidos ou a mesma aba
+  // é carregada mais de uma vez via proxy diferente.
+  const seenKeys = new Set();
+  fatAllRecords = todosRegistros.filter(r => {
+    const key = `${r.motorista}|${r.dataStr}|${r.placaCavalo}|${r.frete}|${r.valorReceber}`;
+    if (seenKeys.has(key)) return false;
+    seenKeys.add(key);
+    return true;
+  });
   loadEl.style.display = 'none';
 
+  // Sempre mostra a tela com todos os motoristas (com ou sem dados)
+  fatPopularFiltros();
+  fatApplyFilters();
   if (!fatAllRecords.length) {
-    emptyEl.style.display = 'block';
-    emptyEl.innerHTML = `<i class="fas fa-truck" style="font-size:2rem;opacity:.3;display:block;margin-bottom:.5rem"></i>
-      Nenhum lançamento encontrado na planilha de faturamento.<br>
-      <span style="font-size:.78rem">${erros.length ? erros.join('<br>') : 'Verifique a URL em Config URLs.'}</span>`;
-    contentEl.style.display = 'none';
-    showToast('Erro ao carregar Faturamento: ' + (erros[0] || 'nenhuma planilha retornou dados'), 6000);
-  } else {
-    fatPopularFiltros();
-    fatApplyFilters();
-    if (erros.length) showToast(`⚠️ ${erros.length} de ${total} planilha(s) de Faturamento falharam: ${erros[0]}`, 6000);
+    showToast('Nenhum lançamento encontrado nas planilhas — motoristas exibidos com valores zerados.', 6000);
+  }
+  if (erros.length) {
+      const nomesFalha = erros.map(e => {
+        const m = e.match(/\(([^)]+)\)/);
+        return m ? m[1] : e;
+      }).join(', ');
+      showToast(`⚠️ ${erros.length} de ${total} planilha(s) sem dados — ${nomesFalha}`, 10000);
+    }
+  if (false) { // bloco morto
   }
 }
 
 function fatPopularFiltros() {
+  // Sempre inclui os 12 motoristas do cadastro + quem tiver dados
   const motoristas = [...new Set([
+    ...DEFAULT_FATURAMENTO_MOTORISTAS,
     ...fatAllRecords.map(r => r.motorista),
     ...fatConfigMotoristas
   ].filter(Boolean))].sort();
@@ -3454,11 +3475,9 @@ function fatApplyFilters() {
   const emptyEl = document.getElementById('fatEmpty');
   const contentEl = document.getElementById('fatContent');
 
-  if (!fatAllRecords.length) {
-    emptyEl.style.display = 'block';
-    contentEl.style.display = 'none';
-    return;
-  }
+  // Sempre mostra o conteúdo — motoristas sem lançamentos aparecem zerados
+  emptyEl.style.display = 'none';
+  contentEl.style.display = 'block';
 
   const ano = document.getElementById('fatAno').value;
   const mesSel = document.getElementById('fatMes').value;
@@ -3471,16 +3490,18 @@ function fatApplyFilters() {
     return true;
   });
 
-  emptyEl.style.display = 'none';
-  contentEl.style.display = 'block';
-
   // ── KPIs ──
   const soma = campo => fatFiltered.reduce((s, r) => s + (r[campo] || 0), 0);
   const totalFaturamento = soma('frete');
   const totalReceber     = soma('valorReceber');
   const totalDiarias     = soma('diaria');
   const totalVales       = fatFiltered.reduce((s, r) => s + (r.valeValor || 0) + (r.manobraValor || 0), 0);
-  const motoristasSet    = new Set(fatFiltered.map(r => r.motorista).filter(Boolean));
+  // Inclui TODOS os motoristas cadastrados, mesmo os sem lançamentos no período
+  const todosMotoristas = [...new Set([
+    ...DEFAULT_FATURAMENTO_MOTORISTAS,
+    ...fatFiltered.map(r => r.motorista).filter(Boolean)
+  ])];
+  const motoristasSet    = new Set(todosMotoristas);
   const cvVals = fatFiltered.map(r => r.mediaCavalo).filter(v => v > 0);
   const crVals = fatFiltered.map(r => r.mediaCarreta).filter(v => v > 0);
   const mediaCv = cvVals.length ? cvVals.reduce((a,b)=>a+b,0)/cvVals.length : 0;
@@ -3494,6 +3515,7 @@ function fatApplyFilters() {
   document.getElementById('fat-mediacv').textContent      = mediaCv ? mediaCv.toLocaleString('pt-BR',{maximumFractionDigits:2}) : '—';
   document.getElementById('fat-mediacr').textContent      = mediaCr ? mediaCr.toLocaleString('pt-BR',{maximumFractionDigits:2}) : '—';
   document.getElementById('fatCount').textContent = fatFiltered.length + ' lançamentos · ' + motoristasSet.size + ' motoristas';
+  document.getElementById('fat-motoristas').textContent = motoristasSet.size;
 
   // ── Ranking por Faturamento (frete) ──
   const rankFat = {};
@@ -3640,17 +3662,29 @@ function fatApplyFilters() {
   const labels = ['Data','Motorista','Cavalo','Carreta','Frete','Comissão','Diária','Bônus','Vales/Manobra','Consignado','Dep. Folha','Valor a Receber','Média CV','Média CR','KM','Horas'];
   document.getElementById('fatTableHead').innerHTML = labels.map(l=>`<th>${l}</th>`).join('');
   const moneyCols = new Set(['frete','comissao','diaria','bonus','valesManobra','empConsignado','depFolha','valorReceber']);
-  document.getElementById('fatTableBody').innerHTML = [...fatFiltered].sort((a,b)=>b.data-a.data).map(row =>
-    `<tr>${cols.map(c => {
-      let val = row[c] ?? '';
-      if (c === 'valorReceber') val = `<span style="font-weight:700;color:${(row[c]||0)>0?'var(--success)':'var(--text-lt)'}">${fmtMoney(row[c]||0)}</span>`;
-      else if (moneyCols.has(c)) val = fmtMoney(row[c]||0);
-      else if (c === 'mediaCavalo' || c === 'mediaCarreta') val = row[c] ? row[c].toLocaleString('pt-BR',{maximumFractionDigits:2}) : '—';
-      else if (c === 'km') val = row[c] ? row[c].toLocaleString('pt-BR',{maximumFractionDigits:0})+' km' : '—';
-      else if (c === 'horas') val = row[c] ? row[c].toLocaleString('pt-BR',{maximumFractionDigits:0})+' h' : '—';
-      else if (!val) val = '—';
-      return `<td>${val}</td>`;
-    }).join('')}</tr>`
+  // Motoristas sem lançamentos no período: linha zerada
+  const motoristasComDados = new Set(fatFiltered.map(r => r.motorista).filter(Boolean));
+  const motoristaSemDados = DEFAULT_FATURAMENTO_MOTORISTAS.filter(m => !motoristasComDados.has(m));
+  const rowsSemDados = motoristaSemDados.map(m => {
+    const frota = FROTA_DATA.find(f => f.motorista === m) || {};
+    return { motorista: m, placaCavalo: frota.placa||'—', placaCarreta: frota.carreta||'—',
+      dataStr:'—', data: new Date(0), frete:0, comissao:0, diaria:0, bonus:0,
+      valesManobra:0, empConsignado:0, depFolha:0, valorReceber:0,
+      mediaCavalo:0, mediaCarreta:0, km:0, horas:0, _semDados:true };
+  });
+  const todasLinhas = [...fatFiltered].sort((a,b)=>b.data-a.data).concat(rowsSemDados);
+
+  function renderCell(c, row) {
+    let val = row[c] ?? '';
+    if (c === 'valorReceber') return `<span style="font-weight:700;color:${(row[c]||0)>0?'var(--success)':'var(--text-lt)'}">${fmtMoney(row[c]||0)}</span>`;
+    if (moneyCols.has(c)) return fmtMoney(row[c]||0);
+    if (c === 'mediaCavalo' || c === 'mediaCarreta') return row[c] ? row[c].toLocaleString('pt-BR',{maximumFractionDigits:2}) : '—';
+    if (c === 'km') return row[c] ? row[c].toLocaleString('pt-BR',{maximumFractionDigits:0})+' km' : '—';
+    if (c === 'horas') return row[c] ? row[c].toLocaleString('pt-BR',{maximumFractionDigits:0})+' h' : '—';
+    return val || '—';
+  }
+  document.getElementById('fatTableBody').innerHTML = todasLinhas.map(row =>
+    `<tr style="${row._semDados ? 'opacity:.55;font-style:italic;background:var(--gray-100)' : ''}">${cols.map(c => `<td>${renderCell(c,row)}</td>`).join('')}</tr>`
   ).join('');
 }
 
