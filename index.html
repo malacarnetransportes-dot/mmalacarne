@@ -826,6 +826,8 @@ footer a{color:var(--accent);text-decoration:none;}
             </div>
           </div>
 
+          <div id="fatDiagnostico" style="display:none;margin-bottom:1rem"></div>
+
           <div id="fatLoading" class="loading-spinner" style="display:none"><div class="spinner"></div> Carregando dados de faturamento da planilha...</div>
           <div id="fatEmpty" style="display:none;text-align:center;padding:2rem;color:var(--text-lt);font-size:.9rem">
             <i class="fas fa-truck" style="font-size:2rem;opacity:.3;display:block;margin-bottom:.5rem"></i>
@@ -3045,6 +3047,7 @@ let fatAllRecords = [];      // todos os registros (todos os motoristas/meses)
 let fatFiltered   = [];      // após filtros de Ano/Mês/Motorista
 let fatChartAno = null, fatChartMedia = null, fatChartDiariasVales = null;
 let fatConfigMotoristas = []; // nomes configurados manualmente (prefixo "NOME|URL"), aparecem no filtro mesmo sem dados ainda
+let fatErrosCarregamento = []; // mensagens de planilha(s) que falharam ao carregar, usado no diagnóstico
 
 async function fetchCSVRaw(url, proxyStartIndex = 0) {
   if (!url) throw new Error('URL não configurada');
@@ -3100,6 +3103,40 @@ function fatLinhaVazia(row) {
 }
 
 // Extrai TODOS os blocos motorista/mês de uma planilha (array de linhas cruas)
+// ── Cruzamento de nomes: resolve o nome do motorista que veio da planilha
+// para o nome oficial cadastrado no FROTA_DATA, ignorando diferenças de
+// acento, maiúsculas/minúsculas e espaços extras. Isso evita que o mesmo
+// motorista apareça duas vezes (uma vez com o nome "oficial" sem dados, e
+// outra com o nome "da planilha" com os dados) só por causa de grafia.
+// Diferenças de conteúdo de verdade (nome faltando sobrenome, etc.) NÃO são
+// resolvidas — continuam aparecendo no diagnóstico pra revisão manual.
+function fatNormNome(s) {
+  return String(s || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove acentos
+    .toUpperCase()
+    .replace(/[^A-Z0-9 ]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+let _fatAtivosPorNorm = null;
+function fatAtivosPorNorm() {
+  if (!_fatAtivosPorNorm) {
+    _fatAtivosPorNorm = {};
+    FROTA_DATA.filter(f => f.motorista && f.motorista !== '—').forEach(f => {
+      _fatAtivosPorNorm[fatNormNome(f.motorista)] = f.motorista;
+    });
+  }
+  return _fatAtivosPorNorm;
+}
+
+function fatResolverMotorista(nomeBruto) {
+  const norm = fatNormNome(nomeBruto);
+  const mapa = fatAtivosPorNorm();
+  if (mapa[norm]) return mapa[norm]; // bateu (ignorando acento/caixa/espaço) → usa nome oficial
+  return String(nomeBruto || '').trim(); // não bateu → mantém como veio, fica sinalizado no diagnóstico
+}
+
 function parseFaturamentoCSV(rows) {
   const registros = [];
   // Aceita dois formatos de cabeçalho de bloco:
@@ -3267,12 +3304,18 @@ async function loadFaturamentoData() {
     }
     fatPopularFiltros();
     fatApplyFilters();
+    fatErrosCarregamento = erros.slice();
+    fatDiagnostico();
   }
 
   async function carregarPlanilha(url, proxyStartIndex) {
     try {
       const rows = await fetchCSVRaw(url, proxyStartIndex);
-      return { ok: true, registros: parseFaturamentoCSV(rows) };
+      const registros = parseFaturamentoCSV(rows);
+      // Cruza cada nome vindo da planilha com o cadastro do FROTA_DATA
+      // (ignorando acento/caixa/espaço) antes de guardar o registro.
+      registros.forEach(r => { r.motorista = fatResolverMotorista(r.motorista); });
+      return { ok: true, registros };
     } catch (e) {
       return { ok: false, msg: e.message || String(e) };
     }
@@ -3301,6 +3344,7 @@ async function loadFaturamentoData() {
 
   fatAllRecords = todosRegistros;
   loadEl.style.display = 'none';
+  fatErrosCarregamento = erros.slice();
 
   if (!fatAllRecords.length) {
     emptyEl.style.display = 'block';
@@ -3309,12 +3353,60 @@ async function loadFaturamentoData() {
       <span style="font-size:.78rem">${erros.length ? erros.join('<br>') : 'Verifique a URL em Config URLs.'}</span>`;
     contentEl.style.display = 'none';
     showToast('Erro ao carregar Faturamento: ' + (erros[0] || 'nenhuma planilha retornou dados'), 6000);
+    fatDiagnostico();
   } else {
     fatPopularFiltros();
     fatApplyFilters();
+    fatDiagnostico();
     if (erros.length) showToast(`⚠️ ${erros.length} de ${total} planilha(s) de Faturamento falharam: ${erros[0]}`, 6000);
   }
 }
+
+// Compara os 12 motoristas ativos do FROTA_DATA contra o que realmente
+// veio das planilhas (fatAllRecords, sem filtro de período) e mostra:
+//  1) motoristas sem NENHUM lançamento carregado (aba vazia ou nome não bate)
+//  2) nomes que vieram das planilhas mas não batem com nenhum dos 12
+//     (provável divergência de grafia — é o motivo mais comum de "sumir")
+//  3) planilhas que falharam ao carregar (erro de rede/URL)
+function fatDiagnostico() {
+  const el = document.getElementById('fatDiagnostico');
+  if (!el) return;
+
+  const ativos = FROTA_DATA.filter(f => f.motorista && f.motorista !== '—').map(f => f.motorista);
+  const nomesCarregados = new Set(fatAllRecords.map(r => r.motorista).filter(Boolean));
+
+  const semLancamento = ativos.filter(m => !nomesCarregados.has(m));
+  const naoReconhecidos = [...nomesCarregados].filter(n => !ativos.includes(n));
+
+  if (!semLancamento.length && !naoReconhecidos.length && !fatErrosCarregamento.length) {
+    el.style.display = 'none';
+    el.innerHTML = '';
+    return;
+  }
+
+  let html = '<div class="dash-card" style="border:1px solid #f5c542;background:rgba(245,197,66,.08)">';
+  html += '<div class="dash-card-title" style="color:#a8790a"><i class="fas fa-triangle-exclamation"></i> Diagnóstico — dados de Faturamento</div>';
+
+  if (semLancamento.length) {
+    html += `<p style="font-size:.85rem;margin:.5rem 0 .25rem"><b>${semLancamento.length} motorista(s) ativo(s) sem nenhum lançamento carregado</b> (aba vazia, planilha não configurada, ou nome na planilha diferente do cadastro):</p>`;
+    html += '<ul style="margin:0 0 .5rem 1.2rem;font-size:.82rem">' + semLancamento.map(m => `<li>${m}</li>`).join('') + '</ul>';
+  }
+
+  if (naoReconhecidos.length) {
+    html += `<p style="font-size:.85rem;margin:.5rem 0 .25rem"><b>${naoReconhecidos.length} nome(s) encontrado(s) nas planilhas que não batem com o cadastro</b> (verifique se é grafia diferente de um dos motoristas acima, veículo parado, ou terceiro):</p>`;
+    html += '<ul style="margin:0 0 .5rem 1.2rem;font-size:.82rem">' + naoReconhecidos.map(m => `<li>${m}</li>`).join('') + '</ul>';
+  }
+
+  if (fatErrosCarregamento.length) {
+    html += `<p style="font-size:.85rem;margin:.5rem 0 .25rem"><b>${fatErrosCarregamento.length} planilha(s) falharam ao carregar:</b></p>`;
+    html += '<ul style="margin:0 0 0 1.2rem;font-size:.82rem">' + fatErrosCarregamento.map(e => `<li>${e}</li>`).join('') + '</ul>';
+  }
+
+  html += '</div>';
+  el.innerHTML = html;
+  el.style.display = 'block';
+}
+
 
 function fatPopularFiltros() {
   const motoristas = [...new Set([
@@ -3402,6 +3494,13 @@ function fatApplyFilters() {
   emptyEl.style.display = 'none';
   contentEl.style.display = 'block';
 
+  // Motoristas ativos cadastrados no FROTA_DATA — base fixa (12 hoje) usada
+  // nos KPIs e nos gráficos abaixo, pra não sumir motorista sem lançamento
+  // no período filtrado.
+  const motoristasAtivosFrota = FROTA_DATA
+    .filter(f => f.motorista && f.motorista !== '—')
+    .map(f => f.motorista);
+
   // ── KPIs ──
   const soma = campo => fatFiltered.reduce((s, r) => s + (r[campo] || 0), 0);
   const totalFaturamento = soma('frete');
@@ -3418,10 +3517,12 @@ function fatApplyFilters() {
   document.getElementById('fat-total').textContent        = fmtMoney(totalReceber);
   document.getElementById('fat-diarias').textContent      = fmtMoney(totalDiarias);
   document.getElementById('fat-vales').textContent        = fmtMoney(totalVales);
-  document.getElementById('fat-motoristas').textContent   = motoristasSet.size;
+  // KPI "Motoristas Ativos" = total cadastrado na frota (fixo), não apenas
+  // quem teve lançamento no período — por isso antes ficava menor que 12.
+  document.getElementById('fat-motoristas').textContent   = motoristasAtivosFrota.length;
   document.getElementById('fat-mediacv').textContent      = mediaCv ? mediaCv.toLocaleString('pt-BR',{maximumFractionDigits:2}) : '—';
   document.getElementById('fat-mediacr').textContent      = mediaCr ? mediaCr.toLocaleString('pt-BR',{maximumFractionDigits:2}) : '—';
-  document.getElementById('fatCount').textContent = fatFiltered.length + ' lançamentos · ' + motoristasSet.size + ' motoristas';
+  document.getElementById('fatCount').textContent = fatFiltered.length + ' lançamentos · ' + motoristasSet.size + ' motoristas c/ lançamento no período';
 
   // ── Ranking por Faturamento (frete) ──
   const rankFat = {};
@@ -3455,14 +3556,20 @@ function fatApplyFilters() {
   });
 
   // ── Gráfico: Média Cavalo x Carreta por Motorista ──
+  // Usa a base fixa de motoristas ativos (motoristasAtivosFrota, definida
+  // acima) para que todos os 12 apareçam mesmo sem lançamento no período
+  // filtrado (preenche com 0).
   const medMap = {};
+  motoristasAtivosFrota.forEach(m => { medMap[m] = { cv: [], cr: [] }; });
   fatFiltered.forEach(r => {
     if (!r.motorista) return;
     if (!medMap[r.motorista]) medMap[r.motorista] = { cv: [], cr: [] };
     if (r.mediaCavalo > 0) medMap[r.motorista].cv.push(r.mediaCavalo);
     if (r.mediaCarreta > 0) medMap[r.motorista].cr.push(r.mediaCarreta);
   });
-  const medMotoristas = Object.keys(medMap);
+  // Une ativos da frota + qualquer motorista extra que apareça nos dados
+  // (ex.: agregado/terceiro sem cadastro em FROTA_DATA), mantendo ordem alfabética.
+  const medMotoristas = [...new Set([...motoristasAtivosFrota, ...Object.keys(medMap)])].sort();
   const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
 
   // ── Ranking — Média Cavalo e Média Carreta (separados) ──
@@ -3492,13 +3599,14 @@ function fatApplyFilters() {
 
   // ── Gráfico: Diárias e Vales por Motorista ──
   const dvMap = {};
+  motoristasAtivosFrota.forEach(m => { dvMap[m] = { diaria: 0, vale: 0 }; });
   fatFiltered.forEach(r => {
     if (!r.motorista) return;
     if (!dvMap[r.motorista]) dvMap[r.motorista] = { diaria: 0, vale: 0 };
     dvMap[r.motorista].diaria += r.diaria || 0;
     dvMap[r.motorista].vale   += (r.valeValor || 0) + (r.manobraValor || 0);
   });
-  const dvMotoristas = Object.keys(dvMap);
+  const dvMotoristas = [...new Set([...motoristasAtivosFrota, ...Object.keys(dvMap)])].sort();
   if (fatChartDiariasVales) fatChartDiariasVales.destroy();
   const ctxDv = document.getElementById('fatChartDiariasVales').getContext('2d');
   fatChartDiariasVales = new Chart(ctxDv, {
@@ -3894,10 +4002,12 @@ function vencTipoPlaca(placaTexto) {
   const p = String(placaTexto || '').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
   if (!p) return 'desconhecido';
   // Verifica se a placa bate com um cavalo (campo placa do FROTA_DATA)
-  const isCavalo = FROTA_DATA.some(f => f.placa.replace(/[^A-Z0-9]/g,'') === p);
+  // .toUpperCase() aqui também, pra não depender de o cadastro estar sempre
+  // digitado em maiúsculas (ex.: "RYQ7i03" continua batendo com "RYQ7I03").
+  const isCavalo = FROTA_DATA.some(f => String(f.placa||'').toUpperCase().replace(/[^A-Z0-9]/g,'') === p);
   if (isCavalo) return 'cavalo';
   // Verifica se bate com uma carreta (campo carreta do FROTA_DATA)
-  const isCarreta = FROTA_DATA.some(f => f.carreta.replace(/[^A-Z0-9]/g,'').includes(p) && p.length >= 6);
+  const isCarreta = FROTA_DATA.some(f => String(f.carreta||'').toUpperCase().replace(/[^A-Z0-9]/g,'').includes(p) && p.length >= 6);
   if (isCarreta) return 'carreta';
   // Heurística pelo formato: placas Mercosul (ABC1D23) e antigas (ABC1234) são cavalos;
   // carretas geralmente têm formatos menos padronizados na frota desta empresa
