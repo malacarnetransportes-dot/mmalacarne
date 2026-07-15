@@ -496,6 +496,9 @@ footer a{color:var(--accent);text-decoration:none;}
 </head>
 <body>
 
+<!-- Sugestões automáticas de placas/nomes usadas em vários campos de busca do sistema -->
+<datalist id="dlFrota"></datalist>
+
 <!-- TOAST -->
 <div id="toast" class="toast"></div>
 
@@ -895,7 +898,7 @@ footer a{color:var(--accent);text-decoration:none;}
           </div>
           <div class="dash-card">
             <div class="filters-bar">
-              <div class="flt-grp"><label>Veículo</label><input type="text" id="batVeiculo" placeholder="Placa ou veículo..."></div>
+              <div class="flt-grp"><label>Veículo</label><input type="text" id="batVeiculo" list="dlFrota" placeholder="Placa ou veículo..."></div>
               <div class="flt-grp"><label>Status</label><select id="batStatus"><option value="">Todos</option><option value="vencido">Vencidas</option><option value="proximo">Próx. 30 dias</option><option value="ok">Em Dia</option></select></div>
               <div class="flt-grp"><label>Data Início</label><input type="date" id="batDataInicio"></div>
               <div class="flt-grp"><label>Data Fim</label><input type="date" id="batDataFim"></div>
@@ -967,7 +970,7 @@ footer a{color:var(--accent);text-decoration:none;}
 
           <div class="dash-card" style="margin-bottom:1.4rem">
             <div class="filters-bar">
-              <div class="flt-grp"><label>Buscar</label><input type="text" id="frotaBusca" placeholder="Nome, placa, carreta ou CPF..." oninput="filtrarFrota()"></div>
+              <div class="flt-grp"><label>Buscar</label><input type="text" id="frotaBusca" list="dlFrota" placeholder="Nome, placa, carreta ou CPF..." oninput="filtrarFrota()"></div>
               <div class="flt-grp"><label>Paletes</label><select id="frotaPaletes" onchange="filtrarFrota()"><option value="">Todos</option><option value="28">28 paletes</option><option value="30">30 paletes (Van)</option></select></div>
               <button class="btn btn-gray" onclick="document.getElementById('frotaBusca').value='';document.getElementById('frotaPaletes').selectedIndex=0;filtrarFrota()"><i class="fas fa-times"></i> Limpar</button>
             </div>
@@ -1500,6 +1503,17 @@ function parseDate(v) {
     const serial = +s;
     if (serial > 30000 && serial < 60000) {
       return new Date(new Date(1899, 11, 30).getTime() + serial * 86400000);
+    }
+  }
+
+  // 3.5) DD/MM sem ano (planilha de Baterias às vezes só tem dia/mês) —
+  //      sempre assume o ANO VIGENTE (ano atual do sistema) como base.
+  if ((m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})$/))) {
+    const dia = +m[1], mes = +m[2];
+    const anoVigente = new Date().getFullYear();
+    if (mes >= 1 && mes <= 12 && dia >= 1 && dia <= 31) {
+      const d = new Date(anoVigente, mes - 1, dia);
+      return isNaN(d) ? null : d;
     }
   }
 
@@ -3987,7 +4001,7 @@ function vencBuildSkeleton(){
           <button class="pneu-leitura-btn" id="venc-${cat.key}-salvar-url" style="width:auto;padding:.4rem .9rem;font-size:.76rem"><i class="fas fa-floppy-disk"></i> Salvar e Carregar</button>
         </div>
         <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:end;margin-bottom:1rem">
-          <div class="flt-grp"><label>Buscar</label><input type="text" id="venc-${cat.key}-busca" placeholder="Placa, nome..."></div>
+          <div class="flt-grp"><label>Buscar</label><input type="text" id="venc-${cat.key}-busca" list="dlFrota" placeholder="Placa, nome..."></div>
           <div class="flt-grp"><label>Status</label>
             <select id="venc-${cat.key}-filtro-status">
               <option value="">Todos</option><option value="vencido">Vencidos</option><option value="proximo">Próx. 30 dias</option><option value="ok">Em dia</option>
@@ -4913,6 +4927,20 @@ const FROTA_DATA = [
   {motorista:'—',                           placa:'MKQ1A80', carreta:'MME7C92',                  paletes:'28', celular:'',               cpf:''},
   {motorista:'—',                           placa:'MKR1080', carreta:'MHF6E75 — 30 pal. Van',    paletes:'28', celular:'',               cpf:''},
 ];
+
+// Popula o datalist global (placas de cavalo, carretas e nomes de motorista)
+// usado como sugestão automática em campos de busca do sistema.
+(function popularSugestoesFrota() {
+  const dl = document.getElementById('dlFrota');
+  if (!dl) return;
+  const valores = new Set();
+  FROTA_DATA.forEach(f => {
+    if (f.placa) valores.add(String(f.placa).trim());
+    if (f.carreta) valores.add(String(f.carreta).split('—')[0].trim()); // remove sufixo tipo "— 30 pal. Van"
+    if (f.motorista && f.motorista !== '—') valores.add(String(f.motorista).trim());
+  });
+  dl.innerHTML = [...valores].sort().map(v => `<option value="${v}">`).join('');
+})();
 
 function getInitials(name) {
   if (!name || name === '—') return '?';
