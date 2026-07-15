@@ -1503,7 +1503,56 @@ function parseDate(v) {
     }
   }
 
+  // 4) MM/AAAA ou MM-AAAA (mês/ano, comum em planilha de troca de bateria)
+  //    Considera o ÚLTIMO dia do mês como vencimento, para não marcar
+  //    "vencido" antes da hora (é conservador: só vence ao fim do mês informado).
+  if ((m = s.match(/^(\d{1,2})[\/\-](\d{4})$/))) {
+    const mes = +m[1], year = +m[2];
+    if (mes >= 1 && mes <= 12 && year >= 1900) {
+      const d = new Date(year, mes, 0); // dia 0 do mês seguinte = último dia do mês informado
+      return isNaN(d) ? null : d;
+    }
+  }
+
+  // 5) AAAA isolado (só o ano — leva em consideração o ano vigente da planilha)
+  //    Usa 31/12 daquele ano como referência de vencimento.
+  if ((m = s.match(/^(\d{4})$/))) {
+    const year = +m[1];
+    if (year >= 1900 && year <= 2100) {
+      return new Date(year, 11, 31);
+    }
+  }
+
   return null;
+}
+
+// Normaliza placa/identificador de veículo para comparação (maiúsculas, sem
+// espaços/traços) — usado para detectar placas repetidas na planilha de Baterias.
+function normalizaPlaca(v) {
+  return String(v || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+// Remove registros duplicados por placa, mantendo apenas o mais recente
+// (maior data de vencimento/troca). Linhas sem placa identificável ou sem
+// nenhuma data comparável são mantidas como estão.
+function dedupePorPlaca(rows, colVeiculo, colData) {
+  if (!colVeiculo) return rows;
+  const map = new Map();
+  const semPlaca = [];
+  rows.forEach(row => {
+    const placa = normalizaPlaca(row[colVeiculo]);
+    if (!placa) { semPlaca.push(row); return; }
+    const existing = map.get(placa);
+    if (!existing) { map.set(placa, row); return; }
+    const dNovo = colData ? parseDate(row[colData]) : null;
+    const dAtual = colData ? parseDate(existing[colData]) : null;
+    if (dNovo && (!dAtual || dNovo > dAtual)) {
+      map.set(placa, row); // registro mais recente vence
+    } else if (!dNovo && !dAtual) {
+      map.set(placa, row); // sem data em nenhum: fica o último da planilha
+    }
+  });
+  return [...map.values(), ...semPlaca];
 }
 
 function fmtMoney(v) {
@@ -3680,7 +3729,11 @@ function aplicarFiltrosBaterias() {
 
   let vencidas=0, proximas=0, ok=0;
 
-  let filtered = bateriasData.filter(row => {
+  // Considera apenas o registro mais recente de cada placa (evita duplicar
+  // veículo que tenha mais de uma linha/histórico na planilha)
+  const dedupedData = dedupePorPlaca(bateriasData, colVeiculo, colData);
+
+  let filtered = dedupedData.filter(row => {
     const dVenc = colData ? parseDate(row[colData]) : null;
     let status = 'ok';
     if (dVenc) {
@@ -3694,8 +3747,8 @@ function aplicarFiltrosBaterias() {
     return true;
   });
 
-  // Contar para KPIs (no total, sem filtro de status)
-  bateriasData.forEach(row => {
+  // Contar para KPIs (no total já deduplicado por placa, sem filtro de status)
+  dedupedData.forEach(row => {
     const dVenc = colData ? parseDate(row[colData]) : null;
     if (dVenc) {
       if (dVenc < now) vencidas++;
@@ -3705,7 +3758,7 @@ function aplicarFiltrosBaterias() {
   });
 
   currentBateriasFiltered = filtered;
-  document.getElementById('bat-total').textContent = bateriasData.length;
+  document.getElementById('bat-total').textContent = dedupedData.length;
   document.getElementById('bat-vencidas').textContent = vencidas;
   document.getElementById('bat-proximas').textContent = proximas;
   document.getElementById('bat-ok').textContent = ok;
