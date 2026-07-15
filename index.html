@@ -498,6 +498,7 @@ footer a{color:var(--accent);text-decoration:none;}
 
 <!-- Sugestões automáticas de placas/nomes usadas em vários campos de busca do sistema -->
 <datalist id="dlFrota"></datalist>
+<datalist id="dlPlacas"></datalist>
 
 <!-- TOAST -->
 <div id="toast" class="toast"></div>
@@ -894,12 +895,14 @@ footer a{color:var(--accent);text-decoration:none;}
             <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-battery-full"></i></div><div><div class="kpi-val" id="bat-total">—</div><div class="kpi-lbl">Total Baterias</div></div></div>
             <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-exclamation-circle"></i></div><div><div class="kpi-val" id="bat-vencidas">—</div><div class="kpi-lbl">Vencidas</div></div></div>
             <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-clock"></i></div><div><div class="kpi-val" id="bat-proximas">—</div><div class="kpi-lbl">Próx. 30 dias</div></div></div>
-            <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-check-circle"></i></div><div><div class="kpi-val" id="bat-ok">—</div><div class="kpi-lbl">Em Dia</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon brown"><i class="fas fa-clock"></i></div><div><div class="kpi-val" id="bat-proximas60">—</div><div class="kpi-lbl">Próx. 2 meses (31-60d)</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon" style="background:rgba(245,158,11,.12);color:#d97706"><i class="fas fa-clock"></i></div><div><div class="kpi-val" id="bat-proximas90">—</div><div class="kpi-lbl">Próx. 3 meses (61-90d)</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-check-circle"></i></div><div><div class="kpi-val" id="bat-ok">—</div><div class="kpi-lbl">Em Dia (+90d)</div></div></div>
           </div>
           <div class="dash-card">
             <div class="filters-bar">
-              <div class="flt-grp"><label>Veículo</label><input type="text" id="batVeiculo" list="dlFrota" placeholder="Placa ou veículo..."></div>
-              <div class="flt-grp"><label>Status</label><select id="batStatus"><option value="">Todos</option><option value="vencido">Vencidas</option><option value="proximo">Próx. 30 dias</option><option value="ok">Em Dia</option></select></div>
+              <div class="flt-grp"><label>Veículo</label><input type="text" id="batVeiculo" list="dlPlacas" placeholder="Placa ou veículo..."></div>
+              <div class="flt-grp"><label>Status</label><select id="batStatus"><option value="">Todos</option><option value="vencido">Vencidas</option><option value="proximo30">Próx. 30 dias</option><option value="proximo60">Próx. 2 meses</option><option value="proximo90">Próx. 3 meses</option><option value="ok">Em Dia</option></select></div>
               <div class="flt-grp"><label>Data Início</label><input type="date" id="batDataInicio"></div>
               <div class="flt-grp"><label>Data Fim</label><input type="date" id="batDataFim"></div>
               <button class="btn btn-accent" onclick="aplicarFiltrosBaterias()"><i class="fas fa-search"></i> Filtrar</button>
@@ -1892,6 +1895,8 @@ function slideBuildSlides(){
         { val: slideText('bat-total','—'), lbl: 'Total Baterias' },
         { val: slideText('bat-vencidas','—'), lbl: 'Vencidas', danger: true },
         { val: slideText('bat-proximas','—'), lbl: 'Próx. 30 dias', warning: true },
+        { val: slideText('bat-proximas60','—'), lbl: 'Próx. 2 meses', warning: true },
+        { val: slideText('bat-proximas90','—'), lbl: 'Próx. 3 meses', warning: true },
         { val: slideText('bat-ok','—'), lbl: 'Em Dia', ok: true },
     ]},
     // 3) Frota / Motoristas — resumo + o conjunto completo (cavalo + carreta) por motorista
@@ -3735,25 +3740,36 @@ function aplicarFiltrosBaterias() {
 
   const now = new Date(); now.setHours(0,0,0,0);
   const em30 = new Date(now); em30.setDate(em30.getDate()+30);
+  const em60 = new Date(now); em60.setDate(em60.getDate()+60);
+  const em90 = new Date(now); em90.setDate(em90.getDate()+90);
+
+  // Classifica o status em uma das 5 faixas: vencido / proximo30 / proximo60 / proximo90 / ok
+  function classificar(dVenc) {
+    if (!dVenc) return 'ok'; // sem data cadastrada — tratado como Em Dia até haver melhor sinalização
+    if (dVenc < now) return 'vencido';
+    if (dVenc <= em30) return 'proximo30';
+    if (dVenc <= em60) return 'proximo60';
+    if (dVenc <= em90) return 'proximo90';
+    return 'ok';
+  }
 
   const vVeiculo = document.getElementById('batVeiculo').value.toLowerCase();
   const vStatus  = document.getElementById('batStatus').value;
   const vDataIni = document.getElementById('batDataInicio').value ? new Date(document.getElementById('batDataInicio').value) : null;
   const vDataFim = document.getElementById('batDataFim').value ? new Date(document.getElementById('batDataFim').value + 'T23:59:59') : null;
 
-  let vencidas=0, proximas=0, ok=0;
+  let vencidas=0, proximas30=0, proximas60=0, proximas90=0, ok=0;
 
   // Considera apenas o registro mais recente de cada placa (evita duplicar
-  // veículo que tenha mais de uma linha/histórico na planilha)
+  // veículo que tenha mais de uma linha/histórico na planilha). Isso também
+  // garante que uma bateria vencida em 2025 sem novo registro em 2026
+  // continue aparecendo — o status compara sempre com a data de HOJE, não
+  // com nenhum ano fixo, então ela não some nem vira "Em Dia" por engano.
   const dedupedData = dedupePorPlaca(bateriasData, colVeiculo, colData);
 
   let filtered = dedupedData.filter(row => {
     const dVenc = colData ? parseDate(row[colData]) : null;
-    let status = 'ok';
-    if (dVenc) {
-      if (dVenc < now) status = 'vencido';
-      else if (dVenc <= em30) status = 'proximo';
-    }
+    const status = classificar(dVenc);
     if (vVeiculo && colVeiculo && !String(row[colVeiculo]||'').toLowerCase().includes(vVeiculo)) return false;
     if (vStatus && status !== vStatus) return false;
     if (vDataIni && dVenc && dVenc < vDataIni) return false;
@@ -3764,17 +3780,20 @@ function aplicarFiltrosBaterias() {
   // Contar para KPIs (no total já deduplicado por placa, sem filtro de status)
   dedupedData.forEach(row => {
     const dVenc = colData ? parseDate(row[colData]) : null;
-    if (dVenc) {
-      if (dVenc < now) vencidas++;
-      else if (dVenc <= em30) proximas++;
-      else ok++;
-    } else ok++;
+    const status = classificar(dVenc);
+    if (status === 'vencido') vencidas++;
+    else if (status === 'proximo30') proximas30++;
+    else if (status === 'proximo60') proximas60++;
+    else if (status === 'proximo90') proximas90++;
+    else ok++;
   });
 
   currentBateriasFiltered = filtered;
   document.getElementById('bat-total').textContent = dedupedData.length;
   document.getElementById('bat-vencidas').textContent = vencidas;
-  document.getElementById('bat-proximas').textContent = proximas;
+  document.getElementById('bat-proximas').textContent = proximas30;
+  document.getElementById('bat-proximas60').textContent = proximas60;
+  document.getElementById('bat-proximas90').textContent = proximas90;
   document.getElementById('bat-ok').textContent = ok;
   document.getElementById('batCount').textContent = filtered.length + ' itens';
 
@@ -3784,11 +3803,21 @@ function aplicarFiltrosBaterias() {
   thead.innerHTML = [...headers, 'Status'].map(h=>`<th>${h}</th>`).join('');
   tbody.innerHTML = filtered.slice(0,500).map(row => {
     const dVenc = colData ? parseDate(row[colData]) : null;
-    let status = 'ok', statusLabel = '✓ Em Dia', badgeClass = 'badge-success';
-    if (dVenc) {
-      if (dVenc < now) { status='vencido'; statusLabel='⚠ Vencida'; badgeClass='badge-danger'; }
-      else if (dVenc <= em30) { status='proximo'; statusLabel='⏰ Próx. 30d'; badgeClass='badge-warning'; }
+    const status = classificar(dVenc);
+    let statusLabel='✓ Em Dia', badgeClass='badge-success';
+    if (status === 'vencido') {
+      // Indica há quanto tempo está vencida — deixa claro quando não é
+      // atraso recente, e sim uma bateria de anos anteriores nunca atualizada.
+      const diasVencida = Math.round((now - dVenc) / 86400000);
+      let tempo;
+      if (diasVencida < 30) tempo = `${diasVencida}d`;
+      else if (diasVencida < 365) tempo = `${Math.round(diasVencida/30)}m`;
+      else tempo = `${(diasVencida/365).toFixed(1)}a`;
+      statusLabel = `⚠ Vencida há ${tempo}`; badgeClass='badge-danger';
     }
+    else if (status === 'proximo30') { statusLabel='⏰ Próx. 30d'; badgeClass='badge-warning'; }
+    else if (status === 'proximo60') { statusLabel='⏰ Próx. 2 meses'; badgeClass='badge-warning'; }
+    else if (status === 'proximo90') { statusLabel='⏰ Próx. 3 meses'; badgeClass='badge-warning'; }
     const cells = headers.map(h => {
       const val = row[h] || '';
       // Formata campos que parecem data
@@ -4932,14 +4961,20 @@ const FROTA_DATA = [
 // usado como sugestão automática em campos de busca do sistema.
 (function popularSugestoesFrota() {
   const dl = document.getElementById('dlFrota');
-  if (!dl) return;
+  const dlPlacas = document.getElementById('dlPlacas');
+  if (!dl && !dlPlacas) return;
   const valores = new Set();
+  const placas = new Set();
   FROTA_DATA.forEach(f => {
-    if (f.placa) valores.add(String(f.placa).trim());
-    if (f.carreta) valores.add(String(f.carreta).split('—')[0].trim()); // remove sufixo tipo "— 30 pal. Van"
+    if (f.placa) { const p = String(f.placa).trim(); valores.add(p); placas.add(p); }
+    if (f.carreta) {
+      const c = String(f.carreta).split('—')[0].trim(); // remove sufixo tipo "— 30 pal. Van"
+      valores.add(c); placas.add(c);
+    }
     if (f.motorista && f.motorista !== '—') valores.add(String(f.motorista).trim());
   });
-  dl.innerHTML = [...valores].sort().map(v => `<option value="${v}">`).join('');
+  if (dl) dl.innerHTML = [...valores].sort().map(v => `<option value="${v}">`).join('');
+  if (dlPlacas) dlPlacas.innerHTML = [...placas].sort().map(v => `<option value="${v}">`).join('');
 })();
 
 function getInitials(name) {
