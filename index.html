@@ -2087,7 +2087,7 @@ function slideFinResumo(){
   const headers = Object.keys(financeiroData[0]);
   const colData  = findCol(headers, ['data','date','vencimento','competencia','lancamento']);
   const colValor = findCol(headers, ['valor','value','montante','total','vl ','vlr','preco','price']);
-  const colCat   = findCol(headers, ['categoria','tipo lancamento','natureza','tipo','descricao','classificacao','servico','produto']);
+  const colCat   = findCol(headers, ['plano de contas','plano','categoria','tipo lancamento','natureza','tipo','descricao','classificacao','servico','produto']);
   const now = new Date();
   const mesAtualKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   const seisMesesAtras = new Date(now.getFullYear(), now.getMonth() - 5, 1);
@@ -2908,7 +2908,7 @@ async function loadFinanceiroData() {
 function popularFiltroCategoria(rows) {
   const cats = new Set();
   const headers = rows[0] ? Object.keys(rows[0]) : [];
-  const colCat = findCol(headers, ['categoria','tipo','descricao','tipo lancamento','natureza','servico','produto']);
+  const colCat = findCol(headers, ['plano de contas','plano','categoria','tipo','descricao','tipo lancamento','natureza','servico','produto']);
   if (colCat) rows.forEach(r => { if (r[colCat]) cats.add(r[colCat]); });
   const sel = document.getElementById('finCategoria');
   sel.innerHTML = '<option value="">Todas</option>';
@@ -2951,7 +2951,7 @@ function applyFinFilters() {
     }
     // Filtro categoria
     if (cat) {
-      const colCat = findCol(headers, ['categoria','tipo lancamento','natureza','descricao','servico','produto']);
+      const colCat = findCol(headers, ['plano de contas','plano','categoria','tipo lancamento','natureza','descricao','servico','produto']);
       const checkCol = colCat || colTipo;
       if (checkCol && row[checkCol] !== cat) return false;
     }
@@ -3158,7 +3158,7 @@ function orcComputeRealizado(ano){
   const colData  = findCol(headers, ['data','date','vencimento','competencia','lan']);
   const colValor = findCol(headers, ['valor','value','montante','total','vl ','vlr','preco','price']);
   const colTipo  = findCol(headers, ['tipo','type','natureza','classificacao']);
-  const colCat   = findCol(headers, ['categoria','tipo lancamento','natureza','descricao','historico','servico','produto']);
+  const colCat   = findCol(headers, ['plano de contas','plano','categoria','tipo lancamento','natureza','descricao','historico','servico','produto']);
   const colDesc  = findCol(headers, ['descricao','historico','memo','obs','description','lancamento','servico','produto']);
 
   financeiroData.forEach(row => {
@@ -3411,9 +3411,43 @@ function manComputeDados(ano){
   const colData  = findCol(headers, ['data','date','vencimento','competencia','lan']);
   const colValor = findCol(headers, ['valor','value','montante','total','vl ','vlr','preco','price']);
   const colTipo  = findCol(headers, ['tipo','type','natureza','classificacao']);
-  const colCat   = findCol(headers, ['categoria','tipo lancamento','natureza','descricao','historico','servico','produto']);
+  const colCat   = findCol(headers, ['plano de contas','plano','categoria','tipo lancamento','natureza','descricao','historico','servico','produto']);
   const colDesc  = findCol(headers, ['descricao','historico','memo','obs','description','lancamento','servico','produto']);
   const colPlaca = findCol(headers, ['placa','veiculo','veículo','cavalo','carreta','equipamento','identificacao','identificação','frota']);
+
+  // Um único lançamento do Financeiro pode trazer, num só texto, vários itens
+  // de nota fiscal concatenados — cada um com sua própria placa e seu próprio
+  // "R$ valor" (ex.: "N11201 - QJA0E90 TOMADA... R$36,75 - N11200 RAC4780...
+  // R$25,15"). Separar por "-" não é confiável porque a descrição de um
+  // item às vezes também contém "-". Por isso usamos cada ocorrência de
+  // "R$ valor" como âncora de FIM de item: tudo entre o fim do valor anterior
+  // e o valor atual (inclusive) é considerado um item só.
+  const RE_PLACA_ITEM = /\b[A-Z]{3}\d[A-Z0-9]\d{2}\b/;
+  function manExtraiItensCusto(texto) {
+    const str = String(texto || '').trim();
+    if (!str) return [];
+    const reValor = /R\$\s*[\d.]*\d,\d{2}/g;
+    const pedacos = [];
+    let lastEnd = 0, m;
+    while ((m = reValor.exec(str)) !== null) {
+      pedacos.push(str.slice(lastEnd, m.index + m[0].length));
+      lastEnd = m.index + m[0].length;
+    }
+    if (!pedacos.length) return []; // texto sem "R$" embutido → não é lista de itens
+    return pedacos.map(chunk => {
+      const valorMatch = chunk.match(/R\$\s*([\d.]*\d,\d{2})/);
+      const valor = valorMatch ? parseMoney(valorMatch[1]) : 0;
+      const nfMatch = chunk.match(/\bN\.?\s?\d{3,}\b/i);
+      const placaMatch = chunk.toUpperCase().match(RE_PLACA_ITEM);
+      const placa = placaMatch ? placaMatch[0] : '';
+      let desc = chunk;
+      if (valorMatch) desc = desc.replace(valorMatch[0], '');
+      if (nfMatch) desc = desc.replace(nfMatch[0], '');
+      if (placa) desc = desc.replace(new RegExp(placa, 'i'), '');
+      desc = desc.replace(/^\s*-\s*/, '').replace(/-\s*$/, '').replace(/\s{2,}/g, ' ').trim();
+      return { nf: nfMatch ? nfMatch[0].toUpperCase() : '', placa, desc, valor };
+    });
+  }
 
   financeiroData.forEach(row => {
     const d = colData ? parseDate(row[colData]) : null;
@@ -3429,27 +3463,41 @@ function manComputeDados(ano){
     const textoPlacaCol = colPlaca ? row[colPlaca] : '';
     const textoCompleto = [textoCategoria, textoDesc, textoPlacaCol].join(' ');
 
-    // Só entram lançamentos de manutenção (mesmo grupo de palavras-chave
-    // usado no Orçamento & Custos)
+    // Só entram lançamentos de manutenção. O Plano de Contas (ou
+    // Categoria) da linha manda nessa decisão — mesmo que os itens dentro
+    // da descrição (peças elétricas, etc.) não tenham a palavra "manutenção".
     if (orcClassificaGrupo(textoCompleto) !== 'manutencao') return;
 
-    const classif = manClassificaVeiculo(textoCompleto, textoPlacaCol);
-    const valor = Math.abs(v);
-    const tipoOS = manClassificaPreventivaCorretiva(textoCompleto);
+    // Tenta separar a descrição em itens individuais (várias notas fiscais
+    // concatenadas numa célula só). Se não achar nenhum "R$" embutido,
+    // trata a linha inteira como item único (comportamento antigo).
+    const itens = manExtraiItensCusto(textoDesc);
+    const itensFinal = itens.length
+      ? itens
+      : [{ nf:'', placa: textoPlacaCol, desc: textoDesc, valor: Math.abs(v) }];
 
-    if (!classif) {
-      naoClassificadoTotal += valor;
-      naoClassificadoQtd++;
-      return;
-    }
+    itensFinal.forEach(item => {
+      const placaItem = item.placa || textoPlacaCol;
+      const itemTextoCompleto = [textoCategoria, item.desc, placaItem].join(' ');
+      const classif = manClassificaVeiculo(itemTextoCompleto, placaItem);
+      const valor = item.valor || 0;
+      if (!valor) return; // item sem valor identificado, não soma nem entra em não classificado
+      const tipoOS = manClassificaPreventivaCorretiva(itemTextoCompleto);
 
-    const bucket = dados[classif.grupo];
-    if (!bucket[classif.id]) bucket[classif.id] = { total:0, preventiva:0, corretiva:0, naoclass:0, qtd:0 };
-    bucket[classif.id].total += valor;
-    bucket[classif.id].qtd++;
-    if (tipoOS === 'preventiva') bucket[classif.id].preventiva += valor;
-    else if (tipoOS === 'corretiva') bucket[classif.id].corretiva += valor;
-    else bucket[classif.id].naoclass += valor;
+      if (!classif) {
+        naoClassificadoTotal += valor;
+        naoClassificadoQtd++;
+        return;
+      }
+
+      const bucket = dados[classif.grupo];
+      if (!bucket[classif.id]) bucket[classif.id] = { total:0, preventiva:0, corretiva:0, naoclass:0, qtd:0 };
+      bucket[classif.id].total += valor;
+      bucket[classif.id].qtd++;
+      if (tipoOS === 'preventiva') bucket[classif.id].preventiva += valor;
+      else if (tipoOS === 'corretiva') bucket[classif.id].corretiva += valor;
+      else bucket[classif.id].naoclass += valor;
+    });
   });
 
   return { dados, naoClassificadoTotal, naoClassificadoQtd };
