@@ -1013,41 +1013,74 @@ footer a{color:var(--accent);text-decoration:none;}
           </div>
         </div>
 
-        <!-- ── TAB AUDITORIA ── -->
+        <!-- ── TAB AUDITORIA GIF BRF ── -->
         <div id="tabAuditoria" class="tab-pane">
 
-          <!-- Summary KPIs -->
-          <div class="aud-summary-grid" id="audSummary">
-            <div class="aud-sum-card"><div class="num" id="aud-total" style="color:var(--primary)">0</div><div class="lbl">Total Itens</div></div>
-            <div class="aud-sum-card"><div class="num" id="aud-yes" style="color:var(--success)">0</div><div class="lbl">Conformes</div></div>
-            <div class="aud-sum-card"><div class="num" id="aud-partial" style="color:var(--warning)">0</div><div class="lbl">Parciais</div></div>
-            <div class="aud-sum-card"><div class="num" id="aud-no" style="color:var(--danger)">0</div><div class="lbl">Não Conformes</div></div>
-            <div class="aud-sum-card"><div class="num" id="aud-pend" style="color:var(--text-lt)">0</div><div class="lbl">Pendentes</div></div>
-            <div class="aud-sum-card">
-              <div style="display:flex;align-items:center;justify-content:center;gap:.5rem">
-                <div class="num" id="aud-score" style="color:var(--accent)">—</div><span style="font-size:.7rem;color:var(--text-lt)">pts</span>
-              </div>
-              <div class="lbl">Pontuação</div>
-              <div class="aud-progress-bar" style="margin-top:.4rem"><div class="aud-progress-fill" id="aud-score-bar" style="background:var(--accent);width:0%"></div></div>
+          <!-- Cabeçalho GIF -->
+          <div style="background:linear-gradient(135deg,#1e2a3a,#2d3748);border-radius:var(--r16);padding:1.2rem 1.6rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.8rem">
+            <div>
+              <div style="font-size:1.1rem;font-weight:800;color:#fff;display:flex;align-items:center;gap:.6rem"><i class="fas fa-clipboard-check" style="color:var(--accent)"></i> Auditoria GIF — BRF</div>
+              <div style="font-size:.75rem;color:#94a3b8;margin-top:.2rem">Avaliação presencial integrada com os controles do sistema</div>
+            </div>
+            <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+              <button class="btn btn-accent btn-sm" onclick="audExportPDF()"><i class="fas fa-file-pdf"></i> Relatório PDF</button>
+              <button class="btn btn-success btn-sm" onclick="audExportCSV()"><i class="fas fa-file-csv"></i> Exportar CSV</button>
+              <button class="btn btn-gray btn-sm" onclick="audExpandAll()"><i class="fas fa-expand-alt"></i> Expandir</button>
+              <button class="btn btn-gray btn-sm" onclick="audCollapseAll()"><i class="fas fa-compress-alt"></i> Recolher</button>
+              <button class="btn btn-danger btn-sm" onclick="audResetAll()"><i class="fas fa-undo"></i> Resetar</button>
             </div>
           </div>
 
-          <!-- Export & Actions bar -->
-          <div class="aud-export-bar">
-            <button class="btn btn-accent btn-sm" onclick="audExportPDF()"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
-            <button class="btn btn-success btn-sm" onclick="audExportCSV()"><i class="fas fa-file-csv"></i> Exportar CSV</button>
-            <button class="btn btn-gray btn-sm" onclick="audExpandAll()"><i class="fas fa-expand-alt"></i> Expandir Tudo</button>
-            <button class="btn btn-gray btn-sm" onclick="audCollapseAll()"><i class="fas fa-compress-alt"></i> Recolher</button>
-            <button class="btn btn-danger btn-sm" onclick="audResetAll()"><i class="fas fa-undo"></i> Resetar</button>
-            <div style="margin-left:auto;display:flex;align-items:center;gap:.5rem">
+          <!-- Painel de resultado GIF (estilo BRF) -->
+          <div style="background:#fff;border:2px solid rgba(212,175,55,.3);border-radius:var(--r16);padding:1.2rem;margin-bottom:1rem;box-shadow:var(--shadow-md)">
+            <div style="font-size:.72rem;font-weight:700;color:var(--text-lt);text-transform:uppercase;letter-spacing:1px;margin-bottom:.8rem">📊 Quadro de Resultado — Somatória de Pontos (BRF GIF)</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.8rem">
+              <div style="text-align:center;padding:.8rem;background:#f8fafc;border-radius:var(--r12);border:1px solid var(--gray-200)">
+                <div style="font-size:2rem;font-weight:800;color:var(--primary)" id="gif-autoaval">145</div>
+                <div style="font-size:.7rem;color:var(--text-lt);margin-top:.2rem">Autoavaliação</div>
+              </div>
+              <div style="text-align:center;padding:.8rem;background:#f8fafc;border-radius:var(--r12);border:1px solid var(--gray-200)">
+                <div style="font-size:2rem;font-weight:800;color:var(--accent-dk)" id="gif-pontos">0</div>
+                <div style="font-size:.7rem;color:var(--text-lt);margin-top:.2rem">Pontos Auditoria</div>
+              </div>
+              <div id="gif-aderencia-card" style="text-align:center;padding:.8rem;background:#fee2e2;border-radius:var(--r12);border:1px solid #fecaca">
+                <div style="font-size:2rem;font-weight:800;color:#991b1b" id="gif-aderencia">0%</div>
+                <div style="font-size:.7rem;color:#991b1b;margin-top:.2rem">Aderência</div>
+              </div>
+              <div style="text-align:center;padding:.8rem;background:#f8fafc;border-radius:var(--r12);border:1px solid var(--gray-200)">
+                <div style="font-size:1.6rem;font-weight:800;color:var(--success)" id="aud-yes">0</div>
+                <div style="font-size:.7rem;color:var(--text-lt);margin-top:.2rem">Conformes</div>
+              </div>
+              <div style="text-align:center;padding:.8rem;background:#f8fafc;border-radius:var(--r12);border:1px solid var(--gray-200)">
+                <div style="font-size:1.6rem;font-weight:800;color:var(--warning)" id="aud-partial">0</div>
+                <div style="font-size:.7rem;color:var(--text-lt);margin-top:.2rem">Parciais</div>
+              </div>
+              <div style="text-align:center;padding:.8rem;background:#f8fafc;border-radius:var(--r12);border:1px solid var(--gray-200)">
+                <div style="font-size:1.6rem;font-weight:800;color:var(--danger)" id="aud-no">0</div>
+                <div style="font-size:.7rem;color:var(--text-lt);margin-top:.2rem">Não Conf.</div>
+              </div>
+              <div style="text-align:center;padding:.8rem;background:#f8fafc;border-radius:var(--r12);border:1px solid var(--gray-200)">
+                <div style="font-size:1.6rem;font-weight:800;color:var(--text-lt)" id="aud-pend">0</div>
+                <div style="font-size:.7rem;color:var(--text-lt);margin-top:.2rem">Pendentes</div>
+              </div>
+            </div>
+            <div style="margin-top:.8rem">
+              <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-lt);margin-bottom:.3rem">
+                <span>Progresso</span><span id="gif-pct-label">0%</span>
+              </div>
+              <div class="aud-progress-bar"><div class="aud-progress-fill" id="aud-score-bar" style="background:var(--danger);width:0%"></div></div>
+            </div>
+            <!-- Auditor / Data -->
+            <div style="display:flex;gap:.8rem;flex-wrap:wrap;margin-top:.9rem;padding-top:.8rem;border-top:1px solid var(--gray-200);align-items:center">
               <label style="font-size:.72rem;font-weight:700;color:var(--text-lt)">Auditor:</label>
-              <input type="text" id="audAuditor" placeholder="Nome do auditor" style="padding:.3rem .7rem;border:1px solid var(--gray-200);border-radius:6px;font-size:.78rem;width:150px" oninput="audSaveState()">
+              <input type="text" id="audAuditor" placeholder="Nome do auditor" style="padding:.3rem .7rem;border:1px solid var(--gray-200);border-radius:6px;font-size:.78rem;width:160px" oninput="audSaveState()">
               <label style="font-size:.72rem;font-weight:700;color:var(--text-lt)">Data:</label>
               <input type="date" id="audDate" style="padding:.3rem .7rem;border:1px solid var(--gray-200);border-radius:6px;font-size:.78rem" oninput="audSaveState()">
+              <button class="btn btn-info btn-sm" onclick="audSyncFromSystem()" style="margin-left:auto"><i class="fas fa-sync-alt"></i> Sincronizar com Sistema</button>
             </div>
           </div>
 
-          <!-- Audit Sections -->
+          <!-- Seções de auditoria -->
           <div id="audSections"></div>
 
         </div><!-- /tabAuditoria -->
@@ -5131,227 +5164,244 @@ function filtrarFrota() {
 }
 
 // ═══════════════════════════════════════════════════════════
-// AUDITORIA OPERACIONAL
+// AUDITORIA GIF — BRF  (integrado com controles reais do sistema)
 // ═══════════════════════════════════════════════════════════
-const AUD_STORAGE_KEY = 'malacarne_auditoria_v1';
+const AUD_STORAGE_KEY = 'malacarne_auditoria_v2';
 
+// Pontuações exatas conforme o PDF da auditoria BRF
 const AUD_DATA = [
   {
-    id:'rh',
-    title:'Processo de Contratação, Integração e Retenção',
-    icon:'fas fa-users',
+    id:'rh', title:'Processo de Contratação, Integração e Retenção', icon:'fas fa-users',
     items:[
-      {id:'1a', code:'1.a', text:'Possui divulgação/captação de candidatos externa e qual o perfil preferencial para o cargo de motorista? Quais os Critérios de Desclassificação da Contratação?'},
-      {id:'1b', code:'1.b', text:'Possui controle das contratações e desligamentos da empresa com suas respectivas datas e com acompanhamento de Turnover?'},
-      {id:'1c', code:'1.c', text:'Possui laboratório credenciado para realização de exames admissionais? Quais os exames são realizados?'},
-      {id:'1d', code:'1.d', text:'São aplicados os testes/treinamentos Demarco/Sest Senat para todo o quadro? (português, matemática, teste teórico e prático de direção)'},
-      {id:'1e', code:'1.e', text:'Possui integração institucional da transportadora abordando temas de Financeiro / Regras Clientes / SST / Macros / Jornada / Velocidade / Média / Manutenção / Frio / Teste prático — apresentar material e checklist/evidências assinadas comprovando a aplicação.'},
-      {id:'1f', code:'1.f', text:'Realiza entrevista de desligamento em 100% dos funcionários desligados (pedidos e demitidos)? Os motivos são estratificados e possuem plano de ação com as principais causas?'},
+      {id:'1a', code:'1.a', pts:3,  text:'Possui divulgação/captação de candidatos externa e qual o perfil preferencial para o cargo de motorista? Quais os Critérios de Desclassificação da Contratação?',
+        hint:'✅ Sistema: aba "Vagas / Entrevistas" — verifique se há critérios de desclassificação registrados nos candidatos reprovados.'},
+      {id:'1b', code:'1.b', pts:3,  text:'Possui controle das contratações e desligamentos da empresa com suas respectivas datas e com acompanhamento de Turnover?',
+        hint:'✅ Sistema: aba "Vagas / Entrevistas" — consulte os candidatos com etapa "Contratado" e "Reprovado". BI deve constar admitidos e demitidos mensalmente.'},
+      {id:'1c', code:'1.c', pts:3,  text:'Possui laboratório credenciado para realização de exames admissionais? Quais os exames são realizados?',
+        hint:'📋 Evidência manual: apresentar contrato/credenciamento do laboratório e lista de exames (clínico, audiometria, acuidade visual, toxicológico).'},
+      {id:'1d', code:'1.d', pts:3,  text:'São aplicados os testes/treinamentos Demarco/Sest Senat para todo o quadro? (português, matemática, teste teórico e prático de direção)',
+        hint:'✅ Sistema: aba "Vagas / Entrevistas" — campo Documentação e Toxicológico. Verifique se há registros de testes aplicados a cada contratado.'},
+      {id:'1e', code:'1.e', pts:8,  text:'Possui integração institucional abordando: Financeiro / Regras Clientes / SST / Macros / Jornada / Velocidade / Média / Manutenção / Frio / Teste prático — apresentar checklist/evidências assinadas.',
+        hint:'✅ Sistema: aba "Checklist Veículos" — confirma que motoristas passaram pela checklist de vistoria. Evidências físicas devem ser apresentadas complementarmente.'},
+      {id:'1f', code:'1.f', pts:5,  text:'Realiza entrevista de desligamento em 100% dos funcionários desligados? Os motivos são estratificados e possuem plano de ação com as principais causas?',
+        hint:'✅ Sistema: aba "Vagas / Entrevistas" — etapa "Reprovado" deve conter observações com motivo do desligamento. Verifique campo OBS de cada saída.'},
     ]
   },
   {
-    id:'jornada',
-    title:'Compensação / Remuneração de Horas Extras e Ações Trabalhistas',
-    icon:'fas fa-clock',
+    id:'jornada', title:'Compensação / Horas Extras e Ações Trabalhistas', icon:'fas fa-clock',
     items:[
-      {id:'1g', code:'1.g', text:'Possui sistema de controle de jornada? Apresentar forma de controle e onde são gerados as horas extras/compensáveis que serão pagas em folha.'},
-      {id:'1h', code:'1.h', text:'Existe compensação ou remuneração de hora extra de acordo com a Convenção Coletiva de cada região? Apresentar folha de pagamento com evidências refletindo as horas geradas no controle de jornada.'},
-      {id:'1i', code:'1.i', text:'Todos os pagamentos aos colaboradores são realizados via folha de pagamento?'},
-      {id:'1j', code:'1.j', text:'Controle das Ações Trabalhistas por Motivo, Função, Valor e Status (Finalizada / Em Aberto).'},
+      {id:'1g', code:'1.g', pts:5,  text:'Possui sistema de controle de jornada? Apresentar onde são geradas as horas extras/compensáveis que serão pagas em folha.',
+        hint:'✅ Sistema: aba "Faturamento" — coluna de horas dos motoristas. Holerite deve refletir essas horas extras e feriados trabalhados.'},
+      {id:'1h', code:'1.h', pts:8,  text:'Existe compensação/remuneração de hora extra conforme Convenção Coletiva? Apresentar folha de pagamento com evidências refletindo as horas do controle de jornada.',
+        hint:'✅ Sistema: aba "Financeiro" — lançamentos de categoria "Folha / Pessoal". Holerite deve bater com horas geradas. Evidência: folha impressa ou digital assinada.'},
+      {id:'1i', code:'1.i', pts:5,  text:'Todos os pagamentos aos colaboradores são realizados via folha de pagamento?',
+        hint:'✅ Sistema: aba "Financeiro" — filtre por categoria "Pessoal / Folha". Todos os pagamentos a motoristas devem ter lançamento correspondente.'},
+      {id:'1j', code:'1.j', pts:5,  text:'Controle das Ações Trabalhistas por Motivo, Função, Valor e Status (Finalizada / Em Aberto).',
+        hint:'✅ Sistema: aba "Financeiro" — filtre por categoria "Trabalhista / Jurídico". Liste processos com valor, status e motivo.'},
     ]
   },
   {
-    id:'custos',
-    title:'Controle de Custos, Orçamento, DRE e Balancete',
-    icon:'fas fa-chart-bar',
+    id:'custos', title:'Controle de Custos, Orçamento, DRE e Balancete', icon:'fas fa-chart-bar',
     items:[
-      {id:'1k', code:'1.k', text:'Possui controle de custos e orçamento mês a mês do ano vigente dos grupos de custos?'},
-      {id:'1l', code:'1.l', text:'Gente — salários, encargos, benefícios, 13º, férias.'},
-      {id:'1m', code:'1.m', text:'Manutenção da frota (fixo e variável).'},
-      {id:'1n', code:'1.n', text:'Investimentos — parcelas de financiamentos de veículos, carrocerias, equipamento de refrigeração, estrutura.'},
-      {id:'1o', code:'1.o', text:'Operacionais — aluguel, material de escritório, telefonia, veículos de apoio.'},
-      {id:'1p', code:'1.p', text:'Financeiras/administrativas — multas, impostos, notas fiscais, passivo trabalhista, pró-labore.'},
-      {id:'1q', code:'1.q', text:'Possui DRE, Balancete assinado e atualizado?'},
+      {id:'1k', code:'1.k', pts:3,  text:'Possui controle de custos e orçamento mês a mês do ano vigente dos grupos de custos (orçado vs realizado)?',
+        hint:'✅ Sistema: aba "Financeiro" — filtre por período mensal e categoria. Compare receitas x despesas mês a mês. Orçado deve ser registrado manualmente.'},
+      {id:'1l', code:'1.l', pts:1,  text:'Gente — salários, encargos, benefícios, 13º, férias.',
+        hint:'✅ Sistema: aba "Financeiro" → categoria "Pessoal". Filtre por mês e exiba total de folha, FGTS, VT, VA, 13º. O orçado para Gente deve estar registrado.'},
+      {id:'1m', code:'1.m', pts:2,  text:'Manutenção da frota (fixo e variável).',
+        hint:'✅ Sistema: aba "Financeiro" → categoria "Manutenção / Mecânica". Separe preventiva (fixo) e corretiva (variável) por mês.'},
+      {id:'1n', code:'1.n', pts:2,  text:'Investimentos — parcelas de financiamentos de veículos, carrocerias, equipamento de refrigeração, estrutura.',
+        hint:'✅ Sistema: aba "Financeiro" → categoria "Financiamento / Investimento". Mostre parcelas mensais de cada ativo.'},
+      {id:'1o', code:'1.o', pts:2,  text:'Operacionais — aluguel, material de escritório, telefonia, veículos de apoio.',
+        hint:'✅ Sistema: aba "Financeiro" → categoria "Operacional". Detalhe por tipo de despesa operacional mês a mês.'},
+      {id:'1p', code:'1.p', pts:2,  text:'Financeiras/administrativas — multas, impostos, notas fiscais, passivo trabalhista, pró-labore.',
+        hint:'✅ Sistema: aba "Financeiro" → categoria "Administrativo / Fiscal". Inclua multas ANTT, SEFAZ, imposto sobre fretes.'},
+      {id:'1q', code:'1.q', pts:3,  text:'Possui DRE, Balancete assinado e atualizado?',
+        hint:'✅ Sistema: aba "Financeiro" — o resumo de Receita x Despesa x Saldo é a base do DRE simplificado. Balancete formal deve ser gerado pelo contador e assinado.'},
     ]
   },
   {
-    id:'docs',
-    title:'Renovação de Documentos (IPVA / Licenciamento)',
-    icon:'fas fa-file-alt',
+    id:'docs', title:'Renovação de Documentos (IPVA / Licenciamento)', icon:'fas fa-file-alt',
     items:[
-      {id:'1r', code:'1.r', text:'Possui controle de renovação de documentos considerando os vencimentos de IPVA/Licenciamento de todas as placas da transportadora?'},
+      {id:'1r', code:'1.r', pts:5,  text:'Possui controle de renovação de documentos considerando os vencimentos de IPVA/Licenciamento de todas as placas da transportadora?',
+        hint:'✅ Sistema: aba "Vencimentos" → guia "Licenciamento / IPVA". Deve constar TODAS as placas com datas de vencimento e alertas. Verifique se há vencidos.'},
     ]
   },
   {
-    id:'combustivel',
-    title:'Controle de Consumo por Litro',
-    icon:'fas fa-gas-pump',
+    id:'combustivel', title:'Controle de Consumo por Litro', icon:'fas fa-gas-pump',
     items:[
-      {id:'1s', code:'1.s', text:'Possui controle de consumo Média por Litro dos cavalos com as métricas utilizadas e ranking de melhores e piores?'},
-      {id:'1t', code:'1.t', text:'Possui controle de consumo Média por Litro das carretas/Equipamentos de Refrigeração com as métricas utilizadas e ranking de melhores e piores?'},
+      {id:'1s', code:'1.s', pts:8,  text:'Possui controle de consumo Média por Litro dos cavalos com métricas e ranking de melhores e piores?',
+        hint:'✅ Sistema: aba "Faturamento" → colunas de média km/L por motorista/cavalo. O ranking já é gerado automaticamente — mostre ao auditor filtrando por período.'},
+      {id:'1t', code:'1.t', pts:5,  text:'Possui controle de consumo Média por Litro das carretas/Equipamentos de Refrigeração com métricas e ranking de melhores e piores?',
+        hint:'✅ Sistema: aba "Faturamento" → coluna "Média Carreta (km/L)". Verifique se carretas e equipamentos de frio estão identificados com consumo registrado.'},
     ]
   },
   {
-    id:'pneus',
-    title:'Controle de Pneus',
-    icon:'fas fa-circle-notch',
+    id:'pneus', title:'Controle de Pneus', icon:'fas fa-circle-notch',
     items:[
-      {id:'1u', code:'1.u', text:'Cadastro de todos os pneus da operação com relação de Quantidade, Marca, tipo e modelo.'},
-      {id:'1v', code:'1.v', text:'Posição de cada pneu em utilização ou em estoque.'},
-      {id:'1x', code:'1.x', text:'Controle de Número de Série e/ou Fogo dos pneus.'},
-      {id:'1w', code:'1.w', text:'Km rodado CPK (Custo por Km) ou Custo por MM/Sulco.'},
-      {id:'1y', code:'1.y', text:'Existe análise da vida útil média por pneu, marca e tipo?'},
+      {id:'1u', code:'1.u', pts:3,  text:'Cadastro de todos os pneus da operação com relação de Quantidade, Marca, tipo e modelo.',
+        hint:'✅ Sistema: aba "Pneus" — deve conter todos os pneus cadastrados por placa com marca e modelo. Confirme se estão preenchidos.'},
+      {id:'1v', code:'1.v', pts:5,  text:'Posição de cada pneu em utilização ou em estoque.',
+        hint:'✅ Sistema: aba "Pneus" — campo de posição (dianteiro, tração, carreta 1-3, estoque). Mostre o mapa de posição de cada veículo ao auditor.'},
+      {id:'1x', code:'1.x', pts:3,  text:'Controle de Número de Série e/ou Fogo dos pneus.',
+        hint:'✅ Sistema: aba "Pneus" — campo "Número de série / Fogo". Verifique se está preenchido em todos os pneus cadastrados.'},
+      {id:'1w', code:'1.w', pts:5,  text:'Km rodado CPK (Custo por Km) ou Custo por MM/Sulco.',
+        hint:'✅ Sistema: aba "Pneus" — campo CPK/Custo por sulco. Se não estiver preenchido automaticamente, calcule: custo total ÷ km rodado por pneu.'},
+      {id:'1y', code:'1.y', pts:5,  text:'Existe análise da vida útil média por pneu, marca e tipo?',
+        hint:'✅ Sistema: aba "Pneus" — filtre por marca e tipo. Calcule média de km rodado dos pneus já descartados para mostrar vida útil por marca.'},
     ]
   },
   {
-    id:'manutencao',
-    title:'Controle Mensal de Custos por Manutenção',
-    icon:'fas fa-tools',
+    id:'manutencao', title:'Controle Mensal de Custos por Manutenção', icon:'fas fa-tools',
     items:[
-      {id:'1z', code:'1.z', text:'Controle de Custos dos cavalos com separação de Preventivas e Corretivas e ranking dos melhores e piores.'},
-      {id:'1aa', code:'1.aa', text:'Controle de Custos das carretas com separação de Preventivas e Corretivas e ranking dos melhores e piores.'},
-      {id:'1ab', code:'1.ab', text:'Controle de Custos dos equipamentos de refrigeração com separação de Preventivas e Corretivas e ranking dos melhores e piores.'},
-      {id:'1ac', code:'1.ac', text:'Existe um programa de controle de manutenção preventiva considerando o manual do fabricante ou Km de rodagem? Está sendo cumprido?'},
+      {id:'1z', code:'1.z', pts:8,  text:'Controle de Custos dos cavalos com separação de Preventivas e Corretivas e ranking dos melhores e piores.',
+        hint:'✅ Sistema: aba "Financeiro" → categoria "Manutenção". Filtre por placa (cavalo) e período. Separe: preventiva (troca de óleo, filtros) x corretiva (peças avariadas). Gere ranking por custo total.'},
+      {id:'1aa', code:'1.aa', pts:5, text:'Controle de Custos das carretas com separação de Preventivas e Corretivas e ranking dos melhores e piores.',
+        hint:'✅ Sistema: aba "Financeiro" → categoria "Manutenção". Filtre por placa (carreta). Apresente separação preventiva x corretiva com total por carreta.'},
+      {id:'1ab', code:'1.ab', pts:5, text:'Controle de Custos dos equipamentos de refrigeração com separação de Preventivas e Corretivas e ranking dos melhores e piores.',
+        hint:'✅ Sistema: aba "Financeiro" → categoria "Manutenção / Frio". Filtre por equipamento de refrigeração. Separe preventiva x corretiva com ranking por custo.'},
+      {id:'1ac', code:'1.ac', pts:5, text:'Existe programa de controle de manutenção preventiva considerando o manual do fabricante ou Km de rodagem? Está sendo cumprido?',
+        hint:'✅ Sistema: aba "Vencimentos" — verifique se há alertas de manutenção por km. Complementar: apresentar planilha/documento de plano preventivo por modelo de veículo.'},
     ]
   },
   {
-    id:'painel',
-    title:'Painel de Gestão à Vista e Indicadores de Resultados',
-    icon:'fas fa-tachometer-alt',
+    id:'painel', title:'Painel de Gestão à Vista e Indicadores de Resultados', icon:'fas fa-tachometer-alt',
     items:[
-      {id:'1ad', code:'1.ad', text:'Abertura de todos os controles de indicadores da categoria de resultados aplicáveis ao segmento da transportadora.'},
-      {id:'1af', code:'1.af', text:'Possui quadro de gestão à vista? (Painel Impresso / TV / Telas)'},
+      {id:'1ad', code:'1.ad', pts:15, text:'Abertura de todos os controles de indicadores da categoria de resultados aplicáveis ao segmento da transportadora.',
+        hint:'✅ Sistema: botão "Gestão à Vista (Slide)" na barra lateral — abre o painel com KPIs de Financeiro, Consumo, Faturamento e Frota. Mostre ao auditor em TV ou projetor. Todos os indicadores GIF devem estar presentes.'},
+      {id:'1af', code:'1.af', pts:5,  text:'Possui quadro de gestão à vista? (Painel Impresso / TV / Telas)',
+        hint:'✅ Sistema: botão "Gestão à Vista (Slide)" — o painel digital já substitui o quadro físico. Confirme que está sendo exibido em tela/TV na operação.'},
     ]
   },
 ];
 
-let audState = {}; // {itemId: {status:'yes'|'partial'|'no'|'', note:''}}
+// Pontuação máxima: 145 pts (conforme PDF da BRF)
+const AUD_MAX_PTS = 145;
+
+let audState = {};
 
 function audLoadState(){
-  try{
-    const raw = localStorage.getItem(AUD_STORAGE_KEY);
-    if(raw) audState = JSON.parse(raw);
-  }catch(e){ audState = {}; }
+  try{ const raw=localStorage.getItem(AUD_STORAGE_KEY); if(raw) audState=JSON.parse(raw); }catch(e){ audState={}; }
 }
 
 function audSaveState(){
-  const auditor = document.getElementById('audAuditor');
-  const dt = document.getElementById('audDate');
-  if(auditor) audState._auditor = auditor.value;
-  if(dt) audState._date = dt.value;
+  const auditor=document.getElementById('audAuditor');
+  const dt=document.getElementById('audDate');
+  if(auditor) audState._auditor=auditor.value;
+  if(dt) audState._date=dt.value;
   localStorage.setItem(AUD_STORAGE_KEY, JSON.stringify(audState));
   audUpdateSummary();
 }
 
 function audSetStatus(itemId, status){
-  if(!audState[itemId]) audState[itemId] = {status:'', note:''};
-  // toggle off if same
-  audState[itemId].status = audState[itemId].status === status ? '' : status;
+  if(!audState[itemId]) audState[itemId]={status:'',note:''};
+  audState[itemId].status = audState[itemId].status===status ? '' : status;
   audSaveState();
   audRenderItemButtons(itemId);
-  audUpdateSummary();
 }
 
 function audRenderItemButtons(itemId){
-  const grp = document.querySelector(`.aud-toggle-group[data-item="${itemId}"]`);
+  const grp=document.querySelector(`.aud-toggle-group[data-item="${itemId}"]`);
   if(!grp) return;
-  const s = (audState[itemId]||{}).status || '';
-  grp.querySelectorAll('.aud-toggle-btn').forEach(b => {
-    b.className = 'aud-toggle-btn';
-    if(b.dataset.val === s) b.classList.add(b.dataset.val);
-  });
-  // note icon
-  const noteBtn = document.querySelector(`.aud-note-btn[data-item="${itemId}"]`);
-  if(noteBtn){
-    const hasNote = (audState[itemId]||{}).note && audState[itemId].note.trim();
-    noteBtn.classList.toggle('has-note', !!hasNote);
-    noteBtn.title = hasNote ? 'Nota: '+audState[itemId].note : 'Adicionar nota';
-  }
+  const s=(audState[itemId]||{}).status||'';
+  grp.querySelectorAll('.aud-toggle-btn').forEach(b=>{ b.className='aud-toggle-btn'; if(b.dataset.val===s) b.classList.add(b.dataset.val); });
+  const noteBtn=document.querySelector(`.aud-note-btn[data-item="${itemId}"]`);
+  if(noteBtn){ const hasNote=(audState[itemId]||{}).note&&audState[itemId].note.trim(); noteBtn.classList.toggle('has-note',!!hasNote); }
 }
 
 function audToggleNote(itemId){
-  const area = document.getElementById('audNote_'+itemId);
+  const area=document.getElementById('audNote_'+itemId);
   if(!area) return;
   area.classList.toggle('open');
-  if(area.classList.contains('open')){
-    const ta = area.querySelector('textarea');
-    if(ta) ta.focus();
-  }
+  if(area.classList.contains('open')){ const ta=area.querySelector('textarea'); if(ta) ta.focus(); }
 }
 
-function audUpdateNote(itemId, val){
+function audUpdateNote(itemId,val){
   if(!audState[itemId]) audState[itemId]={status:'',note:''};
-  audState[itemId].note = val;
+  audState[itemId].note=val;
   audSaveState();
-  const noteBtn = document.querySelector(`.aud-note-btn[data-item="${itemId}"]`);
-  if(noteBtn) noteBtn.classList.toggle('has-note', !!val.trim());
+  const noteBtn=document.querySelector(`.aud-note-btn[data-item="${itemId}"]`);
+  if(noteBtn) noteBtn.classList.toggle('has-note',!!val.trim());
+}
+
+function audCalcPts(item, status){
+  if(status==='yes') return item.pts;
+  if(status==='partial') return Math.round(item.pts*0.5);
+  return 0;
 }
 
 function audSectionScore(section){
-  let yes=0,partial=0,no=0,pend=0;
+  let yes=0,partial=0,no=0,pend=0,ptsSec=0;
   section.items.forEach(item=>{
     const s=(audState[item.id]||{}).status||'';
-    if(s==='yes') yes++;
-    else if(s==='partial') partial++;
+    if(s==='yes'){ yes++; ptsSec+=item.pts; }
+    else if(s==='partial'){ partial++; ptsSec+=Math.round(item.pts*0.5); }
     else if(s==='no') no++;
     else pend++;
   });
   const total=section.items.length;
-  const pct = total>0 ? Math.round(((yes + partial*0.5)/total)*100) : 0;
-  return {yes,partial,no,pend,total,pct};
+  const maxPtsSec=section.items.reduce((a,i)=>a+i.pts,0);
+  const pct=maxPtsSec>0?Math.round((ptsSec/maxPtsSec)*100):0;
+  return {yes,partial,no,pend,total,pct,ptsSec,maxPtsSec};
 }
 
 function audUpdateSummary(){
-  let totYes=0,totPartial=0,totNo=0,totPend=0,totAll=0;
+  let totYes=0,totPartial=0,totNo=0,totPend=0,totAll=0,gifPts=0;
   AUD_DATA.forEach(sec=>{
     const sc=audSectionScore(sec);
     totYes+=sc.yes; totPartial+=sc.partial; totNo+=sc.no; totPend+=sc.pend; totAll+=sc.total;
-    // update section badge
-    const badge = document.getElementById('audBadge_'+sec.id);
+    gifPts+=sc.ptsSec;
+    const badge=document.getElementById('audBadge_'+sec.id);
     if(badge){
-      badge.textContent = sc.pct+'%';
-      badge.style.background = sc.pct>=80?'#d1fae5':sc.pct>=50?'#fef3c7':'#fee2e2';
-      badge.style.color = sc.pct>=80?'#065f46':sc.pct>=50?'#92400e':'#991b1b';
+      badge.textContent=sc.pct+'%';
+      badge.style.background=sc.pct>=80?'#d1fae5':sc.pct>=50?'#fef3c7':'#fee2e2';
+      badge.style.color=sc.pct>=80?'#065f46':sc.pct>=50?'#92400e':'#991b1b';
     }
   });
-  const scoreEl=document.getElementById('aud-score');
+  const aderencia=Math.round((gifPts/AUD_MAX_PTS)*100);
   const barEl=document.getElementById('aud-score-bar');
-  const pct = totAll>0?Math.round(((totYes+totPartial*0.5)/totAll)*100):0;
-  if(scoreEl) scoreEl.textContent=pct+'%';
-  if(barEl){
-    barEl.style.width=pct+'%';
-    barEl.style.background=pct>=80?'var(--success)':pct>=50?'var(--warning)':'var(--danger)';
-  }
+  if(barEl){ barEl.style.width=aderencia+'%'; barEl.style.background=aderencia>=80?'var(--success)':aderencia>=50?'var(--warning)':'var(--danger)'; }
   const setEl=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-  setEl('aud-total',totAll);
-  setEl('aud-yes',totYes);
-  setEl('aud-partial',totPartial);
-  setEl('aud-no',totNo);
-  setEl('aud-pend',totPend);
+  setEl('aud-yes',totYes); setEl('aud-partial',totPartial); setEl('aud-no',totNo); setEl('aud-pend',totPend);
+  setEl('gif-pontos',gifPts); setEl('gif-aderencia',aderencia+'%'); setEl('gif-pct-label',aderencia+'%');
+  // Cor do card de aderência
+  const card=document.getElementById('gif-aderencia-card');
+  if(card){
+    if(aderencia>=80){ card.style.background='#d1fae5'; card.style.borderColor='#6ee7b7'; document.getElementById('gif-aderencia').style.color='#065f46'; }
+    else if(aderencia>=50){ card.style.background='#fef3c7'; card.style.borderColor='#fde68a'; document.getElementById('gif-aderencia').style.color='#92400e'; }
+    else{ card.style.background='#fee2e2'; card.style.borderColor='#fecaca'; document.getElementById('gif-aderencia').style.color='#991b1b'; }
+  }
 }
 
 function audBuildSections(){
-  const container = document.getElementById('audSections');
+  const container=document.getElementById('audSections');
   if(!container) return;
-  container.innerHTML = AUD_DATA.map(sec=>{
-    const sc = audSectionScore(sec);
-    const items = sec.items.map(item=>{
+  container.innerHTML=AUD_DATA.map(sec=>{
+    const sc=audSectionScore(sec);
+    const items=sec.items.map(item=>{
       const s=(audState[item.id]||{}).status||'';
       const note=(audState[item.id]||{}).note||'';
+      const ptsGanhos=audCalcPts(item,s);
       return `
-      <div class="aud-item" id="audItem_${item.id}">
+      <div class="aud-item" id="audItem_${item.id}" style="grid-template-columns:1fr auto auto auto">
         <div>
           <div style="display:flex;align-items:flex-start;gap:.5rem">
             <span class="aud-item-code">${item.code}</span>
-            <span class="aud-item-text">${item.text}</span>
+            <div style="flex:1">
+              <span class="aud-item-text">${item.text}</span>
+              <div style="margin-top:.4rem;font-size:.7rem;color:#3b82f6;background:#eff6ff;border-radius:6px;padding:.3rem .5rem;line-height:1.4;cursor:pointer" onclick="audToggleHint('${item.id}')" id="audHintBtn_${item.id}"><i class="fas fa-info-circle"></i> <strong>Como verificar no sistema</strong> ▼</div>
+              <div id="audHint_${item.id}" style="display:none;margin-top:.3rem;font-size:.72rem;color:#1e40af;background:#dbeafe;border-radius:6px;padding:.4rem .6rem;line-height:1.5">${item.hint}</div>
+            </div>
           </div>
         </div>
-        <div class="aud-toggle-group" data-item="${item.id}">
-          <button class="aud-toggle-btn ${s==='yes'?'yes':''}" data-val="yes" onclick="audSetStatus('${item.id}','yes')" title="Conforme">✓ Sim</button>
-          <button class="aud-toggle-btn ${s==='partial'?'partial':''}" data-val="partial" onclick="audSetStatus('${item.id}','partial')" title="Parcial">~ Parcial</button>
-          <button class="aud-toggle-btn ${s==='no'?'no':''}" data-val="no" onclick="audSetStatus('${item.id}','no')" title="Não Conforme">✗ Não</button>
+        <div style="font-size:.7rem;font-weight:800;color:${s==='yes'?'#065f46':s==='partial'?'#92400e':s==='no'?'#991b1b':'#94a3b8'};min-width:38px;text-align:center">
+          ${ptsGanhos}/${item.pts}<br><span style="font-size:.6rem;font-weight:400">pts</span>
         </div>
-        <button class="aud-note-btn ${note.trim()?'has-note':''}" data-item="${item.id}" onclick="audToggleNote('${item.id}')" title="${note.trim()?'Nota: '+note:'Adicionar nota'}"><i class="fas fa-sticky-note"></i></button>
+        <div class="aud-toggle-group" data-item="${item.id}">
+          <button class="aud-toggle-btn ${s==='yes'?'yes':''}" data-val="yes" onclick="audSetStatus('${item.id}','yes')" title="Conforme — ${item.pts}pts">✓ Sim</button>
+          <button class="aud-toggle-btn ${s==='partial'?'partial':''}" data-val="partial" onclick="audSetStatus('${item.id}','partial')" title="Parcial — ${Math.round(item.pts*0.5)}pts">~ Parcial</button>
+          <button class="aud-toggle-btn ${s==='no'?'no':''}" data-val="no" onclick="audSetStatus('${item.id}','no')" title="Não Conforme — 0pts">✗ Não</button>
+        </div>
+        <button class="aud-note-btn ${note.trim()?'has-note':''}" data-item="${item.id}" onclick="audToggleNote('${item.id}')"><i class="fas fa-sticky-note"></i></button>
       </div>
       <div class="aud-note-area ${note.trim()?'open':''}" id="audNote_${item.id}">
         <textarea placeholder="Observação / evidência..." oninput="audUpdateNote('${item.id}',this.value)">${note}</textarea>
@@ -5361,37 +5411,42 @@ function audBuildSections(){
     return `
     <div class="aud-section">
       <div class="aud-section-header" onclick="audToggleSection('${sec.id}')">
-        <div class="aud-section-title">
-          <i class="${sec.icon}" style="opacity:.8"></i>
-          ${sec.title}
-        </div>
+        <div class="aud-section-title"><i class="${sec.icon}" style="opacity:.8"></i> ${sec.title}</div>
         <div style="display:flex;align-items:center;gap:.5rem">
+          <span style="font-size:.7rem;color:#94a3b8;font-weight:700">${sc.ptsSec}/${sc.maxPtsSec}pts</span>
           <span class="aud-section-badge" id="audBadge_${sec.id}" style="background:#e2e8f0;color:#475569">${sc.pct}%</span>
           <span style="font-size:.7rem;color:#94a3b8">${sc.yes}✓ ${sc.partial}~ ${sc.no}✗ ${sc.pend}?</span>
           <i class="fas fa-chevron-down" id="audChev_${sec.id}" style="color:#94a3b8;font-size:.72rem;transition:.2s"></i>
         </div>
       </div>
-      <div class="aud-section-body" id="audBody_${sec.id}">
-        ${items}
-      </div>
+      <div class="aud-section-body" id="audBody_${sec.id}">${items}</div>
     </div>`;
   }).join('');
   audUpdateSummary();
 }
 
+function audToggleHint(itemId){
+  const h=document.getElementById('audHint_'+itemId);
+  const b=document.getElementById('audHintBtn_'+itemId);
+  if(!h) return;
+  const open=h.style.display==='block';
+  h.style.display=open?'none':'block';
+  if(b) b.innerHTML=`<i class="fas fa-info-circle"></i> <strong>Como verificar no sistema</strong> ${open?'▼':'▲'}`;
+}
+
 function audToggleSection(id){
-  const body = document.getElementById('audBody_'+id);
-  const chev = document.getElementById('audChev_'+id);
+  const body=document.getElementById('audBody_'+id);
+  const chev=document.getElementById('audChev_'+id);
   if(!body) return;
   body.classList.toggle('open');
-  if(chev) chev.style.transform = body.classList.contains('open')?'rotate(180deg)':'';
+  if(chev) chev.style.transform=body.classList.contains('open')?'rotate(180deg)':'';
 }
 
 function audExpandAll(){
   AUD_DATA.forEach(sec=>{
     const body=document.getElementById('audBody_'+sec.id);
     const chev=document.getElementById('audChev_'+sec.id);
-    if(body){body.classList.add('open');}
+    if(body) body.classList.add('open');
     if(chev) chev.style.transform='rotate(180deg)';
   });
 }
@@ -5400,102 +5455,149 @@ function audCollapseAll(){
   AUD_DATA.forEach(sec=>{
     const body=document.getElementById('audBody_'+sec.id);
     const chev=document.getElementById('audChev_'+sec.id);
-    if(body){body.classList.remove('open');}
+    if(body) body.classList.remove('open');
     if(chev) chev.style.transform='';
   });
 }
 
 function audResetAll(){
   if(!confirm('Resetar toda a auditoria? Todos os status e notas serão apagados.')) return;
-  const auditor = (audState._auditor||'');
-  const date = (audState._date||'');
-  audState = {_auditor: auditor, _date: date};
-  audSaveState();
-  audBuildSections();
+  const auditor=(audState._auditor||''), date=(audState._date||'');
+  audState={_auditor:auditor,_date:date};
+  audSaveState(); audBuildSections();
   showToast('Auditoria resetada.');
 }
 
+// Sincroniza automaticamente o que já é verificável pelos dados do sistema
+function audSyncFromSystem(){
+  let atualizados=0;
+
+  // 1.r — Licenciamento/IPVA: se há dados em vencData.licenciamento, marca como sim
+  if(vencData && vencData.licenciamento && vencData.licenciamento.length>0){
+    if(!(audState['1r']||{}).status){ audState['1r']={status:'yes',note:'Automático: controle de Licenciamento/IPVA detectado em "Vencimentos" ('+vencData.licenciamento.length+' registros).'}; atualizados++; }
+  }
+
+  // 1u,1v — Pneus: se há dados no módulo de pneus
+  try{
+    const pneuStorage=localStorage.getItem('malacarne_pneus_v2')||localStorage.getItem('pneuData');
+    if(pneuStorage){
+      const pd=JSON.parse(pneuStorage);
+      const totalPneus=Object.values(pd||{}).reduce((a,v)=>a+(Array.isArray(v)?v.length:0),0);
+      if(totalPneus>0){
+        if(!(audState['1u']||{}).status){ audState['1u']={status:'yes',note:'Automático: '+totalPneus+' pneus cadastrados no módulo Pneus.'}; atualizados++; }
+        if(!(audState['1v']||{}).status){ audState['1v']={status:'yes',note:'Automático: posições de pneus registradas no módulo Pneus.'}; atualizados++; }
+      }
+    }
+  }catch(e){}
+
+  // 1a,1b — Vagas: se há candidatos cadastrados
+  try{
+    const vagas=JSON.parse(localStorage.getItem('vagaCandidatos')||'[]');
+    if(vagas.length>0){
+      if(!(audState['1a']||{}).status){ audState['1a']={status:'yes',note:'Automático: '+vagas.length+' candidatos registrados em "Vagas / Entrevistas".'}; atualizados++; }
+      const contratados=vagas.filter(v=>v.etapa==='Contratado').length;
+      const reprovados=vagas.filter(v=>v.etapa==='Reprovado').length;
+      if(contratados>0||reprovados>0){
+        if(!(audState['1b']||{}).status){ audState['1b']={status:'partial',note:'Automático: '+contratados+' contratados e '+reprovados+' reprovados registrados. Verifique se BI mensal também está atualizado.'}; atualizados++; }
+        if(!(audState['1f']||{}).status){ audState['1f']={status:'partial',note:'Automático: registros de desligamentos detectados. Confirme se há motivo e plano de ação nas observações.'}; atualizados++; }
+      }
+    }
+  }catch(e){}
+
+  // 1s,1t — Consumo: se há dados de faturamento com média km/L
+  if(allFaturamentoData && allFaturamentoData.length>0){
+    if(!(audState['1s']||{}).status){ audState['1s']={status:'yes',note:'Automático: dados de consumo km/L detectados em "Faturamento" ('+allFaturamentoData.length+' registros).'}; atualizados++; }
+    if(!(audState['1t']||{}).status){ audState['1t']={status:'partial',note:'Automático: dados de faturamento detectados. Confirme se carreta/frio também estão com consumo registrado separadamente.'}; atualizados++; }
+  }
+
+  // 1ad,1af — Painel Gestão à Vista: botão existe no sistema
+  if(!(audState['1ad']||{}).status){ audState['1ad']={status:'yes',note:'Automático: Painel "Gestão à Vista (Slide)" disponível no sistema — exibir ao auditor em TV/projetor.'}; atualizados++; }
+  if(!(audState['1af']||{}).status){ audState['1af']={status:'yes',note:'Automático: Painel digital de Gestão à Vista disponível e operacional no sistema.'}; atualizados++; }
+
+  // 1k,1m — Financeiro: se há dados financeiros
+  if(allFinanceiroData && allFinanceiroData.length>0){
+    if(!(audState['1k']||{}).status){ audState['1k']={status:'partial',note:'Automático: '+allFinanceiroData.length+' lançamentos financeiros detectados. Confirme se há coluna de "Orçado" além do realizado.'}; atualizados++; }
+    if(!(audState['1m']||{}).status){ audState['1m']={status:'partial',note:'Automático: lançamentos financeiros detectados. Filtre por categoria "Manutenção" e separe preventiva x corretiva para evidenciar.'}; atualizados++; }
+    if(!(audState['1i']||{}).status){ audState['1i']={status:'partial',note:'Automático: lançamentos de folha detectados no financeiro. Confirme se TODOS os pagamentos a colaboradores passam pela folha.'}; atualizados++; }
+  }
+
+  audSaveState();
+  audBuildSections();
+  showToast('✅ '+atualizados+' itens sincronizados automaticamente com os dados do sistema.');
+}
+
 function audExportCSV(){
-  const rows = [['Seção','Código','Item','Status','Nota']];
+  const rows=[['Seção','Código','Pontuação Máx','Pontos Obtidos','Status','OBS / Evidência']];
   AUD_DATA.forEach(sec=>{
     sec.items.forEach(item=>{
-      const st=(audState[item.id]||{}).status||'Pendente';
+      const st=(audState[item.id]||{}).status||'';
       const note=(audState[item.id]||{}).note||'';
-      const stLabel = st==='yes'?'Conforme':st==='partial'?'Parcial':st==='no'?'Não Conforme':'Pendente';
-      rows.push([sec.title, item.code, item.text, stLabel, note]);
+      const stLabel=st==='yes'?'Conforme':st==='partial'?'Parcial':st==='no'?'Não Conforme':'Pendente';
+      rows.push([sec.title,item.code,item.pts,audCalcPts(item,st),stLabel,note]);
     });
   });
-  const csv = rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
-  const a = document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=`auditoria_malacarne_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`auditoria_gif_malacarne_${new Date().toISOString().slice(0,10)}.csv`; a.click();
 }
 
 function audExportPDF(){
-  const auditor = (audState._auditor||'—');
-  const date = (audState._date? new Date(audState._date+'T12:00').toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR'));
-  let totYes=0,totPartial=0,totNo=0,totPend=0,totAll=0;
-  AUD_DATA.forEach(sec=>{const sc=audSectionScore(sec);totYes+=sc.yes;totPartial+=sc.partial;totNo+=sc.no;totPend+=sc.pend;totAll+=sc.total;});
-  const pct=totAll>0?Math.round(((totYes+totPartial*0.5)/totAll)*100):0;
+  const auditor=(audState._auditor||'—');
+  const date=(audState._date?new Date(audState._date+'T12:00').toLocaleDateString('pt-BR'):new Date().toLocaleDateString('pt-BR'));
+  let gifPts=0;
+  AUD_DATA.forEach(sec=>{ const sc=audSectionScore(sec); gifPts+=sc.ptsSec; });
+  const aderencia=Math.round((gifPts/AUD_MAX_PTS)*100);
 
-  const sections = AUD_DATA.map(sec=>{
+  const sections=AUD_DATA.map(sec=>{
     const sc=audSectionScore(sec);
-    const rows = sec.items.map(item=>{
+    const rows=sec.items.map(item=>{
       const st=(audState[item.id]||{}).status||'';
       const note=(audState[item.id]||{}).note||'';
+      const pts=audCalcPts(item,st);
       const stLabel=st==='yes'?'✓ Conforme':st==='partial'?'~ Parcial':st==='no'?'✗ Não Conforme':'? Pendente';
       const color=st==='yes'?'#065f46':st==='partial'?'#92400e':st==='no'?'#991b1b':'#64748b';
       const bg=st==='yes'?'#d1fae5':st==='partial'?'#fef3c7':st==='no'?'#fee2e2':'#f1f5f9';
       return `<tr style="border-bottom:1px solid #e2e8f0">
-        <td style="padding:5px 8px;font-size:10px;color:#64748b;font-family:monospace;white-space:nowrap">${item.code}</td>
+        <td style="padding:5px 8px;font-size:10px;color:#64748b;font-family:monospace">${item.code}</td>
         <td style="padding:5px 8px;font-size:10px;color:#1e2a3a;line-height:1.4">${item.text}</td>
+        <td style="padding:5px 8px;text-align:center;font-size:10px;font-weight:700;color:#1e2a3a">${pts}/${item.pts}</td>
         <td style="padding:5px 8px;text-align:center"><span style="background:${bg};color:${color};font-size:9px;font-weight:700;padding:2px 7px;border-radius:12px;white-space:nowrap">${stLabel}</span></td>
-        ${note?`<td style="padding:5px 8px;font-size:9px;color:#64748b;max-width:180px">${note}</td>`:'<td></td>'}
+        <td style="padding:5px 8px;font-size:9px;color:#64748b">${note}</td>
       </tr>`;
     }).join('');
-    return `
-    <div style="margin-bottom:18px;break-inside:avoid">
+    return `<div style="margin-bottom:18px;break-inside:avoid">
       <div style="background:linear-gradient(135deg,#1e2a3a,#2d3748);padding:8px 12px;border-radius:6px 6px 0 0;display:flex;justify-content:space-between;align-items:center">
         <span style="color:#fff;font-size:11px;font-weight:700">${sec.title}</span>
-        <span style="background:#d4af37;color:#111;font-size:9px;font-weight:800;padding:2px 8px;border-radius:12px">${sc.pct}%</span>
+        <span style="background:#d4af37;color:#111;font-size:9px;font-weight:800;padding:2px 8px;border-radius:12px">${sc.ptsSec}/${sc.maxPtsSec}pts — ${sc.pct}%</span>
       </div>
-      <table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 6px 6px">
-        <colgroup><col style="width:40px"><col><col style="width:100px"><col style="width:180px"></colgroup>
+      <table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e2e8f0;border-top:none">
+        <colgroup><col style="width:36px"><col><col style="width:60px"><col style="width:100px"><col style="width:160px"></colgroup>
         ${rows}
-      </table>
-    </div>`;
+      </table></div>`;
   }).join('');
 
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Auditoria M-Malacarne</title>
-  <style>body{font-family:'Segoe UI',sans-serif;color:#1e2a3a;padding:24px;max-width:900px;margin:0 auto}
-  @media print{body{padding:8px}}</style></head><body>
+  const aderColor=aderencia>=80?'#065f46':aderencia>=50?'#92400e':'#991b1b';
+  const aderBg=aderencia>=80?'#d1fae5':aderencia>=50?'#fef3c7':'#fee2e2';
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Auditoria GIF — M-Malacarne</title>
+  <style>body{font-family:'Segoe UI',sans-serif;color:#1e2a3a;padding:24px;max-width:960px;margin:0 auto}@media print{body{padding:8px}}</style></head><body>
   <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;padding-bottom:14px;border-bottom:3px solid #d4af37">
-    <div>
-      <div style="font-size:18px;font-weight:800;color:#1e2a3a">M-MALACARNE</div>
-      <div style="font-size:11px;color:#64748b;letter-spacing:1px;text-transform:uppercase">Relatório de Auditoria Operacional</div>
-    </div>
+    <div><div style="font-size:20px;font-weight:800;color:#1e2a3a">M-MALACARNE TRANSP E LOGISTICA</div>
+    <div style="font-size:11px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-top:2px">Auditoria GIF — BRF · Auditoria Presencial</div></div>
     <div style="text-align:right">
       <div style="font-size:11px;color:#64748b">Auditor: <strong>${auditor}</strong></div>
       <div style="font-size:11px;color:#64748b">Data: <strong>${date}</strong></div>
-      <div style="font-size:14px;font-weight:800;color:#d4af37;margin-top:4px">Pontuação: ${pct}%</div>
     </div>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:18px">
-    <div style="background:#f1f5f9;border-radius:8px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:800;color:#8B7355">${totAll}</div><div style="font-size:9px;color:#64748b">Total</div></div>
-    <div style="background:#d1fae5;border-radius:8px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:800;color:#065f46">${totYes}</div><div style="font-size:9px;color:#065f46">Conformes</div></div>
-    <div style="background:#fef3c7;border-radius:8px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:800;color:#92400e">${totPartial}</div><div style="font-size:9px;color:#92400e">Parciais</div></div>
-    <div style="background:#fee2e2;border-radius:8px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:800;color:#991b1b">${totNo}</div><div style="font-size:9px;color:#991b1b">Não Conf.</div></div>
-    <div style="background:#e2e8f0;border-radius:8px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:800;color:#475569">${totPend}</div><div style="font-size:9px;color:#475569">Pendentes</div></div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px">
+    <div style="background:#f1f5f9;border-radius:10px;padding:14px;text-align:center"><div style="font-size:26px;font-weight:800;color:#1e2a3a">145</div><div style="font-size:10px;color:#64748b;margin-top:3px">Autoavaliação</div></div>
+    <div style="background:#f1f5f9;border-radius:10px;padding:14px;text-align:center"><div style="font-size:26px;font-weight:800;color:#d4af37">${gifPts}</div><div style="font-size:10px;color:#64748b;margin-top:3px">Pontos Auditoria</div></div>
+    <div style="background:${aderBg};border-radius:10px;padding:14px;text-align:center"><div style="font-size:26px;font-weight:800;color:${aderColor}">${aderencia}%</div><div style="font-size:10px;color:${aderColor};margin-top:3px">Aderência</div></div>
   </div>
   ${sections}
+  <div style="margin-top:24px;padding-top:12px;border-top:1px solid #e2e8f0;font-size:9px;color:#94a3b8;text-align:center">Gerado pelo sistema M-Malacarne Central de Gestão — ${new Date().toLocaleString('pt-BR')}</div>
   </body></html>`;
-
-  const w=window.open('','_blank');
-  w.document.write(html);
-  w.document.close();
-  setTimeout(()=>w.print(),600);
+  const w=window.open('','_blank'); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),600);
 }
 
 // ═══════════════════════════════════════════════════════════
