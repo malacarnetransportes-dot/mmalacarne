@@ -1682,6 +1682,32 @@ function parseMoney(v) {
   return isNaN(n) ? 0 : n;
 }
 
+// Soma todas as ocorrências de "R$ valor" dentro de um texto livre —
+// usado quando a planilha não tem uma coluna "Valor" própria e o(s)
+// valor(es) do lançamento estão só embutidos no texto do Serviço/Descrição
+// (ex.: "N11201 - QJA0E90 TOMADA... R$36,75 - N11200 RAC4780... R$25,15").
+function extrairRSTotal(texto) {
+  const str = String(texto || '');
+  const matches = str.match(/R\$\s*[\d.]*\d,\d{2}/g);
+  if (!matches || !matches.length) return 0;
+  return matches.reduce((soma, s) => soma + parseMoney(s), 0);
+}
+
+// Valor monetário de uma linha do Financeiro. Prioriza a coluna "Valor"
+// quando ela existe e tem conteúdo; caso contrário, soma os "R$" embutidos
+// no texto (categoria/plano de contas + descrição/serviço). Nesse segundo
+// caso devolve o valor NEGATIVO (convenção de despesa), porque esta
+// planilha só registra custos — não há lançamento de receita/entrada nela.
+function finValorLinha(row, colValor, colCat, colDesc) {
+  if (colValor) {
+    const v = parseMoney(row[colValor]);
+    if (v) return v;
+  }
+  const textoFallback = [colCat ? row[colCat] : '', colDesc ? row[colDesc] : ''].join(' ');
+  const soma = extrairRSTotal(textoFallback);
+  return soma ? -soma : 0;
+}
+
 function parseDate(v) {
   if (v === null || v === undefined || v === '') return null;
   const s = String(v).trim();
@@ -2060,14 +2086,19 @@ function slideFinMonthlyData(){
   const headers = Object.keys(financeiroData[0]);
   const colData = findCol(headers, ['data','date','vencimento','competencia','lancamento']);
   const colValor = findCol(headers, ['valor','value','montante','total','vl ','vlr','preco','price']);
+  const colTipo = findCol(headers, ['tipo','type','natureza','classificacao']);
+  const colCat  = findCol(headers, ['plano de contas','plano','categoria','tipo lancamento','natureza','descricao','servico','produto']);
+  const colDesc = findCol(headers, ['descricao','historico','memo','obs','description','lancamento','servico','produto']);
   const mensal = {};
   financeiroData.forEach(row => {
     const d = colData ? parseDate(row[colData]) : null;
-    const v = colValor ? parseMoney(row[colValor]) : 0;
+    const v = Math.abs(finValorLinha(row, colValor, colCat, colDesc));
     if (!d) return;
     const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
     if (!mensal[key]) mensal[key] = { rec:0, desp:0 };
-    if (v >= 0) mensal[key].rec += v; else mensal[key].desp += Math.abs(v);
+    const t = colTipo ? String(row[colTipo] || '').toLowerCase() : '';
+    if (t.includes('receita') || t.includes('entrada') || t.includes('credito')) mensal[key].rec += v;
+    else mensal[key].desp += v; // esta planilha só registra despesas por padrão
   });
   const meses = Object.keys(mensal).sort().slice(-6);
   const nomesMes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
@@ -2088,6 +2119,7 @@ function slideFinResumo(){
   const colData  = findCol(headers, ['data','date','vencimento','competencia','lancamento']);
   const colValor = findCol(headers, ['valor','value','montante','total','vl ','vlr','preco','price']);
   const colCat   = findCol(headers, ['plano de contas','plano','categoria','tipo lancamento','natureza','tipo','descricao','classificacao','servico','produto']);
+  const colDesc  = findCol(headers, ['descricao','historico','memo','obs','description','lancamento','servico','produto']);
   const now = new Date();
   const mesAtualKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   const seisMesesAtras = new Date(now.getFullYear(), now.getMonth() - 5, 1);
@@ -2096,7 +2128,7 @@ function slideFinResumo(){
   const catMes = {};
   financeiroData.forEach(row => {
     const d = colData ? parseDate(row[colData]) : null;
-    const v = colValor ? Math.abs(parseMoney(row[colValor])) : 0;
+    const v = Math.abs(finValorLinha(row, colValor, colCat, colDesc));
     totalGeral += v;
     if (!d) return;
     if (d >= seisMesesAtras) total6m += v;
@@ -2924,6 +2956,7 @@ function applyFinFilters() {
   const colDesc  = findCol(headers, ['descricao','historico','memo','obs','description','lancamento','servico','produto']);
   const colValor = findCol(headers, ['valor','value','montante','total','vl ','vlr','preco','price']);
   const colTipo  = findCol(headers, ['tipo','type','natureza','categoria','classificacao']);
+  const colCat   = findCol(headers, ['plano de contas','plano','categoria','tipo lancamento','natureza','descricao','servico','produto']);
 
   const dIni  = document.getElementById('finDataInicio').value;
   const dFim  = document.getElementById('finDataFim').value;
@@ -2941,17 +2974,16 @@ function applyFinFilters() {
     }
     // Filtro tipo (receita/despesa)
     if (tipo) {
-      const v = colValor ? parseMoney(row[colValor]) : 0;
+      const v = finValorLinha(row, colValor, colCat, colDesc);
       const t = colTipo ? String(row[colTipo] || '').toLowerCase() : '';
       let rowTipo;
       if (t.includes('receita') || t.includes('entrada') || t.includes('credito')) rowTipo = 'receita';
       else if (t.includes('despesa') || t.includes('saida') || t.includes('debito')) rowTipo = 'despesa';
-      else rowTipo = v >= 0 ? 'receita' : 'despesa';
+      else rowTipo = 'despesa'; // esta planilha só registra despesas por padrão
       if (rowTipo !== tipo) return false;
     }
     // Filtro categoria
     if (cat) {
-      const colCat = findCol(headers, ['plano de contas','plano','categoria','tipo lancamento','natureza','descricao','servico','produto']);
       const checkCol = colCat || colTipo;
       if (checkCol && row[checkCol] !== cat) return false;
     }
@@ -2968,22 +3000,11 @@ function applyFinFilters() {
   // KPIs
   let receita = 0, despesa = 0;
   filtered.forEach(row => {
-    const v = colValor ? parseMoney(row[colValor]) : 0;
+    const v = finValorLinha(row, colValor, colCat, colDesc);
     const t = colTipo ? String(row[colTipo] || '').toLowerCase() : '';
-    if (t.includes('receita') || t.includes('entrada') || t.includes('credito') || v > 0) receita += Math.abs(v);
-    else if (t.includes('despesa') || t.includes('saida') || t.includes('debito') || v < 0) despesa += Math.abs(v);
-    else if (v > 0) receita += v;
-    else if (v < 0) despesa += Math.abs(v);
+    if (t.includes('receita') || t.includes('entrada') || t.includes('credito')) receita += Math.abs(v);
+    else despesa += Math.abs(v); // sem indicação explícita de receita, conta como despesa (esta planilha só tem custos)
   });
-
-  // Se não tiver coluna tipo, tenta detectar por valor positivo/negativo
-  if (!colTipo && colValor) {
-    receita = 0; despesa = 0;
-    filtered.forEach(row => {
-      const v = parseMoney(row[colValor]);
-      if (v >= 0) receita += v; else despesa += Math.abs(v);
-    });
-  }
 
   document.getElementById('fin-receita').textContent = fmtMoney(receita);
   document.getElementById('fin-despesa').textContent = fmtMoney(despesa);
@@ -2995,26 +3016,26 @@ function applyFinFilters() {
   document.getElementById('finCount').textContent = filtered.length + ' registros';
 
   // Tabela
-  renderFinTable(filtered, headers, colData, colDesc, colValor, colTipo);
+  renderFinTable(filtered, headers, colData, colDesc, colValor, colTipo, colCat);
   // Gráficos
-  renderFinCharts(filtered, colData, colValor, colTipo);
+  renderFinCharts(filtered, colValor, colCat, colDesc);
 
   document.getElementById('finLoading').style.display = 'none';
   document.getElementById('finTableWrap').style.display = 'block';
 }
 
-function renderFinTable(data, headers, colData, colDesc, colValor, colTipo) {
+function renderFinTable(data, headers, colData, colDesc, colValor, colTipo, colCat) {
   const thead = document.getElementById('finTableHead');
   const tbody = document.getElementById('finTableBody');
   thead.innerHTML = headers.map(h => `<th>${h}</th>`).join('');
   tbody.innerHTML = data.slice(0, 500).map(row => {
-    const v = colValor ? parseMoney(row[colValor]) : null;
+    const v = finValorLinha(row, colValor, colCat, colDesc);
     const t = colTipo ? String(row[colTipo] || '').toLowerCase() : '';
-    const isReceita = t.includes('receita') || t.includes('entrada') || t.includes('credito') || (v !== null && v > 0 && !colTipo);
+    const isReceita = t.includes('receita') || t.includes('entrada') || t.includes('credito');
     return `<tr>${headers.map(h => {
       let val = row[h] || '';
-      if (h === colValor && v !== null) {
-        const color = v >= 0 ? 'var(--success)' : 'var(--danger)';
+      if (h === colValor && colValor) {
+        const color = isReceita ? 'var(--success)' : 'var(--danger)';
         val = `<span style="color:${color};font-weight:700">${fmtMoney(Math.abs(v))}</span>`;
       }
       return `<td>${val}</td>`;
@@ -3022,12 +3043,14 @@ function renderFinTable(data, headers, colData, colDesc, colValor, colTipo) {
   }).join('');
 }
 
-function renderFinCharts(data, colData, colValor, colTipo) {
-  // Agrega por categoria (para o ranking e o gráfico de pizza)
+// Agrega por Categoria/Plano de Contas (não por "Tipo", que costuma ser só
+// Receita/Despesa e não serve como categoria de ranking). Usa finValorLinha
+// para funcionar mesmo quando não existe coluna "Valor" própria.
+function renderFinCharts(data, colValor, colCat, colDesc) {
   const cats = {};
   data.forEach(row => {
-    const v = colValor ? parseMoney(row[colValor]) : 0;
-    const t = colTipo ? String(row[colTipo] || '') : '';
+    const v = finValorLinha(row, colValor, colCat, colDesc);
+    const t = colCat ? String(row[colCat] || '').trim() : '';
     if (t) cats[t] = (cats[t] || 0) + Math.abs(v);
   });
 
@@ -3165,9 +3188,9 @@ function orcComputeRealizado(ano){
     const d = colData ? parseDate(row[colData]) : null;
     if (!d || d.getFullYear() !== +ano) return;
 
-    const v = colValor ? parseMoney(row[colValor]) : 0;
+    const v = finValorLinha(row, colValor, colCat, colDesc);
     const t = colTipo ? String(row[colTipo] || '').toLowerCase() : '';
-    const isDespesa = t.includes('despesa') || t.includes('saida') || t.includes('debito') || (!t && v < 0) || (v < 0);
+    const isDespesa = !(t.includes('receita') || t.includes('entrada') || t.includes('credito')); // planilha só tem despesas por padrão
     if (!isDespesa) return; // orçamento de custos considera só despesas
 
     // Texto usado para classificar: categoria (preferencial) + descrição, como reforço
@@ -3453,9 +3476,9 @@ function manComputeDados(ano){
     const d = colData ? parseDate(row[colData]) : null;
     if (!d || d.getFullYear() !== +ano) return;
 
-    const v = colValor ? parseMoney(row[colValor]) : 0;
+    const v = finValorLinha(row, colValor, colCat, colDesc);
     const t = colTipo ? String(row[colTipo] || '').toLowerCase() : '';
-    const isDespesa = t.includes('despesa') || t.includes('saida') || t.includes('debito') || v < 0;
+    const isDespesa = !(t.includes('receita') || t.includes('entrada') || t.includes('credito')); // planilha só tem despesas por padrão
     if (!isDespesa) return;
 
     const textoCategoria = colCat ? row[colCat] : '';
