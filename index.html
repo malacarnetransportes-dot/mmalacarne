@@ -396,12 +396,13 @@ footer a{color:var(--accent);text-decoration:none;}
 .data-table .badge{padding:.15rem .55rem;border-radius:30px;font-size:.7rem;font-weight:700;}
 
 /* ── FINANCEIRO — GUIAS (SUB-ABAS) ── */
-.fin-subtabs{display:flex;gap:.5rem;margin-bottom:1.2rem;flex-wrap:wrap;border-bottom:2px solid var(--gray-200);padding-bottom:0;}
-.fin-subtab-btn{display:flex;align-items:center;gap:.5rem;padding:.65rem 1.1rem;border:none;background:none;cursor:pointer;font-size:.83rem;font-weight:700;color:var(--text-lt);border-bottom:3px solid transparent;margin-bottom:-2px;transition:.2s;}
-.fin-subtab-btn:hover{color:var(--primary);}
-.fin-subtab-btn.active{color:var(--accent-dk);border-bottom-color:var(--accent);}
-.fin-subpane{display:none;}
-.fin-subpane.active{display:block;}
+.fin-subtabs,.fat-subtabs{display:flex;gap:.5rem;margin-bottom:1.2rem;flex-wrap:wrap;border-bottom:2px solid var(--gray-200);padding-bottom:0;}
+.fin-subtab-btn,.fat-subtab-btn{display:flex;align-items:center;gap:.5rem;padding:.65rem 1.1rem;border:none;background:none;cursor:pointer;font-size:.83rem;font-weight:700;color:var(--text-lt);border-bottom:3px solid transparent;margin-bottom:-2px;transition:.2s;}
+.fin-subtab-btn:hover,.fat-subtab-btn:hover{color:var(--primary);}
+.fin-subtab-btn.active,.fat-subtab-btn.active{color:var(--accent-dk);border-bottom-color:var(--accent);}
+.consumo-metric-badge{display:inline-flex;align-items:center;gap:.3rem;background:var(--gray-100);padding:.3rem .7rem;border-radius:20px;font-size:.72rem;font-weight:700;color:var(--text-lt)}
+.fin-subpane,.fat-subpane{display:none;}
+.fin-subpane.active,.fat-subpane.active{display:block;}
 
 /* ── ORÇAMENTO & CUSTOS ── */
 .orc-topbar{display:flex;flex-wrap:wrap;align-items:flex-end;gap:1rem;margin-bottom:1rem;}
@@ -981,6 +982,13 @@ footer a{color:var(--accent);text-decoration:none;}
 
         <!-- ── TAB FATURAMENTO ── -->
         <div id="tabFaturamento" class="tab-pane">
+
+          <div class="fat-subtabs">
+            <button class="fat-subtab-btn active" data-fatsub="fatSubLancamentos"><i class="fas fa-list"></i> Lançamentos</button>
+            <button class="fat-subtab-btn" data-fatsub="fatSubConsumo"><i class="fas fa-gas-pump"></i> Controle de Consumo por Litro</button>
+          </div>
+
+          <div id="fatSubLancamentos" class="fat-subpane active">
           <!-- KPIs -->
           <div class="kpi-grid">
             <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-sack-dollar"></i></div><div><div class="kpi-val" id="fat-faturamento">R$ —</div><div class="kpi-lbl">Faturamento Total (Frete)</div></div></div>
@@ -988,8 +996,6 @@ footer a{color:var(--accent);text-decoration:none;}
             <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-hotel"></i></div><div><div class="kpi-val" id="fat-diarias">R$ —</div><div class="kpi-lbl">Total Diárias</div></div></div>
             <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-hand-holding-dollar"></i></div><div><div class="kpi-val" id="fat-vales">R$ —</div><div class="kpi-lbl">Total Vales / Manobra</div></div></div>
             <div class="kpi-card"><div class="kpi-icon brown"><i class="fas fa-user"></i></div><div><div class="kpi-val" id="fat-motoristas">—</div><div class="kpi-lbl">Motoristas Ativos</div></div></div>
-            <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-truck"></i></div><div><div class="kpi-val" id="fat-mediacv">—</div><div class="kpi-lbl">Média Cavalo (km/L)</div></div></div>
-            <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-trailer"></i></div><div><div class="kpi-val" id="fat-mediacr">—</div><div class="kpi-lbl">Média Carreta (km/L)</div></div></div>
           </div>
 
           <!-- Filtros -->
@@ -1026,10 +1032,6 @@ footer a{color:var(--accent);text-decoration:none;}
                 <canvas id="fatChartAno" height="200"></canvas>
               </div>
               <div class="dash-card">
-                <div class="dash-card-title"><i class="fas fa-gas-pump"></i> Média Cavalo x Carreta por Motorista (km/L)</div>
-                <canvas id="fatChartMedia" height="200"></canvas>
-              </div>
-              <div class="dash-card">
                 <div class="dash-card-title"><i class="fas fa-hotel"></i> Diárias e Vales por Motorista</div>
                 <canvas id="fatChartDiariasVales" height="200"></canvas>
               </div>
@@ -1040,14 +1042,6 @@ footer a{color:var(--accent);text-decoration:none;}
               <div class="dash-card">
                 <div class="dash-card-title"><i class="fas fa-medal"></i> Ranking — Valor a Receber por Motorista</div>
                 <ul class="rank-list" id="fatRankingReceber"></ul>
-              </div>
-              <div class="dash-card">
-                <div class="dash-card-title"><i class="fas fa-medal"></i> Ranking — Média Cavalo (km/L)</div>
-                <ul class="rank-list" id="fatRankingMediaCavalo"></ul>
-              </div>
-              <div class="dash-card">
-                <div class="dash-card-title"><i class="fas fa-medal"></i> Ranking — Média Carreta (km/L)</div>
-                <ul class="rank-list" id="fatRankingMediaCarreta"></ul>
               </div>
             </div>
 
@@ -1062,6 +1056,74 @@ footer a{color:var(--accent);text-decoration:none;}
               </div>
             </div>
           </div>
+          </div><!-- /fatSubLancamentos -->
+
+          <div id="fatSubConsumo" class="fat-subpane">
+            <div class="dash-card" style="background:linear-gradient(135deg,rgba(212,175,55,.08),rgba(212,175,55,.02));border:1px solid rgba(212,175,55,.25)">
+              <div class="dash-card-title"><i class="fas fa-gas-pump"></i> Controle de Consumo por Litro</div>
+              <div style="font-size:.78rem;color:var(--text-lt)">Métricas calculadas a partir dos lançamentos de Faturamento (campos <b>Média CV</b>, <b>Média CR</b>, <b>KM</b> e <b>Litros</b>), agrupadas por placa. Use os filtros da aba <b>Lançamentos</b> (Ano/Mês/Motorista) para refinar o período — os dados abaixo seguem o mesmo filtro.</div>
+            </div>
+
+            <div class="kpi-grid" id="fatConsumoKpis">
+              <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-truck"></i></div><div><div class="kpi-val" id="fatc-mediacv">—</div><div class="kpi-lbl">Média Geral Cavalos (km/L)</div></div></div>
+              <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-trailer"></i></div><div><div class="kpi-val" id="fatc-mediacr">—</div><div class="kpi-lbl">Média Geral Carretas (km/L)</div></div></div>
+              <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-gas-pump"></i></div><div><div class="kpi-val" id="fatc-litros">—</div><div class="kpi-lbl">Total Litros Consumidos</div></div></div>
+              <div class="kpi-card"><div class="kpi-icon brown"><i class="fas fa-road"></i></div><div><div class="kpi-val" id="fatc-km">—</div><div class="kpi-lbl">Total KM Rodado</div></div></div>
+              <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-thumbs-up"></i></div><div><div class="kpi-val" id="fatc-melhorcv" style="font-size:1rem">—</div><div class="kpi-lbl">Cavalo Mais Econômico</div></div></div>
+              <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-triangle-exclamation"></i></div><div><div class="kpi-val" id="fatc-piorcv" style="font-size:1rem">—</div><div class="kpi-lbl">Cavalo Menos Econômico</div></div></div>
+            </div>
+
+            <!-- ── CAVALOS ── -->
+            <div class="dash-card" style="border-left:4px solid var(--info)">
+              <div class="dash-card-title"><i class="fas fa-truck" style="color:var(--info)"></i> Cavalos Mecânicos — Consumo Médio (km/L)</div>
+              <canvas id="fatChartConsumoCavalo"></canvas>
+            </div>
+            <div class="charts-grid">
+              <div class="dash-card">
+                <div class="dash-card-title"><i class="fas fa-trophy" style="color:var(--success)"></i> Ranking — Melhores Cavalos (km/L)</div>
+                <ul class="rank-list" id="fatRankMelhoresCavalo"></ul>
+              </div>
+              <div class="dash-card">
+                <div class="dash-card-title"><i class="fas fa-triangle-exclamation" style="color:var(--danger)"></i> Ranking — Piores Cavalos (km/L)</div>
+                <ul class="rank-list" id="fatRankPioresCavalo"></ul>
+              </div>
+            </div>
+            <div class="dash-card">
+              <div class="dash-card-title"><i class="fas fa-table"></i> Métricas Utilizadas por Cavalo</div>
+              <div class="tbl-wrap">
+                <table class="data-table">
+                  <thead><tr><th>Placa</th><th>Motorista</th><th>Nº Registros</th><th>Total KM</th><th>Total Litros</th><th>Média (km/L)</th></tr></thead>
+                  <tbody id="fatTableConsumoCavaloBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- ── CARRETAS / REFRIGERAÇÃO ── -->
+            <div class="dash-card" style="border-left:4px solid #06b6d4;margin-top:1.6rem">
+              <div class="dash-card-title"><i class="fas fa-snowflake" style="color:#06b6d4"></i> Carretas / Equipamentos de Refrigeração — Consumo Médio (km/L)</div>
+              <canvas id="fatChartConsumoCarreta"></canvas>
+            </div>
+            <div class="charts-grid">
+              <div class="dash-card">
+                <div class="dash-card-title"><i class="fas fa-trophy" style="color:var(--success)"></i> Ranking — Melhores Carretas (km/L)</div>
+                <ul class="rank-list" id="fatRankMelhoresCarreta"></ul>
+              </div>
+              <div class="dash-card">
+                <div class="dash-card-title"><i class="fas fa-triangle-exclamation" style="color:var(--danger)"></i> Ranking — Piores Carretas (km/L)</div>
+                <ul class="rank-list" id="fatRankPioresCarreta"></ul>
+              </div>
+            </div>
+            <div class="dash-card">
+              <div class="dash-card-title"><i class="fas fa-table"></i> Métricas Utilizadas por Carreta/Equip. de Refrigeração</div>
+              <div class="tbl-wrap">
+                <table class="data-table">
+                  <thead><tr><th>Placa</th><th>Motorista</th><th>Nº Registros</th><th>Total Litros</th><th>Média (km/L)</th></tr></thead>
+                  <tbody id="fatTableConsumoCarretaBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div><!-- /fatSubConsumo -->
+
         </div>
 
         <!-- ── TAB BATERIAS ── -->
@@ -3785,6 +3847,17 @@ document.querySelectorAll('.fin-subtab-btn[data-finsub]').forEach(btn => {
   });
 });
 
+// Alterna entre as guias (sub-abas) dentro da aba Faturamento
+document.querySelectorAll('.fat-subtab-btn[data-fatsub]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.fat-subtab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.fat-subpane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.fatsub).classList.add('active');
+    if (btn.dataset.fatsub === 'fatSubConsumo') setTimeout(fatRenderConsumo, 50);
+  });
+});
+
 // ═══════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════
 // FATURAMENTO — LEITURA DE PDFs DO GOOGLE DRIVE
@@ -4078,7 +4151,8 @@ function adicionarPDFManual() {
 // ═══════════════════════════════════════════════════════════
 let fatAllRecords = [];      // todos os registros (todos os motoristas/meses)
 let fatFiltered   = [];      // após filtros de Ano/Mês/Motorista
-let fatChartAno = null, fatChartMedia = null, fatChartDiariasVales = null;
+let fatChartAno = null, fatChartDiariasVales = null;
+let fatChartConsumoCavalo = null, fatChartConsumoCarreta = null;
 let fatConfigMotoristas = []; // nomes configurados manualmente (prefixo "NOME|URL"), aparecem no filtro mesmo sem dados ainda
 let fatErrosCarregamento = []; // mensagens de planilha(s) que falharam ao carregar, usado no diagnóstico
 
@@ -4541,10 +4615,6 @@ function fatApplyFilters() {
   const totalDiarias     = soma('diaria');
   const totalVales       = fatFiltered.reduce((s, r) => s + (r.valeValor || 0) + (r.manobraValor || 0), 0);
   const motoristasSet    = new Set(fatFiltered.map(r => r.motorista).filter(Boolean));
-  const cvVals = fatFiltered.map(r => r.mediaCavalo).filter(v => v > 0);
-  const crVals = fatFiltered.map(r => r.mediaCarreta).filter(v => v > 0);
-  const mediaCv = cvVals.length ? cvVals.reduce((a,b)=>a+b,0)/cvVals.length : 0;
-  const mediaCr = crVals.length ? crVals.reduce((a,b)=>a+b,0)/crVals.length : 0;
 
   document.getElementById('fat-faturamento').textContent = fmtMoney(totalFaturamento);
   document.getElementById('fat-total').textContent        = fmtMoney(totalReceber);
@@ -4553,8 +4623,6 @@ function fatApplyFilters() {
   // KPI "Motoristas Ativos" = total cadastrado na frota (fixo), não apenas
   // quem teve lançamento no período — por isso antes ficava menor que 12.
   document.getElementById('fat-motoristas').textContent   = motoristasAtivosFrota.length;
-  document.getElementById('fat-mediacv').textContent      = mediaCv ? mediaCv.toLocaleString('pt-BR',{maximumFractionDigits:2}) : '—';
-  document.getElementById('fat-mediacr').textContent      = mediaCr ? mediaCr.toLocaleString('pt-BR',{maximumFractionDigits:2}) : '—';
   document.getElementById('fatCount').textContent = fatFiltered.length + ' lançamentos · ' + motoristasSet.size + ' motoristas c/ lançamento no período';
 
   // ── Ranking por Faturamento (frete) ──
@@ -4588,47 +4656,8 @@ function fatApplyFilters() {
     options: {responsive:true, plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:v=>fmtMoney(v)}}}}
   });
 
-  // ── Gráfico: Média Cavalo x Carreta por Motorista ──
-  // Usa a base fixa de motoristas ativos (motoristasAtivosFrota, definida
-  // acima) para que todos os 12 apareçam mesmo sem lançamento no período
-  // filtrado (preenche com 0).
-  const medMap = {};
-  motoristasAtivosFrota.forEach(m => { medMap[m] = { cv: [], cr: [] }; });
-  fatFiltered.forEach(r => {
-    if (!r.motorista) return;
-    if (!medMap[r.motorista]) medMap[r.motorista] = { cv: [], cr: [] };
-    if (r.mediaCavalo > 0) medMap[r.motorista].cv.push(r.mediaCavalo);
-    if (r.mediaCarreta > 0) medMap[r.motorista].cr.push(r.mediaCarreta);
-  });
-  // Une ativos da frota + qualquer motorista extra que apareça nos dados
-  // (ex.: agregado/terceiro sem cadastro em FROTA_DATA), mantendo ordem alfabética.
-  const medMotoristas = [...new Set([...motoristasAtivosFrota, ...Object.keys(medMap)])].sort();
-  const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
-
-  // ── Ranking — Média Cavalo e Média Carreta (separados) ──
-  const fmtKmL = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' km/L' : '—';
-  const rankCavaloArr = medMotoristas.map(m => [m, avg(medMap[m].cv)]).filter(([,v]) => v > 0).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  document.getElementById('fatRankingMediaCavalo').innerHTML = rankCavaloArr.length
-    ? rankCavaloArr.map(([m,v]) => `<li><span>${m}</span><span style="font-weight:700;color:#3b82f6">${fmtKmL(v)}</span></li>`).join('')
-    : '<li style="justify-content:center;color:var(--text-lt)">Sem dados.</li>';
-  const rankCarretaArr = medMotoristas.map(m => [m, avg(medMap[m].cr)]).filter(([,v]) => v > 0).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  document.getElementById('fatRankingMediaCarreta').innerHTML = rankCarretaArr.length
-    ? rankCarretaArr.map(([m,v]) => `<li><span>${m}</span><span style="font-weight:700;color:#10b981">${fmtKmL(v)}</span></li>`).join('')
-    : '<li style="justify-content:center;color:var(--text-lt)">Sem dados.</li>';
-
-  if (fatChartMedia) fatChartMedia.destroy();
-  const ctxMedia = document.getElementById('fatChartMedia').getContext('2d');
-  fatChartMedia = new Chart(ctxMedia, {
-    type:'bar',
-    data: {
-      labels: medMotoristas,
-      datasets: [
-        { label:'Média Cavalo (km/L)',  data: medMotoristas.map(m=>avg(medMap[m].cv)), backgroundColor:'rgba(59,130,246,.75)' },
-        { label:'Média Carreta (km/L)', data: medMotoristas.map(m=>avg(medMap[m].cr)), backgroundColor:'rgba(16,185,129,.75)' }
-      ]
-    },
-    options: {responsive:true, plugins:{legend:{position:'top'}}, scales:{y:{beginAtZero:true}}}
-  });
+  // ── Controle de Consumo por Litro (sub-aba dedicada — cavalos e carretas) ──
+  fatRenderConsumo();
 
   // ── Gráfico: Diárias e Vales por Motorista ──
   const dvMap = {};
@@ -4671,6 +4700,131 @@ function fatApplyFilters() {
       return `<td>${val}</td>`;
     }).join('')}</tr>`
   ).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// FATURAMENTO → CONTROLE DE CONSUMO POR LITRO
+// Agrupa os lançamentos filtrados (fatFiltered) por PLACA — de cavalo
+// e de carreta/equip. de refrigeração — calculando a média (km/L)
+// registrada, o total de km, o total de litros e o nº de registros
+// usados no cálculo. Alimenta os KPIs, gráficos e rankings de
+// melhores/piores da sub-aba "Controle de Consumo por Litro".
+// ═══════════════════════════════════════════════════════════
+function fatRenderConsumo() {
+  const chartCvEl = document.getElementById('fatChartConsumoCavalo');
+  if (!chartCvEl) return; // sub-aba ainda não está no DOM
+
+  const fmtKmL = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' km/L' : '—';
+  const fmtNum = v => (v || 0).toLocaleString('pt-BR',{maximumFractionDigits:0});
+
+  // ── Agrupa por placa de CAVALO ──
+  const cavMap = {};
+  fatFiltered.forEach(r => {
+    const p = normalizaPlaca(r.placaCavalo);
+    if (!p) return;
+    if (!cavMap[p]) cavMap[p] = { placa: r.placaCavalo, medias: [], km: 0, litros: 0, registros: 0, motoristas: new Set() };
+    if (r.mediaCavalo > 0) cavMap[p].medias.push(r.mediaCavalo);
+    cavMap[p].km += r.km || 0;
+    cavMap[p].litros += r.litrosCavalo || 0;
+    if (r.mediaCavalo > 0 || r.litrosCavalo > 0 || r.km > 0) cavMap[p].registros++;
+    if (r.motorista) cavMap[p].motoristas.add(r.motorista);
+  });
+  const cavArr = Object.values(cavMap).map(v => ({
+    ...v,
+    media: v.medias.length ? v.medias.reduce((a,b)=>a+b,0)/v.medias.length : 0,
+    motorista: [...v.motoristas].join(', ') || '—'
+  })).filter(v => v.media > 0).sort((a,b) => b.media - a.media);
+
+  // ── Agrupa por placa de CARRETA / EQUIP. DE REFRIGERAÇÃO ──
+  const carMap = {};
+  fatFiltered.forEach(r => {
+    const p = normalizaPlaca(r.placaCarreta);
+    if (!p) return;
+    if (!carMap[p]) carMap[p] = { placa: r.placaCarreta, medias: [], litros: 0, registros: 0, motoristas: new Set() };
+    if (r.mediaCarreta > 0) carMap[p].medias.push(r.mediaCarreta);
+    carMap[p].litros += r.litrosCarreta || 0;
+    if (r.mediaCarreta > 0 || r.litrosCarreta > 0) carMap[p].registros++;
+    if (r.motorista) carMap[p].motoristas.add(r.motorista);
+  });
+  const carArr = Object.values(carMap).map(v => ({
+    ...v,
+    media: v.medias.length ? v.medias.reduce((a,b)=>a+b,0)/v.medias.length : 0,
+    motorista: [...v.motoristas].join(', ') || '—'
+  })).filter(v => v.media > 0).sort((a,b) => b.media - a.media);
+
+  // ── KPIs gerais ──
+  const mediaGeral = arr => arr.length ? arr.reduce((s,v)=>s+v.media,0)/arr.length : 0;
+  const totalLitrosCav = cavArr.reduce((s,v)=>s+v.litros,0);
+  const totalLitrosCar = carArr.reduce((s,v)=>s+v.litros,0);
+  const totalKm = cavArr.reduce((s,v)=>s+v.km,0);
+
+  document.getElementById('fatc-mediacv').textContent = fmtKmL(mediaGeral(cavArr));
+  document.getElementById('fatc-mediacr').textContent = fmtKmL(mediaGeral(carArr));
+  document.getElementById('fatc-litros').textContent  = fmtNum(totalLitrosCav + totalLitrosCar) + ' L';
+  document.getElementById('fatc-km').textContent      = fmtNum(totalKm) + ' km';
+  document.getElementById('fatc-melhorcv').textContent = cavArr.length ? `${cavArr[0].placa} — ${fmtKmL(cavArr[0].media)}` : '—';
+  document.getElementById('fatc-piorcv').textContent   = cavArr.length ? `${cavArr[cavArr.length-1].placa} — ${fmtKmL(cavArr[cavArr.length-1].media)}` : '—';
+
+  // ── Rankings — melhores/piores (top 5 de cada ponta) ──
+  const semDados = '<li style="justify-content:center;color:var(--text-lt)">Sem dados.</li>';
+  const liRank = (v, cor) => `<li><span>${v.placa} <span style="color:var(--text-lt);font-weight:400">(${v.motorista})</span></span><span style="font-weight:700;color:${cor}">${fmtKmL(v.media)}</span></li>`;
+
+  const top5Cav = cavArr.slice(0, 5);
+  const bot5Cav = [...cavArr].reverse().slice(0, 5);
+  document.getElementById('fatRankMelhoresCavalo').innerHTML = top5Cav.length ? top5Cav.map(v => liRank(v,'var(--success)')).join('') : semDados;
+  document.getElementById('fatRankPioresCavalo').innerHTML   = bot5Cav.length ? bot5Cav.map(v => liRank(v,'var(--danger)')).join('')  : semDados;
+
+  const top5Car = carArr.slice(0, 5);
+  const bot5Car = [...carArr].reverse().slice(0, 5);
+  document.getElementById('fatRankMelhoresCarreta').innerHTML = top5Car.length ? top5Car.map(v => liRank(v,'var(--success)')).join('') : semDados;
+  document.getElementById('fatRankPioresCarreta').innerHTML   = bot5Car.length ? bot5Car.map(v => liRank(v,'var(--danger)')).join('')  : semDados;
+
+  // ── Gráficos: barras horizontais, gradiente verde (melhor) → vermelho (pior) ──
+  const gradColor = (i, n) => {
+    if (n <= 1) return 'rgba(16,185,129,.85)';
+    const t = i / (n - 1);
+    const r = Math.round(16  + t * (239 - 16));
+    const g = Math.round(185 + t * (68  - 185));
+    const b = Math.round(129 + t * (68  - 129));
+    return `rgba(${r},${g},${b},.85)`;
+  };
+
+  if (fatChartConsumoCavalo) fatChartConsumoCavalo.destroy();
+  fatChartConsumoCavalo = new Chart(chartCvEl.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: cavArr.map(v => v.placa),
+      datasets: [{ label: 'Média (km/L)', data: cavArr.map(v => v.media), backgroundColor: cavArr.map((v,i) => gradColor(i, cavArr.length)) }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmtKmL(c.raw) } } },
+      scales: { x: { beginAtZero: true, title: { display: true, text: 'km/L' } } }
+    }
+  });
+
+  if (fatChartConsumoCarreta) fatChartConsumoCarreta.destroy();
+  fatChartConsumoCarreta = new Chart(document.getElementById('fatChartConsumoCarreta').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: carArr.map(v => v.placa),
+      datasets: [{ label: 'Média (km/L)', data: carArr.map(v => v.media), backgroundColor: carArr.map((v,i) => gradColor(i, carArr.length)) }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmtKmL(c.raw) } } },
+      scales: { x: { beginAtZero: true, title: { display: true, text: 'km/L' } } }
+    }
+  });
+
+  // ── Tabelas de métricas utilizadas ──
+  document.getElementById('fatTableConsumoCavaloBody').innerHTML = cavArr.length
+    ? cavArr.map(v => `<tr><td>${v.placa}</td><td>${v.motorista}</td><td>${v.registros}</td><td>${fmtNum(v.km)} km</td><td>${fmtNum(v.litros)} L</td><td style="font-weight:700">${fmtKmL(v.media)}</td></tr>`).join('')
+    : '<tr><td colspan="6" style="text-align:center;color:var(--text-lt)">Sem dados.</td></tr>';
+
+  document.getElementById('fatTableConsumoCarretaBody').innerHTML = carArr.length
+    ? carArr.map(v => `<tr><td>${v.placa}</td><td>${v.motorista}</td><td>${v.registros}</td><td>${fmtNum(v.litros)} L</td><td style="font-weight:700">${fmtKmL(v.media)}</td></tr>`).join('')
+    : '<tr><td colspan="5" style="text-align:center;color:var(--text-lt)">Sem dados.</td></tr>';
 }
 
 function fatResetFilters() {
