@@ -394,6 +394,69 @@ footer a{color:var(--accent);text-decoration:none;}
 .data-table td{padding:9px 12px;border-bottom:1px solid var(--gray-200);vertical-align:middle;}
 .data-table tbody tr:hover td{background:#fefce8;}
 .data-table .badge{padding:.15rem .55rem;border-radius:30px;font-size:.7rem;font-weight:700;}
+
+/* ── FINANCEIRO — GUIAS (SUB-ABAS) ── */
+.fin-subtabs{display:flex;gap:.5rem;margin-bottom:1.2rem;flex-wrap:wrap;border-bottom:2px solid var(--gray-200);padding-bottom:0;}
+.fin-subtab-btn{display:flex;align-items:center;gap:.5rem;padding:.65rem 1.1rem;border:none;background:none;cursor:pointer;font-size:.83rem;font-weight:700;color:var(--text-lt);border-bottom:3px solid transparent;margin-bottom:-2px;transition:.2s;}
+.fin-subtab-btn:hover{color:var(--primary);}
+.fin-subtab-btn.active{color:var(--accent-dk);border-bottom-color:var(--accent);}
+.fin-subpane{display:none;}
+.fin-subpane.active{display:block;}
+
+/* ── ORÇAMENTO & CUSTOS ── */
+.orc-topbar{display:flex;flex-wrap:wrap;align-items:flex-end;gap:1rem;margin-bottom:1rem;}
+.orc-group-card{background:#fff;border-radius:var(--r16);box-shadow:var(--shadow-sm);border:1px solid rgba(0,0,0,.04);margin-bottom:1.2rem;overflow:hidden;border-top:4px solid var(--orc-color,var(--accent));}
+.orc-group-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6rem;padding:1rem 1.2rem;background:linear-gradient(135deg,rgba(0,0,0,.015),transparent);}
+.orc-group-title{display:flex;align-items:center;gap:.7rem;font-weight:800;font-size:.95rem;color:#1e2a3a;}
+.orc-group-icon{width:38px;height:38px;border-radius:var(--r8);display:flex;align-items:center;justify-content:center;font-size:1.05rem;background:color-mix(in srgb, var(--orc-color,var(--accent)) 14%, transparent);color:var(--orc-color,var(--accent));flex-shrink:0;}
+.orc-group-sub{font-size:.72rem;color:var(--text-lt);font-weight:500;}
+.orc-group-totals{display:flex;gap:1.4rem;flex-wrap:wrap;}
+.orc-mini-stat{text-align:right;}
+.orc-mini-stat .lbl{font-size:.66rem;color:var(--text-lt);text-transform:uppercase;letter-spacing:.3px;font-weight:700;}
+.orc-mini-stat .val{font-size:.95rem;font-weight:800;color:#1e2a3a;}
+.orc-table-wrap{overflow-x:auto;}
+.orc-table{width:100%;border-collapse:collapse;font-size:.78rem;min-width:760px;}
+.orc-table th{background:var(--gray-100);font-weight:700;padding:8px 10px;text-align:right;border-bottom:2px solid var(--gray-200);color:#1e2a3a;white-space:nowrap;}
+.orc-table th:first-child{text-align:left;}
+.orc-table td{padding:6px 10px;border-bottom:1px solid var(--gray-200);text-align:right;white-space:nowrap;}
+.orc-table td:first-child{text-align:left;font-weight:600;color:#1e2a3a;}
+.orc-table tfoot td{font-weight:800;background:var(--gray-100);border-top:2px solid var(--gray-200);border-bottom:none;}
+.orc-input{width:96px;text-align:right;border:1px solid var(--gray-200);border-radius:6px;padding:.3rem .4rem;font-size:.78rem;font-family:inherit;background:#fbfbfc;transition:.15s;}
+.orc-input:focus{outline:none;border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px rgba(212,175,55,.15);}
+.orc-saldo-pos{color:var(--success);font-weight:700;}
+.orc-saldo-neg{color:var(--danger);font-weight:700;}
+.orc-bar-track{width:60px;height:6px;border-radius:6px;background:var(--gray-200);display:inline-block;overflow:hidden;vertical-align:middle;margin-left:.4rem;}
+.orc-bar-fill{height:100%;border-radius:6px;display:block;}
+
+/* ── FINANCEIRO — CUSTOS POR MANUTENÇÃO ── */
+.man-veiculo-card{background:#fff;border-radius:var(--r16);box-shadow:var(--shadow-sm);border:1px solid rgba(0,0,0,.04);margin-bottom:1.4rem;overflow:hidden;border-top:4px solid var(--man-color,var(--accent));}
+.man-veiculo-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6rem;padding:1rem 1.2rem;background:linear-gradient(135deg,rgba(0,0,0,.015),transparent);}
+.man-veiculo-title{display:flex;align-items:center;gap:.7rem;font-weight:800;font-size:.95rem;color:#1e2a3a;}
+.man-veiculo-icon{width:38px;height:38px;border-radius:var(--r8);display:flex;align-items:center;justify-content:center;font-size:1.05rem;background:color-mix(in srgb, var(--man-color,var(--accent)) 14%, transparent);color:var(--man-color,var(--accent));flex-shrink:0;}
+.man-body{padding:0 1.2rem 1.2rem;display:grid;grid-template-columns:1.3fr 1fr;gap:1.2rem;}
+@media(max-width:900px){.man-body{grid-template-columns:1fr;}}
+.man-best-worst{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:.8rem;}
+@media(max-width:640px){.man-best-worst{grid-template-columns:1fr;}}
+.man-bw-box{border-radius:var(--r12);padding:.8rem;}
+.man-bw-box.best{background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);}
+.man-bw-box.worst{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);}
+.man-bw-title{font-size:.75rem;font-weight:800;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem;}
+.man-bw-title.best{color:var(--success);}
+.man-bw-title.worst{color:var(--danger);}
+.man-bw-item{display:flex;justify-content:space-between;font-size:.78rem;padding:.35rem 0;border-bottom:1px dashed rgba(0,0,0,.08);}
+.man-bw-item:last-child{border-bottom:none;}
+.man-empty-note{font-size:.78rem;color:var(--text-lt);padding:.6rem 1.2rem 1rem;}
+
+/* Programa de Manutenção Preventiva */
+.man-prog-row{display:grid;grid-template-columns:1fr .9fr 1fr 1fr 1fr 1fr auto;gap:.5rem;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--gray-200);font-size:.78rem;}
+.man-prog-row.head{font-weight:700;color:var(--text-lt);text-transform:uppercase;font-size:.68rem;letter-spacing:.3px;}
+@media(max-width:1000px){.man-prog-row{grid-template-columns:1fr;gap:.3rem;padding:.8rem;background:var(--gray-100);border-radius:var(--r8);margin-bottom:.5rem;border-bottom:none;}.man-prog-row.head{display:none;}}
+.man-status-badge{padding:.2rem .65rem;border-radius:30px;font-size:.7rem;font-weight:800;display:inline-block;white-space:nowrap;}
+.man-status-ok{background:rgba(16,185,129,.12);color:var(--success);}
+.man-status-atencao{background:rgba(245,158,11,.14);color:var(--warning);}
+.man-status-atrasado{background:rgba(239,68,68,.14);color:var(--danger);}
+.man-prog-input{width:100%;border:1px solid var(--gray-200);border-radius:6px;padding:.3rem .4rem;font-size:.76rem;font-family:inherit;}
+.man-prog-input:focus{outline:none;border-color:var(--accent);}
 .badge-success{background:#d1fae5;color:#065f46;}
 .badge-danger{background:#fee2e2;color:#991b1b;}
 .badge-warning{background:#fef3c7;color:#92400e;}
@@ -810,6 +873,14 @@ footer a{color:var(--accent);text-decoration:none;}
 
         <!-- ── TAB FINANCEIRO ── -->
         <div id="tabFinanceiro" class="tab-pane active">
+
+          <div class="fin-subtabs">
+            <button class="fin-subtab-btn active" data-finsub="finSubLancamentos"><i class="fas fa-list"></i> Lançamentos</button>
+            <button class="fin-subtab-btn" data-finsub="finSubOrcamento"><i class="fas fa-chart-pie"></i> Orçamento &amp; Custos</button>
+            <button class="fin-subtab-btn" data-finsub="finSubManutencao"><i class="fas fa-screwdriver-wrench"></i> Custos por Manutenção</button>
+          </div>
+
+          <div id="finSubLancamentos" class="fin-subpane active">
           <div class="kpi-grid" id="finKpis">
             <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-arrow-up"></i></div><div><div class="kpi-val" id="fin-receita">R$ —</div><div class="kpi-lbl">Receita Total</div></div></div>
             <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-arrow-down"></i></div><div><div class="kpi-val" id="fin-despesa">R$ —</div><div class="kpi-lbl">Despesa Total</div></div></div>
@@ -842,6 +913,70 @@ footer a{color:var(--accent);text-decoration:none;}
               </table>
             </div>
           </div>
+          </div><!-- /finSubLancamentos -->
+
+          <div id="finSubOrcamento" class="fin-subpane">
+            <div class="orc-topbar">
+              <div class="flt-grp"><label>Ano</label><select id="orcAno"></select></div>
+              <button class="btn btn-accent btn-sm" onclick="orcRender()"><i class="fas fa-sync-alt"></i> Atualizar</button>
+              <button class="btn btn-success btn-sm" onclick="orcExportCSV()"><i class="fas fa-download"></i> Exportar CSV</button>
+              <div style="font-size:.72rem;color:var(--text-lt);max-width:460px;margin-left:auto">
+                <i class="fas fa-circle-info"></i> O <b>Orçado</b> é digitado manualmente por mês (fica salvo neste navegador). O <b>Realizado</b> é calculado automaticamente a partir dos lançamentos do Financeiro, pela categoria de cada registro.
+              </div>
+            </div>
+
+            <div class="kpi-grid" id="orcKpis">
+              <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-bullseye"></i></div><div><div class="kpi-val" id="orc-total-orcado">R$ —</div><div class="kpi-lbl">Orçado no Ano</div></div></div>
+              <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-fire"></i></div><div><div class="kpi-val" id="orc-total-realizado">R$ —</div><div class="kpi-lbl">Realizado no Ano</div></div></div>
+              <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-scale-balanced"></i></div><div><div class="kpi-val" id="orc-total-saldo">R$ —</div><div class="kpi-lbl">Saldo (Orçado - Realizado)</div></div></div>
+              <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-percent"></i></div><div><div class="kpi-val" id="orc-total-pct">—</div><div class="kpi-lbl">% do Orçamento Utilizado</div></div></div>
+            </div>
+
+            <div class="dash-card">
+              <div class="dash-card-title"><i class="fas fa-chart-column"></i> Orçado x Realizado — Mês a Mês</div>
+              <canvas id="orcChartGeral" height="90"></canvas>
+            </div>
+
+            <div id="orcGroupsWrap"></div>
+          </div><!-- /finSubOrcamento -->
+
+          <div id="finSubManutencao" class="fin-subpane">
+            <div class="orc-topbar">
+              <div class="flt-grp"><label>Ano</label><select id="manAno"></select></div>
+              <button class="btn btn-accent btn-sm" onclick="manRender()"><i class="fas fa-sync-alt"></i> Atualizar</button>
+              <button class="btn btn-success btn-sm" onclick="manExportCSV()"><i class="fas fa-download"></i> Exportar CSV</button>
+              <div style="font-size:.72rem;color:var(--text-lt);max-width:460px;margin-left:auto">
+                <i class="fas fa-circle-info"></i> Os custos são identificados automaticamente entre os lançamentos de Manutenção do Financeiro, pela placa/identificação e pelo texto preventiva x corretiva de cada registro.
+              </div>
+            </div>
+
+            <div id="manNaoClassificado" style="display:none;margin-bottom:1rem"></div>
+
+            <div id="manGrupoCavalos"></div>
+            <div id="manGrupoCarretas"></div>
+            <div id="manGrupoRefrigeracao"></div>
+
+            <div class="dash-card" id="manProgramaCard">
+              <div class="dash-card-title"><i class="fas fa-calendar-check"></i> Programa de Manutenção Preventiva
+                <span style="font-size:.7rem;font-weight:500;color:var(--text-lt);margin-left:.4rem">— por Km de rodagem ou intervalo do manual do fabricante</span>
+              </div>
+              <div style="font-size:.78rem;color:var(--text-lt);margin-bottom:.8rem">Cadastre o intervalo preventivo de cada cavalo, carreta ou equipamento de frio e mantenha o Km atual atualizado — o sistema calcula sozinho se a preventiva está em dia, próxima do vencimento ou atrasada. Os dados ficam salvos neste navegador.</div>
+
+              <div class="man-prog-row head">
+                <div>Identificação</div><div>Tipo</div><div>Base</div><div>Intervalo</div><div>Última Preventiva</div><div>Atual</div><div></div>
+              </div>
+              <div id="manProgramaList"></div>
+
+              <div style="margin-top:1rem;padding-top:1rem;border-top:1px dashed var(--gray-200);display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end">
+                <div class="flt-grp"><label>Identificação (placa/equip.)</label><input type="text" id="manNovoId" placeholder="ex: RYE7J26" list="dlPlacas"></div>
+                <div class="flt-grp"><label>Tipo</label><select id="manNovoTipo"><option value="cavalo">Cavalo</option><option value="carreta">Carreta</option><option value="refrigeracao">Refrigeração</option></select></div>
+                <div class="flt-grp"><label>Base</label><select id="manNovoBase"><option value="km">Km de Rodagem</option><option value="tempo">Manual / Tempo (meses)</option></select></div>
+                <div class="flt-grp"><label>Intervalo</label><input type="number" id="manNovoIntervalo" placeholder="ex: 20000 ou 6"></div>
+                <button class="btn btn-accent btn-sm" onclick="manAddPrograma()"><i class="fas fa-plus"></i> Adicionar</button>
+              </div>
+            </div>
+          </div><!-- /finSubManutencao -->
+
         </div>
 
         <!-- ── TAB FATURAMENTO ── -->
@@ -1901,6 +2036,8 @@ document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
     if (btn.dataset.tab === 'tabVagas') setTimeout(vagaInit, 50);
     if (btn.dataset.tab === 'tabChecklist') setTimeout(checklistInit, 50);
     if (btn.dataset.tab === 'tabFaturamento') setTimeout(fatApplyFilters, 50);
+    if (btn.dataset.tab === 'tabFinanceiro') setTimeout(orcInit, 50);
+    if (btn.dataset.tab === 'tabFinanceiro') setTimeout(manRender, 50);
   });
 });
 
@@ -1950,7 +2087,7 @@ function slideFinResumo(){
   const headers = Object.keys(financeiroData[0]);
   const colData  = findCol(headers, ['data','date','vencimento','competencia','lancamento']);
   const colValor = findCol(headers, ['valor','value','montante','total','vl ','vlr','preco','price']);
-  const colCat   = findCol(headers, ['categoria','tipo lancamento','natureza','tipo','descricao','classificacao']);
+  const colCat   = findCol(headers, ['categoria','tipo lancamento','natureza','tipo','descricao','classificacao','servico','produto']);
   const now = new Date();
   const mesAtualKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   const seisMesesAtras = new Date(now.getFullYear(), now.getMonth() - 5, 1);
@@ -2760,6 +2897,8 @@ async function loadFinanceiroData() {
     currentFinanceiroFiltered = rows;
     popularFiltroCategoria(rows);
     applyFinFilters();
+    orcInit();
+    manRender();
   } catch(e) {
     document.getElementById('finLoading').innerHTML = `<span style="color:var(--danger)"><i class="fas fa-exclamation-circle"></i> Erro ao carregar financeiro: ${e.message}</span>`;
     showToast('Erro ao carregar Financeiro');
@@ -2769,7 +2908,7 @@ async function loadFinanceiroData() {
 function popularFiltroCategoria(rows) {
   const cats = new Set();
   const headers = rows[0] ? Object.keys(rows[0]) : [];
-  const colCat = findCol(headers, ['categoria','tipo','descricao','tipo lancamento','natureza']);
+  const colCat = findCol(headers, ['categoria','tipo','descricao','tipo lancamento','natureza','servico','produto']);
   if (colCat) rows.forEach(r => { if (r[colCat]) cats.add(r[colCat]); });
   const sel = document.getElementById('finCategoria');
   sel.innerHTML = '<option value="">Todas</option>';
@@ -2782,7 +2921,7 @@ function applyFinFilters() {
 
   // Detectar colunas chave
   const colData  = findCol(headers, ['data','date','vencimento','competencia','lan']);
-  const colDesc  = findCol(headers, ['descricao','historico','memo','obs','description','lancamento']);
+  const colDesc  = findCol(headers, ['descricao','historico','memo','obs','description','lancamento','servico','produto']);
   const colValor = findCol(headers, ['valor','value','montante','total','vl ','vlr','preco','price']);
   const colTipo  = findCol(headers, ['tipo','type','natureza','categoria','classificacao']);
 
@@ -2812,7 +2951,7 @@ function applyFinFilters() {
     }
     // Filtro categoria
     if (cat) {
-      const colCat = findCol(headers, ['categoria','tipo lancamento','natureza','descricao']);
+      const colCat = findCol(headers, ['categoria','tipo lancamento','natureza','descricao','servico','produto']);
       const checkCol = colCat || colTipo;
       if (checkCol && row[checkCol] !== cat) return false;
     }
@@ -2920,6 +3059,660 @@ function resetFinFilters() {
   ['finTipo','finCategoria'].forEach(id => document.getElementById(id).selectedIndex = 0);
   applyFinFilters();
 }
+
+// ═══════════════════════════════════════════════════════════
+// FINANCEIRO — GUIA "ORÇAMENTO & CUSTOS"
+// Controle de orçado x realizado, mês a mês, do ano vigente,
+// para os 4 grandes grupos de custo da operação:
+//   1) Manutenção da frota (fixo e variável)
+//   2) Investimentos (parcelas de financiamentos)
+//   3) Operacionais (aluguel, escritório, telefonia, apoio)
+//   4) Financeiras / administrativas (multas, impostos, NF, trabalhista, pró-labore)
+// O ORÇADO é digitado manualmente (fica salvo no localStorage do
+// navegador); o REALIZADO é calculado automaticamente a partir dos
+// lançamentos já carregados na aba Financeiro (financeiroData),
+// classificando cada lançamento pelo texto da categoria/descrição.
+// ═══════════════════════════════════════════════════════════
+
+const ORC_MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+const ORC_GRUPOS = [
+  { key:'manutencao',   nome:'Manutenção da Frota',            sub:'Fixo (preventiva) e variável (corretiva)',            icon:'fa-wrench',              color:'#ef4444',
+    keywords:['manuten','mecanic','pneu','oficina','peca','revisao','oleo','freio','borracharia','funilaria','retifica'] },
+  { key:'investimentos', nome:'Investimentos',                 sub:'Parcelas de financiamento — veículos, carrocerias, frio, estrutura', icon:'fa-building-columns', color:'#3b82f6',
+    keywords:['financiamento','investimento','parcela','prestacao','consorcio','carroceria','refrigeracao','frigorif','estrutura','implemento'] },
+  { key:'operacionais',  nome:'Operacionais',                  sub:'Aluguel, material de escritório, telefonia, veículos de apoio', icon:'fa-briefcase', color:'#10b981',
+    keywords:['aluguel','escritorio','telefonia','telefone','internet','apoio','operacional','material de escritorio','copa','limpeza'] },
+  { key:'financeiras',   nome:'Financeiras / Administrativas',  sub:'Multas, impostos, notas fiscais, passivo trabalhista, pró-labore', icon:'fa-file-invoice-dollar', color:'#8B7355',
+    keywords:['multa','imposto','nota fiscal','notafiscal','trabalhista','pro-labore','prolabore','pro labore','administrativo','fiscal','taxa','juro','tarifa bancaria','cartorio','contabil'] },
+];
+
+let orcChartGeralObj = null;
+
+function orcNorm(s){
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+}
+
+// Classifica o texto de categoria/descrição de um lançamento em um dos
+// 4 grupos de custo, por palavras-chave. Retorna null se não casar com nenhum.
+function orcClassificaGrupo(texto){
+  const t = orcNorm(texto);
+  if (!t) return null;
+  for (const g of ORC_GRUPOS) {
+    if (g.keywords.some(kw => t.includes(kw))) return g.key;
+  }
+  return null;
+}
+
+function orcLocalKey(ano, grupoKey){
+  return `orcamento_${ano}_${grupoKey}`;
+}
+
+function orcGetBudget(ano, grupoKey){
+  try {
+    const raw = localStorage.getItem(orcLocalKey(ano, grupoKey));
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr) && arr.length === 12) return arr;
+    }
+  } catch(e){}
+  return new Array(12).fill(0);
+}
+
+function orcSetBudgetValor(ano, grupoKey, mesIdx, valor){
+  const arr = orcGetBudget(ano, grupoKey);
+  arr[mesIdx] = valor;
+  localStorage.setItem(orcLocalKey(ano, grupoKey), JSON.stringify(arr));
+}
+
+// Popula o seletor de ano com os anos encontrados nos lançamentos
+// financeiros + o ano vigente (garantindo que ele sempre apareça).
+function orcPopularAnos(){
+  const sel = document.getElementById('orcAno');
+  const anoAtual = new Date().getFullYear();
+  const anos = new Set([anoAtual]);
+  if (financeiroData.length) {
+    const headers = Object.keys(financeiroData[0]);
+    const colData = findCol(headers, ['data','date','vencimento','competencia','lan']);
+    if (colData) {
+      financeiroData.forEach(r => {
+        const d = parseDate(r[colData]);
+        if (d) anos.add(d.getFullYear());
+      });
+    }
+  }
+  const anosOrdenados = [...anos].sort((a,b) => b - a);
+  const valorAtual = sel.value;
+  sel.innerHTML = anosOrdenados.map(a => `<option value="${a}">${a}</option>`).join('');
+  sel.value = anosOrdenados.includes(+valorAtual) ? valorAtual : anoAtual;
+}
+
+// Calcula o REALIZADO (soma de despesas) por grupo e por mês, para o
+// ano selecionado, a partir dos lançamentos já carregados no Financeiro.
+function orcComputeRealizado(ano){
+  const realizado = {};
+  ORC_GRUPOS.forEach(g => { realizado[g.key] = new Array(12).fill(0); });
+  if (!financeiroData.length) return realizado;
+
+  const headers = Object.keys(financeiroData[0]);
+  const colData  = findCol(headers, ['data','date','vencimento','competencia','lan']);
+  const colValor = findCol(headers, ['valor','value','montante','total','vl ','vlr','preco','price']);
+  const colTipo  = findCol(headers, ['tipo','type','natureza','classificacao']);
+  const colCat   = findCol(headers, ['categoria','tipo lancamento','natureza','descricao','historico','servico','produto']);
+  const colDesc  = findCol(headers, ['descricao','historico','memo','obs','description','lancamento','servico','produto']);
+
+  financeiroData.forEach(row => {
+    const d = colData ? parseDate(row[colData]) : null;
+    if (!d || d.getFullYear() !== +ano) return;
+
+    const v = colValor ? parseMoney(row[colValor]) : 0;
+    const t = colTipo ? String(row[colTipo] || '').toLowerCase() : '';
+    const isDespesa = t.includes('despesa') || t.includes('saida') || t.includes('debito') || (!t && v < 0) || (v < 0);
+    if (!isDespesa) return; // orçamento de custos considera só despesas
+
+    // Texto usado para classificar: categoria (preferencial) + descrição, como reforço
+    const textoClassif = [colCat ? row[colCat] : '', colDesc ? row[colDesc] : ''].join(' ');
+    const grupoKey = orcClassificaGrupo(textoClassif);
+    if (!grupoKey) return;
+
+    realizado[grupoKey][d.getMonth()] += Math.abs(v);
+  });
+
+  return realizado;
+}
+
+function orcFmtPct(realizado, orcado){
+  if (!orcado) return realizado > 0 ? '—' : '0%';
+  return Math.round((realizado / orcado) * 100) + '%';
+}
+
+function orcBarColor(pct){
+  if (pct <= 85) return 'var(--success)';
+  if (pct <= 100) return 'var(--warning)';
+  return 'var(--danger)';
+}
+
+// Renderiza toda a guia de Orçamento & Custos: KPIs gerais, gráfico
+// mês-a-mês e um card por grupo de custo com a tabela editável.
+function orcRender(){
+  if (!document.getElementById('orcAno').options.length) orcPopularAnos();
+  const ano = +document.getElementById('orcAno').value || new Date().getFullYear();
+  const realizado = orcComputeRealizado(ano);
+
+  let totalOrcadoAno = 0, totalRealizadoAno = 0;
+  const totalPorMesOrcado = new Array(12).fill(0);
+  const totalPorMesRealizado = new Array(12).fill(0);
+
+  const wrap = document.getElementById('orcGroupsWrap');
+  wrap.innerHTML = ORC_GRUPOS.map(g => {
+    const orcado = orcGetBudget(ano, g.key);
+    const real = realizado[g.key];
+    let somaOrcado = 0, somaReal = 0;
+
+    const linhas = ORC_MESES.map((mes, i) => {
+      const o = orcado[i] || 0;
+      const r = real[i] || 0;
+      somaOrcado += o; somaReal += r;
+      totalPorMesOrcado[i] += o; totalPorMesRealizado[i] += r;
+      const saldo = o - r;
+      const pct = o ? Math.round((r / o) * 100) : (r > 0 ? 999 : 0);
+      const saldoClass = saldo >= 0 ? 'orc-saldo-pos' : 'orc-saldo-neg';
+      return `<tr>
+        <td>${mes}</td>
+        <td><input type="text" inputmode="decimal" class="orc-input" data-grupo="${g.key}" data-mes="${i}" value="${o ? o.toFixed(2).replace('.',',') : ''}" placeholder="0,00" onchange="orcOnInputChange(this,${ano})"></td>
+        <td>${fmtMoney(r)}</td>
+        <td class="${saldoClass}">${fmtMoney(saldo)}</td>
+        <td>${o ? pct+'%' : (r>0?'—':'0%')}<span class="orc-bar-track"><span class="orc-bar-fill" style="width:${Math.min(pct,100)}%;background:${orcBarColor(pct)}"></span></span></td>
+      </tr>`;
+    }).join('');
+
+    totalOrcadoAno += somaOrcado; totalRealizadoAno += somaReal;
+    const saldoGrupo = somaOrcado - somaReal;
+    const pctGrupo = somaOrcado ? Math.round((somaReal/somaOrcado)*100) : (somaReal>0?999:0);
+
+    return `<div class="orc-group-card" style="--orc-color:${g.color}">
+      <div class="orc-group-head">
+        <div class="orc-group-title">
+          <div class="orc-group-icon"><i class="fas ${g.icon}"></i></div>
+          <div>${g.nome}<div class="orc-group-sub">${g.sub}</div></div>
+        </div>
+        <div class="orc-group-totals">
+          <div class="orc-mini-stat"><div class="lbl">Orçado</div><div class="val">${fmtMoney(somaOrcado)}</div></div>
+          <div class="orc-mini-stat"><div class="lbl">Realizado</div><div class="val">${fmtMoney(somaReal)}</div></div>
+          <div class="orc-mini-stat"><div class="lbl">Saldo</div><div class="val" style="color:${saldoGrupo>=0?'var(--success)':'var(--danger)'}">${fmtMoney(saldoGrupo)}</div></div>
+          <div class="orc-mini-stat"><div class="lbl">% Usado</div><div class="val" style="color:${orcBarColor(pctGrupo)}">${somaOrcado? pctGrupo+'%' : '—'}</div></div>
+        </div>
+      </div>
+      <div class="orc-table-wrap">
+        <table class="orc-table">
+          <thead><tr><th>Mês</th><th>Orçado (R$)</th><th>Realizado (R$)</th><th>Saldo</th><th>% Usado</th></tr></thead>
+          <tbody>${linhas}</tbody>
+          <tfoot><tr><td>Total ${ano}</td><td>${fmtMoney(somaOrcado)}</td><td>${fmtMoney(somaReal)}</td><td style="color:${saldoGrupo>=0?'var(--success)':'var(--danger)'}">${fmtMoney(saldoGrupo)}</td><td>${somaOrcado? pctGrupo+'%':'—'}</td></tr></tfoot>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+
+  // KPIs gerais
+  document.getElementById('orc-total-orcado').textContent = fmtMoney(totalOrcadoAno);
+  document.getElementById('orc-total-realizado').textContent = fmtMoney(totalRealizadoAno);
+  const saldoTotal = totalOrcadoAno - totalRealizadoAno;
+  const saldoEl = document.getElementById('orc-total-saldo');
+  saldoEl.textContent = fmtMoney(saldoTotal);
+  saldoEl.style.color = saldoTotal >= 0 ? 'var(--success)' : 'var(--danger)';
+  document.getElementById('orc-total-pct').textContent = totalOrcadoAno ? Math.round((totalRealizadoAno/totalOrcadoAno)*100)+'%' : '—';
+
+  // Gráfico geral orçado x realizado, mês a mês
+  if (orcChartGeralObj) orcChartGeralObj.destroy();
+  const ctx = document.getElementById('orcChartGeral').getContext('2d');
+  orcChartGeralObj = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ORC_MESES,
+      datasets: [
+        { label:'Orçado', data: totalPorMesOrcado, backgroundColor:'rgba(212,175,55,.55)', borderRadius:4 },
+        { label:'Realizado', data: totalPorMesRealizado, backgroundColor:'rgba(239,68,68,.65)', borderRadius:4 },
+      ]
+    },
+    options: { responsive:true, plugins:{ legend:{ position:'top' } }, scales:{ y:{ beginAtZero:true, ticks:{ callback:v => fmtMoney(v) } } } }
+  });
+}
+
+// Handler do input de orçado: normaliza número em pt-BR, salva e re-renderiza
+function orcOnInputChange(el, ano){
+  const grupo = el.dataset.grupo;
+  const mes = +el.dataset.mes;
+  const valor = parseMoney(el.value);
+  orcSetBudgetValor(ano, grupo, mes, valor);
+  orcRender();
+}
+
+function orcInit(){
+  orcPopularAnos();
+  orcRender();
+}
+
+// Exporta a visão consolidada de orçamento em CSV (todos os grupos, ano selecionado)
+function orcExportCSV(){
+  const ano = +document.getElementById('orcAno').value || new Date().getFullYear();
+  const realizado = orcComputeRealizado(ano);
+  const linhas = [];
+  ORC_GRUPOS.forEach(g => {
+    const orcado = orcGetBudget(ano, g.key);
+    const real = realizado[g.key];
+    ORC_MESES.forEach((mes, i) => {
+      linhas.push({
+        Grupo: g.nome, Ano: ano, Mes: mes,
+        Orcado: (orcado[i]||0).toFixed(2).replace('.',','),
+        Realizado: (real[i]||0).toFixed(2).replace('.',','),
+        Saldo: ((orcado[i]||0) - (real[i]||0)).toFixed(2).replace('.',',')
+      });
+    });
+  });
+  exportCSV(linhas, `orcamento_custos_${ano}`);
+}
+
+// ═══════════════════════════════════════════════════════════
+// FINANCEIRO — GUIA "CUSTOS POR MANUTENÇÃO"
+// Controle mensal dos custos de manutenção, separados por:
+//   • Cavalos (tratores)
+//   • Carretas
+//   • Equipamentos de refrigeração
+// Em cada grupo: separação Preventiva x Corretiva, ranking dos
+// melhores (menor custo) e piores (maior custo), e um Programa de
+// Manutenção Preventiva por Km de rodagem ou por manual/tempo.
+// ═══════════════════════════════════════════════════════════
+
+const MAN_PREV_KEYWORDS = ['preventiv','revisao programada','revisao','troca de oleo','troca de filtro','manutencao programada','check-up','checape','plano de manutencao'];
+const MAN_CORR_KEYWORDS = ['corretiv','quebra','avaria','pane','reparo','conserto','defeito','emergencial'];
+const MAN_REFRIG_KEYWORDS = ['thermo king','thermoking','termoking','carrier','evaporador','compressor de frio','unidade frigorifica','unidade de frio','equipamento de frio','equipamento de refrigeracao'];
+
+let manChartCavalosObj = null, manChartCarretasObj = null, manChartRefrigObj = null;
+
+// Listas de identificação a partir do cadastro de frota (FROTA_DATA)
+function manListaCavalos(){
+  const set = new Set();
+  FROTA_DATA.forEach(f => { if (f.placa) set.add(normalizaPlaca(f.placa)); });
+  return [...set];
+}
+function manListaCarretas(){
+  const set = new Set();
+  FROTA_DATA.forEach(f => {
+    if (f.carreta) {
+      const c = String(f.carreta).split('—')[0].trim();
+      if (c) set.add(normalizaPlaca(c));
+    }
+  });
+  return [...set];
+}
+
+function manClassificaPreventivaCorretiva(texto){
+  const t = orcNorm(texto);
+  if (MAN_PREV_KEYWORDS.some(kw => t.includes(kw))) return 'preventiva';
+  if (MAN_CORR_KEYWORDS.some(kw => t.includes(kw))) return 'corretiva';
+  return 'naoclass';
+}
+
+// Tenta achar, dentro de um texto livre, alguma placa conhecida (cavalo/carreta)
+function manEncontraPlacaNoTexto(texto, listaPlacas){
+  const norm = normalizaPlaca(texto);
+  if (!norm) return null;
+  return listaPlacas.find(p => p && norm.includes(p)) || null;
+}
+
+// Classifica um lançamento de manutenção em {grupo, id}, onde grupo é
+// 'cavalos' | 'carretas' | 'refrigeracao' | null (não identificado)
+function manClassificaVeiculo(textoCompleto, colPlacaValor){
+  const listaCavalos = manListaCavalos();
+  const listaCarretas = manListaCarretas();
+  const tNorm = orcNorm(textoCompleto);
+
+  const isRefrig = MAN_REFRIG_KEYWORDS.some(kw => tNorm.includes(kw));
+
+  // 1) Coluna dedicada de placa/equipamento, se existir
+  if (colPlacaValor) {
+    const placaNorm = normalizaPlaca(colPlacaValor);
+    if (placaNorm) {
+      if (!isRefrig) {
+        if (listaCavalos.includes(placaNorm)) return { grupo:'cavalos', id: colPlacaValor.trim().toUpperCase() };
+        if (listaCarretas.includes(placaNorm)) return { grupo:'carretas', id: colPlacaValor.trim().toUpperCase() };
+      }
+      if (isRefrig) return { grupo:'refrigeracao', id: colPlacaValor.trim().toUpperCase() };
+    }
+  }
+
+  // 2) Procura placa conhecida dentro do texto (categoria + descrição)
+  if (!isRefrig) {
+    const pCavalo = manEncontraPlacaNoTexto(textoCompleto, listaCavalos);
+    if (pCavalo) return { grupo:'cavalos', id: pCavalo };
+    const pCarreta = manEncontraPlacaNoTexto(textoCompleto, listaCarretas);
+    if (pCarreta) return { grupo:'carretas', id: pCarreta };
+  }
+
+  // 3) Palavra-chave de refrigeração sem placa clara → tenta achar carreta associada,
+  //    senão cai em "Não identificado" dentro do próprio grupo refrigeração
+  if (isRefrig) {
+    const pCarreta = manEncontraPlacaNoTexto(textoCompleto, listaCarretas);
+    return { grupo:'refrigeracao', id: pCarreta || 'Não identificado' };
+  }
+
+  return null; // não foi possível classificar por veículo
+}
+
+// Calcula os custos de manutenção do ano selecionado, já separados
+// por grupo (cavalos/carretas/refrigeracao), por veículo e por
+// preventiva/corretiva.
+function manComputeDados(ano){
+  const dados = { cavalos:{}, carretas:{}, refrigeracao:{} };
+  let naoClassificadoTotal = 0, naoClassificadoQtd = 0;
+  if (!financeiroData.length) return { dados, naoClassificadoTotal, naoClassificadoQtd };
+
+  const headers = Object.keys(financeiroData[0]);
+  const colData  = findCol(headers, ['data','date','vencimento','competencia','lan']);
+  const colValor = findCol(headers, ['valor','value','montante','total','vl ','vlr','preco','price']);
+  const colTipo  = findCol(headers, ['tipo','type','natureza','classificacao']);
+  const colCat   = findCol(headers, ['categoria','tipo lancamento','natureza','descricao','historico','servico','produto']);
+  const colDesc  = findCol(headers, ['descricao','historico','memo','obs','description','lancamento','servico','produto']);
+  const colPlaca = findCol(headers, ['placa','veiculo','veículo','cavalo','carreta','equipamento','identificacao','identificação','frota']);
+
+  financeiroData.forEach(row => {
+    const d = colData ? parseDate(row[colData]) : null;
+    if (!d || d.getFullYear() !== +ano) return;
+
+    const v = colValor ? parseMoney(row[colValor]) : 0;
+    const t = colTipo ? String(row[colTipo] || '').toLowerCase() : '';
+    const isDespesa = t.includes('despesa') || t.includes('saida') || t.includes('debito') || v < 0;
+    if (!isDespesa) return;
+
+    const textoCategoria = colCat ? row[colCat] : '';
+    const textoDesc = colDesc ? row[colDesc] : '';
+    const textoPlacaCol = colPlaca ? row[colPlaca] : '';
+    const textoCompleto = [textoCategoria, textoDesc, textoPlacaCol].join(' ');
+
+    // Só entram lançamentos de manutenção (mesmo grupo de palavras-chave
+    // usado no Orçamento & Custos)
+    if (orcClassificaGrupo(textoCompleto) !== 'manutencao') return;
+
+    const classif = manClassificaVeiculo(textoCompleto, textoPlacaCol);
+    const valor = Math.abs(v);
+    const tipoOS = manClassificaPreventivaCorretiva(textoCompleto);
+
+    if (!classif) {
+      naoClassificadoTotal += valor;
+      naoClassificadoQtd++;
+      return;
+    }
+
+    const bucket = dados[classif.grupo];
+    if (!bucket[classif.id]) bucket[classif.id] = { total:0, preventiva:0, corretiva:0, naoclass:0, qtd:0 };
+    bucket[classif.id].total += valor;
+    bucket[classif.id].qtd++;
+    if (tipoOS === 'preventiva') bucket[classif.id].preventiva += valor;
+    else if (tipoOS === 'corretiva') bucket[classif.id].corretiva += valor;
+    else bucket[classif.id].naoclass += valor;
+  });
+
+  return { dados, naoClassificadoTotal, naoClassificadoQtd };
+}
+
+function manPopularAnos(){
+  const sel = document.getElementById('manAno');
+  const anoAtual = new Date().getFullYear();
+  const anos = new Set([anoAtual]);
+  if (financeiroData.length) {
+    const headers = Object.keys(financeiroData[0]);
+    const colData = findCol(headers, ['data','date','vencimento','competencia','lan']);
+    if (colData) financeiroData.forEach(r => { const d = parseDate(r[colData]); if (d) anos.add(d.getFullYear()); });
+  }
+  const anosOrdenados = [...anos].sort((a,b) => b - a);
+  const valorAtual = sel.value;
+  sel.innerHTML = anosOrdenados.map(a => `<option value="${a}">${a}</option>`).join('');
+  sel.value = anosOrdenados.includes(+valorAtual) ? valorAtual : anoAtual;
+}
+
+// Renderiza um card de grupo (cavalos, carretas ou refrigeração): KPIs,
+// gráfico preventiva x corretiva e ranking com melhores/piores.
+function manRenderGrupo(containerId, titulo, icon, color, bucket, baseList, chartVarName){
+  // Monta lista combinada: veículos cadastrados na frota (para aparecerem
+  // mesmo com custo zero) + qualquer identificação extra encontrada nos lançamentos
+  const ids = new Set(baseList || []);
+  Object.keys(bucket).forEach(id => ids.add(id));
+
+  const linhas = [...ids].map(id => {
+    const info = bucket[id] || { total:0, preventiva:0, corretiva:0, naoclass:0, qtd:0 };
+    return { id, ...info };
+  });
+
+  const totalGeral = linhas.reduce((s,l) => s + l.total, 0);
+  const totalPrev = linhas.reduce((s,l) => s + l.preventiva, 0);
+  const totalCorr = linhas.reduce((s,l) => s + l.corretiva, 0);
+  const pctPrev = totalGeral ? Math.round((totalPrev/totalGeral)*100) : 0;
+
+  const rankingDesc = [...linhas].sort((a,b) => b.total - a.total);
+  const comRegistro = linhas.filter(l => l.qtd > 0);
+  const melhores = [...linhas].sort((a,b) => a.total - b.total).slice(0,3);
+  const piores = [...comRegistro].sort((a,b) => b.total - a.total).slice(0,3);
+
+  const tabelaLinhas = rankingDesc.map(l => `
+    <li>
+      <span style="font-weight:700;flex:1">${l.id}</span>
+      <span style="font-size:.72rem;color:var(--text-lt)">${l.qtd} lanç.</span>
+      <span style="font-size:.72rem;color:var(--success)">Prev ${fmtMoney(l.preventiva)}</span>
+      <span style="font-size:.72rem;color:var(--danger)">Corr ${fmtMoney(l.corretiva)}</span>
+      <span style="font-weight:800;color:var(--accent-dk);min-width:90px;text-align:right">${fmtMoney(l.total)}</span>
+    </li>`).join('');
+
+  const html = `
+    <div class="man-veiculo-card" style="--man-color:${color}">
+      <div class="man-veiculo-head">
+        <div class="man-veiculo-title">
+          <div class="man-veiculo-icon"><i class="fas ${icon}"></i></div>
+          <div>${titulo}<div style="font-size:.72rem;color:var(--text-lt);font-weight:500">${linhas.length} identificados · ${fmtMoney(totalGeral)} no ano</div></div>
+        </div>
+        <div class="orc-group-totals">
+          <div class="orc-mini-stat"><div class="lbl">Preventiva</div><div class="val" style="color:var(--success)">${fmtMoney(totalPrev)}</div></div>
+          <div class="orc-mini-stat"><div class="lbl">Corretiva</div><div class="val" style="color:var(--danger)">${fmtMoney(totalCorr)}</div></div>
+          <div class="orc-mini-stat"><div class="lbl">% Preventiva</div><div class="val" style="color:${pctPrev>=60?'var(--success)':'var(--warning)'}">${totalGeral?pctPrev+'%':'—'}</div></div>
+        </div>
+      </div>
+      <div class="man-body">
+        <div>
+          <div class="dash-card-title" style="margin-bottom:.5rem"><i class="fas fa-ranking-star"></i> Ranking por Custo Total</div>
+          <ol class="rank-list">${tabelaLinhas || '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem lançamentos de manutenção neste ano</li>'}</ol>
+        </div>
+        <div>
+          <div class="dash-card-title" style="margin-bottom:.5rem"><i class="fas fa-chart-pie"></i> Preventiva x Corretiva</div>
+          <canvas id="${containerId}Chart" height="160"></canvas>
+          <div class="man-best-worst">
+            <div class="man-bw-box best">
+              <div class="man-bw-title best"><i class="fas fa-trophy"></i> Melhores (menor custo)</div>
+              ${melhores.map(l => `<div class="man-bw-item"><span>${l.id}</span><span>${fmtMoney(l.total)}</span></div>`).join('') || '<div class="man-bw-item">Sem dados</div>'}
+            </div>
+            <div class="man-bw-box worst">
+              <div class="man-bw-title worst"><i class="fas fa-triangle-exclamation"></i> Piores (maior custo)</div>
+              ${piores.map(l => `<div class="man-bw-item"><span>${l.id}</span><span>${fmtMoney(l.total)}</span></div>`).join('') || '<div class="man-bw-item">Sem dados</div>'}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById(containerId).innerHTML = html;
+
+  // Gráfico doughnut Preventiva x Corretiva (+ não classificado, se houver)
+  const totalNaoClass = linhas.reduce((s,l) => s + l.naoclass, 0);
+  const ctx = document.getElementById(containerId + 'Chart');
+  if (ctx) {
+    const dataVals = [totalPrev, totalCorr];
+    const dataLabels = ['Preventiva', 'Corretiva'];
+    const dataColors = ['#10b981', '#ef4444'];
+    if (totalNaoClass > 0) { dataVals.push(totalNaoClass); dataLabels.push('Não classificado'); dataColors.push('#94a3b8'); }
+    const chartObj = new Chart(ctx.getContext('2d'), {
+      type: 'doughnut',
+      data: { labels: dataLabels, datasets: [{ data: dataVals, backgroundColor: dataColors }] },
+      options: { responsive:true, plugins:{ legend:{ position:'bottom', labels:{ font:{ size:10 } } } } }
+    });
+    if (chartVarName === 'cavalos') { if (manChartCavalosObj) manChartCavalosObj.destroy(); manChartCavalosObj = chartObj; }
+    else if (chartVarName === 'carretas') { if (manChartCarretasObj) manChartCarretasObj.destroy(); manChartCarretasObj = chartObj; }
+    else { if (manChartRefrigObj) manChartRefrigObj.destroy(); manChartRefrigObj = chartObj; }
+  }
+
+  return { totalGeral, totalPrev, totalCorr, linhas };
+}
+
+function manRender(){
+  if (!document.getElementById('manAno').options.length) manPopularAnos();
+  const ano = +document.getElementById('manAno').value || new Date().getFullYear();
+  const { dados, naoClassificadoTotal, naoClassificadoQtd } = manComputeDados(ano);
+
+  manRenderGrupo('manGrupoCavalos', 'Cavalos (Tratores)', 'fa-truck', '#ef4444', dados.cavalos, manListaCavalos().map(p => {
+    const f = FROTA_DATA.find(x => normalizaPlaca(x.placa) === p);
+    return f ? f.placa.trim().toUpperCase() : p;
+  }), 'cavalos');
+
+  manRenderGrupo('manGrupoCarretas', 'Carretas', 'fa-trailer', '#3b82f6', dados.carretas, manListaCarretas().map(p => {
+    const f = FROTA_DATA.find(x => normalizaPlaca(String(x.carreta||'').split('—')[0].trim()) === p);
+    return f ? String(f.carreta).split('—')[0].trim().toUpperCase() : p;
+  }), 'carretas');
+
+  manRenderGrupo('manGrupoRefrigeracao', 'Equipamentos de Refrigeração', 'fa-snowflake', '#06b6d4', dados.refrigeracao, [], 'refrigeracao');
+
+  const notaEl = document.getElementById('manNaoClassificado');
+  if (naoClassificadoQtd > 0) {
+    notaEl.style.display = 'block';
+    notaEl.innerHTML = `<div class="dash-card" style="border-left:4px solid var(--warning)">
+      <div style="font-size:.82rem;color:var(--text-lt)"><i class="fas fa-circle-info" style="color:var(--warning)"></i>
+      <b>${naoClassificadoQtd} lançamento(s)</b> de manutenção (total ${fmtMoney(naoClassificadoTotal)}) não puderam ser associados a uma placa/equipamento específico e não entram nos rankings abaixo. Preencha a placa na descrição ou categoria do lançamento no Financeiro para identificá-los automaticamente.</div>
+    </div>`;
+  } else {
+    notaEl.style.display = 'none';
+  }
+
+  manRenderPrograma();
+}
+
+function manExportCSV(){
+  const ano = +document.getElementById('manAno').value || new Date().getFullYear();
+  const { dados } = manComputeDados(ano);
+  const linhas = [];
+  const grupos = [['cavalos','Cavalo'], ['carretas','Carreta'], ['refrigeracao','Refrigeração']];
+  grupos.forEach(([key, nome]) => {
+    Object.entries(dados[key]).forEach(([id, info]) => {
+      linhas.push({
+        Grupo: nome, Identificacao: id, Ano: ano,
+        Total: info.total.toFixed(2).replace('.',','),
+        Preventiva: info.preventiva.toFixed(2).replace('.',','),
+        Corretiva: info.corretiva.toFixed(2).replace('.',','),
+        Lancamentos: info.qtd
+      });
+    });
+  });
+  exportCSV(linhas, `custos_manutencao_${ano}`);
+}
+
+// ── Programa de Manutenção Preventiva (persistido no navegador) ──
+function manProgramaGetAll(){
+  try {
+    const arr = JSON.parse(localStorage.getItem('manPrograma') || '[]');
+    return Array.isArray(arr) ? arr : [];
+  } catch(e){ return []; }
+}
+function manProgramaSaveAll(arr){
+  try { localStorage.setItem('manPrograma', JSON.stringify(arr)); } catch(e){}
+}
+
+function manAddPrograma(){
+  const id = document.getElementById('manNovoId').value.trim();
+  const tipo = document.getElementById('manNovoTipo').value;
+  const base = document.getElementById('manNovoBase').value;
+  const intervalo = parseFloat(document.getElementById('manNovoIntervalo').value) || 0;
+  if (!id || !intervalo) { showToast('Preencha identificação e intervalo'); return; }
+  const arr = manProgramaGetAll();
+  arr.push({ id: id.toUpperCase(), tipo, base, intervalo, ultima: base === 'km' ? 0 : '', atual: base === 'km' ? 0 : '' });
+  manProgramaSaveAll(arr);
+  document.getElementById('manNovoId').value = '';
+  document.getElementById('manNovoIntervalo').value = '';
+  manRenderPrograma();
+  showToast('Item adicionado ao programa preventivo');
+}
+
+function manRemovePrograma(idx){
+  const arr = manProgramaGetAll();
+  arr.splice(idx, 1);
+  manProgramaSaveAll(arr);
+  manRenderPrograma();
+}
+
+function manUpdatePrograma(idx, campo, valor){
+  const arr = manProgramaGetAll();
+  if (!arr[idx]) return;
+  arr[idx][campo] = (campo === 'ultima' || campo === 'atual') && arr[idx].base === 'km' ? (parseFloat(valor) || 0) : valor;
+  manProgramaSaveAll(arr);
+  manRenderPrograma();
+}
+
+// Calcula o status (em dia / atenção / atrasado) de um item do programa
+function manCalculaStatus(item){
+  if (item.base === 'km') {
+    const restante = item.intervalo - Math.max(0, (item.atual || 0) - (item.ultima || 0));
+    if (!item.atual) return { texto:'Sem Km atual', classe:'man-status-atencao', detalhe:'—' };
+    if (restante <= 0) return { texto:'Atrasado', classe:'man-status-atrasado', detalhe:`${Math.abs(Math.round(restante))} km além` };
+    if (restante <= item.intervalo * 0.1) return { texto:'Atenção', classe:'man-status-atencao', detalhe:`faltam ${Math.round(restante)} km` };
+    return { texto:'Em dia', classe:'man-status-ok', detalhe:`faltam ${Math.round(restante)} km` };
+  } else {
+    if (!item.ultima) return { texto:'Sem data', classe:'man-status-atencao', detalhe:'—' };
+    const dUltima = new Date(item.ultima + 'T00:00:00');
+    if (isNaN(dUltima)) return { texto:'Data inválida', classe:'man-status-atencao', detalhe:'—' };
+    const dProxima = new Date(dUltima);
+    dProxima.setMonth(dProxima.getMonth() + (item.intervalo || 0));
+    const hoje = new Date();
+    const diasRestantes = Math.round((dProxima - hoje) / 86400000);
+    if (diasRestantes <= 0) return { texto:'Atrasado', classe:'man-status-atrasado', detalhe:`venceu em ${dProxima.toLocaleDateString('pt-BR')}` };
+    if (diasRestantes <= 30) return { texto:'Atenção', classe:'man-status-atencao', detalhe:`vence em ${dProxima.toLocaleDateString('pt-BR')}` };
+    return { texto:'Em dia', classe:'man-status-ok', detalhe:`vence em ${dProxima.toLocaleDateString('pt-BR')}` };
+  }
+}
+
+function manRenderPrograma(){
+  const list = document.getElementById('manProgramaList');
+  if (!list) return;
+  const arr = manProgramaGetAll();
+  if (!arr.length) {
+    list.innerHTML = '<div class="man-empty-note"><i class="fas fa-circle-info"></i> Nenhum item cadastrado ainda. Adicione cavalos, carretas ou equipamentos de frio abaixo para acompanhar a preventiva de cada um.</div>';
+    return;
+  }
+  const tipoLabel = { cavalo:'Cavalo', carreta:'Carreta', refrigeracao:'Refrigeração' };
+  list.innerHTML = arr.map((item, idx) => {
+    const st = manCalculaStatus(item);
+    const campoUltima = item.base === 'km'
+      ? `<input type="number" class="man-prog-input" value="${item.ultima || ''}" placeholder="Km última" onchange="manUpdatePrograma(${idx},'ultima',this.value)">`
+      : `<input type="date" class="man-prog-input" value="${item.ultima || ''}" onchange="manUpdatePrograma(${idx},'ultima',this.value)">`;
+    const campoAtual = item.base === 'km'
+      ? `<input type="number" class="man-prog-input" value="${item.atual || ''}" placeholder="Km atual" onchange="manUpdatePrograma(${idx},'atual',this.value)">`
+      : `<span style="font-size:.72rem;color:var(--text-lt)">hoje</span>`;
+    return `<div class="man-prog-row">
+      <div><b>${item.id}</b></div>
+      <div>${tipoLabel[item.tipo] || item.tipo}</div>
+      <div>${item.base === 'km' ? 'Km de Rodagem' : 'Manual / Tempo'}</div>
+      <div>${item.intervalo} ${item.base === 'km' ? 'km' : 'meses'}</div>
+      <div>${campoUltima}</div>
+      <div>${campoAtual}</div>
+      <div style="display:flex;align-items:center;gap:.4rem"><span class="man-status-badge ${st.classe}" title="${st.detalhe}">${st.texto}</span><button class="btn btn-gray btn-sm" style="padding:.2rem .5rem" onclick="manRemovePrograma(${idx})"><i class="fas fa-trash"></i></button></div>
+    </div>`;
+  }).join('');
+}
+
+// Alterna entre as guias (sub-abas) dentro da aba Financeiro
+document.querySelectorAll('.fin-subtab-btn[data-finsub]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.fin-subtab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.fin-subpane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.finsub).classList.add('active');
+    if (btn.dataset.finsub === 'finSubOrcamento') setTimeout(orcRender, 50);
+    if (btn.dataset.finsub === 'finSubManutencao') setTimeout(manRender, 50);
+  });
+});
 
 // ═══════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════
