@@ -814,6 +814,9 @@ footer a{color:var(--accent);text-decoration:none;}
   <div style="background:#eff6ff;border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:.7rem .9rem;margin-bottom:.8rem">
     <div style="font-size:.72rem;font-weight:800;color:#1e40af;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem">🤖 MAX — Assistente</div>
     <p style="font-size:.72rem;color:var(--text-lt);margin-bottom:.5rem">MAX responde localmente com os dados já carregados no dashboard (Financeiro, Orçamento, Manutenção, Faturamento, Baterias, Vencimentos, Frota) — sem custo e sem configuração.</p>
+    <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">IA (opcional, grátis) — Chave Groq</label>
+    <input type="password" id="maxGroqApiKey" placeholder="gsk_... (deixe em branco para usar só o modo local)">
+    <p style="font-size:.7rem;color:var(--text-lt);margin-top:.2rem;margin-bottom:.5rem">Crie uma chave grátis em <a href="https://console.groq.com/keys" target="_blank" style="color:var(--accent)">console.groq.com/keys</a> (não pede cartão). Com a chave, o MAX passa a entender perguntas livres, combinando os dados do dashboard com raciocínio real — sem ela, continua no modo local por palavras-chave.</p>
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">Voz</label>
     <select id="maxVoiceSelect" style="width:100%;padding:.6rem;border-radius:8px;border:1px solid var(--gray-200)"><option value="">Carregando vozes...</option></select>
     <button type="button" id="maxVoiceTestBtn" class="btn btn-gray btn-sm" style="margin-top:.5rem"><i class="fas fa-volume-high"></i> Testar voz</button>
@@ -916,7 +919,9 @@ footer a{color:var(--accent);text-decoration:none;}
           <div class="charts-grid">
             <div class="dash-card"><div class="dash-card-title"><i class="fas fa-layer-group"></i> Ranking por Tipo de Contas</div><ol class="rank-list" id="finRankTipoContas"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
             <div class="dash-card"><div class="dash-card-title"><i class="fas fa-building"></i> Ranking por Local</div><ol class="rank-list" id="finRankLocal"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
-            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-pie"></i> Por Categoria</div><div class="chart-box" style="height:230px"><canvas id="finPieChart" height="180"></canvas></div></div>
+            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-tags"></i> Ranking por Tipo de Local</div><ol class="rank-list" id="finRankTipoLocal"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
+            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-pie"></i> Por Categoria (Tipo de Local)</div><div class="chart-box" style="height:230px"><canvas id="finPieChart" height="180"></canvas></div></div>
+            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-bar"></i> Gráfico — Top 10 Locais por Valor</div><div class="chart-box" style="height:260px"><canvas id="finBarLocalChart" height="220"></canvas></div></div>
           </div>
           <div class="dash-card">
             <div class="dash-card-title"><i class="fas fa-table"></i> Lançamentos <span id="finCount" style="background:var(--gray-100);padding:.15rem .6rem;border-radius:30px;font-size:.75rem;margin-left:.5rem"></span></div>
@@ -1710,6 +1715,10 @@ let NFE_CLIENT_SECRET = localStorage.getItem('nfeClientSecret') || '';
 let NFE_CNPJ          = localStorage.getItem('nfeCnpj')         || '';
 let nfeAccessToken    = '';
 let nfeTokenExpiry    = 0;
+
+// MAX — chave da API Groq (gratuita), opcional. Sem ela, MAX responde só
+// com o sistema local de regras (respostaLocalMAX).
+let MAX_GROQ_KEY = localStorage.getItem('maxGroqApiKey') || '';
 let nfeAllData        = [];   // todas as NF-e brutas
 let nfeFiltered       = [];   // após filtros
 let nfeBarChartObj    = null;
@@ -1721,7 +1730,7 @@ let currentFinanceiroFiltered = [], currentFaturamentoFiltered = [], currentBate
 let calcHistoricoArr = [];
 
 // charts
-let finPieChartObj = null, fatLineChart = null;
+let finPieChartObj = null, finBarLocalChartObj = null, fatLineChart = null;
 
 // ═══════════════════════════════════════════════════════════
 // UTILITÁRIOS
@@ -1912,6 +1921,33 @@ function finColTipoContas(headers) {
 // (não localização geográfica/região/cidade).
 function finColLocal(headers) {
   return findCol(headers, ['local', 'empresa']);
+}
+
+// Classifica o nome bruto da coluna "Local" (fornecedor/praça/empresa do
+// lançamento, ex.: "POSTO SOL DA DUTRA", "PIPPI PNEUS") em um "Tipo de
+// Local" — agrupamento por natureza do estabelecimento, usado no ranking
+// e no gráfico "Por Categoria". Baseado em palavras-chave (mesmo padrão
+// usado em ORC_GRUPOS), com fallback em "Diversos / Outros" para nomes
+// que não batem com nenhuma regra.
+function finClassificarTipoLocal(nomeLocal) {
+  const n = String(nomeLocal || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const tem = (...kws) => kws.some(k => n.includes(k));
+  if (tem('posto', 'combustiv')) return 'Postos & Combustível';
+  if (tem('pneu', 'borracharia', 'recapadora')) return 'Pneus & Borracharia';
+  if (tem('refrigera', 'frigorif', 'frigo', 'implemento')) return 'Refrigeração & Implementos';
+  if (tem('rastreamento', 'truckscontrol', 'opentech', 'globscan', 'globservice', 'monitoramento', 'tecnologia')) return 'Rastreamento & Monitoramento';
+  if (tem('banco', 'seguro', 'sompo', 'unime', 'unimed', 'tokio marine', 'mbm segur', 'financeira', 'consorcio', 'finame')) return 'Seguros & Bancos';
+  if (tem('bateria')) return 'Baterias';
+  if (tem('lava')) return 'Lavação';
+  if (tem('sindicato', 'prefeitura', 'detran', 'dnit', 'antt', 'cartorio', 'cdl')) return 'Sindicato & Órgãos';
+  if (tem('pensao', 'pix', 'motorista')) return 'Pessoal & Motoristas';
+  if (tem('toxicolog', 'medic', 'epis', 'sestsenat')) return 'Saúde Ocupacional & Segurança';
+  if (tem('contab', 'contassesc', 'escritorio', 'coworking', 'juridic', 'advogad', 'assessoria')) return 'Administrativo & Escritório';
+  if (tem('estacionamento', 'pedagio', 'manobra', 'sem parar', 'park')) return 'Estacionamento & Pedágio';
+  if (tem('multa')) return 'Multas de Trânsito';
+  if (tem('alvara', 'cofins', 'confins', 'csll', 'fgts', 'icms', 'inss', 'iptu', 'ipva', 'irpj', 'issqn', 'pis', 'guia', 'licenciamento')) return 'Impostos & Tributos';
+  if (tem('mecanic', 'oficina', 'peca', 'retifica', 'funilaria', 'distribuidora', 'importadora', 'comercio', 'lubrif', 'servico', 'volvo', 'iveco', 'eletric', 'eletro', 'diesel', 'truck', 'estofaria', 'recuperadora', 'alinhamento', 'ar condicionado', 'socorro', 'reboque')) return 'Mecânica, Elétrica & Peças';
+  return 'Diversos / Outros';
 }
 
 // Lista de proxies CORS, tentados em ordem até um funcionar.
@@ -2945,6 +2981,7 @@ function openUrlModal(){
   document.getElementById('nfeClientId').value = NFE_CLIENT_ID;
   document.getElementById('nfeClientSecret').value = NFE_CLIENT_SECRET;
   document.getElementById('nfeCnpj').value = NFE_CNPJ;
+  document.getElementById('maxGroqApiKey').value = MAX_GROQ_KEY;
   if (window.__maxPopulateVoices) window.__maxPopulateVoices();
   document.getElementById('urlConfigModal').classList.add('active');
   document.getElementById('urlModalBackdrop').classList.add('active');
@@ -2974,6 +3011,9 @@ document.getElementById('saveUrlsBtn').onclick = () => {
   localStorage.setItem('nfeClientSecret', NFE_CLIENT_SECRET);
   localStorage.setItem('nfeCnpj',         NFE_CNPJ);
   nfeAccessToken = ''; nfeTokenExpiry = 0; // force re-auth
+  MAX_GROQ_KEY = document.getElementById('maxGroqApiKey').value.trim();
+  if (MAX_GROQ_KEY) localStorage.setItem('maxGroqApiKey', MAX_GROQ_KEY);
+  else localStorage.removeItem('maxGroqApiKey');
   var maxVoiceSel = document.getElementById('maxVoiceSelect');
   if (maxVoiceSel) {
     if (maxVoiceSel.value) localStorage.setItem('maxVoiceURI', maxVoiceSel.value);
@@ -3156,17 +3196,21 @@ function renderFinTable(data, headers, colData, colDesc, colValor, colTipo, colC
   }).join('');
 }
 
-// Agrega por Categoria/Plano de Contas (usado só para o gráfico de pizza
-// "Por Categoria"), por Tipo de Contas e por Local. Usa finValorLinha para
-// funcionar mesmo quando não existe coluna "Valor" própria. colTipoContas é
-// o agrupamento contábil mais amplo ("Grupo Tipo de Contas") e colLocal é a
-// praça/filial/unidade do lançamento; ambos renderizados em cards de ranking
-// separados, respeitando os mesmos filtros (data/mês/tipo/categoria/busca)
-// já aplicados em applyFinFilters.
+// Agrega por Categoria/Plano de Contas, por Tipo de Contas, por Local e
+// por Tipo de Local (classificação derivada do nome do Local via
+// finClassificarTipoLocal). Usa finValorLinha para funcionar mesmo quando
+// não existe coluna "Valor" própria. colTipoContas é o agrupamento
+// contábil mais amplo ("Grupo Tipo de Contas") e colLocal é a
+// praça/filial/fornecedor do lançamento; todos renderizados em cards de
+// ranking separados, respeitando os mesmos filtros (data/mês/tipo/
+// categoria/busca) já aplicados em applyFinFilters. O gráfico "Por
+// Categoria" usa a distribuição por Tipo de Local (em vez de duplicar a
+// mesma coluna já exibida na lista "Ranking por Tipo de Contas").
 function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLocal) {
   const cats = {};
   const tiposContas = {};
   const locais = {};
+  const tiposLocal = {};
   data.forEach(row => {
     const v = finValorLinha(row, colValor, colCat, colDesc);
     const t = colCat ? String(row[colCat] || '').trim() : '';
@@ -3174,7 +3218,11 @@ function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLoca
     const tc = colTipoContas ? String(row[colTipoContas] || '').trim() : '';
     if (tc) tiposContas[tc] = (tiposContas[tc] || 0) + Math.abs(v);
     const lc = colLocal ? String(row[colLocal] || '').trim() : '';
-    if (lc) locais[lc] = (locais[lc] || 0) + Math.abs(v);
+    if (lc) {
+      locais[lc] = (locais[lc] || 0) + Math.abs(v);
+      const tl = finClassificarTipoLocal(lc);
+      tiposLocal[tl] = (tiposLocal[tl] || 0) + Math.abs(v);
+    }
   });
 
   // Ranking por Tipo de Contas — lista ordenada da maior para a menor,
@@ -3187,7 +3235,7 @@ function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLoca
       : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li>';
   }
 
-  // Ranking por Local — mesmo padrão, agrupado pela praça/filial/unidade
+  // Ranking por Local — mesmo padrão, agrupado pela praça/filial/fornecedor
   const rankLocalEl = document.getElementById('finRankLocal');
   if (rankLocalEl) {
     const rankingLocal = Object.entries(locais).sort((a, b) => b[1] - a[1]);
@@ -3196,18 +3244,49 @@ function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLoca
       : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li>';
   }
 
-  // Pie
+  // Ranking por Tipo de Local — agrupado pela classificação derivada
+  // (Postos & Combustível, Pneus & Borracharia, Refrigeração, etc.)
+  const rankTipoLocalEl = document.getElementById('finRankTipoLocal');
+  const rankingTipoLocal = Object.entries(tiposLocal).sort((a, b) => b[1] - a[1]);
+  if (rankTipoLocalEl) {
+    rankTipoLocalEl.innerHTML = rankingTipoLocal.length
+      ? rankingTipoLocal.map(([nome, valor]) => `<li><span style="font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px" title="${nome}">${nome}</span><span style="font-weight:800;color:var(--accent)">${fmtMoney(valor)}</span></li>`).join('')
+      : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li>';
+  }
+
+  // Pie "Por Categoria" — agora mostra a distribuição por Tipo de Local,
+  // já que a coluna de Categoria/Tipo de Contas já aparece na lista acima
+  // (evita duplicar exatamente a mesma informação em dois cards)
   if (finPieChartObj) finPieChartObj.destroy();
-  const catKeys = Object.keys(cats).slice(0, 10);
+  const tipoLocalKeys = rankingTipoLocal.slice(0, 10).map(([nome]) => nome);
   const ctxPie = document.getElementById('finPieChart').getContext('2d');
   finPieChartObj = new Chart(ctxPie, {
     type: 'doughnut',
     data: {
-      labels: catKeys,
-      datasets: [{data: catKeys.map(k => cats[k]), backgroundColor:['#d4af37','#8B7355','#10b981','#ef4444','#3b82f6','#f59e0b','#8b5cf6','#06b6d4','#84cc16','#f97316']}]
+      labels: tipoLocalKeys,
+      datasets: [{data: tipoLocalKeys.map(k => tiposLocal[k]), backgroundColor:['#d4af37','#8B7355','#10b981','#ef4444','#3b82f6','#f59e0b','#8b5cf6','#06b6d4','#84cc16','#f97316']}]
     },
     options: {responsive:true, plugins:{legend:{position:'right'}}}
   });
+
+  // Barra horizontal — Top 10 Locais (fornecedores/praças) por valor
+  if (finBarLocalChartObj) finBarLocalChartObj.destroy();
+  const barLocalEl = document.getElementById('finBarLocalChart');
+  if (barLocalEl) {
+    const top10Locais = Object.entries(locais).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    finBarLocalChartObj = new Chart(barLocalEl.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: top10Locais.map(([nome]) => nome),
+        datasets: [{ label: 'Valor', data: top10Locais.map(([, valor]) => valor), backgroundColor: 'rgba(212,175,55,.85)' }]
+      },
+      options: {
+        indexAxis: 'y', responsive: true,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmtMoney(c.raw) } } },
+        scales: { x: { beginAtZero: true, title: { display: true, text: 'R$' } } }
+      }
+    });
+  }
 }
 
 function resetFinFilters() {
@@ -7529,14 +7608,73 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
       "Baterias, Vencimentos, Frota). Pergunta \"ajuda\" pra ver tudo que sei responder.";
   }
 
-  function askMAX(userMessage) {
+  // MAX com IA (Groq, grátis) — junta o snapshot de todos os módulos
+  // (mesmas funções do modo local) e manda pro modelo raciocinar de verdade
+  // sobre a pergunta, em vez de só bater palavra-chave. Se não tiver chave
+  // configurada, ou a chamada falhar (rede, chave inválida, limite grátis
+  // estourado), quem chama cai de volta pro respostaLocalMAX.
+  // Modelo: ajuste aqui se a Groq descontinuar o nome abaixo.
+  const MAX_GROQ_MODEL = 'llama-3.1-8b-instant';
+
+  function snapshotDadosMAX() {
+    return TOPICOS_MAX.map(function (t) {
+      try { return t.fn(); } catch (e) { return null; }
+    }).filter(Boolean).join('\n');
+  }
+
+  async function askMAXviaIA(pergunta) {
+    const snapshot = snapshotDadosMAX();
+    const ctx = getDashboardContext();
+    const systemPrompt =
+      'Você é o MAX, assistente do dashboard de gestão de frota da empresa (aba atual: ' + (ctx.aba_ativa || '—') + '). ' +
+      'Responda SEMPRE em português do Brasil, de forma direta e curta (poucas frases), como um colega de trabalho. ' +
+      'Use APENAS os dados abaixo, já carregados do sistema; não invente números. Se o dado pedido não estiver aqui, diga que não tem essa informação carregada.\n\n' +
+      'DADOS ATUAIS DO DASHBOARD:\n' + (snapshot || '(nenhum módulo com dados carregados ainda)');
+
+    const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + MAX_GROQ_KEY
+      },
+      body: JSON.stringify({
+        model: MAX_GROQ_MODEL,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: pergunta }
+        ],
+        temperature: 0.3,
+        max_tokens: 400
+      })
+    });
+    if (!resp.ok) {
+      const errBody = await resp.text().catch(function () { return ''; });
+      throw new Error('Groq HTTP ' + resp.status + ': ' + errBody.slice(0, 200));
+    }
+    const data = await resp.json();
+    const texto = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+    if (!texto) throw new Error('Resposta vazia da IA');
+    return texto.trim();
+  }
+
+  async function askMAX(userMessage) {
     if (!userMessage.trim()) return;
     addMessage("user", userMessage);
     showTyping(); setStatus("busy");
-    setTimeout(function () {
-      var reply = respostaLocalMAX(userMessage);
-      hideTyping(); addMessage("bot", reply); setStatus("online"); speakText(reply);
-    }, 350); // pequeno delay só pra dar sensação de "processando"
+    let reply;
+    if (MAX_GROQ_KEY) {
+      try {
+        reply = await askMAXviaIA(userMessage);
+      } catch (e) {
+        console.warn('[MAX] IA indisponível, caindo pro modo local:', e);
+        reply = respostaLocalMAX(userMessage);
+      }
+    } else {
+      // pequeno delay só pra dar sensação de "processando" no modo local
+      await new Promise(function (r) { setTimeout(r, 350); });
+      reply = respostaLocalMAX(userMessage);
+    }
+    hideTyping(); addMessage("bot", reply); setStatus("online"); speakText(reply);
   }
 
   function sendText() {
