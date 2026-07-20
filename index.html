@@ -813,7 +813,10 @@ footer a{color:var(--accent);text-decoration:none;}
 
   <div style="background:#eff6ff;border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:.7rem .9rem;margin-bottom:.8rem">
     <div style="font-size:.72rem;font-weight:800;color:#1e40af;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem">🤖 MAX — Assistente</div>
-    <p style="font-size:.72rem;color:var(--text-lt);margin-bottom:0">MAX responde localmente com os dados já carregados no dashboard (Financeiro, Faturamento, Baterias, Vencimentos, Frota) — sem custo e sem configuração.</p>
+    <p style="font-size:.72rem;color:var(--text-lt);margin-bottom:.5rem">MAX responde localmente com os dados já carregados no dashboard (Financeiro, Orçamento, Manutenção, Faturamento, Baterias, Vencimentos, Frota) — sem custo e sem configuração.</p>
+    <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">Voz</label>
+    <select id="maxVoiceSelect" style="width:100%;padding:.6rem;border-radius:8px;border:1px solid var(--gray-200)"><option value="">Carregando vozes...</option></select>
+    <button type="button" id="maxVoiceTestBtn" class="btn btn-gray btn-sm" style="margin-top:.5rem"><i class="fas fa-volume-high"></i> Testar voz</button>
   </div>
 
   <div style="display:flex;gap:.6rem;margin-top:.5rem">
@@ -2933,6 +2936,7 @@ function openUrlModal(){
   document.getElementById('nfeClientId').value = NFE_CLIENT_ID;
   document.getElementById('nfeClientSecret').value = NFE_CLIENT_SECRET;
   document.getElementById('nfeCnpj').value = NFE_CNPJ;
+  if (window.__maxPopulateVoices) window.__maxPopulateVoices();
   document.getElementById('urlConfigModal').classList.add('active');
   document.getElementById('urlModalBackdrop').classList.add('active');
 }
@@ -2942,6 +2946,10 @@ function closeUrlModal(){
 }
 document.getElementById('openUrlConfig').onclick = openUrlModal;
 document.getElementById('closeUrlModalBtn').onclick = closeUrlModal;
+document.getElementById('maxVoiceTestBtn').onclick = function() {
+  var sel = document.getElementById('maxVoiceSelect');
+  if (window.__maxTestVoice) window.__maxTestVoice(sel ? sel.value : '');
+};
 document.getElementById('saveUrlsBtn').onclick = () => {
   URL_FIN = document.getElementById('urlFinanceiro').value || DEFAULT_FINANCEIRO;
   URL_BAT = document.getElementById('urlBaterias').value || DEFAULT_BATERIAS;
@@ -2957,6 +2965,11 @@ document.getElementById('saveUrlsBtn').onclick = () => {
   localStorage.setItem('nfeClientSecret', NFE_CLIENT_SECRET);
   localStorage.setItem('nfeCnpj',         NFE_CNPJ);
   nfeAccessToken = ''; nfeTokenExpiry = 0; // force re-auth
+  var maxVoiceSel = document.getElementById('maxVoiceSelect');
+  if (maxVoiceSel) {
+    if (maxVoiceSel.value) localStorage.setItem('maxVoiceURI', maxVoiceSel.value);
+    else localStorage.removeItem('maxVoiceURI');
+  }
   closeUrlModal();
   showToast('Configurações salvas!');
   loadFinanceiroData();
@@ -3033,8 +3046,8 @@ function applyFinFilters() {
   const colValor = findCol(headers, ['valor','value','montante','total','vl ','vlr','preco','price']);
   const colTipo  = findCol(headers, ['tipo','type','natureza','categoria','classificacao']);
   const colCat   = finColCategoria(headers);
-  const colTipoContas = finColTipoContas(headers);
-  if (!colTipoContas) console.warn('[Financeiro] Coluna "Tipo de Contas" não encontrada. Cabeçalhos da planilha:', headers);
+  const overrideTC = localStorage.getItem('finColTipoContasOverride');
+  const colTipoContas = (overrideTC && headers.includes(overrideTC)) ? overrideTC : finColTipoContas(headers);
 
   const dIni  = document.getElementById('finDataInicio').value;
   const dFim  = document.getElementById('finDataFim').value;
@@ -3042,7 +3055,7 @@ function applyFinFilters() {
   const cat   = document.getElementById('finCategoria').value;
   const busca = document.getElementById('finBusca').value.toLowerCase();
 
-  let filtered = financeiroData.filter(row => {
+  function passaFiltros(row, ignorarCategoria) {
     // Filtro data
     if (colData && (dIni || dFim)) {
       const d = parseDate(row[colData]);
@@ -3052,7 +3065,6 @@ function applyFinFilters() {
     }
     // Filtro tipo (receita/despesa)
     if (tipo) {
-      const v = finValorLinha(row, colValor, colCat, colDesc);
       const t = colTipo ? String(row[colTipo] || '').toLowerCase() : '';
       let rowTipo;
       if (t.includes('receita') || t.includes('entrada') || t.includes('credito')) rowTipo = 'receita';
@@ -3060,8 +3072,10 @@ function applyFinFilters() {
       else rowTipo = 'despesa'; // esta planilha só registra despesas por padrão
       if (rowTipo !== tipo) return false;
     }
-    // Filtro categoria
-    if (cat) {
+    // Filtro categoria — não entra no cálculo dos rankings, só na tabela: os
+    // rankings servem justamente pra ver a distribuição inteira do período,
+    // não colapsar pra 1 item quando o usuário já escolheu uma categoria.
+    if (!ignorarCategoria && cat) {
       const checkCol = colCat || colTipo;
       if (checkCol && row[checkCol] !== cat) return false;
     }
@@ -3071,7 +3085,10 @@ function applyFinFilters() {
       if (!rowText.includes(busca)) return false;
     }
     return true;
-  });
+  }
+
+  let filtered = financeiroData.filter(row => passaFiltros(row, false));
+  let filteredPeriodo = cat ? financeiroData.filter(row => passaFiltros(row, true)) : filtered;
 
   currentFinanceiroFiltered = filtered;
 
@@ -3093,10 +3110,10 @@ function applyFinFilters() {
   document.getElementById('fin-registros').textContent = filtered.length;
   document.getElementById('finCount').textContent = filtered.length + ' registros';
 
-  // Tabela
+  // Tabela — respeita o filtro de Categoria normalmente
   renderFinTable(filtered, headers, colData, colDesc, colValor, colTipo, colCat);
-  // Gráficos
-  renderFinCharts(filtered, colValor, colCat, colDesc, colTipoContas);
+  // Gráficos/Rankings — sempre a distribuição inteira do período (data/tipo/busca), ignorando a Categoria selecionada
+  renderFinCharts(filteredPeriodo, colValor, colCat, colDesc, colTipoContas, headers);
 
   document.getElementById('finLoading').style.display = 'none';
   document.getElementById('finTableWrap').style.display = 'block';
@@ -7063,8 +7080,8 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
 
   var CONFIG = {
     TTS_VOICE: "pt-BR",
-    TTS_RATE: 0.95,
-    TTS_PITCH: 0.9,
+    TTS_RATE: 0.92,
+    TTS_PITCH: 0.78,
   };
 
   /* ── CSS ──────────────────────────────────────────────── */
@@ -7377,77 +7394,117 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
     return (!v || v === "—" || v === "R$ —") ? null : v;
   }
 
-  // MAX local — responde com base nos dados JÁ carregados na tela, sem nenhuma
-  // chamada externa, sem chave, sem custo. Cobre as perguntas mais comuns do
-  // dia a dia (financeiro, faturamento, baterias, vencimentos, frota) por
-  // palavras-chave. Se não reconhecer a pergunta, orienta o que pode perguntar.
+  // MAX local — cada função abaixo cobre UM assunto e devolve texto ou null
+  // se não tiver dado. respostaLocalMAX roda todas que baterem com a
+  // pergunta e junta os resultados — é o "cruzamento de informação" que dá
+  // pra fazer sem IA paga: várias seções na mesma resposta.
+  var TOPICOS_MAX = [
+    {
+      nome: "financeiro",
+      re: /receita|despesa|saldo|financeiro|fluxo de caixa/,
+      fn: function () {
+        var r = txt("fin-receita"), d = txt("fin-despesa"), s = txt("fin-saldo"), n = txt("fin-registros");
+        if (!r && !d && !s) return "Financeiro: sem dados carregados ainda (abra a aba Financeiro).";
+        return "Financeiro — Receita " + (r || "—") + ", Despesa " + (d || "—") + ", Saldo " + (s || "—") +
+          (n ? " (" + n + " registros)" : "") + ".";
+      }
+    },
+    {
+      nome: "orcamento",
+      re: /orcamento|orçado|realizado/,
+      fn: function () {
+        var orc = txt("orc-total-orcado"), rea = txt("orc-total-realizado"), sal = txt("orc-total-saldo"), pct = txt("orc-total-pct");
+        if (!orc && !rea) return "Orçamento: sem dados ainda — abra Financeiro → Orçamento & Custos.";
+        return "Orçamento do ano — Orçado " + (orc || "—") + ", Realizado " + (rea || "—") +
+          ", Saldo " + (sal || "—") + (pct ? " (" + pct + " utilizado)" : "") + ".";
+      }
+    },
+    {
+      nome: "manutencao",
+      re: /manutencao|custo por veiculo|custo por placa|preventiva|corretiva|oficina|conserto/,
+      fn: function () {
+        if (typeof manComputeDados !== "function" || !financeiroData.length) return "Manutenção: sem dados do Financeiro carregados ainda.";
+        try {
+          var ano = new Date().getFullYear();
+          var r = manComputeDados(ano);
+          var soma = function (bucket) { return Object.values(bucket).reduce(function (a, b) { return a + (b.total || 0); }, 0); };
+          var totalCavalos = soma(r.dados.cavalos), totalCarretas = soma(r.dados.carretas), totalRefrig = soma(r.dados.refrigeracao);
+          var total = totalCavalos + totalCarretas + totalRefrig;
+          return "Manutenção " + ano + " — Total " + fmtMoney(total) + " (Cavalos " + fmtMoney(totalCavalos) +
+            ", Carretas " + fmtMoney(totalCarretas) + ", Refrigeração " + fmtMoney(totalRefrig) + ")" +
+            (r.naoClassificadoQtd ? ". " + r.naoClassificadoQtd + " lançamento(s) ainda não classificados." : ".");
+        } catch (e) { return "Manutenção: não consegui calcular agora."; }
+      }
+    },
+    {
+      nome: "faturamento",
+      re: /faturamento|frete\b|diaria|vale\b|manobra/,
+      fn: function () {
+        var fat = txt("fat-faturamento"), tot = txt("fat-total"), mot = txt("fat-motoristas");
+        if (!fat && !tot) return "Faturamento: sem dados carregados ainda (abra a aba Faturamento).";
+        return "Faturamento — Total (Frete) " + (fat || "—") + ", A Receber " + (tot || "—") +
+          (mot ? ", " + mot + " motoristas ativos" : "") + ".";
+      }
+    },
+    {
+      nome: "baterias",
+      re: /bateria/,
+      fn: function () {
+        var totalBat = txt("bat-total"), venc = txt("bat-vencidas"), p30 = txt("bat-proximas");
+        if (!totalBat) return "Baterias: sem dados carregados ainda (abra a aba Baterias).";
+        return "Baterias — " + totalBat + " no total, " + (venc || "0") + " vencidas, " + (p30 || "0") + " vencendo em 30 dias.";
+      }
+    },
+    {
+      nome: "vencimentos",
+      re: /vencimento|licenciamento|\bcnh\b|\baso\b|toxicologico|vencendo|vence\b|documentacao/,
+      fn: function () {
+        if (typeof vencCounts === "undefined" || typeof VENC_CATEGORIAS === "undefined") return "Vencimentos: abra a aba Vencimentos pra carregar.";
+        var partes = VENC_CATEGORIAS.map(function (cat) {
+          var c = vencCounts[cat.key];
+          if (!c || (!c.vencidos && !c.proximos)) return null;
+          return cat.label + " (" + c.vencidos + " vencido, " + c.proximos + " próximo)";
+        }).filter(Boolean);
+        if (!partes.length) return "Vencimentos: tudo em dia ou sem dados carregados ainda.";
+        return "Vencimentos com pendência — " + partes.join(", ") + ".";
+      }
+    },
+    {
+      nome: "frota",
+      re: /motorista|veiculo|veículo|placa|frota|caminhao|caminhão|\bcavalo\b|carreta/,
+      fn: function () {
+        if (typeof FROTA_DATA === "undefined" || !FROTA_DATA.length) return "Frota: dados não encontrados no momento.";
+        var ativos = FROTA_DATA.filter(function (v) { return v.motorista && v.motorista !== "—"; }).length;
+        return "Frota — " + FROTA_DATA.length + " veículo(s), " + ativos + " com motorista ativo, " +
+          (FROTA_DATA.length - ativos) + " parado(s)/sem motorista.";
+      }
+    },
+  ];
+
+  // MAX local — sem IA externa, sem custo, sem chave. Roda todos os tópicos
+  // que baterem na pergunta e junta as respostas numa mensagem só (é o
+  // cruzamento de informação entre módulos do sistema). "Resumo geral" /
+  // "como está tudo" força todos os tópicos de uma vez.
   function respostaLocalMAX(pergunta) {
     var p = pergunta.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-    // Financeiro
-    if (/receita|despesa|saldo|financeiro/.test(p)) {
-      var r = txt("fin-receita"), d = txt("fin-despesa"), s = txt("fin-saldo"), n = txt("fin-registros");
-      if (r || d || s) {
-        return "Financeiro atual — Receita: " + (r || "sem dados") + " · Despesa: " + (d || "sem dados") +
-          " · Saldo: " + (s || "sem dados") + (n ? " (" + n + " registros)" : "") +
-          ". Abra a aba Financeiro para filtrar por período.";
-      }
-      return "Ainda não há dados carregados no Financeiro. Abra a aba Financeiro pra carregar da planilha.";
+    if (/ajuda|^ola\W*$|^oi\W*$|bom dia|boa tarde|boa noite|o que voce faz|comandos/.test(p)) {
+      return "Domino todos os módulos do sistema: Financeiro, Orçamento & Custos, Manutenção, Faturamento, " +
+        "Baterias, Vencimentos (CNH/ASO/licenciamento) e Frota/Motoristas. Pergunta sobre qualquer um, combine " +
+        "vários na mesma pergunta (ex.: \"como está o financeiro e as baterias?\"), ou peça \"resumo geral\" " +
+        "que eu junto tudo.";
     }
 
-    // Faturamento
-    if (/faturamento|frete|diaria|vale|manobra/.test(p)) {
-      var fat = txt("fat-faturamento"), tot = txt("fat-total"), mot = txt("fat-motoristas");
-      if (fat || tot) {
-        return "Faturamento — Total (Frete): " + (fat || "sem dados") + " · A Receber: " + (tot || "sem dados") +
-          (mot ? " · " + mot + " motoristas ativos" : "") + ". Detalhes na aba Faturamento.";
-      }
-      return "Ainda não há dados carregados em Faturamento. Abra a aba Faturamento pra carregar.";
-    }
+    var pedirTudo = /resumo geral|visao geral|como esta tudo|como estamos|status geral|panorama/.test(p);
+    var respostas = [];
+    TOPICOS_MAX.forEach(function (t) {
+      if (pedirTudo || t.re.test(p)) respostas.push(t.fn());
+    });
 
-    // Baterias
-    if (/bateria/.test(p)) {
-      var totalBat = txt("bat-total"), venc = txt("bat-vencidas"), p30 = txt("bat-proximas");
-      if (totalBat) {
-        return "Baterias — " + totalBat + " no total, " + (venc || "0") + " vencidas e " + (p30 || "0") +
-          " vencendo nos próximos 30 dias. Veja a lista completa na aba Baterias.";
-      }
-      return "Abra a aba Baterias pra eu conseguir consultar os vencimentos.";
-    }
+    if (respostas.length) return respostas.join(" ");
 
-    // Vencimentos (licenciamento, CNH, ASO, etc.)
-    if (/vencimento|licenciamento|cnh|aso|toxicologico|vencendo|vence\b/.test(p)) {
-      if (typeof vencCounts !== "undefined" && typeof VENC_CATEGORIAS !== "undefined") {
-        var partes = VENC_CATEGORIAS.map(function (cat) {
-          var c = vencCounts[cat.key];
-          if (!c) return null;
-          return cat.label + ": " + c.vencidos + " vencido(s), " + c.proximos + " próximo(s)";
-        }).filter(Boolean);
-        if (partes.length) return "Vencimentos — " + partes.join(" · ") + ". Detalhes na aba Vencimentos.";
-      }
-      return "Abra a aba Vencimentos pra eu conseguir consultar licenciamento, CNH, ASO e afins.";
-    }
-
-    // Frota / motoristas
-    if (/motorista|veiculo|veículo|placa|frota|caminhao|caminhão|cavalo|carreta/.test(p)) {
-      if (typeof FROTA_DATA !== "undefined" && FROTA_DATA.length) {
-        var ativos = FROTA_DATA.filter(function (v) { return v.motorista && v.motorista !== "—"; }).length;
-        var parados = FROTA_DATA.length - ativos;
-        return "Frota — " + FROTA_DATA.length + " veículo(s) cadastrados: " + ativos + " com motorista ativo e " +
-          parados + " parado(s)/sem motorista. Detalhes na aba Motoristas/Frota.";
-      }
-      return "Não encontrei os dados de frota carregados no momento.";
-    }
-
-    // Ajuda / saudação
-    if (/ajuda|ola|olá|oi\b|bom dia|boa tarde|boa noite|o que voce faz|o que você faz/.test(p)) {
-      return "Posso te passar um resumo rápido de: Financeiro (receita/despesa/saldo), Faturamento, Baterias, " +
-        "Vencimentos (CNH, ASO, licenciamento...) e Frota/Motoristas. É só perguntar, ex.: \"como está o saldo?\" " +
-        "ou \"tem bateria vencida?\".";
-    }
-
-    return "Não entendi essa pergunta ainda — hoje respondo sobre Financeiro, Faturamento, Baterias, " +
-      "Vencimentos e Frota, usando os dados já carregados no dashboard. Tenta reformular ou pergunta \"ajuda\".";
+    return "Não achei esse assunto nos módulos que domino (Financeiro, Orçamento, Manutenção, Faturamento, " +
+      "Baterias, Vencimentos, Frota). Pergunta \"ajuda\" pra ver tudo que sei responder.";
   }
 
   function askMAX(userMessage) {
@@ -7527,7 +7584,48 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
     setStatus("online");
   }
 
-  function speakText(text) {
+  // Escolhe a melhor voz disponível: usa a salva pelo usuário (localStorage)
+  // se existir; senão tenta achar uma voz PT-BR "de qualidade" (Google/
+  // Microsoft/Natural/Online) com timbre mais grave, senão qualquer PT-BR.
+  function resolveVoice() {
+    var voices = window.speechSynthesis.getVoices();
+    if (!voices.length) return null;
+    var savedURI = localStorage.getItem("maxVoiceURI");
+    if (savedURI) {
+      var saved = voices.find(function (v) { return v.voiceURI === savedURI; });
+      if (saved) return saved;
+    }
+    var ptVoices = voices.filter(function (v) { return v.lang && v.lang.toLowerCase().indexOf("pt") === 0; });
+    var pool = ptVoices.length ? ptVoices : voices;
+    var qualidade = pool.find(function (v) { return /google|microsoft|natural|online|neural/i.test(v.name); });
+    return qualidade || pool[0] || null;
+  }
+
+  function populateVoiceSelect() {
+    var sel = document.getElementById("maxVoiceSelect");
+    if (!sel) return;
+    var voices = window.speechSynthesis.getVoices();
+    if (!voices.length) return; // getVoices() pode carregar de forma assíncrona; tentaremos de novo no evento voiceschanged
+    var savedURI = localStorage.getItem("maxVoiceURI");
+    var ordenadas = voices.slice().sort(function (a, b) {
+      var aPt = a.lang.toLowerCase().indexOf("pt") === 0 ? 0 : 1;
+      var bPt = b.lang.toLowerCase().indexOf("pt") === 0 ? 0 : 1;
+      return aPt - bPt || a.name.localeCompare(b.name);
+    });
+    sel.innerHTML = '<option value="">Automática (melhor disponível)</option>' + ordenadas.map(function (v) {
+      var sel2 = v.voiceURI === savedURI ? " selected" : "";
+      return '<option value="' + v.voiceURI.replace(/"/g, "&quot;") + '"' + sel2 + ">" + v.name + " (" + v.lang + ")</option>";
+    }).join("");
+  }
+  if (window.speechSynthesis) {
+    window.speechSynthesis.addEventListener("voiceschanged", populateVoiceSelect);
+  }
+  window.__maxPopulateVoices = populateVoiceSelect;
+  window.__maxTestVoice = function (voiceURI) {
+    speakText("Sistemas online. Sou o MAX, assistente da M-Malacarne.", voiceURI || null);
+  };
+
+  function speakText(text, voiceURIOverride) {
     if (!window.speechSynthesis) return;
     var clean = text.replace(/[\u{1F300}-\u{1FFFF}]/gu, "").replace(/[⚠️✓✕→←↑↓]/g, "").trim();
     if (!clean) return;
@@ -7536,10 +7634,12 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
     ttsUtterance.lang = CONFIG.TTS_VOICE;
     ttsUtterance.rate = CONFIG.TTS_RATE;
     ttsUtterance.pitch = CONFIG.TTS_PITCH;
-    var voices = window.speechSynthesis.getVoices();
-    var ptVoice = voices.find(function(v){ return v.lang.startsWith("pt") && (v.name.includes("Google") || v.name.includes("Microsoft")); })
-                  || voices.find(function(v){ return v.lang.startsWith("pt"); });
-    if (ptVoice) ttsUtterance.voice = ptVoice;
+    var voice = null;
+    if (voiceURIOverride) {
+      voice = window.speechSynthesis.getVoices().find(function (v) { return v.voiceURI === voiceURIOverride; }) || null;
+    }
+    if (!voice) voice = resolveVoice();
+    if (voice) ttsUtterance.voice = voice;
     ttsUtterance.onstart = function() { isSpeaking = true; };
     ttsUtterance.onend = function() { isSpeaking = false; };
     window.speechSynthesis.speak(ttsUtterance);
