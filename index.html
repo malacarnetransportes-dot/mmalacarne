@@ -853,7 +853,6 @@ footer a{color:var(--accent);text-decoration:none;}
         <button class="pa-nav-item" data-tab="tabChecklist"><i class="fas fa-clipboard-check"></i> Checklist Veículos</button>
         <button class="pa-nav-item" data-tab="tabAuditoria"><i class="fas fa-clipboard-check"></i> Auditoria</button>
         <button class="pa-nav-item" data-tab="tabNfe"><i class="fas fa-file-invoice"></i> NF-e / Abast.</button>
-        <button class="pa-nav-item" data-tab="tabLinks"><i class="fas fa-link"></i> Links Úteis</button>
       </nav>
       <div class="pa-sidebar-footer">
         <button class="pa-nav-item" id="openSlideModeBtn" style="font-size:.8rem;color:var(--accent)"><i class="fas fa-tv"></i> Gestão à Vista (Slide)</button>
@@ -907,6 +906,7 @@ footer a{color:var(--accent);text-decoration:none;}
           </div>
           <div class="charts-grid">
             <div class="dash-card"><div class="dash-card-title"><i class="fas fa-ranking-star"></i> Ranking por Categoria</div><ol class="rank-list" id="finRankCategoria"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
+            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-layer-group"></i> Ranking por Tipo de Contas</div><ol class="rank-list" id="finRankTipoContas"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
             <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-pie"></i> Por Categoria</div><div class="chart-box" style="height:230px"><canvas id="finPieChart" height="180"></canvas></div></div>
           </div>
           <div class="dash-card">
@@ -1634,40 +1634,6 @@ footer a{color:var(--accent);text-decoration:none;}
           </div>
         </div><!-- /tabChecklist -->
 
-        <!-- ── TAB LINKS ÚTEIS ── -->
-        <div id="tabLinks" class="tab-pane">
-          <div class="dash-card" style="margin-bottom:1.2rem">
-            <div style="font-weight:700;font-size:.92rem;color:#1e2a3a;margin-bottom:.3rem"><i class="fas fa-map-marked-alt" style="color:var(--accent)"></i> Locais e Sistemas de Apoio</div>
-            <div style="font-size:.8rem;color:var(--text-lt)">Acesso rápido a mapas, estacionamento e ao sistema de fretes.</div>
-          </div>
-          <div class="links-grid" id="linksGrid">
-            <a class="link-card" href="https://maps.app.goo.gl/mgfqFUj6xszixUXJ7?g_st=aw" target="_blank" rel="noopener">
-              <div class="link-card-icon"><i class="fas fa-map-marker-alt"></i></div>
-              <div class="link-card-body">
-                <h3>Localização</h3>
-                <p>Abrir ponto no Google Maps</p>
-              </div>
-              <i class="fas fa-external-link-alt link-card-go"></i>
-            </a>
-            <a class="link-card" href="https://maps.app.goo.gl/riRFfRPhEpAFTLA49?g_st=aw" target="_blank" rel="noopener">
-              <div class="link-card-icon"><i class="fas fa-square-parking"></i></div>
-              <div class="link-card-body">
-                <h3>Estacionamento Regis Renovo Park</h3>
-                <p>Próximo a Embu das Artes</p>
-              </div>
-              <i class="fas fa-external-link-alt link-card-go"></i>
-            </a>
-            <a class="link-card" href="https://web.movtrans.com.br/" target="_blank" rel="noopener">
-              <div class="link-card-icon"><i class="fas fa-truck-fast"></i></div>
-              <div class="link-card-body">
-                <h3>MovTrans</h3>
-                <p>Sistema web de fretes / rastreio</p>
-              </div>
-              <i class="fas fa-external-link-alt link-card-go"></i>
-            </a>
-          </div>
-        </div><!-- /tabLinks -->
-
       </div><!-- /pa-main -->
     </div><!-- /pa-content -->
   </div><!-- /pa-layout -->
@@ -1915,6 +1881,22 @@ function findCol(headers, keywords) {
   return null;
 }
 
+// Coluna de "Categoria" propriamente dita (plano de contas / categoria do
+// lançamento). NÃO cai em "descricao"/"servico"/"produto" — isso fazia o
+// ranking agrupar por texto de descrição (itens/placas individuais) em vez
+// de por categoria de fato quando a planilha não tinha coluna "Categoria".
+// Se a planilha só tiver "Grupo Tipo de Contas", cai nele via fallback.
+function finColCategoria(headers) {
+  return findCol(headers, ['categoria','plano de contas','plano','tipo lancamento','classificacao']) || finColTipoContas(headers);
+}
+
+// Coluna do GRUPO/TIPO DE CONTAS (agrupamento contábil mais amplo, ex.:
+// "Grupo Tipo de Contas"). Prioriza esse nome exato antes de variações mais
+// genéricas de "grupo", para não colidir com outras colunas.
+function finColTipoContas(headers) {
+  return findCol(headers, ['grupo tipo de contas','tipo de contas','grupo de contas','tipo de conta','grupo']);
+}
+
 // Lista de proxies CORS, tentados em ordem até um funcionar.
 // allorigins e codetabs primeiro (mais estáveis para CSV grande);
 // corsproxy.io por último pois costuma limitar taxa de uso.
@@ -2129,8 +2111,7 @@ const pageTitles = {
   tabPneus: '<i class="fas fa-circle-dot" style="color:var(--accent)"></i> Controle de Pneus',
   tabVencimentos: '<i class="fas fa-triangle-exclamation" style="color:var(--accent)"></i> Controle de Vencimentos',
   tabVagas: '<i class="fas fa-user-tie" style="color:var(--accent)"></i> Vagas / Entrevistas',
-  tabChecklist: '<i class="fas fa-clipboard-check" style="color:var(--accent)"></i> Checklist de Veículos',
-  tabLinks: '<i class="fas fa-link" style="color:var(--accent)"></i> Links Úteis'
+  tabChecklist: '<i class="fas fa-clipboard-check" style="color:var(--accent)"></i> Checklist de Veículos'
 };
 
 document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
@@ -2176,7 +2157,7 @@ function slideFinMonthlyData(){
   const colData = findCol(headers, ['data','date','vencimento','competencia','lancamento']);
   const colValor = findCol(headers, ['valor','value','montante','total','vl ','vlr','preco','price']);
   const colTipo = findCol(headers, ['tipo','type','natureza','classificacao']);
-  const colCat  = findCol(headers, ['plano de contas','plano','categoria','tipo lancamento','natureza','descricao','servico','produto']);
+  const colCat   = finColCategoria(headers);
   const colDesc = findCol(headers, ['descricao','historico','memo','obs','description','lancamento','servico','produto']);
   const mensal = {};
   financeiroData.forEach(row => {
@@ -2207,7 +2188,7 @@ function slideFinResumo(){
   const headers = Object.keys(financeiroData[0]);
   const colData  = findCol(headers, ['data','date','vencimento','competencia','lancamento']);
   const colValor = findCol(headers, ['valor','value','montante','total','vl ','vlr','preco','price']);
-  const colCat   = findCol(headers, ['plano de contas','plano','categoria','tipo lancamento','natureza','tipo','descricao','classificacao','servico','produto']);
+  const colCat   = finColCategoria(headers);
   const colDesc  = findCol(headers, ['descricao','historico','memo','obs','description','lancamento','servico','produto']);
   const now = new Date();
   const mesAtualKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
@@ -3029,7 +3010,7 @@ async function loadFinanceiroData() {
 function popularFiltroCategoria(rows) {
   const cats = new Set();
   const headers = rows[0] ? Object.keys(rows[0]) : [];
-  const colCat = findCol(headers, ['plano de contas','plano','categoria','tipo','descricao','tipo lancamento','natureza','servico','produto']);
+  const colCat   = finColCategoria(headers);
   if (colCat) rows.forEach(r => { if (r[colCat]) cats.add(r[colCat]); });
   const sel = document.getElementById('finCategoria');
   sel.innerHTML = '<option value="">Todas</option>';
@@ -3045,7 +3026,8 @@ function applyFinFilters() {
   const colDesc  = findCol(headers, ['descricao','historico','memo','obs','description','lancamento','servico','produto']);
   const colValor = findCol(headers, ['valor','value','montante','total','vl ','vlr','preco','price']);
   const colTipo  = findCol(headers, ['tipo','type','natureza','categoria','classificacao']);
-  const colCat   = findCol(headers, ['plano de contas','plano','categoria','tipo lancamento','natureza','descricao','servico','produto']);
+  const colCat   = finColCategoria(headers);
+  const colTipoContas = finColTipoContas(headers);
 
   const dIni  = document.getElementById('finDataInicio').value;
   const dFim  = document.getElementById('finDataFim').value;
@@ -3107,7 +3089,7 @@ function applyFinFilters() {
   // Tabela
   renderFinTable(filtered, headers, colData, colDesc, colValor, colTipo, colCat);
   // Gráficos
-  renderFinCharts(filtered, colValor, colCat, colDesc);
+  renderFinCharts(filtered, colValor, colCat, colDesc, colTipoContas);
 
   document.getElementById('finLoading').style.display = 'none';
   document.getElementById('finTableWrap').style.display = 'block';
@@ -3135,12 +3117,18 @@ function renderFinTable(data, headers, colData, colDesc, colValor, colTipo, colC
 // Agrega por Categoria/Plano de Contas (não por "Tipo", que costuma ser só
 // Receita/Despesa e não serve como categoria de ranking). Usa finValorLinha
 // para funcionar mesmo quando não existe coluna "Valor" própria.
-function renderFinCharts(data, colValor, colCat, colDesc) {
+// colTipoContas é o agrupamento contábil mais amplo ("Grupo Tipo de Contas"),
+// renderizado em card de ranking separado, respeitando os mesmos filtros
+// (data/tipo/categoria/busca) já aplicados em applyFinFilters.
+function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas) {
   const cats = {};
+  const tiposContas = {};
   data.forEach(row => {
     const v = finValorLinha(row, colValor, colCat, colDesc);
     const t = colCat ? String(row[colCat] || '').trim() : '';
     if (t) cats[t] = (cats[t] || 0) + Math.abs(v);
+    const tc = colTipoContas ? String(row[colTipoContas] || '').trim() : '';
+    if (tc) tiposContas[tc] = (tiposContas[tc] || 0) + Math.abs(v);
   });
 
   // Ranking por Categoria — lista ordenada da maior para a menor
@@ -3149,6 +3137,16 @@ function renderFinCharts(data, colValor, colCat, colDesc) {
     const ranking = Object.entries(cats).sort((a, b) => b[1] - a[1]);
     rankEl.innerHTML = ranking.length
       ? ranking.map(([nome, valor]) => `<li><span style="font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px" title="${nome}">${nome}</span><span style="font-weight:800;color:var(--accent)">${fmtMoney(valor)}</span></li>`).join('')
+      : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li>';
+  }
+
+  // Ranking por Tipo de Contas — mesmo padrão, agrupado pelo campo de
+  // agrupamento contábil ("Grupo Tipo de Contas")
+  const rankTcEl = document.getElementById('finRankTipoContas');
+  if (rankTcEl) {
+    const rankingTc = Object.entries(tiposContas).sort((a, b) => b[1] - a[1]);
+    rankTcEl.innerHTML = rankingTc.length
+      ? rankingTc.map(([nome, valor]) => `<li><span style="font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px" title="${nome}">${nome}</span><span style="font-weight:800;color:var(--accent)">${fmtMoney(valor)}</span></li>`).join('')
       : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li>';
   }
 
@@ -3270,7 +3268,7 @@ function orcComputeRealizado(ano){
   const colData  = findCol(headers, ['data','date','vencimento','competencia','lan']);
   const colValor = findCol(headers, ['valor','value','montante','total','vl ','vlr','preco','price']);
   const colTipo  = findCol(headers, ['tipo','type','natureza','classificacao']);
-  const colCat   = findCol(headers, ['plano de contas','plano','categoria','tipo lancamento','natureza','descricao','historico','servico','produto']);
+  const colCat   = finColCategoria(headers);
   const colDesc  = findCol(headers, ['descricao','historico','memo','obs','description','lancamento','servico','produto']);
 
   financeiroData.forEach(row => {
@@ -3523,7 +3521,7 @@ function manComputeDados(ano){
   const colData  = findCol(headers, ['data','date','vencimento','competencia','lan']);
   const colValor = findCol(headers, ['valor','value','montante','total','vl ','vlr','preco','price']);
   const colTipo  = findCol(headers, ['tipo','type','natureza','classificacao']);
-  const colCat   = findCol(headers, ['plano de contas','plano','categoria','tipo lancamento','natureza','descricao','historico','servico','produto']);
+  const colCat   = finColCategoria(headers);
   const colDesc  = findCol(headers, ['descricao','historico','memo','obs','description','lancamento','servico','produto']);
   const colPlaca = findCol(headers, ['placa','veiculo','veículo','cavalo','carreta','equipamento','identificacao','identificação','frota']);
 
