@@ -476,6 +476,16 @@ footer a{color:var(--accent);text-decoration:none;}
 
 /* Charts */
 .charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.4rem;margin-bottom:1.4rem;}
+.fin-charts-row{display:flex;flex-wrap:wrap;gap:1.4rem;margin-bottom:1.4rem;align-items:stretch;}
+.fin-rank-col{flex:1 1 440px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.4rem;align-content:start;}
+.fin-pie-col{flex:1 1 440px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.4rem;align-content:start;}
+.fin-col-cfg-btn{float:right;background:none;border:none;color:var(--text-lt);cursor:pointer;font-size:.78rem;padding:0 .15rem;line-height:1;}
+.fin-col-cfg-btn:hover{color:var(--accent);}
+.fin-col-cfg-pop{background:#fff;border:1px solid var(--gray-200);border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.18);padding:.4rem;max-height:320px;overflow:auto;z-index:9999;min-width:220px;font-size:.82rem;}
+.fin-col-cfg-pop-hdr{font-weight:700;margin:.15rem .4rem .4rem;color:var(--text);}
+.fin-col-cfg-opt{padding:.35rem .5rem;border-radius:6px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fin-col-cfg-opt:hover{background:var(--gray-100);}
+.fin-col-cfg-opt.active{background:var(--accent);color:#fff;font-weight:700;}
 
 /* Calculadora */
 .calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;}
@@ -916,12 +926,16 @@ footer a{color:var(--accent);text-decoration:none;}
               <button class="btn btn-success btn-sm" onclick="exportCSV(currentFinanceiroFiltered,'financeiro')"><i class="fas fa-download"></i> CSV</button>
             </div>
           </div>
-          <div class="charts-grid">
-            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-layer-group"></i> Ranking por Tipo de Contas</div><ol class="rank-list" id="finRankTipoContas"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
-            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-building"></i> Ranking por Local</div><ol class="rank-list" id="finRankLocal"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
-            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-tags"></i> Ranking por Tipo de Local</div><ol class="rank-list" id="finRankTipoLocal"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
-            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-pie"></i> Por Categoria (Tipo de Local)</div><div class="chart-box" style="height:230px"><canvas id="finPieChart" height="180"></canvas></div></div>
-            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-bar"></i> Gráfico — Top 10 Locais por Valor</div><div class="chart-box" style="height:260px"><canvas id="finBarLocalChart" height="220"></canvas></div></div>
+          <div class="fin-charts-row">
+            <div class="fin-rank-col">
+              <div class="dash-card"><div class="dash-card-title"><i class="fas fa-layer-group"></i> Ranking por Tipo de Contas</div><ol class="rank-list" id="finRankTipoContas"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
+              <div class="dash-card"><div class="dash-card-title"><i class="fas fa-building"></i> Ranking por Local<button type="button" class="fin-col-cfg-btn" onclick="finConfigLocalCol(event)" title="Selecionar qual coluna da planilha representa o Local"><i class="fas fa-cog"></i></button></div><ol class="rank-list" id="finRankLocal"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
+              <div class="dash-card"><div class="dash-card-title"><i class="fas fa-tags"></i> Ranking por Tipo de Local</div><ol class="rank-list" id="finRankTipoLocal"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
+            </div>
+            <div class="fin-pie-col">
+              <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-pie"></i> Por Categoria (Tipo de Local)</div><div class="chart-box" style="height:260px"><canvas id="finPieChart" height="220"></canvas></div></div>
+              <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-pie"></i> Top 10 Locais por Valor</div><div class="chart-box" style="height:260px"><canvas id="finBarLocalChart" height="220"></canvas></div></div>
+            </div>
           </div>
           <div class="dash-card">
             <div class="dash-card-title"><i class="fas fa-table"></i> Lançamentos <span id="finCount" style="background:var(--gray-100);padding:.15rem .6rem;border-radius:30px;font-size:.75rem;margin-left:.5rem"></span></div>
@@ -1920,7 +1934,49 @@ function finColTipoContas(headers) {
 // Coluna de "Local" — na planilha isso representa a EMPRESA do lançamento
 // (não localização geográfica/região/cidade).
 function finColLocal(headers) {
-  return findCol(headers, ['local', 'empresa']);
+  const override = localStorage.getItem('finColLocalOverride');
+  if (override && headers.includes(override)) return override;
+  return findCol(headers, ['local', 'empresa', 'fornecedor', 'favorecido', 'beneficiario', 'praca', 'razao social', 'nome fornecedor', 'nome do fornecedor', 'unidade', 'filial', 'pago a', 'recebido de', 'credor', 'cliente']);
+}
+
+// Permite ao usuário forçar manualmente qual coluna da planilha deve ser
+// tratada como "Local" (fornecedor/praça/empresa), para quando o nome real
+// da coluna não bate com nenhuma palavra-chave do auto-detect acima. A
+// escolha fica salva no localStorage (finColLocalOverride) e tem prioridade
+// sobre a detecção automática — mesmo padrão já usado para "Tipo de Contas".
+function finConfigLocalCol(ev) {
+  if (ev) ev.stopPropagation();
+  document.querySelectorAll('.fin-col-cfg-pop').forEach(p => p.remove());
+  if (!financeiroData.length) return;
+  const headers = Object.keys(financeiroData[0]);
+  const atual = localStorage.getItem('finColLocalOverride') || finColLocal(headers) || '';
+  const btn = ev ? ev.currentTarget : null;
+  const pop = document.createElement('div');
+  pop.className = 'fin-col-cfg-pop';
+  pop.innerHTML = '<div class="fin-col-cfg-pop-hdr">Coluna usada como "Local":</div>'
+    + headers.map(h => `<div class="fin-col-cfg-opt${h === atual ? ' active' : ''}" data-col="${h.replace(/"/g, '&quot;')}">${h}</div>`).join('')
+    + '<div class="fin-col-cfg-opt" style="color:var(--danger)" data-col="">— Detectar automaticamente —</div>';
+  document.body.appendChild(pop);
+  pop.querySelectorAll('.fin-col-cfg-opt').forEach(opt => {
+    opt.addEventListener('click', () => finSetColLocal(opt.getAttribute('data-col')));
+  });
+  if (btn) {
+    const rect = btn.getBoundingClientRect();
+    pop.style.position = 'fixed';
+    pop.style.top = (rect.bottom + 4) + 'px';
+    pop.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - pop.offsetWidth - 12)) + 'px';
+  }
+  setTimeout(() => {
+    document.addEventListener('click', function closeOnClickOutside(e) {
+      if (!pop.contains(e.target)) { pop.remove(); document.removeEventListener('click', closeOnClickOutside, true); }
+    }, true);
+  }, 0);
+}
+function finSetColLocal(nome) {
+  if (nome) localStorage.setItem('finColLocalOverride', nome);
+  else localStorage.removeItem('finColLocalOverride');
+  document.querySelectorAll('.fin-col-cfg-pop').forEach(p => p.remove());
+  applyFinFilters();
 }
 
 // Classifica o nome bruto da coluna "Local" (fornecedor/praça/empresa do
@@ -3269,21 +3325,20 @@ function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLoca
     options: {responsive:true, plugins:{legend:{position:'right'}}}
   });
 
-  // Barra horizontal — Top 10 Locais (fornecedores/praças) por valor
+  // Pizza — Top 10 Locais (fornecedores/praças) por valor
   if (finBarLocalChartObj) finBarLocalChartObj.destroy();
   const barLocalEl = document.getElementById('finBarLocalChart');
   if (barLocalEl) {
     const top10Locais = Object.entries(locais).sort((a, b) => b[1] - a[1]).slice(0, 10);
     finBarLocalChartObj = new Chart(barLocalEl.getContext('2d'), {
-      type: 'bar',
+      type: 'pie',
       data: {
         labels: top10Locais.map(([nome]) => nome),
-        datasets: [{ label: 'Valor', data: top10Locais.map(([, valor]) => valor), backgroundColor: 'rgba(212,175,55,.85)' }]
+        datasets: [{ data: top10Locais.map(([, valor]) => valor), backgroundColor: ['#d4af37','#8B7355','#10b981','#ef4444','#3b82f6','#f59e0b','#8b5cf6','#06b6d4','#84cc16','#f97316'] }]
       },
       options: {
-        indexAxis: 'y', responsive: true,
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmtMoney(c.raw) } } },
-        scales: { x: { beginAtZero: true, title: { display: true, text: 'R$' } } }
+        responsive: true,
+        plugins: { legend: { position: 'right' }, tooltip: { callbacks: { label: c => `${c.label}: ${fmtMoney(c.raw)}` } } }
       }
     });
   }
