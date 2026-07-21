@@ -476,11 +476,23 @@ footer a{color:var(--accent);text-decoration:none;}
 
 /* Charts */
 .charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.4rem;margin-bottom:1.4rem;}
-.fin-charts-row{display:flex;flex-wrap:wrap;gap:1.4rem;margin-bottom:1.4rem;align-items:stretch;}
-.fin-rank-col{flex:1 1 440px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.4rem;align-content:start;}
-.fin-pie-col{flex:1 1 440px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.4rem;align-content:start;}
-.fin-col-cfg-btn{float:right;background:none;border:none;color:var(--text-lt);cursor:pointer;font-size:.78rem;padding:0 .15rem;line-height:1;}
-.fin-col-cfg-btn:hover{color:var(--accent);}
+.fin-charts-row{display:flex;flex-wrap:wrap;gap:1.4rem;margin-bottom:1.4rem;align-items:stretch;min-width:0;}
+.fin-rank-col{flex:1 1 420px;min-width:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1.2rem;align-content:start;}
+.fin-pie-col{flex:1 1 420px;min-width:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1.2rem;align-content:start;}
+.fin-rank-col .dash-card,.fin-pie-col .dash-card{min-width:0;transition:box-shadow .2s,transform .2s;}
+.fin-rank-col .dash-card:hover,.fin-pie-col .dash-card:hover{box-shadow:0 8px 24px rgba(0,0,0,.09);transform:translateY(-2px);}
+.fin-rank-col .rank-list{max-height:340px;overflow-y:auto;padding-right:.2rem;}
+.fin-rank-col .rank-list::-webkit-scrollbar{width:6px;}
+.fin-rank-col .rank-list::-webkit-scrollbar-thumb{background:var(--gray-200);border-radius:10px;}
+@media (max-width:1100px){
+  .fin-rank-col,.fin-pie-col{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));}
+}
+@media (max-width:640px){
+  .fin-charts-row{gap:1rem;}
+  .fin-rank-col,.fin-pie-col{grid-template-columns:1fr;}
+}
+.fin-col-cfg-btn{margin-left:auto;background:none;border:none;color:var(--text-lt);cursor:pointer;font-size:.78rem;padding:.15rem .3rem;line-height:1;border-radius:6px;}
+.fin-col-cfg-btn:hover{color:var(--accent);background:var(--gray-100);}
 .fin-col-cfg-pop{background:#fff;border:1px solid var(--gray-200);border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.18);padding:.4rem;max-height:320px;overflow:auto;z-index:9999;min-width:220px;font-size:.82rem;}
 .fin-col-cfg-pop-hdr{font-weight:700;margin:.15rem .4rem .4rem;color:var(--text);}
 .fin-col-cfg-opt{padding:.35rem .5rem;border-radius:6px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -918,6 +930,7 @@ footer a{color:var(--accent);text-decoration:none;}
               <div class="flt-grp"><label>Data Início</label><input type="date" id="finDataInicio"></div>
               <div class="flt-grp"><label>Data Fim</label><input type="date" id="finDataFim"></div>
               <div class="flt-grp"><label>Mês</label><select id="finMes"><option value="">Todos</option><option value="0">Janeiro</option><option value="1">Fevereiro</option><option value="2">Março</option><option value="3">Abril</option><option value="4">Maio</option><option value="5">Junho</option><option value="6">Julho</option><option value="7">Agosto</option><option value="8">Setembro</option><option value="9">Outubro</option><option value="10">Novembro</option><option value="11">Dezembro</option></select></div>
+              <div class="flt-grp"><label>Ano</label><select id="finAno"><option value="">Todos</option></select></div>
               <div class="flt-grp"><label>Tipo</label><select id="finTipo"><option value="">Todos</option><option value="receita">Receita</option><option value="despesa">Despesa</option></select></div>
               <div class="flt-grp"><label>Categoria</label><select id="finCategoria"><option value="">Todas</option></select></div>
               <div class="flt-grp"><label>Buscar</label><input type="text" id="finBusca" placeholder="Descrição..."></div>
@@ -926,14 +939,15 @@ footer a{color:var(--accent);text-decoration:none;}
               <button class="btn btn-success btn-sm" onclick="exportCSV(currentFinanceiroFiltered,'financeiro')"><i class="fas fa-download"></i> CSV</button>
             </div>
           </div>
+          <div id="finDiagnostico" style="display:none;margin-bottom:1rem"></div>
           <div class="fin-charts-row">
             <div class="fin-rank-col">
               <div class="dash-card"><div class="dash-card-title"><i class="fas fa-layer-group"></i> Ranking por Tipo de Contas</div><ol class="rank-list" id="finRankTipoContas"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
               <div class="dash-card"><div class="dash-card-title"><i class="fas fa-building"></i> Ranking por Local<button type="button" class="fin-col-cfg-btn" onclick="finConfigLocalCol(event)" title="Selecionar qual coluna da planilha representa o Local"><i class="fas fa-cog"></i></button></div><ol class="rank-list" id="finRankLocal"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
-              <div class="dash-card"><div class="dash-card-title"><i class="fas fa-tags"></i> Ranking por Tipo de Local</div><ol class="rank-list" id="finRankTipoLocal"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
+              <div class="dash-card"><div class="dash-card-title"><i class="fas fa-filter"></i> Ranking por Empresa (Categoria filtrada)</div><ol class="rank-list" id="finRankTipoLocal"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
             </div>
             <div class="fin-pie-col">
-              <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-pie"></i> Por Categoria (Tipo de Local)</div><div class="chart-box" style="height:260px"><canvas id="finPieChart" height="220"></canvas></div></div>
+              <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-pie"></i> Por Tipo de Contas</div><div class="chart-box" style="height:260px"><canvas id="finPieChart" height="220"></canvas></div></div>
               <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-pie"></i> Top 10 Locais por Valor</div><div class="chart-box" style="height:260px"><canvas id="finBarLocalChart" height="220"></canvas></div></div>
             </div>
           </div>
@@ -1936,7 +1950,19 @@ function finColTipoContas(headers) {
 function finColLocal(headers) {
   const override = localStorage.getItem('finColLocalOverride');
   if (override && headers.includes(override)) return override;
-  return findCol(headers, ['local', 'empresa', 'fornecedor', 'favorecido', 'beneficiario', 'praca', 'razao social', 'nome fornecedor', 'nome do fornecedor', 'unidade', 'filial', 'pago a', 'recebido de', 'credor', 'cliente']);
+  // Prioridade: match exato (ignorando acento/caixa) com os nomes de coluna
+  // já confirmados na planilha real ("EMPRESA"), antes de cair no
+  // substring genérico abaixo.
+  const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  // "empresa" tem prioridade sobre "local": numa planilha que tenha as duas
+  // colunas (ex.: "Empresa" = fornecedor real e "Local" = cidade/praça), o
+  // ranking deve agrupar pela EMPRESA, não pela primeira que aparecer na
+  // ordem das colunas da planilha.
+  const exatoEmpresa = headers.find(h => norm(h) === 'empresa');
+  if (exatoEmpresa) return exatoEmpresa;
+  const exatoLocal = headers.find(h => norm(h) === 'local');
+  if (exatoLocal) return exatoLocal;
+  return findCol(headers, ['empresa', 'fornecedor', 'favorecido', 'beneficiario', 'razao social', 'nome fornecedor', 'nome do fornecedor', 'pago a', 'recebido de', 'credor', 'cliente', 'local', 'praca', 'unidade', 'filial']);
 }
 
 // Permite ao usuário forçar manualmente qual coluna da planilha deve ser
@@ -1977,6 +2003,32 @@ function finSetColLocal(nome) {
   else localStorage.removeItem('finColLocalOverride');
   document.querySelectorAll('.fin-col-cfg-pop').forEach(p => p.remove());
   applyFinFilters();
+}
+
+// Painel sempre visível mostrando exatamente o que a aplicação está
+// enxergando na planilha carregada: os cabeçalhos reais, um valor de
+// exemplo de cada um (de uma linha com conteúdo) e qual coluna foi
+// escolhida para Categoria / Tipo de Contas / Local. Existe para o
+// próprio usuário conferir e corrigir sem precisar de acesso externo à
+// planilha — resolve o mesmo tipo de divergência de nomes de coluna que
+// o diagnóstico de Faturamento resolve para nomes de motorista.
+function finRenderDiagnostico(headers, data, cols) {
+  const el = document.getElementById('finDiagnostico');
+  if (!el) return;
+  const amostra = data.find(r => headers.some(h => String(r[h] || '').trim())) || data[0] || {};
+  const linha = (nome) => {
+    if (!nome) return '<span style="color:var(--danger)">— não encontrada —</span>';
+    const v = String(amostra[nome] ?? '').trim();
+    return `<b>${nome}</b> <span style="color:var(--text-lt)">(ex.: "${v ? v.slice(0, 40) : 'vazio'}")</span>`;
+  };
+  let html = '<div class="dash-card" style="border:1px solid var(--gray-200)">';
+  html += '<div class="dash-card-title"><i class="fas fa-magnifying-glass"></i> Diagnóstico de colunas — Financeiro</div>';
+  html += `<p style="font-size:.82rem;margin:.2rem 0 .5rem"><b>Categoria:</b> ${linha(cols.colCat)} &nbsp;|&nbsp; <b>Tipo de Contas:</b> ${linha(cols.colTipoContas)} &nbsp;|&nbsp; <b>Local:</b> ${linha(cols.colLocal)}</p>`;
+  html += '<p style="font-size:.8rem;margin:.4rem 0 .3rem;color:var(--text-lt)">Todos os cabeçalhos encontrados na planilha (clique na engrenagem de "Ranking por Local" pra escolher outra coluna para Local):</p>';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:.4rem">' + headers.map(h => `<span style="background:var(--gray-100);border-radius:20px;padding:.2rem .7rem;font-size:.78rem" title="ex.: ${String(amostra[h] ?? '').trim().replace(/"/g,'&quot;')}">${h}</span>`).join('') + '</div>';
+  html += '</div>';
+  el.innerHTML = html;
+  el.style.display = 'block';
 }
 
 // Classifica o nome bruto da coluna "Local" (fornecedor/praça/empresa do
@@ -3139,6 +3191,19 @@ function popularFiltroCategoria(rows) {
   const sel = document.getElementById('finCategoria');
   sel.innerHTML = '<option value="">Todas</option>';
   [...cats].sort().forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o); });
+
+  // Anos presentes na planilha, pra permitir combinar com o filtro de Mês
+  // (sem isso, "Mês" sozinho misturava dados de anos diferentes).
+  const colData = findCol(headers, ['data','date','vencimento','competencia','lan']);
+  const anos = new Set();
+  if (colData) rows.forEach(r => { const d = parseDate(r[colData]); if (d) anos.add(d.getFullYear()); });
+  const anoSel = document.getElementById('finAno');
+  if (anoSel) {
+    const anoAtual = anoSel.value;
+    anoSel.innerHTML = '<option value="">Todos</option>';
+    [...anos].sort((a, b) => b - a).forEach(a => { const o = document.createElement('option'); o.value = a; o.textContent = a; anoSel.appendChild(o); });
+    if ([...anos].some(a => String(a) === anoAtual)) anoSel.value = anoAtual;
+  }
 }
 
 function applyFinFilters() {
@@ -3155,10 +3220,14 @@ function applyFinFilters() {
   const overrideTC = localStorage.getItem('finColTipoContasOverride');
   const colTipoContas = (overrideTC && headers.includes(overrideTC)) ? overrideTC : finColTipoContas(headers);
 
+  finRenderDiagnostico(headers, financeiroData, { colCat, colTipoContas, colLocal, colValor, colDesc });
+
   const dIni  = document.getElementById('finDataInicio').value;
   const dFim  = document.getElementById('finDataFim').value;
   const mesEl = document.getElementById('finMes');
   const mes   = mesEl ? mesEl.value : '';
+  const anoEl = document.getElementById('finAno');
+  const ano   = anoEl ? anoEl.value : '';
   const tipo  = document.getElementById('finTipo').value.toLowerCase();
   const cat   = document.getElementById('finCategoria').value;
   const busca = document.getElementById('finBusca').value.toLowerCase();
@@ -3171,11 +3240,14 @@ function applyFinFilters() {
       if (dIni && d < new Date(dIni + 'T00:00:00')) return false;
       if (dFim && d > new Date(dFim + 'T23:59:59')) return false;
     }
-    // Filtro mês (independe do ano, ignora dados sem data reconhecível)
-    if (colData && mes !== '') {
+    // Filtro mês + ano (se um Ano específico estiver selecionado, o mês só
+    // bate dentro daquele ano; sem Ano selecionado, continua pegando o mês
+    // em qualquer ano — mesmo comportamento de antes, agora opcional)
+    if (colData && (mes !== '' || ano !== '')) {
       const d = parseDate(row[colData]);
       if (!d) return false;
-      if (d.getMonth() !== Number(mes)) return false;
+      if (mes !== '' && d.getMonth() !== Number(mes)) return false;
+      if (ano !== '' && d.getFullYear() !== Number(ano)) return false;
     }
     // Filtro tipo (receita/despesa)
     if (tipo) {
@@ -3227,7 +3299,7 @@ function applyFinFilters() {
   // Tabela — respeita o filtro de Categoria normalmente
   renderFinTable(filtered, headers, colData, colDesc, colValor, colTipo, colCat);
   // Gráficos/Rankings — sempre a distribuição inteira do período (data/tipo/busca), ignorando a Categoria selecionada
-  renderFinCharts(filteredPeriodo, colValor, colCat, colDesc, colTipoContas, colLocal, headers);
+  renderFinCharts(filteredPeriodo, colValor, colCat, colDesc, colTipoContas, colLocal, filtered);
 
   document.getElementById('finLoading').style.display = 'none';
   document.getElementById('finTableWrap').style.display = 'block';
@@ -3252,21 +3324,23 @@ function renderFinTable(data, headers, colData, colDesc, colValor, colTipo, colC
   }).join('');
 }
 
-// Agrega por Categoria/Plano de Contas, por Tipo de Contas, por Local e
-// por Tipo de Local (classificação derivada do nome do Local via
-// finClassificarTipoLocal). Usa finValorLinha para funcionar mesmo quando
-// não existe coluna "Valor" própria. colTipoContas é o agrupamento
-// contábil mais amplo ("Grupo Tipo de Contas") e colLocal é a
-// praça/filial/fornecedor do lançamento; todos renderizados em cards de
-// ranking separados, respeitando os mesmos filtros (data/mês/tipo/
-// categoria/busca) já aplicados em applyFinFilters. O gráfico "Por
-// Categoria" usa a distribuição por Tipo de Local (em vez de duplicar a
-// mesma coluna já exibida na lista "Ranking por Tipo de Contas").
-function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLocal) {
+// Agrega por Categoria/Plano de Contas, por Tipo de Contas e por Local
+// (Empresa) — usando finValorLinha pra funcionar mesmo quando não existe
+// coluna "Valor" própria. colTipoContas é o agrupamento contábil mais
+// amplo ("Tipo de Conta") e colLocal é a empresa/fornecedor do
+// lançamento. "Ranking por Tipo de Contas" e "Ranking por Local" sempre
+// usam a distribuição inteira do período (parâmetro `data`, que ignora a
+// Categoria selecionada — ver comentário em applyFinFilters). Já
+// "Ranking por Empresa (Categoria filtrada)" usa `dataFiltrada`, que
+// respeita o filtro de Categoria/Tipo/Busca/Data ativo — é ele que
+// responde quando o usuário filtra por uma Categoria específica. Nada
+// aqui usa classificação por palavra-chave: tudo vem direto das colunas
+// reais da planilha (TIPO DE CONTA / EMPRESA), conforme o valor digitado
+// nelas.
+function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLocal, dataFiltrada) {
   const cats = {};
   const tiposContas = {};
   const locais = {};
-  const tiposLocal = {};
   data.forEach(row => {
     const v = finValorLinha(row, colValor, colCat, colDesc);
     const t = colCat ? String(row[colCat] || '').trim() : '';
@@ -3274,24 +3348,32 @@ function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLoca
     const tc = colTipoContas ? String(row[colTipoContas] || '').trim() : '';
     if (tc) tiposContas[tc] = (tiposContas[tc] || 0) + Math.abs(v);
     const lc = colLocal ? String(row[colLocal] || '').trim() : '';
-    if (lc) {
-      locais[lc] = (locais[lc] || 0) + Math.abs(v);
-      const tl = finClassificarTipoLocal(lc);
-      tiposLocal[tl] = (tiposLocal[tl] || 0) + Math.abs(v);
-    }
+    if (lc) locais[lc] = (locais[lc] || 0) + Math.abs(v);
+  });
+
+  // Ranking por Empresa dentro da Categoria filtrada — respeita o filtro
+  // ativo (diferente do ranking "por Local" acima, que é sempre o
+  // período inteiro). É este ranking que muda quando o usuário escolhe
+  // uma Categoria no filtro.
+  const locaisFiltro = {};
+  (dataFiltrada || []).forEach(row => {
+    const v = finValorLinha(row, colValor, colCat, colDesc);
+    const lc = colLocal ? String(row[colLocal] || '').trim() : '';
+    if (lc) locaisFiltro[lc] = (locaisFiltro[lc] || 0) + Math.abs(v);
   });
 
   // Ranking por Tipo de Contas — lista ordenada da maior para a menor,
   // agrupado pelo campo de agrupamento contábil ("Grupo Tipo de Contas")
   const rankTcEl = document.getElementById('finRankTipoContas');
+  const rankingTc = Object.entries(tiposContas).sort((a, b) => b[1] - a[1]);
   if (rankTcEl) {
-    const rankingTc = Object.entries(tiposContas).sort((a, b) => b[1] - a[1]);
     rankTcEl.innerHTML = rankingTc.length
       ? rankingTc.map(([nome, valor]) => `<li><span style="font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px" title="${nome}">${nome}</span><span style="font-weight:800;color:var(--accent)">${fmtMoney(valor)}</span></li>`).join('')
       : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li>';
   }
 
-  // Ranking por Local — mesmo padrão, agrupado pela praça/filial/fornecedor
+  // Ranking por Local — mesmo padrão, agrupado pela empresa/fornecedor,
+  // sempre o período inteiro (ignora a Categoria selecionada)
   const rankLocalEl = document.getElementById('finRankLocal');
   if (rankLocalEl) {
     const rankingLocal = Object.entries(locais).sort((a, b) => b[1] - a[1]);
@@ -3300,32 +3382,31 @@ function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLoca
       : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li>';
   }
 
-  // Ranking por Tipo de Local — agrupado pela classificação derivada
-  // (Postos & Combustível, Pneus & Borracharia, Refrigeração, etc.)
+  // Ranking por Empresa (Categoria filtrada) — atualiza conforme o filtro
+  // de Categoria escolhido em cima
   const rankTipoLocalEl = document.getElementById('finRankTipoLocal');
-  const rankingTipoLocal = Object.entries(tiposLocal).sort((a, b) => b[1] - a[1]);
+  const rankingLocaisFiltro = Object.entries(locaisFiltro).sort((a, b) => b[1] - a[1]);
   if (rankTipoLocalEl) {
-    rankTipoLocalEl.innerHTML = rankingTipoLocal.length
-      ? rankingTipoLocal.map(([nome, valor]) => `<li><span style="font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px" title="${nome}">${nome}</span><span style="font-weight:800;color:var(--accent)">${fmtMoney(valor)}</span></li>`).join('')
+    rankTipoLocalEl.innerHTML = rankingLocaisFiltro.length
+      ? rankingLocaisFiltro.map(([nome, valor]) => `<li><span style="font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px" title="${nome}">${nome}</span><span style="font-weight:800;color:var(--accent)">${fmtMoney(valor)}</span></li>`).join('')
       : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li>';
   }
 
-  // Pie "Por Categoria" — agora mostra a distribuição por Tipo de Local,
-  // já que a coluna de Categoria/Tipo de Contas já aparece na lista acima
-  // (evita duplicar exatamente a mesma informação em dois cards)
+  // Pie "Por Categoria" — distribuição real por Tipo de Contas (coluna da
+  // planilha), período inteiro
   if (finPieChartObj) finPieChartObj.destroy();
-  const tipoLocalKeys = rankingTipoLocal.slice(0, 10).map(([nome]) => nome);
+  const top10TipoContas = rankingTc.slice(0, 10);
   const ctxPie = document.getElementById('finPieChart').getContext('2d');
   finPieChartObj = new Chart(ctxPie, {
     type: 'doughnut',
     data: {
-      labels: tipoLocalKeys,
-      datasets: [{data: tipoLocalKeys.map(k => tiposLocal[k]), backgroundColor:['#d4af37','#8B7355','#10b981','#ef4444','#3b82f6','#f59e0b','#8b5cf6','#06b6d4','#84cc16','#f97316']}]
+      labels: top10TipoContas.map(([nome]) => nome),
+      datasets: [{data: top10TipoContas.map(([, valor]) => valor), backgroundColor:['#d4af37','#8B7355','#10b981','#ef4444','#3b82f6','#f59e0b','#8b5cf6','#06b6d4','#84cc16','#f97316']}]
     },
     options: {responsive:true, plugins:{legend:{position:'right'}}}
   });
 
-  // Pizza — Top 10 Locais (fornecedores/praças) por valor
+  // Pizza — Top 10 Locais (fornecedores/praças) por valor, período inteiro
   if (finBarLocalChartObj) finBarLocalChartObj.destroy();
   const barLocalEl = document.getElementById('finBarLocalChart');
   if (barLocalEl) {
@@ -3346,7 +3427,7 @@ function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLoca
 
 function resetFinFilters() {
   ['finDataInicio','finDataFim','finBusca'].forEach(id => document.getElementById(id).value = '');
-  ['finTipo','finCategoria','finMes'].forEach(id => document.getElementById(id).selectedIndex = 0);
+  ['finTipo','finCategoria','finMes','finAno'].forEach(id => document.getElementById(id).selectedIndex = 0);
   applyFinFilters();
 }
 
