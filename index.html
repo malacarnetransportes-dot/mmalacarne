@@ -1203,12 +1203,22 @@ footer a{color:var(--accent);text-decoration:none;}
           <div class="dash-card" id="batRankingCard" style="display:none">
             <div class="man-body" style="padding:0">
               <div>
-                <div class="dash-card-title" style="margin-bottom:.5rem"><i class="fas fa-industry"></i> Ranking por Marca</div>
+                <div class="dash-card-title" style="margin-bottom:.5rem"><i class="fas fa-battery-half"></i> Ranking por Modelo de Bateria</div>
                 <ol class="rank-list" id="batRankMarca"></ol>
               </div>
               <div>
-                <div class="dash-card-title" style="margin-bottom:.5rem"><i class="fas fa-hourglass-half"></i> Ranking por Tempo (mais antiga primeiro)</div>
-                <ol class="rank-list" id="batRankTempo"></ol>
+                <div class="dash-card-title" style="margin-bottom:.5rem"><i class="fas fa-hourglass-half"></i> Tempo Médio por Modelo — 5 Melhores x 5 Piores</div>
+                <div id="batTempoNota" style="font-size:.72rem;color:var(--text-lt);margin-bottom:.5rem"></div>
+                <div class="man-best-worst" style="margin-top:0">
+                  <div class="man-bw-box best">
+                    <div class="man-bw-title best"><i class="fas fa-trophy"></i> Melhores (maior duração média)</div>
+                    <div id="batTempoMelhores"></div>
+                  </div>
+                  <div class="man-bw-box worst">
+                    <div class="man-bw-title worst"><i class="fas fa-triangle-exclamation"></i> Piores (menor duração média)</div>
+                    <div id="batTempoPiores"></div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1294,7 +1304,8 @@ footer a{color:var(--accent);text-decoration:none;}
 
           <!-- Cadastrar novo motorista/veículo -->
           <div class="dash-card" style="margin-bottom:1.4rem">
-            <div class="dash-card-title"><i class="fas fa-user-plus"></i> Agregar Motorista / Veículo à Frota</div>
+            <div class="dash-card-title" id="frotaFormTitulo"><i class="fas fa-user-plus"></i> Agregar Motorista / Veículo à Frota</div>
+            <div style="font-size:.75rem;color:var(--text-lt);margin-bottom:.6rem">Cadastre um veículo novo ou clique em "Editar" num card/linha da tabela abaixo pra completar dados que estejam faltando (marca, modelo, ano, celular, CPF...).</div>
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.7rem">
               <div class="flt-grp"><label>Motorista</label><input type="text" id="frotaNovoMotorista" placeholder="Nome completo"></div>
               <div class="flt-grp"><label>Placa Cavalo *</label><input type="text" id="frotaNovoPlaca" placeholder="Ex: RYE7J26" style="text-transform:uppercase"></div>
@@ -1314,7 +1325,10 @@ footer a{color:var(--accent);text-decoration:none;}
               <div class="flt-grp"><label>Celular</label><input type="text" id="frotaNovoCelular" placeholder="Ex: 49 - 99999-9999"></div>
               <div class="flt-grp"><label>CPF</label><input type="text" id="frotaNovoCpf" placeholder="Ex: 000.000.000-00"></div>
             </div>
-            <div style="margin-top:.9rem"><button class="btn btn-primary" onclick="frotaExtraAdd()"><i class="fas fa-plus"></i> Adicionar à Frota</button></div>
+            <div style="margin-top:.9rem;display:flex;gap:.6rem">
+              <button class="btn btn-primary" id="frotaSalvarBtn" onclick="frotaExtraAdd()"><i class="fas fa-plus"></i> Adicionar à Frota</button>
+              <button class="btn btn-gray" id="frotaCancelarBtn" style="display:none" onclick="frotaEditarCancelar()"><i class="fas fa-times"></i> Cancelar edição</button>
+            </div>
           </div>
 
           <!-- Cards de motoristas -->
@@ -5303,7 +5317,8 @@ function aplicarFiltrosBaterias() {
   const headers = Object.keys(bateriasData[0]);
   const colVeiculo = findCol(headers, ['veiculo','placa','caminhao','carro','cavalo','truck','frota']);
   const colData    = findCol(headers, ['vencimento','data','validade','troca','substituicao','proxima']);
-  const colMarca   = findCol(headers, ['marca','fabricante']);
+  const colModelo  = findCol(headers, ['modelo bateria','modelo','tipo bateria','tipo']);
+  const colInstalacao = findCol(headers.filter(h => h !== colData), ['instalacao','instalação','compra','aquisicao','aquisição','fabricacao','fabricação','emissao','emissão','anterior','data inicial']);
 
   const now = new Date(); now.setHours(0,0,0,0);
   const em30 = new Date(now); em30.setDate(em30.getDate()+30);
@@ -5398,7 +5413,7 @@ function aplicarFiltrosBaterias() {
     return `<tr>${cells}<td><span class="badge ${badgeClass}">${statusLabel}</span></td></tr>`;
   }).join('');
 
-  batRenderRankings(dedupedData, colVeiculo, colData, colMarca, now);
+  batRenderRankings(dedupedData, colVeiculo, colData, colModelo, colInstalacao, now);
 
   document.getElementById('batLoading').style.display = 'none';
   document.getElementById('batTableWrap').style.display = 'block';
@@ -5407,59 +5422,86 @@ function aplicarFiltrosBaterias() {
 // Ranking por Marca (quantidade e vencidas por fabricante) e Ranking por
 // Tempo (da bateria mais antiga/vencida há mais tempo para a mais nova),
 // cruzando o CSV de Baterias com o próprio CSV (sem depender da Frota).
-function batRenderRankings(dedupedData, colVeiculo, colData, colMarca, now){
+function batRenderRankings(dedupedData, colVeiculo, colData, colModelo, colInstalacao, now){
   const card = document.getElementById('batRankingCard');
   if (!dedupedData.length) { card.style.display = 'none'; return; }
 
-  // Ranking por marca
-  let marcaList = [];
-  if (colMarca) {
-    const porMarca = {};
+  // Ranking por modelo (quantidade cadastrada de cada modelo de bateria + vencidas)
+  let modeloList = [];
+  if (colModelo) {
+    const porModelo = {};
     dedupedData.forEach(row => {
-      const marca = String(row[colMarca] || 'Não identificado').trim().toUpperCase() || 'Não identificado';
+      const modelo = String(row[colModelo] || 'Não identificado').trim().toUpperCase() || 'Não identificado';
       const dVenc = colData ? parseDate(row[colData]) : null;
-      if (!porMarca[marca]) porMarca[marca] = { total:0, vencidas:0 };
-      porMarca[marca].total++;
-      if (dVenc && dVenc < now) porMarca[marca].vencidas++;
+      if (!porModelo[modelo]) porModelo[modelo] = { total:0, vencidas:0 };
+      porModelo[modelo].total++;
+      if (dVenc && dVenc < now) porModelo[modelo].vencidas++;
     });
-    marcaList = Object.entries(porMarca).sort((a,b) => b[1].total - a[1].total);
+    modeloList = Object.entries(porModelo).sort((a,b) => b[1].total - a[1].total);
   }
 
-  // Ranking por tempo: da bateria mais antiga (vencida há mais tempo / com
-  // vencimento mais próximo) para a mais recente.
-  const comData = dedupedData
-    .map(row => ({ veiculo: colVeiculo ? row[colVeiculo] : '—', dVenc: colData ? parseDate(row[colData]) : null }))
-    .filter(r => r.dVenc)
-    .sort((a,b) => a.dVenc - b.dVenc);
-
-  const tempoLabel = (dVenc) => {
-    const dias = Math.round((now - dVenc) / 86400000);
-    if (dias >= 0) {
-      if (dias < 30) return `Vencida há ${dias}d`;
-      if (dias < 365) return `Vencida há ${Math.round(dias/30)}m`;
-      return `Vencida há ${(dias/365).toFixed(1)}a`;
+  // Duração média por modelo. Se a planilha tiver data de instalação/troca
+  // anterior, calcula a vida útil real (vencimento - instalação). Se não
+  // tiver, usa como aproximação o tempo até o vencimento a partir de hoje
+  // (quanto maior, melhor a bateria está "durando").
+  const usaVidaUtilReal = !!colInstalacao;
+  const porModeloDuracao = {};
+  dedupedData.forEach(row => {
+    if (!colModelo) return;
+    const modelo = String(row[colModelo] || 'Não identificado').trim().toUpperCase() || 'Não identificado';
+    const dVenc = colData ? parseDate(row[colData]) : null;
+    if (!dVenc) return;
+    let dias;
+    if (usaVidaUtilReal) {
+      const dInst = parseDate(row[colInstalacao]);
+      if (!dInst) return;
+      dias = Math.round((dVenc - dInst) / 86400000);
+      if (dias <= 0) return;
+    } else {
+      dias = Math.round((dVenc - now) / 86400000);
     }
-    const diasRest = -dias;
-    if (diasRest < 30) return `Vence em ${diasRest}d`;
-    if (diasRest < 365) return `Vence em ${Math.round(diasRest/30)}m`;
-    return `Vence em ${(diasRest/365).toFixed(1)}a`;
+    if (!porModeloDuracao[modelo]) porModeloDuracao[modelo] = { soma:0, qtd:0 };
+    porModeloDuracao[modelo].soma += dias;
+    porModeloDuracao[modelo].qtd++;
+  });
+
+  const fmtDias = (dias) => {
+    const abs = Math.abs(dias);
+    const txt = abs < 30 ? `${Math.round(abs)}d` : abs < 365 ? `${(abs/30).toFixed(1)}m` : `${(abs/365).toFixed(1)}a`;
+    return dias < 0 ? `-${txt}` : txt;
   };
 
-  const rankMarcaEl = document.getElementById('batRankMarca');
-  const rankTempoEl = document.getElementById('batRankTempo');
+  const mediasPorModelo = Object.entries(porModeloDuracao)
+    .map(([modelo, v]) => ({ modelo, media: v.soma / v.qtd, qtd: v.qtd }))
+    .filter(m => m.qtd > 0);
 
-  rankMarcaEl.innerHTML = marcaList.length ? marcaList.map(([marca, info]) => `
+  const ordenadoDesc = [...mediasPorModelo].sort((a,b) => b.media - a.media);
+  const melhores = ordenadoDesc.slice(0,5);
+  const piores = [...ordenadoDesc].reverse().slice(0,5);
+
+  const rankModeloEl = document.getElementById('batRankMarca');
+  const notaEl = document.getElementById('batTempoNota');
+  const melhoresEl = document.getElementById('batTempoMelhores');
+  const pioresEl = document.getElementById('batTempoPiores');
+
+  rankModeloEl.innerHTML = modeloList.length ? modeloList.map(([modelo, info]) => `
     <li>
-      <span style="font-weight:700;flex:1">${marca}</span>
+      <span style="font-weight:700;flex:1">${modelo}</span>
       <span style="font-size:.72rem;color:var(--danger)">${info.vencidas} vencida(s)</span>
       <span style="font-weight:800;color:var(--accent-dk);min-width:70px;text-align:right">${info.total} un.</span>
-    </li>`).join('') : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Cadastre a coluna "Marca" na planilha de Baterias para ver este ranking</li>';
+    </li>`).join('') : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Cadastre a coluna "Modelo" na planilha de Baterias para ver este ranking</li>';
 
-  rankTempoEl.innerHTML = comData.length ? comData.slice(0,20).map(r => `
-    <li>
-      <span style="font-weight:700;flex:1">${r.veiculo || '—'}</span>
-      <span style="font-weight:800;color:${r.dVenc < now ? 'var(--danger)' : 'var(--accent-dk)'};min-width:110px;text-align:right">${tempoLabel(r.dVenc)}</span>
-    </li>`).join('') : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem datas de vencimento cadastradas</li>';
+  notaEl.textContent = usaVidaUtilReal
+    ? 'Vida útil média = data de vencimento − data de instalação/troca anterior, por modelo.'
+    : 'Sem coluna de instalação na planilha: usando o tempo até o vencimento (a partir de hoje) como aproximação da duração, por modelo.';
+
+  melhoresEl.innerHTML = melhores.length ? melhores.map(m => `
+    <div class="man-bw-item"><span>${m.modelo} <span style="color:var(--text-lt)">(${m.qtd})</span></span><span>${fmtDias(m.media)}</span></div>`).join('')
+    : '<div class="man-bw-item">Sem dados suficientes</div>';
+
+  pioresEl.innerHTML = piores.length ? piores.map(m => `
+    <div class="man-bw-item"><span>${m.modelo} <span style="color:var(--text-lt)">(${m.qtd})</span></span><span>${fmtDias(m.media)}</span></div>`).join('')
+    : '<div class="man-bw-item">Sem dados suficientes</div>';
 
   card.style.display = 'block';
 }
@@ -6621,6 +6663,26 @@ function frotaExtraSaveAll(arr){
   frotaExtraGetAll().forEach(item => FROTA_DATA.push(item));
 })();
 
+// ── Complementos/edições de cadastros já existentes (base fixa do código) ──
+// "Agregar" também serve para COMPLETAR dados que faltam num motorista/
+// veículo já cadastrado (ex.: celular, CPF, marca/modelo/ano). Como os
+// registros base vêm de um array fixo no código, as edições ficam
+// guardadas à parte, por placa, e são aplicadas por cima ao carregar.
+const FROTA_OVERRIDES_KEY = 'malacarne_frota_overrides_v1';
+function frotaOverridesGetAll(){
+  try { return JSON.parse(localStorage.getItem(FROTA_OVERRIDES_KEY) || '{}'); } catch(e){ return {}; }
+}
+function frotaOverridesSaveAll(obj){
+  localStorage.setItem(FROTA_OVERRIDES_KEY, JSON.stringify(obj));
+}
+(function aplicarFrotaOverrides(){
+  const overrides = frotaOverridesGetAll();
+  FROTA_DATA.forEach(f => { if (!f._custom && overrides[f.placa]) Object.assign(f, overrides[f.placa]); });
+})();
+
+// Placa do registro em edição no momento (null = formulário está em modo "adicionar novo")
+let frotaEditandoPlaca = null;
+
 // Popula o datalist global (placas de cavalo, carretas e nomes de motorista)
 // usado como sugestão automática em campos de busca do sistema.
 function popularSugestoesFrota() {
@@ -6723,6 +6785,7 @@ function filtrarFrota() {
           <div style="display:flex;gap:.4rem">
             <a href="https://wa.me/55${tel}" target="_blank" style="background:#25D366;color:#fff;border:none;border-radius:8px;padding:.3rem .7rem;font-size:.72rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem"><i class="fab fa-whatsapp"></i> WA</a>
             <a href="tel:${tel}" style="background:var(--info);color:#fff;border:none;border-radius:8px;padding:.3rem .7rem;font-size:.72rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem"><i class="fas fa-phone"></i></a>
+            <button onclick="frotaEditarAbrir('${r.placa}')" style="background:var(--gray-200);color:#1e2a3a;border:none;border-radius:8px;padding:.3rem .55rem;font-size:.72rem;font-weight:700;cursor:pointer" title="Completar/editar dados"><i class="fas fa-pen"></i></button>
           </div>
         </div>
       </div>
@@ -6742,7 +6805,7 @@ function filtrarFrota() {
       <td style="text-align:center">${isVan ? `<span class="badge badge-warning">${r.paletes} Van</span>` : `<span class="badge badge-info">${r.paletes}</span>`}</td>
       <td><a href="https://wa.me/55${tel}" target="_blank" style="color:var(--success);text-decoration:none;font-size:.82rem"><i class="fab fa-whatsapp"></i> ${r.celular}</a></td>
       <td style="font-size:.75rem;color:var(--text-lt)">${r.cpf}</td>
-      <td><a href="tel:${tel}" class="btn btn-sm btn-success" style="padding:.25rem .6rem"><i class="fas fa-phone"></i></a>${r._custom ? ` <button class="btn btn-sm btn-gray" style="padding:.25rem .5rem" title="Remover cadastro" onclick="frotaExtraRemover('${r.placa}')"><i class="fas fa-trash"></i></button>` : ''}</td>
+      <td><a href="tel:${tel}" class="btn btn-sm btn-success" style="padding:.25rem .6rem"><i class="fas fa-phone"></i></a> <button class="btn btn-sm btn-gray" style="padding:.25rem .5rem" title="Completar/editar dados" onclick="frotaEditarAbrir('${r.placa}')"><i class="fas fa-pen"></i></button>${r._custom ? ` <button class="btn btn-sm btn-gray" style="padding:.25rem .5rem" title="Remover cadastro" onclick="frotaExtraRemover('${r.placa}')"><i class="fas fa-trash"></i></button>` : ''}</td>
     </tr>`;
   }).join('');
 }
@@ -6750,6 +6813,52 @@ function filtrarFrota() {
 // Cadastra um novo motorista/veículo direto pela tela (sem editar código).
 // Fica salvo neste navegador e entra imediatamente nos cards, na tabela,
 // nas sugestões de busca e nos rankings de manutenção.
+// Abre o formulário no modo edição, preenchendo com os dados atuais do
+// motorista/veículo selecionado — usado tanto pra completar informação que
+// falta quanto pra corrigir algo já cadastrado.
+function frotaEditarAbrir(placa){
+  const r = FROTA_DATA.find(f => f.placa === placa);
+  if (!r) return;
+  frotaEditandoPlaca = placa;
+
+  document.getElementById('frotaNovoMotorista').value    = r.motorista === '—' ? '' : (r.motorista || '');
+  document.getElementById('frotaNovoPlaca').value        = r.placa || '';
+  document.getElementById('frotaNovoCarreta').value      = String(r.carreta || '').split('—')[0].trim();
+  document.getElementById('frotaNovoCavaloMarca').value  = r.cavaloMarca || '';
+  document.getElementById('frotaNovoCavaloModelo').value = r.cavaloModelo || '';
+  document.getElementById('frotaNovoCavaloAno').value    = r.cavaloAno || '';
+  document.getElementById('frotaNovoCarretaMarca').value = r.carretaMarca || '';
+  document.getElementById('frotaNovoCarretaAno').value   = r.carretaAno || '';
+  document.getElementById('frotaNovoRefrigMarca').value  = r.refrigMarca || '';
+  document.getElementById('frotaNovoRefrigModelo').value = r.refrigModelo || '';
+  document.getElementById('frotaNovoRefrigAno').value    = r.refrigAno || '';
+  document.getElementById('frotaNovoCelular').value      = r.celular || '';
+  document.getElementById('frotaNovoCpf').value          = r.cpf || '';
+  document.getElementById('frotaNovoPaletes').value      = r.paletes === '30' ? '30' : '28';
+  document.getElementById('frotaNovoVan').checked         = String(r.carreta || '').includes('Van');
+
+  document.getElementById('frotaFormTitulo').innerHTML = `<i class="fas fa-pen"></i> Completando cadastro: ${r.placa}`;
+  document.getElementById('frotaSalvarBtn').innerHTML = '<i class="fas fa-check"></i> Salvar Alterações';
+  document.getElementById('frotaCancelarBtn').style.display = 'inline-flex';
+  document.getElementById('frotaNovoPlaca').scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+function frotaEditarCancelar(){
+  frotaEditandoPlaca = null;
+  ['frotaNovoMotorista','frotaNovoPlaca','frotaNovoCarreta','frotaNovoCelular','frotaNovoCpf',
+   'frotaNovoCavaloMarca','frotaNovoCavaloModelo','frotaNovoCavaloAno',
+   'frotaNovoCarretaMarca','frotaNovoCarretaAno',
+   'frotaNovoRefrigMarca','frotaNovoRefrigModelo','frotaNovoRefrigAno'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('frotaNovoPaletes').selectedIndex = 0;
+  document.getElementById('frotaNovoVan').checked = false;
+  document.getElementById('frotaFormTitulo').innerHTML = '<i class="fas fa-user-plus"></i> Agregar Motorista / Veículo à Frota';
+  document.getElementById('frotaSalvarBtn').innerHTML = '<i class="fas fa-plus"></i> Adicionar à Frota';
+  document.getElementById('frotaCancelarBtn').style.display = 'none';
+}
+
+// Adiciona um motorista/veículo novo, OU — se frotaEditandoPlaca estiver
+// setado — salva as alterações/complementos no registro já existente
+// (seja ele um cadastro base do código ou um cadastro extra da tela).
 function frotaExtraAdd(){
   const motorista = (document.getElementById('frotaNovoMotorista').value || '').trim().toUpperCase();
   const placa     = (document.getElementById('frotaNovoPlaca').value || '').trim().toUpperCase();
@@ -6760,7 +6869,7 @@ function frotaExtraAdd(){
   const isVan         = paletes === '30' && document.getElementById('frotaNovoVan').checked;
   const carreta       = carretaPlaca ? (carretaPlaca + (isVan ? ' — 30 pal. Van' : '')) : '';
 
-  const novo = {
+  const campos = {
     motorista: motorista || '—',
     placa, carreta, paletes,
     celular: (document.getElementById('frotaNovoCelular').value || '').trim(),
@@ -6773,9 +6882,32 @@ function frotaExtraAdd(){
     refrigMarca:  (document.getElementById('frotaNovoRefrigMarca').value || '').trim().toUpperCase(),
     refrigModelo: (document.getElementById('frotaNovoRefrigModelo').value || '').trim(),
     refrigAno:    (document.getElementById('frotaNovoRefrigAno').value || '').trim(),
-    _custom: true,
   };
 
+  if (frotaEditandoPlaca) {
+    const registro = FROTA_DATA.find(f => f.placa === frotaEditandoPlaca);
+    if (registro) {
+      Object.assign(registro, campos);
+      if (registro._custom) {
+        // Cadastro extra: regrava o objeto inteiro no localStorage de extras.
+        const extras = frotaExtraGetAll().map(f => f.placa === frotaEditandoPlaca ? Object.assign({}, f, campos) : f);
+        frotaExtraSaveAll(extras);
+      } else {
+        // Cadastro base do código: grava só o "patch" de complemento, por placa.
+        const overrides = frotaOverridesGetAll();
+        overrides[frotaEditandoPlaca] = campos;
+        frotaOverridesSaveAll(overrides);
+      }
+    }
+    frotaEditarCancelar();
+    popularSugestoesFrota();
+    filtrarFrota();
+    if (document.getElementById('manAno')) manRender();
+    showToast(`✓ Cadastro de ${motorista || placa} atualizado!`);
+    return;
+  }
+
+  const novo = Object.assign({ _custom: true }, campos);
   const extras = frotaExtraGetAll();
   extras.push(novo);
   frotaExtraSaveAll(extras);
