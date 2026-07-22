@@ -988,8 +988,26 @@ footer a{color:var(--accent);text-decoration:none;}
 
           <div id="finSubManutencao" class="fin-subpane">
             <div class="orc-topbar">
-              <div class="flt-grp"><label>Ano</label><select id="manAno"></select></div>
+              <div class="flt-grp"><label>Ano</label><select id="manAno" onchange="manRender()"></select></div>
+              <div class="flt-grp"><label>Mês</label>
+                <select id="manMes" onchange="manRender()">
+                  <option value="">Todos</option>
+                  <option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option>
+                  <option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option>
+                  <option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option>
+                  <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
+                </select>
+              </div>
+              <div class="flt-grp"><label>Data início</label><input type="date" id="manDataIni" onchange="manRender()"></div>
+              <div class="flt-grp"><label>Data fim</label><input type="date" id="manDataFim" onchange="manRender()"></div>
+              <div class="flt-grp"><label>Placa</label>
+                <select id="manPlaca" onchange="manRender()"><option value="">Todas</option></select>
+              </div>
+              <div class="flt-grp"><label>Marca</label>
+                <select id="manMarca" onchange="manRender()"><option value="">Todas</option></select>
+              </div>
               <button class="btn btn-accent btn-sm" onclick="manRender()"><i class="fas fa-sync-alt"></i> Atualizar</button>
+              <button class="btn btn-gray btn-sm" onclick="manLimparFiltros()"><i class="fas fa-eraser"></i> Limpar filtros</button>
               <button class="btn btn-success btn-sm" onclick="manExportCSV()"><i class="fas fa-download"></i> Exportar CSV</button>
               <div style="font-size:.72rem;color:var(--text-lt);max-width:460px;margin-left:auto">
                 <i class="fas fa-circle-info"></i> Os custos são identificados automaticamente entre os lançamentos de Manutenção do Financeiro, pela placa/identificação e pelo texto preventiva x corretiva de cada registro.
@@ -3759,7 +3777,26 @@ function manClassificaVeiculo(textoCompleto, colPlacaValor){
 // Calcula os custos de manutenção do ano selecionado, já separados
 // por grupo (cavalos/carretas/refrigeracao), por veículo e por
 // preventiva/corretiva.
-function manComputeDados(ano){
+// Retorna a marca cadastrada na Frota para um id de cavalo/carreta/refrigeração
+// (usado pelo filtro de Marca da aba Custos por Manutenção).
+function manMarcaDoId(grupo, id){
+  const norm = normalizaPlaca(id);
+  if (grupo === 'cavalos') {
+    const f = FROTA_DATA.find(x => normalizaPlaca(x.placa) === norm);
+    return f ? (f.cavaloMarca || '') : '';
+  }
+  const f = FROTA_DATA.find(x => normalizaPlaca(String(x.carreta||'').split('—')[0].trim()) === norm);
+  if (!f) return '';
+  return grupo === 'refrigeracao' ? (f.refrigMarca || '') : (f.carretaMarca || '');
+}
+
+function manComputeDados(ano, filtros){
+  filtros = filtros || {};
+  const placaNorm = filtros.placa ? normalizaPlaca(filtros.placa) : '';
+  const marcaNorm = filtros.marca ? String(filtros.marca).trim().toUpperCase() : '';
+  const mes = filtros.mes ? +filtros.mes : 0;
+  const dIniObj = filtros.dataIni ? new Date(filtros.dataIni + 'T00:00:00') : null;
+  const dFimObj = filtros.dataFim ? new Date(filtros.dataFim + 'T23:59:59') : null;
   const dados = { cavalos:{}, carretas:{}, refrigeracao:{} };
   let naoClassificadoTotal = 0, naoClassificadoQtd = 0;
   if (!financeiroData.length) return { dados, naoClassificadoTotal, naoClassificadoQtd };
@@ -3808,7 +3845,14 @@ function manComputeDados(ano){
 
   financeiroData.forEach(row => {
     const d = colData ? parseDate(row[colData]) : null;
-    if (!d || d.getFullYear() !== +ano) return;
+    if (!d) return;
+    if (dIniObj || dFimObj) {
+      if (dIniObj && d < dIniObj) return;
+      if (dFimObj && d > dFimObj) return;
+    } else {
+      if (d.getFullYear() !== +ano) return;
+      if (mes && (d.getMonth() + 1) !== mes) return;
+    }
 
     const v = finValorLinha(row, colValor, colCat, colDesc);
     const t = colTipo ? String(row[colTipo] || '').toLowerCase() : '';
@@ -3846,6 +3890,9 @@ function manComputeDados(ano){
         naoClassificadoQtd++;
         return;
       }
+
+      if (placaNorm && normalizaPlaca(classif.id) !== placaNorm) return;
+      if (marcaNorm && (manMarcaDoId(classif.grupo, classif.id) || '').trim().toUpperCase() !== marcaNorm) return;
 
       const bucket = dados[classif.grupo];
       if (!bucket[classif.id]) bucket[classif.id] = { total:0, preventiva:0, corretiva:0, naoclass:0, qtd:0 };
@@ -4025,10 +4072,57 @@ function manRenderRankingMarcaAno(bucketCavalos){
   if (el) el.innerHTML = html;
 }
 
+// Preenche os selects de Placa e Marca da aba Custos por Manutenção com
+// tudo que está cadastrado na Frota (cavalos, carretas e refrigeração).
+function manPopularFiltros(){
+  const selPlaca = document.getElementById('manPlaca');
+  const selMarca = document.getElementById('manMarca');
+  if (selPlaca && !selPlaca.dataset.preenchido) {
+    const placas = new Set();
+    FROTA_DATA.forEach(f => {
+      if (f.placa) placas.add(String(f.placa).trim().toUpperCase());
+      if (f.carreta) placas.add(String(f.carreta).split('—')[0].trim().toUpperCase());
+    });
+    selPlaca.innerHTML = '<option value="">Todas</option>' + [...placas].sort().map(p => `<option value="${p}">${p}</option>`).join('');
+    selPlaca.dataset.preenchido = '1';
+  }
+  if (selMarca && !selMarca.dataset.preenchido) {
+    const marcas = new Set();
+    FROTA_DATA.forEach(f => {
+      if (f.cavaloMarca) marcas.add(f.cavaloMarca.trim().toUpperCase());
+      if (f.carretaMarca) marcas.add(f.carretaMarca.trim().toUpperCase());
+      if (f.refrigMarca) marcas.add(f.refrigMarca.trim().toUpperCase());
+    });
+    selMarca.innerHTML = '<option value="">Todas</option>' + [...marcas].sort().map(m => `<option value="${m}">${m}</option>`).join('');
+    selMarca.dataset.preenchido = '1';
+  }
+}
+
+function manLimparFiltros(){
+  document.getElementById('manMes').value = '';
+  document.getElementById('manDataIni').value = '';
+  document.getElementById('manDataFim').value = '';
+  document.getElementById('manPlaca').value = '';
+  document.getElementById('manMarca').value = '';
+  manRender();
+}
+
+function manFiltrosAtuais(){
+  return {
+    mes: document.getElementById('manMes').value,
+    dataIni: document.getElementById('manDataIni').value,
+    dataFim: document.getElementById('manDataFim').value,
+    placa: document.getElementById('manPlaca').value,
+    marca: document.getElementById('manMarca').value,
+  };
+}
+
 function manRender(){
   if (!document.getElementById('manAno').options.length) manPopularAnos();
+  manPopularFiltros();
   const ano = +document.getElementById('manAno').value || new Date().getFullYear();
-  const { dados, naoClassificadoTotal, naoClassificadoQtd } = manComputeDados(ano);
+  const filtros = manFiltrosAtuais();
+  const { dados, naoClassificadoTotal, naoClassificadoQtd } = manComputeDados(ano, filtros);
 
   manRenderGrupo('manGrupoCavalos', 'Cavalos (Tratores)', 'fa-truck', '#ef4444', dados.cavalos, manListaCavalos().map(p => {
     const f = FROTA_DATA.find(x => normalizaPlaca(x.placa) === p);
@@ -4042,7 +4136,14 @@ function manRender(){
     return f ? String(f.carreta).split('—')[0].trim().toUpperCase() : p;
   }), 'carretas');
 
-  manRenderGrupo('manGrupoRefrigeracao', 'Equipamentos de Refrigeração', 'fa-snowflake', '#06b6d4', dados.refrigeracao, [], 'refrigeracao', manLabelRefrigeracao);
+  // Base da lista de Refrigeração = toda carreta cadastrada na Frota que tem
+  // equipamento de frio informado (marca/modelo/ano), pra aparecer mesmo
+  // sem lançamento de manutenção ainda.
+  const baseRefrigeracao = FROTA_DATA
+    .filter(f => f.carreta && (f.refrigMarca || f.refrigModelo))
+    .map(f => String(f.carreta).split('—')[0].trim().toUpperCase());
+
+  manRenderGrupo('manGrupoRefrigeracao', 'Equipamentos de Refrigeração', 'fa-snowflake', '#06b6d4', dados.refrigeracao, baseRefrigeracao, 'refrigeracao', manLabelRefrigeracao);
 
   const notaEl = document.getElementById('manNaoClassificado');
   if (naoClassificadoQtd > 0) {
@@ -4060,7 +4161,7 @@ function manRender(){
 
 function manExportCSV(){
   const ano = +document.getElementById('manAno').value || new Date().getFullYear();
-  const { dados } = manComputeDados(ano);
+  const { dados } = manComputeDados(ano, manFiltrosAtuais());
   const linhas = [];
   const grupos = [['cavalos','Cavalo'], ['carretas','Carreta'], ['refrigeracao','Refrigeração']];
   grupos.forEach(([key, nome]) => {
