@@ -1200,6 +1200,18 @@ footer a{color:var(--accent);text-decoration:none;}
             <div class="kpi-card"><div class="kpi-icon" style="background:rgba(245,158,11,.12);color:#d97706"><i class="fas fa-clock"></i></div><div><div class="kpi-val" id="bat-proximas90">—</div><div class="kpi-lbl">Próx. 3 meses (61-90d)</div></div></div>
             <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-check-circle"></i></div><div><div class="kpi-val" id="bat-ok">—</div><div class="kpi-lbl">Em Dia (+90d)</div></div></div>
           </div>
+          <div class="dash-card" id="batRankingCard" style="display:none">
+            <div class="man-body" style="padding:0">
+              <div>
+                <div class="dash-card-title" style="margin-bottom:.5rem"><i class="fas fa-industry"></i> Ranking por Marca</div>
+                <ol class="rank-list" id="batRankMarca"></ol>
+              </div>
+              <div>
+                <div class="dash-card-title" style="margin-bottom:.5rem"><i class="fas fa-hourglass-half"></i> Ranking por Tempo (mais antiga primeiro)</div>
+                <ol class="rank-list" id="batRankTempo"></ol>
+              </div>
+            </div>
+          </div>
           <div class="dash-card">
             <div class="filters-bar">
               <div class="flt-grp"><label>Veículo</label><input type="text" id="batVeiculo" list="dlPlacas" placeholder="Placa ou veículo..."></div>
@@ -5291,6 +5303,7 @@ function aplicarFiltrosBaterias() {
   const headers = Object.keys(bateriasData[0]);
   const colVeiculo = findCol(headers, ['veiculo','placa','caminhao','carro','cavalo','truck','frota']);
   const colData    = findCol(headers, ['vencimento','data','validade','troca','substituicao','proxima']);
+  const colMarca   = findCol(headers, ['marca','fabricante']);
 
   const now = new Date(); now.setHours(0,0,0,0);
   const em30 = new Date(now); em30.setDate(em30.getDate()+30);
@@ -5385,8 +5398,70 @@ function aplicarFiltrosBaterias() {
     return `<tr>${cells}<td><span class="badge ${badgeClass}">${statusLabel}</span></td></tr>`;
   }).join('');
 
+  batRenderRankings(dedupedData, colVeiculo, colData, colMarca, now);
+
   document.getElementById('batLoading').style.display = 'none';
   document.getElementById('batTableWrap').style.display = 'block';
+}
+
+// Ranking por Marca (quantidade e vencidas por fabricante) e Ranking por
+// Tempo (da bateria mais antiga/vencida há mais tempo para a mais nova),
+// cruzando o CSV de Baterias com o próprio CSV (sem depender da Frota).
+function batRenderRankings(dedupedData, colVeiculo, colData, colMarca, now){
+  const card = document.getElementById('batRankingCard');
+  if (!dedupedData.length) { card.style.display = 'none'; return; }
+
+  // Ranking por marca
+  let marcaList = [];
+  if (colMarca) {
+    const porMarca = {};
+    dedupedData.forEach(row => {
+      const marca = String(row[colMarca] || 'Não identificado').trim().toUpperCase() || 'Não identificado';
+      const dVenc = colData ? parseDate(row[colData]) : null;
+      if (!porMarca[marca]) porMarca[marca] = { total:0, vencidas:0 };
+      porMarca[marca].total++;
+      if (dVenc && dVenc < now) porMarca[marca].vencidas++;
+    });
+    marcaList = Object.entries(porMarca).sort((a,b) => b[1].total - a[1].total);
+  }
+
+  // Ranking por tempo: da bateria mais antiga (vencida há mais tempo / com
+  // vencimento mais próximo) para a mais recente.
+  const comData = dedupedData
+    .map(row => ({ veiculo: colVeiculo ? row[colVeiculo] : '—', dVenc: colData ? parseDate(row[colData]) : null }))
+    .filter(r => r.dVenc)
+    .sort((a,b) => a.dVenc - b.dVenc);
+
+  const tempoLabel = (dVenc) => {
+    const dias = Math.round((now - dVenc) / 86400000);
+    if (dias >= 0) {
+      if (dias < 30) return `Vencida há ${dias}d`;
+      if (dias < 365) return `Vencida há ${Math.round(dias/30)}m`;
+      return `Vencida há ${(dias/365).toFixed(1)}a`;
+    }
+    const diasRest = -dias;
+    if (diasRest < 30) return `Vence em ${diasRest}d`;
+    if (diasRest < 365) return `Vence em ${Math.round(diasRest/30)}m`;
+    return `Vence em ${(diasRest/365).toFixed(1)}a`;
+  };
+
+  const rankMarcaEl = document.getElementById('batRankMarca');
+  const rankTempoEl = document.getElementById('batRankTempo');
+
+  rankMarcaEl.innerHTML = marcaList.length ? marcaList.map(([marca, info]) => `
+    <li>
+      <span style="font-weight:700;flex:1">${marca}</span>
+      <span style="font-size:.72rem;color:var(--danger)">${info.vencidas} vencida(s)</span>
+      <span style="font-weight:800;color:var(--accent-dk);min-width:70px;text-align:right">${info.total} un.</span>
+    </li>`).join('') : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Cadastre a coluna "Marca" na planilha de Baterias para ver este ranking</li>';
+
+  rankTempoEl.innerHTML = comData.length ? comData.slice(0,20).map(r => `
+    <li>
+      <span style="font-weight:700;flex:1">${r.veiculo || '—'}</span>
+      <span style="font-weight:800;color:${r.dVenc < now ? 'var(--danger)' : 'var(--accent-dk)'};min-width:110px;text-align:right">${tempoLabel(r.dVenc)}</span>
+    </li>`).join('') : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem datas de vencimento cadastradas</li>';
+
+  card.style.display = 'block';
 }
 
 function resetBatFilters() {
