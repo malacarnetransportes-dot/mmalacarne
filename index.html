@@ -999,6 +999,7 @@ footer a{color:var(--accent);text-decoration:none;}
             <div id="manNaoClassificado" style="display:none;margin-bottom:1rem"></div>
 
             <div id="manGrupoCavalos"></div>
+            <div id="manRankingMarcaAno"></div>
             <div id="manGrupoCarretas"></div>
             <div id="manGrupoRefrigeracao"></div>
 
@@ -1259,6 +1260,31 @@ footer a{color:var(--accent);text-decoration:none;}
               <div class="flt-grp"><label>Paletes</label><select id="frotaPaletes" onchange="filtrarFrota()"><option value="">Todos</option><option value="28">28 paletes</option><option value="30">30 paletes (Van)</option></select></div>
               <button class="btn btn-gray" onclick="document.getElementById('frotaBusca').value='';document.getElementById('frotaPaletes').selectedIndex=0;filtrarFrota()"><i class="fas fa-times"></i> Limpar</button>
             </div>
+          </div>
+
+          <!-- Cadastrar novo motorista/veículo -->
+          <div class="dash-card" style="margin-bottom:1.4rem">
+            <div class="dash-card-title"><i class="fas fa-user-plus"></i> Agregar Motorista / Veículo à Frota</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.7rem">
+              <div class="flt-grp"><label>Motorista</label><input type="text" id="frotaNovoMotorista" placeholder="Nome completo"></div>
+              <div class="flt-grp"><label>Placa Cavalo *</label><input type="text" id="frotaNovoPlaca" placeholder="Ex: RYE7J26" style="text-transform:uppercase"></div>
+              <div class="flt-grp"><label>Marca Cavalo</label><input type="text" id="frotaNovoCavaloMarca" placeholder="Ex: SCANIA"></div>
+              <div class="flt-grp"><label>Modelo Cavalo</label><input type="text" id="frotaNovoCavaloModelo" placeholder="Ex: R450 A6X2"></div>
+              <div class="flt-grp"><label>Ano Cavalo</label><input type="text" id="frotaNovoCavaloAno" placeholder="Ex: 2022"></div>
+              <div class="flt-grp"><label>Placa Carreta</label><input type="text" id="frotaNovoCarreta" placeholder="Ex: QJH0591" style="text-transform:uppercase"></div>
+              <div class="flt-grp"><label>Marca Carreta</label><input type="text" id="frotaNovoCarretaMarca" placeholder="Ex: RANDON"></div>
+              <div class="flt-grp"><label>Ano Carreta</label><input type="text" id="frotaNovoCarretaAno" placeholder="Ex: 2018"></div>
+              <div class="flt-grp"><label>Marca Refrigeração</label><input type="text" id="frotaNovoRefrigMarca" placeholder="Ex: THERMOKING"></div>
+              <div class="flt-grp"><label>Modelo Refrigeração</label><input type="text" id="frotaNovoRefrigModelo" placeholder="Ex: SLX 400i"></div>
+              <div class="flt-grp"><label>Ano Refrigeração</label><input type="text" id="frotaNovoRefrigAno" placeholder="Ex: 2018"></div>
+              <div class="flt-grp"><label>Paletes</label>
+                <select id="frotaNovoPaletes"><option value="28">28 paletes</option><option value="30">30 paletes (Van)</option></select>
+              </div>
+              <div class="flt-grp" style="align-self:end"><label style="display:flex;align-items:center;gap:.4rem;cursor:pointer"><input type="checkbox" id="frotaNovoVan"> É carreta Van?</label></div>
+              <div class="flt-grp"><label>Celular</label><input type="text" id="frotaNovoCelular" placeholder="Ex: 49 - 99999-9999"></div>
+              <div class="flt-grp"><label>CPF</label><input type="text" id="frotaNovoCpf" placeholder="Ex: 000.000.000-00"></div>
+            </div>
+            <div style="margin-top:.9rem"><button class="btn btn-primary" onclick="frotaExtraAdd()"><i class="fas fa-plus"></i> Adicionar à Frota</button></div>
           </div>
 
           <!-- Cards de motoristas -->
@@ -3851,7 +3877,8 @@ function manPopularAnos(){
 
 // Renderiza um card de grupo (cavalos, carretas ou refrigeração): KPIs,
 // gráfico preventiva x corretiva e ranking com melhores/piores.
-function manRenderGrupo(containerId, titulo, icon, color, bucket, baseList, chartVarName){
+function manRenderGrupo(containerId, titulo, icon, color, bucket, baseList, chartVarName, labelFn){
+  labelFn = labelFn || (id => id);
   // Monta lista combinada: veículos cadastrados na frota (para aparecerem
   // mesmo com custo zero) + qualquer identificação extra encontrada nos lançamentos
   const ids = new Set(baseList || []);
@@ -3874,7 +3901,7 @@ function manRenderGrupo(containerId, titulo, icon, color, bucket, baseList, char
 
   const tabelaLinhas = rankingDesc.map(l => `
     <li>
-      <span style="font-weight:700;flex:1">${l.id}</span>
+      <span style="font-weight:700;flex:1">${labelFn(l.id)}</span>
       <span style="font-size:.72rem;color:var(--text-lt)">${l.qtd} lanç.</span>
       <span style="font-size:.72rem;color:var(--success)">Prev ${fmtMoney(l.preventiva)}</span>
       <span style="font-size:.72rem;color:var(--danger)">Corr ${fmtMoney(l.corretiva)}</span>
@@ -3905,11 +3932,11 @@ function manRenderGrupo(containerId, titulo, icon, color, bucket, baseList, char
           <div class="man-best-worst">
             <div class="man-bw-box best">
               <div class="man-bw-title best"><i class="fas fa-trophy"></i> Melhores (menor custo)</div>
-              ${melhores.map(l => `<div class="man-bw-item"><span>${l.id}</span><span>${fmtMoney(l.total)}</span></div>`).join('') || '<div class="man-bw-item">Sem dados</div>'}
+              ${melhores.map(l => `<div class="man-bw-item"><span>${labelFn(l.id)}</span><span>${fmtMoney(l.total)}</span></div>`).join('') || '<div class="man-bw-item">Sem dados</div>'}
             </div>
             <div class="man-bw-box worst">
               <div class="man-bw-title worst"><i class="fas fa-triangle-exclamation"></i> Piores (maior custo)</div>
-              ${piores.map(l => `<div class="man-bw-item"><span>${l.id}</span><span>${fmtMoney(l.total)}</span></div>`).join('') || '<div class="man-bw-item">Sem dados</div>'}
+              ${piores.map(l => `<div class="man-bw-item"><span>${labelFn(l.id)}</span><span>${fmtMoney(l.total)}</span></div>`).join('') || '<div class="man-bw-item">Sem dados</div>'}
             </div>
           </div>
         </div>
@@ -3939,6 +3966,65 @@ function manRenderGrupo(containerId, titulo, icon, color, bucket, baseList, char
   return { totalGeral, totalPrev, totalCorr, linhas };
 }
 
+// Monta o rótulo de exibição de um equipamento de refrigeração: placa da
+// carreta + marca/modelo/ano do equipamento, buscando na Frota cadastrada.
+function manLabelRefrigeracao(id){
+  const norm = normalizaPlaca(id);
+  const f = FROTA_DATA.find(x => normalizaPlaca(String(x.carreta||'').split('—')[0].trim()) === norm);
+  if (!f || !f.refrigModelo) return id;
+  const marca = f.refrigMarca ? f.refrigMarca + ' ' : '';
+  const ano = f.refrigAno ? ` (${f.refrigAno})` : '';
+  return `${id} — ${marca}${f.refrigModelo}${ano}`;
+}
+
+// Agrupa o custo total de manutenção dos cavalos por marca e por ano de
+// fabricação, cruzando o bucket de custos com o cadastro da Frota.
+function manRankingMarcaAno(bucketCavalos){
+  const porMarca = {}, porAno = {};
+  Object.keys(bucketCavalos).forEach(id => {
+    const total = bucketCavalos[id].total || 0;
+    const norm = normalizaPlaca(id);
+    const f = FROTA_DATA.find(x => normalizaPlaca(x.placa) === norm);
+    const marca = (f && f.cavaloMarca) ? f.cavaloMarca : 'Não identificado';
+    const ano = (f && f.cavaloAno) ? String(f.cavaloAno) : 'Não identificado';
+    porMarca[marca] = (porMarca[marca] || 0) + total;
+    porAno[ano] = (porAno[ano] || 0) + total;
+  });
+  const toList = obj => Object.entries(obj).sort((a,b) => b[1]-a[1]);
+  return { marcaList: toList(porMarca), anoList: toList(porAno) };
+}
+
+function manRenderRankingMarcaAno(bucketCavalos){
+  const { marcaList, anoList } = manRankingMarcaAno(bucketCavalos);
+  const li = (list) => list.map(([label, total]) => `
+    <li>
+      <span style="font-weight:700;flex:1">${label}</span>
+      <span style="font-weight:800;color:var(--accent-dk);min-width:90px;text-align:right">${fmtMoney(total)}</span>
+    </li>`).join('') || '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem lançamentos de manutenção neste ano</li>';
+
+  const html = `
+    <div class="man-veiculo-card" style="--man-color:#f59e0b">
+      <div class="man-veiculo-head">
+        <div class="man-veiculo-title">
+          <div class="man-veiculo-icon"><i class="fas fa-tags"></i></div>
+          <div>Custo de Manutenção — Cavalos por Marca e Ano</div>
+        </div>
+      </div>
+      <div class="man-body">
+        <div>
+          <div class="dash-card-title" style="margin-bottom:.5rem"><i class="fas fa-industry"></i> Ranking por Marca</div>
+          <ol class="rank-list">${li(marcaList)}</ol>
+        </div>
+        <div>
+          <div class="dash-card-title" style="margin-bottom:.5rem"><i class="fas fa-calendar"></i> Ranking por Ano de Fabricação</div>
+          <ol class="rank-list">${li(anoList)}</ol>
+        </div>
+      </div>
+    </div>`;
+  const el = document.getElementById('manRankingMarcaAno');
+  if (el) el.innerHTML = html;
+}
+
 function manRender(){
   if (!document.getElementById('manAno').options.length) manPopularAnos();
   const ano = +document.getElementById('manAno').value || new Date().getFullYear();
@@ -3949,12 +4035,14 @@ function manRender(){
     return f ? f.placa.trim().toUpperCase() : p;
   }), 'cavalos');
 
+  manRenderRankingMarcaAno(dados.cavalos);
+
   manRenderGrupo('manGrupoCarretas', 'Carretas', 'fa-trailer', '#3b82f6', dados.carretas, manListaCarretas().map(p => {
     const f = FROTA_DATA.find(x => normalizaPlaca(String(x.carreta||'').split('—')[0].trim()) === p);
     return f ? String(f.carreta).split('—')[0].trim().toUpperCase() : p;
   }), 'carretas');
 
-  manRenderGrupo('manGrupoRefrigeracao', 'Equipamentos de Refrigeração', 'fa-snowflake', '#06b6d4', dados.refrigeracao, [], 'refrigeracao');
+  manRenderGrupo('manGrupoRefrigeracao', 'Equipamentos de Refrigeração', 'fa-snowflake', '#06b6d4', dados.refrigeracao, [], 'refrigeracao', manLabelRefrigeracao);
 
   const notaEl = document.getElementById('manNaoClassificado');
   if (naoClassificadoQtd > 0) {
@@ -6302,29 +6390,64 @@ function copiarSenha(senha, sistema) {
 // ═══════════════════════════════════════════════════════════
 const FROTA_DATA = [
   // ── MOTORISTAS ATIVOS ──
-  {motorista:'ADRIANO VAZ DOS SANTOS',     placa:'RYE7J26', carreta:'QJH0591',                  paletes:'28', celular:'46 - 99983-7772', cpf:'023.114.919-03'},
-  {motorista:'ANDERSON VEIGA SANTOS',       placa:'QTM0G30', carreta:'RYQ7I03 — 30 pal. Van',    paletes:'30', celular:'42 - 99832-0501', cpf:'012.273.449-10'},
-  {motorista:'CRISTIANO DE ALMEIDA',        placa:'QJM1350', carreta:'OKD8A19',                  paletes:'28', celular:'49 - 99110-7517', cpf:'029.395.799-11'},
-  {motorista:'ERI ORLANDO ROMERO',          placa:'QJC0B40', carreta:'MLB0J76',                  paletes:'28', celular:'92 - 99220-9993', cpf:'706.920.112-50'},
-  {motorista:'GILSON MARGOTTI',             placa:'RAC4780', carreta:'RXS3D84',                  paletes:'28', celular:'41 - 99930-9646', cpf:'045.221.079-86'},
-  {motorista:'HILDO ANTONIO ALMEIDA',       placa:'QJY0640', carreta:'QHI5B08',                  paletes:'28', celular:'49 - 99913-6578', cpf:'394.955.669-91'},
-  {motorista:'JORGE ODAIR LOPES',           placa:'RLB3C26', carreta:'MKB0A39 — 30 pal. Van',    paletes:'30', celular:'49 - 99840-9613', cpf:'848.045.729-53'},
-  {motorista:'JOSIAS FERREIRA DOS SANTOS',  placa:'QTM0E20', carreta:'QIW2885',                  paletes:'28', celular:'41 - 99782-7246', cpf:'035.686.699-86'},
-  {motorista:'LEANDRO L KLEE',              placa:'RYE7J76', carreta:'RLO9G15',                  paletes:'28', celular:'49 - 99910-0398', cpf:'038.197.969-59'},
-  {motorista:'MARIANO DE SOUZA',            placa:'QJA0E90', carreta:'QHA1357',                  paletes:'30', celular:'87 - 98134-2532', cpf:'098.235.784-27'},
-  {motorista:'RAFAEL DE FRANÇA RAMOS',      placa:'RLB3E46', carreta:'IWV8B19',                  paletes:'28', celular:'42 - 98804-7766', cpf:'065.936.019-50'},
-  {motorista:'RODRIGO DA ROSA',             placa:'RYE7J36', carreta:'RDS9H31',                  paletes:'30', celular:'49 - 99922-8442', cpf:'944.742.309-49'},
+  // Campos cavaloMarca/cavaloModelo/cavaloAno e carretaMarca/carretaAno/refrigMarca/refrigModelo/refrigAno
+  // vêm do cadastro oficial da frota (Padrão Gentrex) e alimentam os rankings por marca/ano da Manutenção.
+  {motorista:'ADRIANO VAZ DOS SANTOS',     placa:'RYE7J26', carreta:'QJH0591',                  paletes:'28', celular:'46 - 99983-7772', cpf:'023.114.919-03',
+    cavaloMarca:'SCANIA', cavaloModelo:'SCANIA/R450 A6X2', cavaloAno:2022, carretaMarca:'RANDON', carretaAno:2018, refrigMarca:'THERMOKING', refrigModelo:'SLX 400i', refrigAno:2018},
+  {motorista:'ANDERSON VEIGA SANTOS',       placa:'QTM0G30', carreta:'RYQ7I03 — 30 pal. Van',    paletes:'30', celular:'42 - 99832-0501', cpf:'012.273.449-10',
+    cavaloMarca:'VOLVO', cavaloModelo:'VOLVO / FH 460 6X2T', cavaloAno:'2019/2020', carretaMarca:'RANDON', carretaAno:2023, refrigMarca:'CARRIER', refrigModelo:'X4 7500', refrigAno:2023},
+  {motorista:'CRISTIANO DE ALMEIDA',        placa:'QJM1350', carreta:'OKD8A19',                  paletes:'28', celular:'49 - 99110-7517', cpf:'029.395.799-11',
+    cavaloMarca:'IVECO', cavaloModelo:'IVECO / HI WAY STRALIS 600 S44T', cavaloAno:2018, carretaMarca:'RANDON', carretaAno:2018, refrigMarca:'THERMOKING', refrigModelo:'SB200', refrigAno:null},
+  {motorista:'ERI ORLANDO ROMERO',          placa:'QJC0B40', carreta:'MLB0J76',                  paletes:'28', celular:'92 - 99220-9993', cpf:'706.920.112-50',
+    cavaloMarca:'SCANIA', cavaloModelo:'SCANIA / RH 400 A6X2', cavaloAno:2018, carretaMarca:'FACCHINI', carretaAno:2013, refrigMarca:'THERMOKING', refrigModelo:'SB210', refrigAno:2014},
+  {motorista:'GILSON MARGOTTI',             placa:'RAC4780', carreta:'RXS3D84',                  paletes:'28', celular:'41 - 99930-9646', cpf:'045.221.079-86',
+    cavaloMarca:'VOLVO', cavaloModelo:'VOLVO / FH 460 6X2T', cavaloAno:'2019/2020', carretaMarca:'FACCHINI', carretaAno:2022, refrigMarca:'THERMOKING', refrigModelo:'SB210+', refrigAno:2008},
+  {motorista:'HILDO ANTONIO ALMEIDA',       placa:'QJY0640', carreta:'QHI5B08',                  paletes:'28', celular:'49 - 99913-6578', cpf:'394.955.669-91',
+    cavaloMarca:'IVECO', cavaloModelo:'IVECO / HI WAY STRALIS 600 S44T', cavaloAno:2019, carretaMarca:'FACCHINI', carretaAno:2016, refrigMarca:'THERMOKING', refrigModelo:'SB300', refrigAno:2016},
+  {motorista:'JORGE ODAIR LOPES',           placa:'RLB3C26', carreta:'MKB0A39 — 30 pal. Van',    paletes:'30', celular:'49 - 99840-9613', cpf:'848.045.729-53',
+    cavaloMarca:'SCANIA', cavaloModelo:'SCANIA/R450 A6X2', cavaloAno:2021, carretaMarca:'RANDON', carretaAno:2011, refrigMarca:'THERMOKING', refrigModelo:'SB210', refrigAno:2012},
+  {motorista:'JOSIAS FERREIRA DOS SANTOS',  placa:'QTM0E20', carreta:'QIW2885',                  paletes:'28', celular:'41 - 99782-7246', cpf:'035.686.699-86',
+    cavaloMarca:'VOLVO', cavaloModelo:'VOLVO / FH 460 6X2T', cavaloAno:'2019/2020', carretaMarca:'RANDON', carretaAno:2018, refrigMarca:'THERMOKING', refrigModelo:'SLX 400i', refrigAno:2018},
+  {motorista:'LEANDRO L KLEE',              placa:'RYE7J76', carreta:'RLO9G15',                  paletes:'28', celular:'49 - 99910-0398', cpf:'038.197.969-59',
+    cavaloMarca:'SCANIA', cavaloModelo:'SCANIA/R450 A6X2', cavaloAno:2022, carretaMarca:'RANDON', carretaAno:2021, refrigMarca:'CARRIER', refrigModelo:'X4 7500', refrigAno:2021},
+  {motorista:'MARIANO DE SOUZA',            placa:'QJA0E90', carreta:'QHA1357',                  paletes:'30', celular:'87 - 98134-2532', cpf:'098.235.784-27',
+    cavaloMarca:'SCANIA', cavaloModelo:'SCANIA / RH 400 A6X2', cavaloAno:2018, carretaMarca:'RANDON', carretaAno:2014, refrigMarca:'THERMOKING', refrigModelo:'SB300', refrigAno:2014},
+  {motorista:'RAFAEL DE FRANÇA RAMOS',      placa:'RLB3E46', carreta:'IWV8B19',                  paletes:'28', celular:'42 - 98804-7766', cpf:'065.936.019-50',
+    cavaloMarca:'SCANIA', cavaloModelo:'SCANIA/R450 A6X2', cavaloAno:2021, carretaMarca:'NOMA', carretaAno:2016, refrigMarca:'CARRIER', refrigModelo:'X 2100', refrigAno:2016},
+  {motorista:'RODRIGO DA ROSA',             placa:'RYE7J36', carreta:'RDS9H31',                  paletes:'30', celular:'49 - 99922-8442', cpf:'944.742.309-49',
+    cavaloMarca:'SCANIA', cavaloModelo:'SCANIA/R450 A6X2', cavaloAno:2022, carretaMarca:'RANDON', carretaAno:2020, refrigMarca:'CARRIER', refrigModelo:'X4 7500', refrigAno:2020},
   // ── VEÍCULOS PARADOS ──
-  {motorista:'—',                           placa:'QJL8F70', carreta:'RXQ4H32',                  paletes:'28', celular:'49 - 99927-1817', cpf:'560.043.389-15'},
-  {motorista:'—',                           placa:'RLB3E26', carreta:'MGG7C96 — 30 pal. Van',    paletes:'28', celular:'',               cpf:''},
-  {motorista:'—',                           placa:'RAC4760', carreta:'RDS9G71',                  paletes:'28', celular:'',               cpf:''},
-  {motorista:'—',                           placa:'MKQ1A80', carreta:'MME7C92',                  paletes:'28', celular:'',               cpf:''},
-  {motorista:'—',                           placa:'MKR1080', carreta:'MHF6E75 — 30 pal. Van',    paletes:'28', celular:'',               cpf:''},
+  {motorista:'—',                           placa:'QJL8F70', carreta:'RXQ4H32',                  paletes:'28', celular:'49 - 99927-1817', cpf:'560.043.389-15',
+    cavaloMarca:'IVECO', cavaloModelo:'IVECO / HI WAY STRALIS 600 S44T', cavaloAno:2019, carretaMarca:'FACCHINI', carretaAno:2022, refrigMarca:'THERMOKING', refrigModelo:'SB 190', refrigAno:2022},
+  {motorista:'—',                           placa:'RLB3E26', carreta:'MGG7C96 — 30 pal. Van',    paletes:'28', celular:'',               cpf:'',
+    cavaloMarca:'SCANIA', cavaloModelo:'SCANIA/R450 A6X2', cavaloAno:2021, carretaMarca:'RANDON', carretaAno:2010, refrigMarca:'CARRIER', refrigModelo:'X 1800', refrigAno:2010},
+  {motorista:'—',                           placa:'RAC4760', carreta:'RDS9G71',                  paletes:'28', celular:'',               cpf:'',
+    cavaloMarca:'VOLVO', cavaloModelo:'VOLVO / FH 460 6X2T', cavaloAno:'2019/2020', carretaMarca:'RANDON', carretaAno:2020, refrigMarca:'CARRIER', refrigModelo:'X4 7500', refrigAno:2020},
+  {motorista:'—',                           placa:'MKQ1A80', carreta:'MME7C92',                  paletes:'28', celular:'',               cpf:'',
+    cavaloMarca:'SCANIA', cavaloModelo:'SCANIA / G 400 A6X2', cavaloAno:2012, carretaMarca:'FACCHINI', carretaAno:2019, refrigMarca:'THERMOKING', refrigModelo:'SB190', refrigAno:2018},
+  {motorista:'—',                           placa:'MKR1080', carreta:'MHF6E75 — 30 pal. Van',    paletes:'28', celular:'',               cpf:'',
+    cavaloMarca:'SCANIA', cavaloModelo:'SCANIA / G 400 A6X2', cavaloAno:'2012', carretaMarca:'RANDON', carretaAno:2010, refrigMarca:'CARRIER', refrigModelo:'X 1800', refrigAno:2010},
 ];
+
+// ── Cadastros extras adicionados pela tela (localStorage) ──
+// Permite agregar novo motorista/veículo à frota sem editar o código-fonte.
+// Ficam somados ao array acima (mesmo formato) e sobrevivem entre acessos
+// neste navegador. Cada item extra recebe _custom:true para poder ser
+// removido pela própria tela de cadastro.
+const FROTA_EXTRA_KEY = 'malacarne_frota_extra_v1';
+function frotaExtraGetAll(){
+  try { return JSON.parse(localStorage.getItem(FROTA_EXTRA_KEY) || '[]'); } catch(e){ return []; }
+}
+function frotaExtraSaveAll(arr){
+  localStorage.setItem(FROTA_EXTRA_KEY, JSON.stringify(arr));
+}
+(function loadFrotaExtra(){
+  frotaExtraGetAll().forEach(item => FROTA_DATA.push(item));
+})();
 
 // Popula o datalist global (placas de cavalo, carretas e nomes de motorista)
 // usado como sugestão automática em campos de busca do sistema.
-(function popularSugestoesFrota() {
+function popularSugestoesFrota() {
   const dl = document.getElementById('dlFrota');
   const dlPlacas = document.getElementById('dlPlacas');
   if (!dl && !dlPlacas) return;
@@ -6340,7 +6463,8 @@ const FROTA_DATA = [
   });
   if (dl) dl.innerHTML = [...valores].sort().map(v => `<option value="${v}">`).join('');
   if (dlPlacas) dlPlacas.innerHTML = [...placas].sort().map(v => `<option value="${v}">`).join('');
-})();
+}
+popularSugestoesFrota();
 
 function getInitials(name) {
   if (!name || name === '—') return '?';
@@ -6442,9 +6566,68 @@ function filtrarFrota() {
       <td style="text-align:center">${isVan ? `<span class="badge badge-warning">${r.paletes} Van</span>` : `<span class="badge badge-info">${r.paletes}</span>`}</td>
       <td><a href="https://wa.me/55${tel}" target="_blank" style="color:var(--success);text-decoration:none;font-size:.82rem"><i class="fab fa-whatsapp"></i> ${r.celular}</a></td>
       <td style="font-size:.75rem;color:var(--text-lt)">${r.cpf}</td>
-      <td><a href="tel:${tel}" class="btn btn-sm btn-success" style="padding:.25rem .6rem"><i class="fas fa-phone"></i></a></td>
+      <td><a href="tel:${tel}" class="btn btn-sm btn-success" style="padding:.25rem .6rem"><i class="fas fa-phone"></i></a>${r._custom ? ` <button class="btn btn-sm btn-gray" style="padding:.25rem .5rem" title="Remover cadastro" onclick="frotaExtraRemover('${r.placa}')"><i class="fas fa-trash"></i></button>` : ''}</td>
     </tr>`;
   }).join('');
+}
+
+// Cadastra um novo motorista/veículo direto pela tela (sem editar código).
+// Fica salvo neste navegador e entra imediatamente nos cards, na tabela,
+// nas sugestões de busca e nos rankings de manutenção.
+function frotaExtraAdd(){
+  const motorista = (document.getElementById('frotaNovoMotorista').value || '').trim().toUpperCase();
+  const placa     = (document.getElementById('frotaNovoPlaca').value || '').trim().toUpperCase();
+  if (!placa) { showToast('Informe ao menos a placa do cavalo.'); return; }
+
+  const carretaPlaca = (document.getElementById('frotaNovoCarreta').value || '').trim().toUpperCase();
+  const paletes       = document.getElementById('frotaNovoPaletes').value || '28';
+  const isVan         = paletes === '30' && document.getElementById('frotaNovoVan').checked;
+  const carreta       = carretaPlaca ? (carretaPlaca + (isVan ? ' — 30 pal. Van' : '')) : '';
+
+  const novo = {
+    motorista: motorista || '—',
+    placa, carreta, paletes,
+    celular: (document.getElementById('frotaNovoCelular').value || '').trim(),
+    cpf:     (document.getElementById('frotaNovoCpf').value || '').trim(),
+    cavaloMarca:  (document.getElementById('frotaNovoCavaloMarca').value || '').trim().toUpperCase(),
+    cavaloModelo: (document.getElementById('frotaNovoCavaloModelo').value || '').trim(),
+    cavaloAno:    (document.getElementById('frotaNovoCavaloAno').value || '').trim(),
+    carretaMarca: (document.getElementById('frotaNovoCarretaMarca').value || '').trim().toUpperCase(),
+    carretaAno:   (document.getElementById('frotaNovoCarretaAno').value || '').trim(),
+    refrigMarca:  (document.getElementById('frotaNovoRefrigMarca').value || '').trim().toUpperCase(),
+    refrigModelo: (document.getElementById('frotaNovoRefrigModelo').value || '').trim(),
+    refrigAno:    (document.getElementById('frotaNovoRefrigAno').value || '').trim(),
+    _custom: true,
+  };
+
+  const extras = frotaExtraGetAll();
+  extras.push(novo);
+  frotaExtraSaveAll(extras);
+  FROTA_DATA.push(novo);
+
+  ['frotaNovoMotorista','frotaNovoPlaca','frotaNovoCarreta','frotaNovoCelular','frotaNovoCpf',
+   'frotaNovoCavaloMarca','frotaNovoCavaloModelo','frotaNovoCavaloAno',
+   'frotaNovoCarretaMarca','frotaNovoCarretaAno',
+   'frotaNovoRefrigMarca','frotaNovoRefrigModelo','frotaNovoRefrigAno'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('frotaNovoPaletes').selectedIndex = 0;
+  document.getElementById('frotaNovoVan').checked = false;
+
+  popularSugestoesFrota();
+  filtrarFrota();
+  if (document.getElementById('manAno')) manRender();
+  showToast(`✓ ${motorista || placa} adicionado à frota!`);
+}
+
+function frotaExtraRemover(placa){
+  if (!confirm('Remover este cadastro da frota?')) return;
+  const extras = frotaExtraGetAll().filter(f => f.placa !== placa);
+  frotaExtraSaveAll(extras);
+  const idx = FROTA_DATA.findIndex(f => f._custom && f.placa === placa);
+  if (idx >= 0) FROTA_DATA.splice(idx, 1);
+  popularSugestoesFrota();
+  filtrarFrota();
+  if (document.getElementById('manAno')) manRender();
+  showToast('Cadastro removido.');
 }
 
 // ═══════════════════════════════════════════════════════════
