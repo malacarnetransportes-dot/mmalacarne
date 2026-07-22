@@ -939,16 +939,14 @@ footer a{color:var(--accent);text-decoration:none;}
               <button class="btn btn-success btn-sm" onclick="exportCSV(currentFinanceiroFiltered,'financeiro')"><i class="fas fa-download"></i> CSV</button>
             </div>
           </div>
-          <div id="finDiagnostico" style="display:none;margin-bottom:1rem"></div>
           <div class="fin-charts-row">
             <div class="fin-rank-col">
               <div class="dash-card"><div class="dash-card-title"><i class="fas fa-layer-group"></i> Ranking por Tipo de Contas</div><ol class="rank-list" id="finRankTipoContas"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
-              <div class="dash-card"><div class="dash-card-title"><i class="fas fa-building"></i> Ranking por Local<button type="button" class="fin-col-cfg-btn" onclick="finConfigLocalCol(event)" title="Selecionar qual coluna da planilha representa o Local"><i class="fas fa-cog"></i></button></div><ol class="rank-list" id="finRankLocal"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
               <div class="dash-card"><div class="dash-card-title"><i class="fas fa-filter"></i> Ranking por Empresa (Categoria filtrada)</div><ol class="rank-list" id="finRankTipoLocal"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
             </div>
             <div class="fin-pie-col">
               <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-pie"></i> Por Tipo de Contas</div><div class="chart-box" style="height:260px"><canvas id="finPieChart" height="220"></canvas></div></div>
-              <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-pie"></i> Top 10 Locais por Valor</div><div class="chart-box" style="height:260px"><canvas id="finBarLocalChart" height="220"></canvas></div></div>
+              <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-pie"></i> Top 10 Locais por Valor<button type="button" class="fin-col-cfg-btn" onclick="finConfigLocalCol(event)" title="Selecionar qual coluna da planilha representa o Local"><i class="fas fa-cog"></i></button></div><div class="chart-box" style="height:260px"><canvas id="finBarLocalChart" height="220"></canvas></div></div>
             </div>
           </div>
           <div class="dash-card">
@@ -1979,7 +1977,7 @@ function finConfigLocalCol(ev) {
   const btn = ev ? ev.currentTarget : null;
   const pop = document.createElement('div');
   pop.className = 'fin-col-cfg-pop';
-  pop.innerHTML = '<div class="fin-col-cfg-pop-hdr">Coluna usada como "Local":</div>'
+  pop.innerHTML = '<div class="fin-col-cfg-pop-hdr">Coluna usada como "Local" (Top 10 Locais):</div>'
     + headers.map(h => `<div class="fin-col-cfg-opt${h === atual ? ' active' : ''}" data-col="${h.replace(/"/g, '&quot;')}">${h}</div>`).join('')
     + '<div class="fin-col-cfg-opt" style="color:var(--danger)" data-col="">— Detectar automaticamente —</div>';
   document.body.appendChild(pop);
@@ -2003,32 +2001,6 @@ function finSetColLocal(nome) {
   else localStorage.removeItem('finColLocalOverride');
   document.querySelectorAll('.fin-col-cfg-pop').forEach(p => p.remove());
   applyFinFilters();
-}
-
-// Painel sempre visível mostrando exatamente o que a aplicação está
-// enxergando na planilha carregada: os cabeçalhos reais, um valor de
-// exemplo de cada um (de uma linha com conteúdo) e qual coluna foi
-// escolhida para Categoria / Tipo de Contas / Local. Existe para o
-// próprio usuário conferir e corrigir sem precisar de acesso externo à
-// planilha — resolve o mesmo tipo de divergência de nomes de coluna que
-// o diagnóstico de Faturamento resolve para nomes de motorista.
-function finRenderDiagnostico(headers, data, cols) {
-  const el = document.getElementById('finDiagnostico');
-  if (!el) return;
-  const amostra = data.find(r => headers.some(h => String(r[h] || '').trim())) || data[0] || {};
-  const linha = (nome) => {
-    if (!nome) return '<span style="color:var(--danger)">— não encontrada —</span>';
-    const v = String(amostra[nome] ?? '').trim();
-    return `<b>${nome}</b> <span style="color:var(--text-lt)">(ex.: "${v ? v.slice(0, 40) : 'vazio'}")</span>`;
-  };
-  let html = '<div class="dash-card" style="border:1px solid var(--gray-200)">';
-  html += '<div class="dash-card-title"><i class="fas fa-magnifying-glass"></i> Diagnóstico de colunas — Financeiro</div>';
-  html += `<p style="font-size:.82rem;margin:.2rem 0 .5rem"><b>Categoria:</b> ${linha(cols.colCat)} &nbsp;|&nbsp; <b>Tipo de Contas:</b> ${linha(cols.colTipoContas)} &nbsp;|&nbsp; <b>Local:</b> ${linha(cols.colLocal)}</p>`;
-  html += '<p style="font-size:.8rem;margin:.4rem 0 .3rem;color:var(--text-lt)">Todos os cabeçalhos encontrados na planilha (clique na engrenagem de "Ranking por Local" pra escolher outra coluna para Local):</p>';
-  html += '<div style="display:flex;flex-wrap:wrap;gap:.4rem">' + headers.map(h => `<span style="background:var(--gray-100);border-radius:20px;padding:.2rem .7rem;font-size:.78rem" title="ex.: ${String(amostra[h] ?? '').trim().replace(/"/g,'&quot;')}">${h}</span>`).join('') + '</div>';
-  html += '</div>';
-  el.innerHTML = html;
-  el.style.display = 'block';
 }
 
 // Classifica o nome bruto da coluna "Local" (fornecedor/praça/empresa do
@@ -3220,8 +3192,6 @@ function applyFinFilters() {
   const overrideTC = localStorage.getItem('finColTipoContasOverride');
   const colTipoContas = (overrideTC && headers.includes(overrideTC)) ? overrideTC : finColTipoContas(headers);
 
-  finRenderDiagnostico(headers, financeiroData, { colCat, colTipoContas, colLocal, colValor, colDesc });
-
   const dIni  = document.getElementById('finDataInicio').value;
   const dFim  = document.getElementById('finDataFim').value;
   const mesEl = document.getElementById('finMes');
@@ -3369,16 +3339,6 @@ function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLoca
   if (rankTcEl) {
     rankTcEl.innerHTML = rankingTc.length
       ? rankingTc.map(([nome, valor]) => `<li><span style="font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px" title="${nome}">${nome}</span><span style="font-weight:800;color:var(--accent)">${fmtMoney(valor)}</span></li>`).join('')
-      : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li>';
-  }
-
-  // Ranking por Local — mesmo padrão, agrupado pela empresa/fornecedor,
-  // sempre o período inteiro (ignora a Categoria selecionada)
-  const rankLocalEl = document.getElementById('finRankLocal');
-  if (rankLocalEl) {
-    const rankingLocal = Object.entries(locais).sort((a, b) => b[1] - a[1]);
-    rankLocalEl.innerHTML = rankingLocal.length
-      ? rankingLocal.map(([nome, valor]) => `<li><span style="font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px" title="${nome}">${nome}</span><span style="font-weight:800;color:var(--accent)">${fmtMoney(valor)}</span></li>`).join('')
       : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li>';
   }
 
