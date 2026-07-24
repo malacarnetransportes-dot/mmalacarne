@@ -1817,7 +1817,7 @@ let nfeTokenExpiry    = 0;
 
 // MAX — chave da API Groq (gratuita), opcional. Sem ela, MAX responde só
 // com o sistema local de regras (respostaLocalMAX).
-let MAX_GROQ_KEY = localStorage.getItem('maxGroqApiKey') || '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';
+let MAX_GROQ_KEY = localStorage.getItem('maxGroqApiKey') || '';
 let nfeAllData        = [];   // todas as NF-e brutas
 let nfeFiltered       = [];   // após filtros
 let nfeBarChartObj    = null;
@@ -6640,66 +6640,12 @@ document.getElementById('calcDiaria').addEventListener('keydown', e => { if(e.ke
 // ═══════════════════════════════════════════════════════════
 // SENHAS
 // ═══════════════════════════════════════════════════════════
-const SENHAS_DATA = [
-  {sistema:'Trizy (Plataforma)',url:'https://plataforma.trizy.com.br/',usuario:'',senha:'Mala23252325@'},
-  {sistema:'Angel Lira — Logística',url:'https://logistica.angellira.com.br/lira-verso/home',usuario:'',senha:'Malacarne2325@'},
-  {sistema:'Angel Lira — App (VINICIUS)',url:'https://app.angellira.com.br/',usuario:'VINICIUS.MALACARNE',senha:'Mala2325@'},
-  {sistema:'Angel Lira — App (RONALDO)',url:'https://app.angellira.com.br/',usuario:'RONALDO.MALACARNE',senha:'Mala23252325@'},
-  {sistema:'Averb. Carga Seguro ATM',url:'',usuario:'RONI / COD 11455200',senha:'mala2325'},
-  {sistema:'Integração Multicte',url:'',usuario:'WS / COD 11455200',senha:'base123'},
-  {sistema:'Posto Pelanda',url:'http://www.postospelanda.com.br',usuario:'76344936000100',senha:'14689'},
-  {sistema:'Graal FrotaFlex',url:'https://graal.frotaflex.com.br/',usuario:'76344936000100',senha:'7634'},
-  {sistema:'Atlas Facilities (Novo Portal)',url:'https://gestao.atlasfacilities.com.br/contracts/list',usuario:'maximinovilmormalacarne@gmail.com',senha:'Mala2325@'},
-  {sistema:'OnixSat — Espelhamento',url:'https://www.onixsat.com.br/rastreamento/new/login.aspx',usuario:'MAXIMINO',senha:'Malamvm30@'},
-  {sistema:'OnixSat — Enterprise',url:'',usuario:'MAXIMINO',senha:'@mvm30'},
-  {sistema:'OnixSat — COOPERSEARA',url:'',usuario:'COOPERSEARA',senha:'CoFrseara@123'},
-  {sistema:'OnixSat — NewMaps App',url:'https://www.newrastreamentoonline.com.br/new/espelhamento/',usuario:'mmalacarne@netcon.com.br',senha:'@Malamvm30'},
-  {sistema:'Rede OLA FrotaFlex (Sol da Dutra)',url:'https://redeola.frotaflex.com.br/',usuario:'76344936000100',senha:'mala2325'},
-  {sistema:'OpenTech SIL (BRF/MLCN01)',url:'https://sil.opentechgr.com.br/',usuario:'BRF/MLCN01',senha:'Mala23252325'},
-  {sistema:'OpenTech SIL (BRF/MLCN02)',url:'https://sil.opentechgr.com.br/',usuario:'BRF/MLCN02',senha:'#Mala23252325@0'},
-  {sistema:'Meu TIM',url:'https://meutim.tim.com.br/novo',usuario:'106197412',senha:'7746'},
-  {sistema:'BRF Parceiros (Service Now)',url:'https://brfprd.service-now.com/parceiros?id=csm_vehicles',usuario:'76344936000100',senha:'mala2325 / 446032'},
-  {sistema:'Scania FINAME (Boletos)',url:'https://scania.ifclick.com.br/meus_boletos.php',usuario:'mmalacarnetransporte@gmail.com',senha:'A9F9501D'},
-  {sistema:'My Scania',url:'https://my.scania.com/#/start',usuario:'financeirommalacarne@gmail.com',senha:'Mala2325@'},
-  {sistema:'Scania Banco (Boletos)',url:'https://boletos.scaniabanco.com.br/',usuario:'dmalacarne@netcon.com.br',senha:'6B29A976'},
-  {sistema:'Scania Banco (Portal)',url:'https://www.scaniabanco.com.br/portal/',usuario:'MALACARNE',senha:'C6BE23C1'},
-  {sistema:'Scania FMP NextGen',url:'https://fmpnextgen.scania.com/#/sign-in',usuario:'maldiomax5',senha:'@mala2325'},
-  {sistema:'Volvo Boleto (Plano Manutenção)',url:'https://volvo.cob360.com.br/site/login',usuario:'76344936000100',senha:'M@76344'},
-  {sistema:'Volvo Boletos',url:'https://volvo.cob360.com.br/boletos',usuario:'76344936000100',senha:'mala2325'},
-  {sistema:'BRF MIISY',url:'https://brf.miisy.com/supplier/do/dashboard',usuario:'dmalacarne@netcon.com.br',senha:'Mala23252325@@'},
-  {sistema:'BRF TMS',url:'https://tms.brf-corp.com/tm/framework/Frame.jsp',usuario:'T328629',senha:'mala2325'},
-  {sistema:'BRF Primária (Temperatura)',url:'https://brfprimaria.hbsis.com.br/account/login',usuario:'76344936',senha:'M@lacarne19'},
-  {sistema:'BRF Extrato',url:'',usuario:'76344936',senha:'328629'},
-  {sistema:'Gente e Gestão',url:'http://www.genteegestao.com.br/portal/index.aspx',usuario:'dmalacarne@netcon.com.br',senha:'mala2325'},
-  {sistema:'Novo JDA (Oracle)',url:'https://idcs-c7036628499e4f669fda23e2a82fbf86.identity.oraclecloud.com/ui/v1/signin',usuario:'mmalacarne@netcon.com.br',senha:'Malacarne2325'},
-  {sistema:'ARIBA',url:'https://service-2.ariba.com/Supplier.aw',usuario:'dmalacarne@netcon.com.br',senha:'mala2325 | Cód: AN01056409856'},
-  {sistema:'Agriçopel Portal',url:'https://agricopel.portaldocliente.online/',usuario:'dmalacarne@netcon.com.br',senha:'mala2325'},
-  {sistema:'Grupo Ravanello',url:'http://gruporavanello.lzt.com.br/',usuario:'76.3444.936/0001-00',senha:'T0A803'},
-  {sistema:'Grupo CSV',url:'',usuario:'76344936000100',senha:'i9@2017'},
-  {sistema:'Trucks Control / OnixTec',url:'https://www.truckscontrol.com.br/financeiro/',usuario:'mmalacarne@netcon.com.br',senha:'mala.66'},
-  {sistema:'Multicadastro APISUL',url:'',usuario:'76344936000100',senha:'948548'},
-  {sistema:'WebAlarme',url:'http://WWW.WEBALARME.COM.BR',usuario:'Conta: 1807-591',senha:'0275'},
-  {sistema:'HiveCloud / MDF-e (SC)',url:'https://login.hivecloud.com.br/login',usuario:'76344-SC',senha:'76344'},
-  {sistema:'HiveCloud / MDF-e (PR)',url:'https://login.hivecloud.com.br/login',usuario:'76344-PR',senha:'76344'},
-  {sistema:'HiveCloud / MDF-e (SP)',url:'https://login.hivecloud.com.br/login',usuario:'76344-SP',senha:'76344'},
-  {sistema:'MultiCTE (SC)',url:'http://brf.multicte.com.br/CTe/Logon.aspx',usuario:'76344-SC',senha:'76344'},
-  {sistema:'MultiCTE (PR)',url:'http://brf.multicte.com.br/CTe/Logon.aspx',usuario:'76344-PR',senha:'76344'},
-  {sistema:'MultiCTE (SP)',url:'http://brf.multicte.com.br/CTe/Logon.aspx',usuario:'76344-SP',senha:'76344'},
-  {sistema:'Veltec (Câmera ao Vivo)',url:'https://vplayer.com.br/',usuario:'',senha:'1234'},
-  {sistema:'Veltec Suporte',url:'https://veltec.atlassian.net/servicedesk/customer/user/login',usuario:'dmalacarne@netcon.com.br',senha:'mala2325'},
-  {sistema:'VFleets',url:'https://ce.vfleets.com.br/app/',usuario:'mmalacarnetransporte@gmail.com',senha:'@Mala2325'},
-  {sistema:'Aurora',url:'',usuario:'76344936/000100',senha:'Mala2025*'},
-  {sistema:'Sem Parar',url:'',usuario:'76344936000100',senha:'c2047d7c'},
-  {sistema:'SitCarga',url:'',usuario:'CPF: 34806660949 / ANTT: 001293941',senha:'mala2325'},
-  {sistema:'Vivo',url:'',usuario:'dmalacarne@netcon.com.br',senha:'232500'},
-  {sistema:'Home Office',url:'',usuario:'eudiomar@hotmail.com',senha:'@mvm30'},
-  {sistema:'E-mail Netcon (dmalacarne)',url:'',usuario:'dmalacarne@netcon.com.br',senha:'sala22325'},
-  {sistema:'Gmail (maximino)',url:'',usuario:'maximinovilmormalacarne@gmail.com',senha:'Mala23252325@'},
-  {sistema:'Gmail (financeiro)',url:'',usuario:'financeirommalacarne@gmail.com',senha:'Mala2325@'},
-  {sistema:'Gmail (dmalacarne990)',url:'',usuario:'dmalacarne990@gmail.com',senha:'mala2325'},
-  {sistema:'Wireless (Senha)',url:'',usuario:'25carne2523',senha:'@M@L@2325'},
-  {sistema:'Roteador',url:'',usuario:'MALACARNE2325',senha:'MALACARNE2325'},
-];
+// ATENÇÃO: as senhas foram REMOVIDAS daqui em 24/07/2026 por estarem
+// vazando em texto puro no HTML público (visível por "Ver código-fonte"
+// mesmo sem login). Use localStorage (por navegador) ou um cofre de
+// senhas de verdade (Bitwarden, 1Password) em vez de hardcode.
+// Estrutura esperada por item: {sistema, url, usuario, senha}
+const SENHAS_DATA = JSON.parse(localStorage.getItem('malacarneSenhas') || '[]');
 
 let senhasVisiveis = {};
 
