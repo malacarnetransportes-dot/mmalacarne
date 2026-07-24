@@ -2775,7 +2775,25 @@ function pneuAplicarImportacao(parsed){
     if (!overrides[placa]) overrides[placa] = { posicoes:{}, historico:[] };
     if (v.alerta) overrides[placa].alerta = true;
     if (v.numeroFogo) overrides[placa].numeroFogo = v.numeroFogo;
-    overrides[placa].posicoes = { ...(overrides[placa].posicoes||{}), ...(v.posicoes || {}) };
+
+    // Separa campos de LEITURA (kmAtual/sulcoAtual/custoUnit) — esses não ficam no cadastro,
+    // vão para pneuLeituras, que é de onde pneuCalcTire() lê para calcular CPK e vida útil.
+    const posicoesCadastro = {};
+    Object.entries(v.posicoes || {}).forEach(([chave, info]) => {
+      if (!info) return;
+      const { kmAtual, sulcoAtual, custoUnit, ...cadastro } = info;
+      if (Object.keys(cadastro).length) posicoesCadastro[chave] = { ...(overrides[placa].posicoes?.[chave]||{}), ...cadastro };
+      if (kmAtual != null || sulcoAtual != null || custoUnit != null) {
+        const leituraAtual = pneuGetLeitura(placa, chave);
+        pneuSaveLeitura(placa, chave, {
+          ...leituraAtual,
+          ...(kmAtual != null ? { kmAtual } : {}),
+          ...(sulcoAtual != null ? { sulcoAtual } : {}),
+          ...(custoUnit != null ? { custoUnit } : {}),
+        });
+      }
+    });
+    overrides[placa].posicoes = { ...(overrides[placa].posicoes||{}), ...posicoesCadastro };
     overrides[placa].historico = [ ...(overrides[placa].historico||[]), ...(v.historico || []) ];
   });
   pneuSaveOverrides(overrides);
@@ -3048,54 +3066,171 @@ function pneuBuildRanking(){
   document.getElementById('pneuRankingRuim').innerHTML = ruins.map(linha).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-lt)">Sem leituras suficientes ainda.</td></tr>';
 }
 
+let pneuImportPendente = null; // { parsed, avisos } aguardando confirmação do usuário
+
+function pneuNormalizeChave(str){
+  return String(str||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+}
+
+// Tenta corrigir uma chave de posição que a IA não escreveu exatamente igual à lista válida
+// (ex.: "tracao_LDF", "Tração LDF", "eixo-tracao-ldf") comparando por aproximação.
+function pneuResolverChave(chaveBruta, eixoPadrao){
+  if (!chaveBruta) return null;
+  const alvo = pneuNormalizeChave(chaveBruta);
+  const direta = PNEU_POS.find(p => pneuNormalizeChave(p.key) === alvo);
+  if (direta) return direta.key;
+  // Tenta casar por grupo + lado (label), ignorando separadores/acentos
+  const candidatos = PNEU_POS.filter(p => alvo.includes(pneuNormalizeChave(p.label)));
+  if (candidatos.length === 1) return candidatos[0].key;
+  if (candidatos.length > 1) {
+    // desempata pelo eixo padrão escolhido pelo usuário no formulário
+    const doEixoPadrao = candidatos.find(p => p.key.startsWith(eixoPadrao));
+    if (doEixoPadrao) return doEixoPadrao.key;
+  }
+  return null;
+}
+
+// Extrai o maior bloco JSON válido de uma resposta que pode vir com texto/markdown ao redor
+function pneuExtrairJSON(saidaBruta){
+  const semMarkdown = saidaBruta.replace(/```json|```/gi, '').trim();
+  const ini = semMarkdown.indexOf('{');
+  const fim = semMarkdown.lastIndexOf('}');
+  if (ini === -1 || fim === -1 || fim <= ini) throw new Error('JSON não encontrado na resposta.');
+  return JSON.parse(semMarkdown.slice(ini, fim + 1));
+}
+
+// Valida e normaliza o JSON retornado pela IA: corrige chaves de posição, remove lixo,
+// e devolve avisos legíveis sobre o que não pôde ser reconhecido — nada disso é gravado sem revisão.
+function pneuValidarImportacao(parsed, eixoPadrao){
+  const avisos = [];
+  const veiculosValidos = [];
+  (parsed.veiculos || []).forEach(v => {
+    if (!v.placa || !/^[A-Za-z0-9]{6,8}$/.test(v.placa.replace(/[-\s]/g,''))) {
+      avisos.push(`Placa inválida ou ausente ignorada: "${v.placa || '(vazio)'}"`);
+      return;
+    }
+    const placa = v.placa.toUpperCase().replace(/[-\s]/g,'');
+    const posicoesOk = {};
+    Object.entries(v.posicoes || {}).forEach(([chave, info]) => {
+      const chaveResolvida = pneuResolverChave(chave, eixoPadrao);
+      if (!chaveResolvida) { avisos.push(`${placa}: posição "${chave}" não reconhecida — não foi salva.`); return; }
+      if (info && info.status && !PNEU_STATUS_LABEL[info.status]) info.status = 'semdados';
+      posicoesOk[chaveResolvida] = info;
+    });
+    veiculosValidos.push({ ...v, placa, posicoes: posicoesOk });
+  });
+  const custosValidos = (parsed.custos || []).filter(c => {
+    const ok = c.placa && typeof c.valor === 'number' && c.valor > 0;
+    if (!ok) avisos.push(`Lançamento de custo ignorado (placa ou valor ausente): ${JSON.stringify(c)}`);
+    return ok;
+  });
+  return { parsed: { veiculos: veiculosValidos, custos: custosValidos }, avisos };
+}
+
+function pneuRenderImportPreview(parsed, avisos){
+  const resultEl = document.getElementById('pneuWaResultado');
+  const totalPosicoes = parsed.veiculos.reduce((a,v) => a + Object.keys(v.posicoes||{}).length, 0);
+  const linhasVeiculo = parsed.veiculos.map(v => {
+    const posResumo = Object.entries(v.posicoes||{}).map(([chave, info]) => {
+      const posLabel = PNEU_POS.find(p => p.key === chave);
+      const partes = [posLabel ? `${posLabel.grupo} (${posLabel.label})` : chave];
+      if (info?.marca) partes.push(info.marca);
+      if (info?.status) partes.push(PNEU_STATUS_LABEL[info.status] || info.status);
+      if (info?.kmInstalado) partes.push(pneuFmtKm(info.kmInstalado) + ' na instalação');
+      if (info?.kmAtual) partes.push('leitura: ' + pneuFmtKm(info.kmAtual) + ' atual');
+      if (info?.sulcoAtual != null) partes.push(info.sulcoAtual + ' mm de sulco');
+      if (info?.custoUnit) partes.push(pneuFmtMoney(info.custoUnit) + ' de custo');
+      return partes.join(' · ');
+    });
+    return `<div style="margin-bottom:.6rem"><b>${v.placa}</b>${v.alerta ? ' <span style="color:#ef4444;font-weight:700">⚠ Alerta</span>' : ''}
+      ${posResumo.length ? '<ul style="margin:.25rem 0 0 1.1rem;padding:0;font-size:.75rem;color:var(--text-lt)">' + posResumo.map(p=>`<li>${p}</li>`).join('') + '</ul>' : '<div style="font-size:.75rem;color:var(--text-lt)">Sem posições de pneu identificadas (pode ser só histórico/custo).</div>'}
+      ${(v.historico||[]).length ? `<div style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem">+ ${v.historico.length} registro(s) de histórico</div>` : ''}
+    </div>`;
+  }).join('') || '<div style="font-size:.8rem;color:var(--text-lt)">Nenhum veículo identificado no texto.</div>';
+
+  resultEl.innerHTML = `
+    <div style="border:1.5px solid var(--gray-200);border-radius:12px;padding:.9rem 1rem;background:#fafbfc">
+      <div style="font-weight:700;font-size:.82rem;color:#1e2a3a;margin-bottom:.5rem"><i class="fas fa-magnifying-glass"></i> Conferir antes de salvar</div>
+      <div style="font-size:.76rem;color:var(--text-lt);margin-bottom:.6rem">${parsed.veiculos.length} placa(s) · ${totalPosicoes} posição(ões) de pneu · ${parsed.custos.length} lançamento(s) de custo</div>
+      ${linhasVeiculo}
+      ${avisos.length ? `<div style="margin-top:.5rem;padding:.6rem .8rem;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;font-size:.72rem;color:#9a5b13"><b>${avisos.length} aviso(s):</b><ul style="margin:.3rem 0 0 1.1rem;padding:0">${avisos.map(a=>`<li>${a}</li>`).join('')}</ul></div>` : ''}
+      <div style="display:flex;gap:.6rem;margin-top:.8rem">
+        <button id="pneuConfirmarImport" style="width:auto;padding:.55rem 1.2rem;background:var(--accent);color:#fff;border:none;border-radius:9px;font-weight:700;font-size:.78rem;cursor:pointer"><i class="fas fa-check"></i> Confirmar e salvar</button>
+        <button id="pneuCancelarImport" style="width:auto;padding:.55rem 1.2rem;background:#fff;color:#64748b;border:1.5px solid var(--gray-200);border-radius:9px;font-weight:700;font-size:.78rem;cursor:pointer">Cancelar</button>
+      </div>
+    </div>`;
+
+  document.getElementById('pneuConfirmarImport').addEventListener('click', () => {
+    pneuAplicarImportacao(pneuImportPendente.parsed);
+    const n = pneuImportPendente.parsed.veiculos.length, c = pneuImportPendente.parsed.custos.length;
+    pneuImportPendente = null;
+    document.getElementById('pneuWaTexto').value = '';
+    resultEl.innerHTML = `<div style="color:#16a34a;font-size:.8rem"><i class="fas fa-check-circle"></i> Salvo: ${n} placa(s) e ${c} lançamento(s) de custo.</div>`;
+  });
+  document.getElementById('pneuCancelarImport').addEventListener('click', () => {
+    pneuImportPendente = null;
+    resultEl.innerHTML = '<div style="font-size:.78rem;color:var(--text-lt)">Importação cancelada. O texto continua colado — ajuste o eixo padrão ou o texto e importe de novo.</div>';
+  });
+}
+
 async function pneuImportarTexto(){
   const texto = document.getElementById('pneuWaTexto').value.trim();
   const resultEl = document.getElementById('pneuWaResultado');
+  const btn = document.getElementById('pneuWaImportar');
   if (!texto) { resultEl.innerHTML = '<div style="color:#dc2626;font-size:.8rem">Cole o texto antes de importar.</div>'; return; }
   const eixoPadrao = document.getElementById('pneuWaEixo').value;
+  btn.disabled = true;
   resultEl.innerHTML = '<div style="font-size:.8rem;color:var(--text-lt)"><i class="fas fa-spinner fa-spin"></i> Lendo e organizando os dados...</div>';
   try {
     const chavesValidas = PNEU_POS.map(p => p.key).join(', ');
-    const prompt = `Extraia dados de controle de pneus do texto abaixo. O texto pode vir de uma mensagem de grupo de WhatsApp (bullets "*", marcador "📌 Placa X") OU de uma planilha colada como texto puro (colunas separadas por TAB, vírgula ou ponto-e-vírgula). Reconheça qualquer um dos dois formatos.
+    const prompt = `Você é um assistente de controle de frota. Extraia dados de pneus do texto abaixo. Pode ser: (a) mensagem de grupo de WhatsApp com bullets "*" ou marcador "📌 Placa X"; (b) planilha colada como texto puro (colunas separadas por TAB, vírgula ou ponto-e-vírgula); (c) uma leitura pontual de campo ("KM atual", "sulco", "trocou pneu", "mandou pra recapagem" etc). Reconheça qualquer um desses formatos, inclusive misturados no mesmo texto.
 
 TEXTO:
 """
 ${texto}
 """
 
-Chaves de posição válidas (cada uma representa um pneu do conjunto cavalo 6x2 + carreta): ${chavesValidas}
-Mapeamento usual: "LDF" ou "Lado direito F" = lado direito frente; "LDD" ou "Lado direito D" = lado direito detrás/trás; "LEF" ou "Lado esquerdo F" = lado esquerdo frente; "LED" ou "Lado esquerdo D" = lado esquerdo detrás/trás.
+Chaves de posição válidas (cada uma é um pneu do conjunto cavalo 6x2 + carreta) — use EXATAMENTE uma destas strings, sem variações: ${chavesValidas}
+Mapeamento de lado: "LDF"/"Lado direito F" = lado direito frente; "LDD"/"Lado direito D" = lado direito detrás; "LEF"/"Lado esquerdo F" = lado esquerdo frente; "LED"/"Lado esquerdo D" = lado esquerdo detrás.
 Se o texto citar um eixo genérico (ex: "Tração:", "Dianteiro:") sem indicar se é do cavalo ou da carreta, use como prefixo padrão: "${eixoPadrao}".
+Se o texto trouxer apenas uma atualização de leitura (KM atual, profundidade de sulco em mm, custo de serviço) para um pneu já existente, ainda assim retorne no mesmo formato, preenchendo só os campos citados (não invente marca/modelo se não foram ditos).
+Datas: normalize para "DD/MM/AAAA" quando o ano não for dito, assuma o ano atual do texto ou omita o campo "data" se não for possível saber.
 
-Retorne APENAS um JSON válido, sem markdown e sem texto fora do JSON, neste formato:
+Retorne APENAS um JSON válido, sem markdown e sem texto fora do JSON, neste formato exato:
 {
   "veiculos": [
-    { "placa": "XXX0000", "posicoes": { "<chave_valida>": { "numeroFogo": "", "marca": "", "modelo": "", "tipo": "", "status": "novo|recapado|atencao|alerta|semdados", "kmInstalado": 0 } }, "historico": [ { "data": "", "km": "", "desc": "", "custo": 0, "motorista": "", "alerta": false } ], "alerta": false, "numeroFogo": "" }
+    { "placa": "XXX0000", "posicoes": { "<chave_valida>": { "numeroFogo": "", "marca": "", "modelo": "", "tipo": "", "status": "novo|recapado|atencao|alerta|semdados", "kmInstalado": 0, "kmAtual": 0, "sulcoAtual": 0, "custoUnit": 0 } }, "historico": [ { "data": "", "km": "", "desc": "", "custo": 0, "motorista": "", "alerta": false } ], "alerta": false, "numeroFogo": "" }
   ],
   "custos": [ { "placa": "XXX0000", "valor": 0 } ]
 }
-Não invente informação que não esteja no texto — omita o campo se não existir. Se não houver veículos, use "veiculos": []. Se não houver lista de custos, use "custos": [].`;
+Regras importantes: não invente informação que não esteja no texto — omita o campo se não existir. Se não houver veículos, use "veiculos": []. Se não houver lista de custos, use "custos": []. Nunca use uma chave de posição fora da lista fornecida.`;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
+        max_tokens: 4000,
         messages: [{ role: 'user', content: prompt }]
       })
     });
+    if (!response.ok) throw new Error('Falha na API (' + response.status + ')');
     const data = await response.json();
     const saida = (data.content || []).map(c => c.text || '').join('');
-    const clean = saida.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(clean);
+    const parsedBruto = pneuExtrairJSON(saida);
+    const { parsed, avisos } = pneuValidarImportacao(parsedBruto, eixoPadrao);
 
-    pneuAplicarImportacao(parsed);
-    resultEl.innerHTML = `<div style="color:#16a34a;font-size:.8rem"><i class="fas fa-check-circle"></i> Importado: ${(parsed.veiculos||[]).length} placa(s) e ${(parsed.custos||[]).length} lançamento(s) de custo.</div>`;
-    document.getElementById('pneuWaTexto').value = '';
+    if (!parsed.veiculos.length && !parsed.custos.length) {
+      resultEl.innerHTML = `<div style="color:#dc2626;font-size:.8rem">Não encontrei placas nem custos reconhecíveis nesse texto.${avisos.length ? '<br>' + avisos.map(a=>`• ${a}`).join('<br>') : ''}</div>`;
+      return;
+    }
+    pneuImportPendente = { parsed, avisos };
+    pneuRenderImportPreview(parsed, avisos);
   } catch(err) {
     console.error(err);
-    resultEl.innerHTML = '<div style="color:#dc2626;font-size:.8rem">Não consegui interpretar o texto colado. Confira o formato e tente novamente.</div>';
+    resultEl.innerHTML = `<div style="color:#dc2626;font-size:.8rem">Não consegui interpretar o texto colado (${err.message || 'erro desconhecido'}). Confira o formato e tente novamente.</div>`;
+  } finally {
+    btn.disabled = false;
   }
 }
 
