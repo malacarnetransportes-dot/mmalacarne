@@ -7768,8 +7768,10 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
 
   var CONFIG = {
     TTS_VOICE: "pt-BR",
-    TTS_RATE: 0.92,
-    TTS_PITCH: 0.78,
+    TTS_RATE: 0.95,
+    TTS_PITCH: 0.82,
+    WAKE_WORDS: /\b(hey|ei|e[íi]|oi|fala|opa)\s*max\b/i,
+    WAKE_MODE_DEFAULT: false, // só liga sozinho se o usuário já ativou antes (localStorage)
   };
 
   /* ── CSS ──────────────────────────────────────────────── */
@@ -7907,6 +7909,25 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
       background: rgba(0,255,200,.15);
       border-color: rgba(0,255,200,.6); color: #00ffcc;
     }
+    #max-wake-btn {
+      background: none; border: 1px solid rgba(255,255,255,.15);
+      color: rgba(255,255,255,.45); border-radius: 6px;
+      padding: 4px 7px; cursor: pointer; font-size: .72rem;
+      transition: .2s; white-space: nowrap; flex-shrink: 0;
+    }
+    #max-wake-btn:hover { background: rgba(255,255,255,.06); }
+    #max-wake-btn.active {
+      background: rgba(0,180,255,.12); border-color: rgba(0,180,255,.5);
+      color: #00b4ff;
+    }
+    #max-fab.wake-armed::after {
+      content: ""; position: absolute; inset: -3px; border-radius: 50%;
+      border: 1.5px solid rgba(0,180,255,.5); animation: max-wake-ring 2.4s ease-in-out infinite;
+    }
+    @keyframes max-wake-ring {
+      0%, 100% { opacity: .25; transform: scale(1); }
+      50%      { opacity: .7;  transform: scale(1.06); }
+    }
     .max-wave { display: none; align-items: center; gap: 2px; height: 18px; }
     .max-wave.active { display: flex; }
     .max-wave-bar {
@@ -8001,6 +8022,7 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
             </div>
             <span id="max-voice-label">Clique no microfone para falar</span>
             <button id="max-mic-btn">🎤 Falar</button>
+            <button id="max-wake-btn" title="Ativar/desativar escuta contínua por 'Hey MAX'">👂 Hey MAX</button>
           </div>
           <div class="max-text-row">
             <textarea id="max-text-input" rows="1" placeholder="Ou escreva sua pergunta…"></textarea>
@@ -8014,6 +8036,8 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
   /* ── ESTADO ───────────────────────────────────────────── */
   var isOpen = false, isListening = false, isSpeaking = false;
   var recognition = null, ttsUtterance = null;
+  var wakeRecognition = null, wakeModeOn = false, wakeShouldRun = false;
+  var wakeRestartTimer = null;
 
   /* ── INIT ─────────────────────────────────────────────── */
   function init() {
@@ -8029,6 +8053,7 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
     document.getElementById("max-fab").addEventListener("click", toggleChat);
     document.getElementById("max-close-btn").addEventListener("click", closeChat);
     document.getElementById("max-mic-btn").addEventListener("click", toggleVoice);
+    document.getElementById("max-wake-btn").addEventListener("click", toggleWakeMode);
     document.getElementById("max-send-btn").addEventListener("click", sendText);
     document.getElementById("max-text-input").addEventListener("keydown", function(e) {
       if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendText(); }
@@ -8038,6 +8063,14 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
       this.style.height = Math.min(this.scrollHeight, 90) + "px";
     });
     setupSpeechRecognition();
+    setupWakeRecognition();
+    // Se o usuário já tinha ativado "Hey MAX" antes, religa sozinho.
+    // (Chrome só concede o microfone sem clique se a permissão já foi
+    // dada nessa origem antes — por isso a 1ª ativação sempre precisa
+    // de um clique manual no botão 👂 Hey MAX.)
+    if (localStorage.getItem("maxWakeMode") === "1") {
+      toggleWakeMode();
+    }
   }
 
   function toggleChat() { if (isOpen) closeChat(); else openChat(); }
@@ -8180,7 +8213,8 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
       return "Domino todos os módulos do sistema: Financeiro, Orçamento & Custos, Manutenção, Faturamento, " +
         "Baterias, Vencimentos (CNH/ASO/licenciamento) e Frota/Motoristas. Pergunta sobre qualquer um, combine " +
         "vários na mesma pergunta (ex.: \"como está o financeiro e as baterias?\"), ou peça \"resumo geral\" " +
-        "que eu junto tudo.";
+        "que eu junto tudo. Pode chamar por voz a qualquer hora dizendo 'Hey MAX' se ativar o modo de escuta " +
+        "contínua no botão 👂.";
     }
 
     var pedirTudo = /resumo geral|visao geral|como esta tudo|como estamos|status geral|panorama/.test(p);
@@ -8201,7 +8235,11 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
   // configurada, ou a chamada falhar (rede, chave inválida, limite grátis
   // estourado), quem chama cai de volta pro respostaLocalMAX.
   // Modelo: ajuste aqui se a Groq descontinuar o nome abaixo.
-  const MAX_GROQ_MODEL = 'llama-3.1-8b-instant';
+  // 70B em vez de 8B: raciocina muito melhor (nível GPT-4o em benchmarks),
+  // continua 100% gratuito no free tier da Groq. Se a Groq descontinuar o
+  // nome abaixo, troque aqui — o sistema já cai pro modo local sozinho
+  // se a chamada falhar.
+  const MAX_GROQ_MODEL = 'llama-3.3-70b-versatile';
 
   function snapshotDadosMAX() {
     return TOPICOS_MAX.map(function (t) {
@@ -8213,9 +8251,25 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
     const snapshot = snapshotDadosMAX();
     const ctx = getDashboardContext();
     const systemPrompt =
-      'Você é o MAX, assistente do dashboard de gestão de frota da empresa (aba atual: ' + (ctx.aba_ativa || '—') + '). ' +
-      'Responda SEMPRE em português do Brasil, de forma direta e curta (poucas frases), como um colega de trabalho. ' +
-      'Use APENAS os dados abaixo, já carregados do sistema; não invente números. Se o dado pedido não estiver aqui, diga que não tem essa informação carregada.\n\n' +
+      'Você é o MAX — o copiloto de operações da M-Malacarne, empresa de transporte refrigerado com ~40 anos ' +
+      'de estrada no Sul, Sudeste e Sudoeste do Brasil. Sua persona: um especialista sênior em logística e ' +
+      'gestão de frota, nível internacional, com décadas de experiência em transporte refrigerado, custos de ' +
+      'frota, manutenção preventiva, compliance de documentação (CNH/ASO/toxicológico/licenciamento) e ' +
+      'operação financeira de transportadoras. Você fala como esse especialista falaria com o gestor: direto, ' +
+      'seguro, sem enrolação, mas sempre pronto pra ir além do número puro e dar leitura profissional — ' +
+      'alertar risco, sugerir prioridade, comparar com o que seria saudável pro setor, apontar o que merece ' +
+      'atenção antes de virar problema (aba atual do sistema: ' + (ctx.aba_ativa || '—') + ').\n\n' +
+      'REGRAS INEGOCIÁVEIS:\n' +
+      '- Responda sempre em português do Brasil, curto e direto — poucas frases, sem enrolação, tom de colega ' +
+      'sênior e não de manual.\n' +
+      '- Para QUALQUER número, nome, placa, data ou valor: use exclusivamente os dados abaixo, já carregados do ' +
+      'sistema. Nunca invente ou estime dado que não está aqui. Se faltar, diga claramente que esse dado não ' +
+      'está carregado.\n' +
+      '- Sua expertise em logística serve pra interpretar e priorizar os dados reais (ex: "esse custo de ' +
+      'manutenção em cavalos tá alto pro padrão do setor, vale investigar X"), nunca pra criar números novos.\n' +
+      '- Se a pergunta for fora dos módulos do sistema mas dentro da sua área de expertise (logística, frota, ' +
+      'gestão de transporte em geral), pode responder com seu conhecimento profissional, deixando claro quando ' +
+      'é opinião/prática de mercado e não dado do sistema.\n\n' +
       'DADOS ATUAIS DO DASHBOARD:\n' + (snapshot || '(nenhum módulo com dados carregados ainda)');
 
     const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -8230,8 +8284,8 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
           { role: 'system', content: systemPrompt },
           { role: 'user', content: pergunta }
         ],
-        temperature: 0.3,
-        max_tokens: 400
+        temperature: 0.4,
+        max_tokens: 700
       })
     });
     if (!resp.ok) {
@@ -8290,6 +8344,7 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
     recognition.lang = "pt-BR"; recognition.interimResults = true;
     recognition.maxAlternatives = 1; recognition.continuous = false;
     recognition.onstart = function() {
+      if (wakeShouldRun) { try { wakeRecognition.stop(); } catch (e) {} } // evita 2 reconhecimentos simultâneos
       isListening = true; setStatus("listening");
       document.getElementById("max-mic-btn").textContent = "⏹ Parar";
       document.getElementById("max-mic-btn").classList.add("active");
@@ -8329,11 +8384,103 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
     document.getElementById("max-voice-icon").textContent = "🎙️";
     document.getElementById("max-voice-label").textContent = "Clique no microfone para falar";
     setStatus("online");
+    if (wakeShouldRun) { try { wakeRecognition.start(); } catch (e) {} } // devolve a escuta pro "Hey MAX"
+  }
+
+  // ── MODO "HEY MAX" (escuta contínua com palavra de ativação) ──────────
+  // Roda um SpeechRecognition separado, continuous:true, só escutando pela
+  // wake word. Ao detectar "hey max" / "ei max" / "fala max" etc., se já
+  // veio junto com um comando na mesma frase ("hey max, como tá o
+  // financeiro") já dispara direto; senão abre o chat e liga a escuta de
+  // comando normal (mesmo fluxo do botão 🎤).
+  function setupWakeRecognition() {
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return; // sem suporte a voz nesse navegador — botão fica inerte
+    wakeRecognition = new SR();
+    wakeRecognition.lang = "pt-BR";
+    wakeRecognition.continuous = true;
+    wakeRecognition.interimResults = true;
+    wakeRecognition.maxAlternatives = 1;
+
+    wakeRecognition.onresult = function (event) {
+      for (var i = event.resultIndex; i < event.results.length; i++) {
+        if (!event.results[i].isFinal) continue;
+        var transcript = event.results[i][0].transcript || "";
+        var m = transcript.match(CONFIG.WAKE_WORDS);
+        if (!m) continue;
+        var comando = transcript.slice(m.index + m[0].length).trim();
+        openChat();
+        if (comando) {
+          askMAX(comando);
+        } else {
+          // só a wake word: abre o mic de comando, como se tivesse clicado
+          try { stopWakeListening(true); recognition.start(); } catch (e) {}
+        }
+      }
+    };
+    wakeRecognition.onerror = function (event) {
+      // "no-speech"/"aborted" são normais em escuta contínua longa — ignora e deixa o onend religar.
+      if (event.error === "not-allowed") {
+        wakeShouldRun = false;
+        setWakeUI(false);
+        addMessage("system", "Permissão de microfone negada — modo 'Hey MAX' desligado.");
+      }
+    };
+    wakeRecognition.onend = function () {
+      // Chrome derruba o reconhecimento sozinho de tempos em tempos mesmo
+      // em continuous:true; se o modo ainda deve estar ligado, religa.
+      if (wakeShouldRun) {
+        wakeRestartTimer = setTimeout(function () {
+          try { wakeRecognition.start(); } catch (e) {}
+        }, 300);
+      }
+    };
+  }
+
+  function toggleWakeMode() {
+    if (!wakeRecognition) { addMessage("system", "Escuta contínua não disponível nesse navegador. Use Chrome."); return; }
+    if (wakeModeOn) { stopWakeListening(false); }
+    else { startWakeListening(); }
+  }
+
+  function startWakeListening() {
+    wakeShouldRun = true;
+    try { wakeRecognition.start(); } catch (e) { /* já pode estar rodando */ }
+    setWakeUI(true);
+    localStorage.setItem("maxWakeMode", "1");
+    addMessage("system", "Modo 'Hey MAX' ativado — pode chamar por voz a qualquer momento.");
+  }
+
+  // silencioso=true: pausa momentânea (ex.: pra passar o mic pro comando),
+  // sem desligar o modo nem avisar o usuário.
+  function stopWakeListening(silencioso) {
+    wakeShouldRun = false;
+    clearTimeout(wakeRestartTimer);
+    try { wakeRecognition.stop(); } catch (e) {}
+    if (!silencioso) {
+      setWakeUI(false);
+      localStorage.setItem("maxWakeMode", "0");
+      addMessage("system", "Modo 'Hey MAX' desativado.");
+    }
+  }
+
+  function setWakeUI(ligado) {
+    wakeModeOn = ligado;
+    var btn = document.getElementById("max-wake-btn");
+    var fab = document.getElementById("max-fab");
+    if (btn) btn.classList.toggle("active", ligado);
+    if (fab) fab.classList.toggle("wake-armed", ligado);
   }
 
   // Escolhe a melhor voz disponível: usa a salva pelo usuário (localStorage)
   // se existir; senão tenta achar uma voz PT-BR "de qualidade" (Google/
   // Microsoft/Natural/Online) com timbre mais grave, senão qualquer PT-BR.
+  // Ordem de prioridade pra achar a voz PT-BR mais natural que o navegador
+  // oferecer DE GRAÇA (sem API paga): 1) voz salva manualmente pelo usuário;
+  // 2) vozes "Online/Natural/Neural" (Microsoft Natural, Google WaveNet via
+  // Chrome) — essas são as que mais se aproximam de voz de IA real;
+  // 3) qualquer voz Google (boa qualidade, roda no servidor do Google);
+  // 4) qualquer voz PT-BR; 5) qualquer voz disponível.
   function resolveVoice() {
     var voices = window.speechSynthesis.getVoices();
     if (!voices.length) return null;
@@ -8344,8 +8491,16 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
     }
     var ptVoices = voices.filter(function (v) { return v.lang && v.lang.toLowerCase().indexOf("pt") === 0; });
     var pool = ptVoices.length ? ptVoices : voices;
-    var qualidade = pool.find(function (v) { return /google|microsoft|natural|online|neural/i.test(v.name); });
-    return qualidade || pool[0] || null;
+    var porPrioridade = [
+      function (v) { return /online|natural|neural/i.test(v.name); },
+      function (v) { return /google/i.test(v.name); },
+      function (v) { return /microsoft/i.test(v.name); },
+    ];
+    for (var i = 0; i < porPrioridade.length; i++) {
+      var achou = pool.find(porPrioridade[i]);
+      if (achou) return achou;
+    }
+    return pool[0] || null;
   }
 
   function populateVoiceSelect() {
@@ -8387,8 +8542,14 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
     }
     if (!voice) voice = resolveVoice();
     if (voice) ttsUtterance.voice = voice;
-    ttsUtterance.onstart = function() { isSpeaking = true; };
-    ttsUtterance.onend = function() { isSpeaking = false; };
+    ttsUtterance.onstart = function() {
+      isSpeaking = true;
+      if (wakeShouldRun) { try { wakeRecognition.stop(); } catch (e) {} }
+    };
+    ttsUtterance.onend = function() {
+      isSpeaking = false;
+      if (wakeShouldRun && !isListening) { try { wakeRecognition.start(); } catch (e) {} }
+    };
     window.speechSynthesis.speak(ttsUtterance);
   }
 
