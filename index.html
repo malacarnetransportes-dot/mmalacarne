@@ -835,11 +835,11 @@ footer a{color:var(--accent);text-decoration:none;}
 
   <div style="background:#eff6ff;border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:.7rem .9rem;margin-bottom:.8rem">
     <div style="font-size:.72rem;font-weight:800;color:#1e40af;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem">🤖 MAX — Assistente</div>
-    <p style="font-size:.72rem;color:var(--text-lt);margin-bottom:.5rem">MAX responde localmente com os dados já carregados no dashboard (Financeiro, Orçamento, Manutenção, Faturamento, Baterias, Vencimentos, Frota) — sem custo e sem configuração. Com a chave abaixo, ele passa a raciocinar de verdade, funcionando de qualquer computador.</p>
+    <p style="font-size:.72rem;color:var(--text-lt);margin-bottom:.5rem">MAX responde localmente com os dados já carregados no dashboard (Financeiro, Orçamento, Manutenção, Faturamento, Baterias, Vencimentos, Frota) — sem custo e sem configuração. Com a chave abaixo, ele passa a raciocinar de verdade e a <b>buscar na web</b> pra conferir informação que muda com o tempo (preço de combustível, regra da ANTT, rodovia, notícia do setor) antes de responder — funcionando de qualquer computador.</p>
 
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">IA na nuvem grátis — Chave Groq</label>
     <input type="password" id="maxGroqApiKey" placeholder="gsk_... (deixe em branco para usar só o modo local)">
-    <p style="font-size:.7rem;color:var(--text-lt);margin-top:.2rem;margin-bottom:.5rem">Crie uma chave grátis em <a href="https://console.groq.com/keys" target="_blank" style="color:var(--accent)">console.groq.com/keys</a> (não pede cartão). Sem ela, o MAX continua no modo local por palavras-chave.</p>
+    <p style="font-size:.7rem;color:var(--text-lt);margin-top:.2rem;margin-bottom:.5rem">Crie uma chave grátis em <a href="https://console.groq.com/keys" target="_blank" style="color:var(--accent)">console.groq.com/keys</a> (não pede cartão). Sem ela, o MAX continua no modo local por palavras-chave. Quando a resposta usar busca real na web, aparece o selo "🔎 verificado na web".</p>
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">Voz</label>
     <select id="maxVoiceSelect" style="width:100%;padding:.6rem;border-radius:8px;border:1px solid var(--gray-200)"><option value="">Carregando vozes...</option></select>
     <button type="button" id="maxVoiceTestBtn" class="btn btn-gray btn-sm" style="margin-top:.5rem"><i class="fas fa-volume-high"></i> Testar voz</button>
@@ -8078,10 +8078,17 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
   function openChat() { isOpen = true; document.getElementById("max-chat").classList.add("open"); scrollToBottom(); }
   function closeChat() { isOpen = false; document.getElementById("max-chat").classList.remove("open"); if (isListening) stopListening(); }
 
-  function addMessage(role, text) {
+  function addMessage(role, text, verificado) {
     var el = document.createElement("div");
     el.className = "max-msg " + role;
     el.textContent = text;
+    if (verificado) {
+      var badge = document.createElement("span");
+      badge.textContent = "🔎 verificado na web";
+      badge.style.cssText = "display:block;margin-top:.35rem;font-size:.65rem;font-weight:700;" +
+        "color:#1e8e5a;letter-spacing:.2px;";
+      el.appendChild(badge);
+    }
     document.getElementById("max-messages").appendChild(el);
     scrollToBottom();
   }
@@ -8311,12 +8318,15 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
   // sobre a pergunta, em vez de só bater palavra-chave. Se não tiver chave
   // configurada, ou a chamada falhar (rede, chave inválida, limite grátis
   // estourado), quem chama cai de volta pro respostaLocalMAX.
-  // Modelo: ajuste aqui se a Groq descontinuar o nome abaixo.
-  // 70B em vez de 8B: raciocina muito melhor (nível GPT-4o em benchmarks),
-  // continua 100% gratuito no free tier da Groq. Se a Groq descontinuar o
-  // nome abaixo, troque aqui — o sistema já cai pro modo local sozinho
-  // se a chamada falhar.
-  const MAX_GROQ_MODEL = 'llama-3.3-70b-versatile';
+  // Modelo: 'groq/compound' é o sistema agêntico da Groq — além de raciocinar
+  // (mesma base Llama 3.3 70B / GPT-OSS 120B), ele tem BUSCA NA WEB embutida
+  // e decide sozinho quando precisa checar uma informação atual (preço de
+  // combustível, regra da ANTT, rodovia interditada, cotação, etc.) antes de
+  // responder, em vez de chutar. Continua 100% gratuito no free tier da
+  // Groq, mesma chamada de API de antes. Se a Groq descontinuar o nome
+  // abaixo, troque aqui — o sistema já cai pro modo local sozinho se a
+  // chamada falhar. (Fallback sem busca: 'llama-3.3-70b-versatile'.)
+  const MAX_GROQ_MODEL = 'groq/compound';
 
   function snapshotDadosMAX() {
     return TOPICOS_MAX.map(function (t) {
@@ -8345,7 +8355,12 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
       'manutenção em cavalos tá alto pro padrão do setor, vale investigar X"), nunca pra criar números novos.\n' +
       '- Se a pergunta for fora dos módulos do sistema mas dentro da sua área de expertise (logística, frota, ' +
       'gestão de transporte em geral), pode responder com seu conhecimento profissional, deixando claro quando ' +
-      'é opinião/prática de mercado e não dado do sistema.\n\n' +
+      'é opinião/prática de mercado e não dado do sistema.\n' +
+      '- Você TEM busca na web disponível. Use-a sempre que a resposta depender de algo que muda com o tempo e ' +
+      'não está nos dados do sistema: preço/posto de combustível, regra ou prazo da ANTT/DETRAN, situação de ' +
+      'rodovia, clima na rota, cotação, notícia do setor de transporte, etc. Nunca chute esse tipo de dado de ' +
+      'memória — busque e cite a fonte resumidamente (ex: "segundo a ANTT, ..."). Para os dados do dashboard ' +
+      'abaixo, não busque nada, eles já são a fonte da verdade.\n\n' +
       'DADOS ATUAIS DO DASHBOARD:\n' + (snapshot || '(nenhum módulo com dados carregados ainda)');
   }
 
@@ -8371,9 +8386,14 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
       throw new Error('Groq HTTP ' + resp.status + ': ' + errBody.slice(0, 200));
     }
     const data = await resp.json();
-    const texto = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+    const msg = data && data.choices && data.choices[0] && data.choices[0].message;
+    const texto = msg && msg.content;
     if (!texto) throw new Error('Resposta vazia da IA');
-    return texto.trim();
+    // groq/compound preenche executed_tools quando de fato buscou na web ou
+    // rodou código pra responder — usamos isso só pra sinalizar visualmente
+    // que a resposta foi checada, não é o texto em si.
+    const buscou = !!(msg.executed_tools && msg.executed_tools.length);
+    return { texto: texto.trim(), verificado: buscou };
   }
 
   // Ordem de tentativa: Groq (nuvem grátis, funciona de qualquer computador,
@@ -8383,16 +8403,19 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
     if (!userMessage.trim()) return;
     addMessage("user", userMessage);
     showTyping(); setStatus("busy");
-    let reply = null;
+    let reply = null, verificado = false;
     if (MAX_GROQ_KEY) {
-      try { reply = await askMAXviaIA(userMessage); }
+      try {
+        const r = await askMAXviaIA(userMessage);
+        reply = r.texto; verificado = r.verificado;
+      }
       catch (e) { console.warn('[MAX] Groq indisponível:', e.message); }
     }
     if (reply === null) {
       await new Promise(function (r) { setTimeout(r, MAX_GROQ_KEY ? 150 : 350); });
       reply = respostaLocalMAX(userMessage);
     }
-    hideTyping(); addMessage("bot", reply); setStatus("online"); speakText(reply);
+    hideTyping(); addMessage("bot", reply, verificado); setStatus("online"); speakText(reply);
   }
 
   function sendText() {
@@ -8558,6 +8581,11 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
   // Chrome) — essas são as que mais se aproximam de voz de IA real;
   // 3) qualquer voz Google (boa qualidade, roda no servidor do Google);
   // 4) qualquer voz PT-BR; 5) qualquer voz disponível.
+  // Motores conhecidos por soarem robóticos/picotados (sintetizadores locais
+  // antigos tipo eSpeak/SAPI5 "Desktop" ou "Compact"). Só usamos um desses
+  // como último recurso, se não sobrar mais nada na lista de vozes.
+  var VOZ_ROBOTICA_RE = /espeak|compact|desktop|pico|festival/i;
+
   function resolveVoice() {
     var voices = window.speechSynthesis.getVoices();
     if (!voices.length) return null;
@@ -8568,6 +8596,10 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
     }
     var ptVoices = voices.filter(function (v) { return v.lang && v.lang.toLowerCase().indexOf("pt") === 0; });
     var pool = ptVoices.length ? ptVoices : voices;
+    // separa as vozes decentes das robóticas conhecidas — só cai pras
+    // robóticas se não houver NENHUMA outra opção no pool.
+    var boas = pool.filter(function (v) { return !VOZ_ROBOTICA_RE.test(v.name); });
+    var poolFinal = boas.length ? boas : pool;
     var porPrioridade = [
       function (v) { return /online|natural|neural/i.test(v.name) && /antonio|ricardo|daniel|male/i.test(v.name); }, // neural + masculina grave = mais "Jarvis"
       function (v) { return /online|natural|neural/i.test(v.name); },
@@ -8575,10 +8607,10 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
       function (v) { return /microsoft/i.test(v.name); },
     ];
     for (var i = 0; i < porPrioridade.length; i++) {
-      var achou = pool.find(porPrioridade[i]);
+      var achou = poolFinal.find(porPrioridade[i]);
       if (achou) return achou;
     }
-    return pool[0] || null;
+    return poolFinal[0] || null;
   }
 
   function populateVoiceSelect() {
