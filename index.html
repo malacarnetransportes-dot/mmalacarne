@@ -8152,9 +8152,25 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
           var soma = function (bucket) { return Object.values(bucket).reduce(function (a, b) { return a + (b.total || 0); }, 0); };
           var totalCavalos = soma(r.dados.cavalos), totalCarretas = soma(r.dados.carretas), totalRefrig = soma(r.dados.refrigeracao);
           var total = totalCavalos + totalCarretas + totalRefrig;
-          return "Manutenção " + ano + " — Total " + fmtMoney(total) + " (Cavalos " + fmtMoney(totalCavalos) +
+          var texto = "Manutenção " + ano + " — Total " + fmtMoney(total) + " (Cavalos " + fmtMoney(totalCavalos) +
             ", Carretas " + fmtMoney(totalCarretas) + ", Refrigeração " + fmtMoney(totalRefrig) + ")" +
             (r.naoClassificadoQtd ? ". " + r.naoClassificadoQtd + " lançamento(s) ainda não classificados." : ".");
+          // Ranking por veículo (cruza os 3 buckets) — dá pro MAX apontar quem
+          // está puxando o custo, não só o total geral.
+          var todos = [];
+          ["cavalos", "carretas", "refrigeracao"].forEach(function (grupo) {
+            Object.keys(r.dados[grupo]).forEach(function (placa) {
+              todos.push({ placa: placa, total: r.dados[grupo][placa].total, corretiva: r.dados[grupo][placa].corretiva });
+            });
+          });
+          todos.sort(function (a, b) { return b.total - a.total; });
+          if (todos.length) {
+            var top = todos.slice(0, 5).map(function (v) {
+              return v.placa + " (" + fmtMoney(v.total) + (v.corretiva > 0 ? ", " + fmtMoney(v.corretiva) + " corretiva" : "") + ")";
+            }).join(", ");
+            texto += " Maiores custos por veículo em " + ano + ": " + top + ".";
+          }
+          return texto;
         } catch (e) { return "Manutenção: não consegui calcular agora."; }
       }
     },
@@ -8164,8 +8180,28 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
       fn: function () {
         var fat = txt("fat-faturamento"), tot = txt("fat-total"), mot = txt("fat-motoristas");
         if (!fat && !tot) return "Faturamento: sem dados carregados ainda (abra a aba Faturamento).";
-        return "Faturamento — Total (Frete) " + (fat || "—") + ", A Receber " + (tot || "—") +
+        var texto = "Faturamento — Total (Frete) " + (fat || "—") + ", A Receber " + (tot || "—") +
           (mot ? ", " + mot + " motoristas ativos" : "") + ".";
+        // Ranking por motorista (respeita os filtros de período aplicados na
+        // aba) — sem isso o MAX só via os KPIs agregados, nunca quem estava
+        // faturando mais ou menos.
+        try {
+          if (typeof fatFiltered !== "undefined" && fatFiltered.length) {
+            var rank = {};
+            fatFiltered.forEach(function (r) { if (r.motorista) rank[r.motorista] = (rank[r.motorista] || 0) + (r.valorReceber || 0); });
+            var arr = Object.keys(rank).map(function (m) { return { motorista: m, valor: rank[m] }; });
+            arr.sort(function (a, b) { return b.valor - a.valor; });
+            if (arr.length) {
+              var topM = arr.slice(0, 3).map(function (v) { return v.motorista + " (" + fmtMoney(v.valor) + ")"; }).join(", ");
+              texto += " Maiores a receber no período filtrado: " + topM + ".";
+              if (arr.length > 3) {
+                var botM = arr.slice(-3).reverse().map(function (v) { return v.motorista + " (" + fmtMoney(v.valor) + ")"; }).join(", ");
+                texto += " Menores: " + botM + ".";
+              }
+            }
+          }
+        } catch (e) {}
+        return texto;
       }
     },
     {
@@ -8174,7 +8210,28 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
       fn: function () {
         var totalBat = txt("bat-total"), venc = txt("bat-vencidas"), p30 = txt("bat-proximas");
         if (!totalBat) return "Baterias: sem dados carregados ainda (abra a aba Baterias).";
-        return "Baterias — " + totalBat + " no total, " + (venc || "0") + " vencidas, " + (p30 || "0") + " vencendo em 30 dias.";
+        var texto = "Baterias — " + totalBat + " no total, " + (venc || "0") + " vencidas, " + (p30 || "0") + " vencendo em 30 dias.";
+        // Lista os veículos vencidos por nome/placa (antes só existia o
+        // número agregado — o MAX não conseguia dizer QUAL bateria trocar).
+        try {
+          if (typeof bateriasData !== "undefined" && bateriasData.length && typeof findCol === "function" && typeof parseDate === "function") {
+            var headers = Object.keys(bateriasData[0]);
+            var colVeiculo = findCol(headers, ['veiculo', 'placa', 'caminhao', 'carro', 'cavalo', 'truck', 'frota']);
+            var colData = findCol(headers, ['vencimento', 'data', 'validade', 'troca', 'substituicao', 'proxima']);
+            if (colVeiculo && colData) {
+              var now = new Date(); now.setHours(0, 0, 0, 0);
+              var vencidas = bateriasData.map(function (row) {
+                return { veic: row[colVeiculo], d: parseDate(row[colData]) };
+              }).filter(function (i) { return i.veic && i.d && i.d < now; });
+              vencidas.sort(function (a, b) { return a.d - b.d; });
+              if (vencidas.length) {
+                var lista = vencidas.slice(0, 6).map(function (i) { return i.veic; }).join(", ");
+                texto += " Vencidas: " + lista + (vencidas.length > 6 ? " e mais " + (vencidas.length - 6) + "." : ".");
+              }
+            }
+          }
+        } catch (e) {}
+        return texto;
       }
     },
     {
@@ -8188,7 +8245,20 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
           return cat.label + " (" + c.vencidos + " vencido, " + c.proximos + " próximo)";
         }).filter(Boolean);
         if (!partes.length) return "Vencimentos: tudo em dia ou sem dados carregados ainda.";
-        return "Vencimentos com pendência — " + partes.join(", ") + ".";
+        var texto = "Vencimentos com pendência — " + partes.join(", ") + ".";
+        // vencAlertasAtuais já é calculado pela própria aba (mesma função
+        // usada no sino de alertas) e tem nome/placa por item — antes o MAX
+        // só enxergava os contadores, nunca QUEM está vencido.
+        try {
+          if (typeof vencAlertasAtuais !== "undefined" && vencAlertasAtuais.length) {
+            var vencidos = vencAlertasAtuais.filter(function (a) { return a.vencido; }).sort(function (a, b) { return a.data - b.data; });
+            if (vencidos.length) {
+              var lista = vencidos.slice(0, 6).map(function (a) { return a.id + " (" + a.categoria + ")"; }).join(", ");
+              texto += " Vencidos: " + lista + (vencidos.length > 6 ? " e mais " + (vencidos.length - 6) + "." : ".");
+            }
+          }
+        } catch (e) {}
+        return texto;
       }
     },
     {
@@ -8196,9 +8266,15 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
       re: /motorista|veiculo|veículo|placa|frota|caminhao|caminhão|\bcavalo\b|carreta/,
       fn: function () {
         if (typeof FROTA_DATA === "undefined" || !FROTA_DATA.length) return "Frota: dados não encontrados no momento.";
-        var ativos = FROTA_DATA.filter(function (v) { return v.motorista && v.motorista !== "—"; }).length;
-        return "Frota — " + FROTA_DATA.length + " veículo(s), " + ativos + " com motorista ativo, " +
-          (FROTA_DATA.length - ativos) + " parado(s)/sem motorista.";
+        var ativos = FROTA_DATA.filter(function (v) { return v.motorista && v.motorista !== "—"; });
+        var parados = FROTA_DATA.filter(function (v) { return !v.motorista || v.motorista === "—"; });
+        var texto = "Frota — " + FROTA_DATA.length + " veículo(s), " + ativos.length + " com motorista ativo, " +
+          parados.length + " parado(s)/sem motorista.";
+        if (parados.length) {
+          var lista = parados.slice(0, 8).map(function (v) { return v.placa; }).join(", ");
+          texto += " Placas paradas: " + lista + (parados.length > 8 ? " e mais " + (parados.length - 8) + "." : ".");
+        }
+        return texto;
       }
     },
   ];
