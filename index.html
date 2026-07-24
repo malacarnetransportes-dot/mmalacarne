@@ -1509,28 +1509,30 @@ footer a{color:var(--accent);text-decoration:none;}
         <!-- ── TAB PNEUS ── -->
         <div id="tabPneus" class="tab-pane">
           <div class="dash-card" style="margin-bottom:1.2rem">
-            <div style="font-weight:700;font-size:.92rem;color:#1e2a3a;margin-bottom:.3rem"><i class="fas fa-circle-dot" style="color:var(--accent)"></i> Controle de Pneus por Veículo</div>
-            <div style="font-size:.8rem;color:var(--text-lt)">Selecione a placa, use os filtros, passe o mouse sobre um pneu para ver o resumo e clique para abrir o detalhe completo ao lado.</div>
-          </div>
-
-          <div class="dash-card" style="margin-bottom:1.2rem">
-            <div style="font-weight:700;font-size:.9rem;color:#1e2a3a;margin-bottom:.3rem"><i class="fab fa-whatsapp" style="color:#25D366"></i> Importar Mensagem do Grupo (WhatsApp)</div>
-            <div style="font-size:.76rem;color:var(--text-lt);margin-bottom:.7rem">Cole aqui o texto copiado do grupo (formato "📌 Placa..." ou lista de custos da borracharia) e clique em Importar. Não é uma conexão automática com o WhatsApp — é leitura do texto colado.</div>
-            <textarea id="pneuWaTexto" rows="5" style="width:100%;border-radius:10px;border:1.5px solid var(--gray-200);padding:.7rem .9rem;font-size:.82rem;font-family:inherit;resize:vertical" placeholder="Cole aqui a mensagem do grupo..."></textarea>
-            <div style="display:flex;gap:1rem;align-items:end;flex-wrap:wrap;margin-top:.7rem">
-              <div class="flt-grp"><label>Aplicar códigos (LDF/LDD/LEF/LED) ao eixo</label>
-                <select id="pneuWaEixo">
-                  <option value="tracao">Eixo Tração</option>
-                  <option value="dianteiro">Eixo Dianteiro</option>
-                  <option value="truck">Eixo Truck (Auxiliar)</option>
-                  <option value="carreta1">Eixo Carreta 1 (Dianteiro)</option>
-                  <option value="carreta2">Eixo Carreta 2 (Meio)</option>
-                  <option value="carreta3">Eixo Carreta 3 (Traseiro)</option>
-                </select>
-              </div>
-              <button class="pneu-leitura-btn" id="pneuWaImportar" style="width:auto;padding:.6rem 1.4rem"><i class="fas fa-file-import"></i> Importar</button>
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.6rem">
+              <div style="font-size:.8rem;color:var(--text-lt)">Selecione a placa, use os filtros, passe o mouse sobre um pneu para ver o resumo e clique para abrir o detalhe completo ao lado.</div>
+              <button type="button" id="pneuWaToggleBtn" onclick="document.getElementById('pneuWaBox').style.display=document.getElementById('pneuWaBox').style.display==='none'?'block':'none';this.querySelector('i.fa-chevron-down,i.fa-chevron-up').classList.toggle('fa-chevron-down');this.querySelector('i.fa-chevron-down,i.fa-chevron-up').classList.toggle('fa-chevron-up')" style="width:auto;padding:.5rem 1rem;font-size:.78rem;font-weight:700;color:#25D366;background:#25D36615;border:1.5px solid #25D36640;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:.4rem;white-space:nowrap">
+                <i class="fab fa-whatsapp"></i> Importar do WhatsApp <i class="fas fa-chevron-down" style="font-size:.7rem"></i>
+              </button>
             </div>
-            <div id="pneuWaResultado" style="margin-top:.8rem"></div>
+            <div id="pneuWaBox" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1.5px solid var(--gray-200)">
+              <div style="font-size:.76rem;color:var(--text-lt);margin-bottom:.7rem">Cole aqui o texto copiado do grupo (formato "📌 Placa..." ou lista de custos da borracharia) e clique em Importar. Não é uma conexão automática com o WhatsApp — é leitura do texto colado.</div>
+              <textarea id="pneuWaTexto" rows="5" style="width:100%;border-radius:10px;border:1.5px solid var(--gray-200);padding:.7rem .9rem;font-size:.82rem;font-family:inherit;resize:vertical" placeholder="Cole aqui a mensagem do grupo..."></textarea>
+              <div style="display:flex;gap:1rem;align-items:end;flex-wrap:wrap;margin-top:.7rem">
+                <div class="flt-grp"><label>Aplicar códigos (LDF/LDD/LEF/LED) ao eixo</label>
+                  <select id="pneuWaEixo">
+                    <option value="tracao">Eixo Tração</option>
+                    <option value="dianteiro">Eixo Dianteiro</option>
+                    <option value="truck">Eixo Truck (Auxiliar)</option>
+                    <option value="carreta1">Eixo Carreta 1 (Dianteiro)</option>
+                    <option value="carreta2">Eixo Carreta 2 (Meio)</option>
+                    <option value="carreta3">Eixo Carreta 3 (Traseiro)</option>
+                  </select>
+                </div>
+                <button class="pneu-leitura-btn" id="pneuWaImportar" style="width:auto;padding:.6rem 1.4rem"><i class="fas fa-file-import"></i> Importar</button>
+              </div>
+              <div id="pneuWaResultado" style="margin-top:.8rem"></div>
+            </div>
           </div>
 
           <div class="dash-card" style="margin-bottom:1.2rem;display:flex;gap:1rem;align-items:end;flex-wrap:wrap">
