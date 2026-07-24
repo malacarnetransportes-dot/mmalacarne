@@ -835,10 +835,11 @@ footer a{color:var(--accent);text-decoration:none;}
 
   <div style="background:#eff6ff;border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:.7rem .9rem;margin-bottom:.8rem">
     <div style="font-size:.72rem;font-weight:800;color:#1e40af;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem">🤖 MAX — Assistente</div>
-    <p style="font-size:.72rem;color:var(--text-lt);margin-bottom:.5rem">MAX responde localmente com os dados já carregados no dashboard (Financeiro, Orçamento, Manutenção, Faturamento, Baterias, Vencimentos, Frota) — sem custo e sem configuração.</p>
-    <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">IA (opcional, grátis) — Chave Groq</label>
+    <p style="font-size:.72rem;color:var(--text-lt);margin-bottom:.5rem">MAX responde localmente com os dados já carregados no dashboard (Financeiro, Orçamento, Manutenção, Faturamento, Baterias, Vencimentos, Frota) — sem custo e sem configuração. Com a chave abaixo, ele passa a raciocinar de verdade, funcionando de qualquer computador.</p>
+
+    <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">IA na nuvem grátis — Chave Groq</label>
     <input type="password" id="maxGroqApiKey" placeholder="gsk_... (deixe em branco para usar só o modo local)">
-    <p style="font-size:.7rem;color:var(--text-lt);margin-top:.2rem;margin-bottom:.5rem">Crie uma chave grátis em <a href="https://console.groq.com/keys" target="_blank" style="color:var(--accent)">console.groq.com/keys</a> (não pede cartão). Com a chave, o MAX passa a entender perguntas livres, combinando os dados do dashboard com raciocínio real — sem ela, continua no modo local por palavras-chave.</p>
+    <p style="font-size:.7rem;color:var(--text-lt);margin-top:.2rem;margin-bottom:.5rem">Crie uma chave grátis em <a href="https://console.groq.com/keys" target="_blank" style="color:var(--accent)">console.groq.com/keys</a> (não pede cartão). Sem ela, o MAX continua no modo local por palavras-chave.</p>
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">Voz</label>
     <select id="maxVoiceSelect" style="width:100%;padding:.6rem;border-radius:8px;border:1px solid var(--gray-200)"><option value="">Carregando vozes...</option></select>
     <button type="button" id="maxVoiceTestBtn" class="btn btn-gray btn-sm" style="margin-top:.5rem"><i class="fas fa-volume-high"></i> Testar voz</button>
@@ -7768,8 +7769,8 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
 
   var CONFIG = {
     TTS_VOICE: "pt-BR",
-    TTS_RATE: 0.95,
-    TTS_PITCH: 0.82,
+    TTS_RATE: 0.93,
+    TTS_PITCH: 0.75,
     WAKE_WORDS: /\b(hey|ei|e[íi]|oi|fala|opa)\s*max\b/i,
     WAKE_MODE_DEFAULT: false, // só liga sozinho se o usuário já ativou antes (localStorage)
   };
@@ -8247,11 +8248,10 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
     }).filter(Boolean).join('\n');
   }
 
-  async function askMAXviaIA(pergunta) {
+  function buildSystemPrompt() {
     const snapshot = snapshotDadosMAX();
     const ctx = getDashboardContext();
-    const systemPrompt =
-      'Você é o MAX — o copiloto de operações da M-Malacarne, empresa de transporte refrigerado com ~40 anos ' +
+    return 'Você é o MAX — o copiloto de operações da M-Malacarne, empresa de transporte refrigerado com ~40 anos ' +
       'de estrada no Sul, Sudeste e Sudoeste do Brasil. Sua persona: um especialista sênior em logística e ' +
       'gestão de frota, nível internacional, com décadas de experiência em transporte refrigerado, custos de ' +
       'frota, manutenção preventiva, compliance de documentação (CNH/ASO/toxicológico/licenciamento) e ' +
@@ -8271,7 +8271,9 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
       'gestão de transporte em geral), pode responder com seu conhecimento profissional, deixando claro quando ' +
       'é opinião/prática de mercado e não dado do sistema.\n\n' +
       'DADOS ATUAIS DO DASHBOARD:\n' + (snapshot || '(nenhum módulo com dados carregados ainda)');
+  }
 
+  async function askMAXviaIA(pergunta) {
     const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -8281,7 +8283,7 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
       body: JSON.stringify({
         model: MAX_GROQ_MODEL,
         messages: [
-          { role: 'system', content: systemPrompt },
+          { role: 'system', content: buildSystemPrompt() },
           { role: 'user', content: pergunta }
         ],
         temperature: 0.4,
@@ -8298,21 +8300,20 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
     return texto.trim();
   }
 
+  // Ordem de tentativa: Groq (nuvem grátis, funciona de qualquer computador,
+  // sem depender de máquina ligada) → modo local por palavra-chave
+  // (garantia de que o MAX nunca fica mudo).
   async function askMAX(userMessage) {
     if (!userMessage.trim()) return;
     addMessage("user", userMessage);
     showTyping(); setStatus("busy");
-    let reply;
+    let reply = null;
     if (MAX_GROQ_KEY) {
-      try {
-        reply = await askMAXviaIA(userMessage);
-      } catch (e) {
-        console.warn('[MAX] IA indisponível, caindo pro modo local:', e);
-        reply = respostaLocalMAX(userMessage);
-      }
-    } else {
-      // pequeno delay só pra dar sensação de "processando" no modo local
-      await new Promise(function (r) { setTimeout(r, 350); });
+      try { reply = await askMAXviaIA(userMessage); }
+      catch (e) { console.warn('[MAX] Groq indisponível:', e.message); }
+    }
+    if (reply === null) {
+      await new Promise(function (r) { setTimeout(r, MAX_GROQ_KEY ? 150 : 350); });
       reply = respostaLocalMAX(userMessage);
     }
     hideTyping(); addMessage("bot", reply); setStatus("online"); speakText(reply);
@@ -8492,6 +8493,7 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
     var ptVoices = voices.filter(function (v) { return v.lang && v.lang.toLowerCase().indexOf("pt") === 0; });
     var pool = ptVoices.length ? ptVoices : voices;
     var porPrioridade = [
+      function (v) { return /online|natural|neural/i.test(v.name) && /antonio|ricardo|daniel|male/i.test(v.name); }, // neural + masculina grave = mais "Jarvis"
       function (v) { return /online|natural|neural/i.test(v.name); },
       function (v) { return /google/i.test(v.name); },
       function (v) { return /microsoft/i.test(v.name); },
