@@ -1815,7 +1815,7 @@ let nfeTokenExpiry    = 0;
 
 // MAX — chave da API Groq (gratuita), opcional. Sem ela, MAX responde só
 // com o sistema local de regras (respostaLocalMAX).
-let MAX_GROQ_KEY = localStorage.getItem('maxGroqApiKey') || '';
+let MAX_GROQ_KEY = localStorage.getItem('maxGroqApiKey') || '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';
 let nfeAllData        = [];   // todas as NF-e brutas
 let nfeFiltered       = [];   // após filtros
 let nfeBarChartObj    = null;
@@ -7769,8 +7769,8 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
 
   var CONFIG = {
     TTS_VOICE: "pt-BR",
-    TTS_RATE: 0.93,
-    TTS_PITCH: 0.75,
+    TTS_RATE: 1.0,
+    TTS_PITCH: 1.0,
     WAKE_WORDS: /\b(hey|ei|e[íi]|oi|fala|opa)\s*max\b/i,
     WAKE_MODE_DEFAULT: false, // só liga sozinho se o usuário já ativou antes (localStorage)
   };
