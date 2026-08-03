@@ -1534,14 +1534,15 @@ footer a{color:var(--accent);text-decoration:none;}
               <div id="pneuWaResultado" style="margin-top:.8rem"></div>
 
               <div style="margin-top:1.1rem;padding-top:1rem;border-top:1.5px dashed var(--gray-200)">
-                <div style="font-weight:700;font-size:.82rem;color:#1e2a3a;margin-bottom:.4rem"><i class="fas fa-file-lines" style="color:var(--accent)"></i> Leitura automática de um Doc publicado</div>
+                <div style="font-weight:700;font-size:.82rem;color:#1e2a3a;margin-bottom:.4rem"><i class="fas fa-file-lines" style="color:var(--accent)"></i> Leitura automática de um Doc</div>
                 <div style="font-size:.76rem;color:var(--text-lt);margin-bottom:.7rem">Em vez de colar manualmente, leia direto de um Google Doc publicado (Arquivo → Compartilhar → Publicar na Web) que recebe as mensagens/leituras automaticamente. O texto encontrado cai no campo acima e passa pela mesma conferência de IA antes de salvar — nada é gravado sem sua confirmação.</div>
                 <div style="display:flex;gap:.6rem;align-items:end;flex-wrap:wrap">
                   <div class="flt-grp" style="flex:1;min-width:260px"><label>URL do Doc publicado</label>
-                    <input type="text" id="pneuDocUrl" placeholder="https://docs.google.com/document/d/e/.../pub">
+                    <input type="text" id="pneuDocUrl" placeholder="Link de edição ou de Publicar na Web do Doc">
                   </div>
                   <button class="pneu-leitura-btn" id="pneuDocBuscarBtn" style="width:auto;padding:.6rem 1.2rem"><i class="fas fa-cloud-arrow-down"></i> Buscar agora</button>
                 </div>
+                <div style="font-size:.7rem;color:var(--text-lt);margin-top:.4rem">Aceita o link de edição do Google Docs (tenta ler o conteúdo real via exportação, funciona se o Doc estiver compartilhado como "qualquer pessoa com o link") ou o link de "Publicar na Web".</div>
                 <label style="display:flex;align-items:center;gap:.4rem;font-size:.74rem;color:var(--text-lt);margin-top:.6rem;cursor:pointer">
                   <input type="checkbox" id="pneuDocAutoCheck" style="width:auto"> Verificar automaticamente a cada 5 minutos (enquanto esta aba estiver aberta no navegador)
                 </label>
@@ -1810,7 +1811,7 @@ const DEFAULT_FATURAMENTO = DEFAULT_FATURAMENTO_DOCS.join("\n");
 // de pneus (ex.: robô que replica o grupo de WhatsApp para um Doc). É lido
 // via proxy CORS (mesma lista de proxies dos outros módulos) e o texto
 // extraído passa pelo MESMO parser de IA usado na colagem manual.
-const DEFAULT_PNEU_DOC = "https://docs.google.com/document/d/e/2PACX-1vR4rIhekIETB7y1_F-G53do706ALJ0ByTBMhFxYxRSqADTsOMhgKJbu-Y5NgrA8Lq2Zl4tEaEQWiX8k/pub";
+const DEFAULT_PNEU_DOC = "https://docs.google.com/document/d/1b1HeGvFFYrSY5wbwB8ry6y9NGGtUMbu2z1s-KqJDhm0/edit?usp=sharing";
 
 let URL_FIN  = localStorage.getItem("urlFinanceiro")  || DEFAULT_FINANCEIRO;
 let URL_BAT  = localStorage.getItem("urlBaterias")    || DEFAULT_BATERIAS;
@@ -3238,9 +3239,19 @@ async function pneuImportarTexto(){
   resultEl.innerHTML = '<div style="font-size:.8rem;color:var(--text-lt)"><i class="fas fa-spinner fa-spin"></i> Lendo e organizando os dados...</div>';
   try {
     const chavesValidas = PNEU_POS.map(p => p.key).join(', ');
-    const prompt = `Você é um assistente de controle de frota. Extraia dados de pneus do texto abaixo. Pode ser: (a) mensagem de grupo de WhatsApp com bullets "*" ou marcador "📌 Placa X"; (b) planilha colada como texto puro (colunas separadas por TAB, vírgula ou ponto-e-vírgula); (c) uma leitura pontual de campo ("KM atual", "sulco", "trocou pneu", "mandou pra recapagem" etc). Reconheça qualquer um desses formatos, inclusive misturados no mesmo texto.
+    const prompt = `Você é um assistente extremamente cuidadoso de controle de frota, especialista em extrair dados de pneus de textos desorganizados sem perder nem inventar nenhuma informação. Extraia dados de pneus do texto abaixo. Pode ser: (a) mensagem de grupo de WhatsApp com bullets "*" ou marcador "📌 Placa X"; (b) planilha colada como texto puro (colunas separadas por TAB, vírgula ou ponto-e-vírgula); (c) uma leitura pontual de campo ("KM atual", "sulco", "trocou pneu", "mandou pra recapagem" etc); (d) uma sequência de várias entradas soltas, uma atrás da outra, tipo "001 pneu... 002 pneu... Data 27... Motorista ADRIAN... Km 337... Troca de... marca... PLACA... 65 TRA... 66 TRA...". Reconheça qualquer um desses formatos, inclusive todos misturados no mesmo texto, e trate cada entrada numerada/repetida como um registro separado — nunca funda dois registros diferentes em um só, e nunca pule um registro achando que é duplicado sem ter certeza.
 
 O texto pode vir colado manualmente OU extraído automaticamente de um Google Doc que replica um grupo de WhatsApp; nesse caso cada mensagem pode vir precedida de remetente/hora (ex.: "[14:32, 03/08] João:" ou "João - 14:32") — ignore esses prefixos de remetente/hora ao extrair os dados, eles não são parte da leitura em si.
+
+Exemplo rápido (formato, não os dados reais) — texto de entrada:
+"""
+📌 Placa ABC1234
+Motorista: Carlos
+Km atual eixo tração: 145000
+LDF: pneu novo, marca Pirelli, custo 1800
+"""
+Saída esperada (parte do JSON, ilustrativo):
+{"veiculos":[{"placa":"ABC1234","posicoes":{"tracao_LDF":{"marca":"Pirelli","status":"novo","custoUnit":1800,"kmAtual":145000}},"historico":[{"desc":"Pneu novo instalado","motorista":"Carlos","custo":1800}]}],"custos":[{"placa":"ABC1234","valor":1800}]}
 
 TEXTO:
 """
@@ -3253,21 +3264,23 @@ Se o texto citar um eixo genérico (ex: "Tração:", "Dianteiro:") sem indicar s
 Se o texto trouxer apenas uma atualização de leitura (KM atual, profundidade de sulco em mm, custo de serviço) para um pneu já existente, ainda assim retorne no mesmo formato, preenchendo só os campos citados (não invente marca/modelo se não foram ditos).
 Datas: normalize para "DD/MM/AAAA" quando o ano não for dito, assuma o ano atual do texto ou omita o campo "data" se não for possível saber.
 
-Retorne APENAS um JSON válido, sem markdown e sem texto fora do JSON, neste formato exato:
+Antes de responder, revise mentalmente TODAS as placas, números de entrada e leituras que aparecem no texto (mesmo as que parecem fragmentadas ou cortadas) e escreva um resumo curto em bullets (uma linha por placa/entrada encontrada) — isso ajuda a não esquecer nenhuma. DEPOIS desse resumo, escreva a linha "###JSON###" sozinha, e em seguida o JSON final.
+
+Formato do JSON final, exatamente assim:
 {
   "veiculos": [
     { "placa": "XXX0000", "posicoes": { "<chave_valida>": { "numeroFogo": "", "marca": "", "modelo": "", "tipo": "", "status": "novo|recapado|atencao|alerta|semdados", "kmInstalado": 0, "kmAtual": 0, "sulcoAtual": 0, "custoUnit": 0 } }, "historico": [ { "data": "", "km": "", "desc": "", "custo": 0, "motorista": "", "alerta": false } ], "alerta": false, "numeroFogo": "" }
   ],
   "custos": [ { "placa": "XXX0000", "valor": 0 } ]
 }
-Regras importantes: não invente informação que não esteja no texto — omita o campo se não existir. Se não houver veículos, use "veiculos": []. Se não houver lista de custos, use "custos": []. Nunca use uma chave de posição fora da lista fornecida.`;
+Regras importantes: não invente informação que não esteja no texto — omita o campo se não existir. Se não houver veículos, use "veiculos": []. Se não houver lista de custos, use "custos": []. Nunca use uma chave de posição fora da lista fornecida. Não esqueça nenhuma placa ou entrada do texto, mesmo que o texto seja longo.`;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 4000,
+        max_tokens: 8000,
         messages: [{ role: 'user', content: prompt }]
       })
     });
@@ -3296,30 +3309,59 @@ Regras importantes: não invente informação que não esteja no texto — omita
 // ═══════════════════════════════════════════════════════════
 let pneuDocAutoTimer = null;
 
-// Busca o HTML do Doc publicado com o mesmo esquema de proxies/timeout
-// usado para as planilhas (fetchComTimeout + CORS_PROXIES).
+// Extrai o ID real do documento (não o ID de publicação "d/e/XXXX") de
+// qualquer link colado — link de edição, de visualização ou já o /export.
+// Link "Publicar na Web" (formato /d/e/XXXX/pub) NÃO tem ID real utilizável
+// aqui, então retorna null nesse caso (cai direto na rota de scrape do /pub).
+function pneuExtrairIdDoc(url){
+  const str = String(url || '');
+  if (/\/document\/d\/e\//.test(str)) return null;
+  const m = str.match(/\/document\/d\/([a-zA-Z0-9_-]{20,})/);
+  return m ? m[1] : null;
+}
+
+// Busca o conteúdo do documento tentando, nessa ordem:
+// 1) /export?format=txt do ID real — só funciona sem login se o Doc estiver
+//    compartilhado como "Qualquer pessoa com o link" (não é a mesma coisa
+//    que "Publicar na Web"); mas quando funciona, lê o conteúdo ATUAL de
+//    verdade, sem o bug de publicação com abas (Tabs).
+// 2) HTML do link "Publicar na Web" (/pub), como antes — serve de reserva
+//    para quando o Doc não tem esse compartilhamento aberto.
+// Ambas as rotas passam pela mesma cadeia de proxies/timeout das planilhas.
 async function pneuFetchDocRaw(url){
-  const attempts = [url, ...CORS_PROXIES.map(fn => fn(url))];
+  const idReal = pneuExtrairIdDoc(url);
+  const candidatos = [];
+  if (idReal) candidatos.push({ tipo:'export', url:`https://docs.google.com/document/d/${idReal}/export?format=txt` });
+  candidatos.push({ tipo:'pub', url });
+
   let lastErr;
-  for (const attemptUrl of attempts) {
-    try {
-      const res = await fetchComTimeout(attemptUrl, 9000);
-      if (!res.ok) { lastErr = new Error('HTTP ' + res.status); continue; }
-      const html = await res.text();
-      if (!html || html.trim().length < 20) { lastErr = new Error('Resposta vazia'); continue; }
-      return html;
-    } catch(e) {
-      lastErr = e.name === 'AbortError' ? new Error('Tempo esgotado ao conectar') : e;
-      continue;
+  for (const cand of candidatos) {
+    const attempts = [cand.url, ...CORS_PROXIES.map(fn => fn(cand.url))];
+    for (const attemptUrl of attempts) {
+      try {
+        const res = await fetchComTimeout(attemptUrl, 9000);
+        if (!res.ok) { lastErr = new Error('HTTP ' + res.status); continue; }
+        const texto = await res.text();
+        if (!texto || texto.trim().length < 20) { lastErr = new Error('Resposta vazia'); continue; }
+        // Se caiu numa tela de login do Google em vez do conteúdo, essa
+        // rota não está liberada sem autenticação — tenta a próxima.
+        if (/accounts\.google\.com\/ServiceLogin|<title>\s*Sign in/i.test(texto)) { lastErr = new Error('Sem permissão de acesso anônimo'); continue; }
+        return { tipo: cand.tipo, conteudo: texto };
+      } catch(e) {
+        lastErr = e.name === 'AbortError' ? new Error('Tempo esgotado ao conectar') : e;
+        continue;
+      }
     }
   }
   throw lastErr || new Error('Falha ao buscar o documento');
 }
 
-// Extrai só o texto útil do HTML do Doc publicado, descartando o "casco"
-// padrão da página (título duplicado, avisos de rodapé do Google etc).
-function pneuExtrairTextoDoc(html){
-  const doc = new DOMParser().parseFromString(html, 'text/html');
+// Extrai só o texto útil, descartando o "casco" padrão da página quando a
+// resposta veio como HTML do link "Publicar na Web" (rota de reserva).
+// Quando veio do /export?format=txt já é texto puro, então só normaliza.
+function pneuExtrairTextoDoc(resultado){
+  if (resultado.tipo === 'export') return resultado.conteudo.trim();
+  const doc = new DOMParser().parseFromString(resultado.conteudo, 'text/html');
   doc.querySelectorAll('script,style,link,meta,title').forEach(el => el.remove());
   let texto = (doc.body ? doc.body.innerText : doc.documentElement.textContent) || '';
   const linhasIgnorar = [
@@ -3352,14 +3394,15 @@ async function pneuBuscarDoc(opts = {}){
   const statusEl = document.getElementById('pneuDocStatus');
   const btn = document.getElementById('pneuDocBuscarBtn');
   const agora = () => new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
-  if (!url) { statusEl.innerHTML = '<span style="color:#dc2626">Informe a URL do Doc publicado.</span>'; return; }
+  if (!url) { statusEl.innerHTML = '<span style="color:#dc2626">Informe a URL do Doc.</span>'; return; }
   if (btn) btn.disabled = true;
   statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando conteúdo do Doc...';
   try {
-    const html = await pneuFetchDocRaw(url);
-    const texto = pneuExtrairTextoDoc(html);
+    const resultado = await pneuFetchDocRaw(url);
+    const texto = pneuExtrairTextoDoc(resultado);
+    const origem = resultado.tipo === 'export' ? 'via /export (documento real)' : 'via link publicado';
     if (!texto || texto.length < 3) {
-      statusEl.innerHTML = `<span style="color:var(--text-lt)">Doc encontrado, mas ainda sem conteúdo de texto (últ. verificação ${agora()}).</span>`;
+      statusEl.innerHTML = `<span style="color:var(--text-lt)">Doc encontrado (${origem}), mas ainda sem conteúdo de texto (últ. verificação ${agora()}).</span>`;
       return;
     }
     const hash = pneuHashTexto(texto);
@@ -3370,9 +3413,9 @@ async function pneuBuscarDoc(opts = {}){
     }
     localStorage.setItem('pneu_doc_last_hash', hash);
     document.getElementById('pneuWaTexto').value = texto;
-    statusEl.innerHTML = `<span style="color:#16a34a">${texto.length} caractere(s) lido(s) do Doc — interpretando com IA... (últ. verificação ${agora()})</span>`;
+    statusEl.innerHTML = `<span style="color:#16a34a">${texto.length} caractere(s) lido(s) do Doc ${origem} — interpretando com IA... (últ. verificação ${agora()})</span>`;
     await pneuImportarTexto();
-    statusEl.innerHTML = `<span style="color:#16a34a">Leitura do Doc processada às ${agora()} — confira o resultado acima antes de salvar.</span>`;
+    statusEl.innerHTML = `<span style="color:#16a34a">Leitura do Doc processada às ${agora()} (${origem}) — confira o resultado acima antes de salvar.</span>`;
   } catch(err) {
     console.error(err);
     statusEl.innerHTML = `<span style="color:#dc2626">Não consegui buscar o Doc (${err.message || 'erro desconhecido'}).</span>`;
