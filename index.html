@@ -6003,7 +6003,11 @@ function vencCalcularStatusLinha(row, cat, headers, colId, colData, colSituacao,
     const colsParcelas = vencColunasParcelas(headers);
     const tipoPlaca = vencTipoPlaca(placaTxt);
     const ehCavaloFrota = tipoPlaca === 'cavalo';
-    const parcelado = mesCal && (colsParcelas.some(c => String(row[c] || '').trim() !== '') || ehCavaloFrota);
+    const ehCarretaFrota = tipoPlaca === 'carreta';
+    // Carreta NUNCA é parcelada, mesmo que as colunas PARCELA estejam
+    // preenchidas na planilha (isso pode acontecer por erro de digitação
+    // ou por a placa não ter sido reconhecida como carreta no FROTA_DATA).
+    const parcelado = !ehCarretaFrota && mesCal && (colsParcelas.some(c => String(row[c] || '').trim() !== '') || ehCavaloFrota);
     if (parcelado) {
       parcelas = [1, 2, 3].map(off => new Date(now.getFullYear(), (mesCal - 1) + off, 10));
     }
@@ -6150,7 +6154,10 @@ function vencRenderCategoria(cat){
         let parcelaCell = tipoPl === 'carreta'
           ? `<span class="badge badge-gray" style="font-size:.72rem">À vista — 1x</span>`
           : '—';
-        if (parcelas) {
+        // Blindagem extra: carreta NUNCA mostra parcelamento, mesmo que
+        // 'parcelas' tenha sido calculado (não deveria mais acontecer após
+        // a correção em vencCalcularStatusLinha, mas fica como garantia).
+        if (parcelas && tipoPl !== 'carreta') {
           const pago = colSituacao ? String(row[colSituacao] || '').trim().toLowerCase().includes('ok') : false;
           const labels = parcelas.map((pd, i) => {
             // Respeita a data de cada parcela individualmente
