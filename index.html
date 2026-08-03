@@ -1532,6 +1532,21 @@ footer a{color:var(--accent);text-decoration:none;}
                 <button class="pneu-leitura-btn" id="pneuWaImportar" style="width:auto;padding:.6rem 1.4rem"><i class="fas fa-file-import"></i> Importar</button>
               </div>
               <div id="pneuWaResultado" style="margin-top:.8rem"></div>
+
+              <div style="margin-top:1.1rem;padding-top:1rem;border-top:1.5px dashed var(--gray-200)">
+                <div style="font-weight:700;font-size:.82rem;color:#1e2a3a;margin-bottom:.4rem"><i class="fas fa-file-lines" style="color:var(--accent)"></i> Leitura automática de um Doc publicado</div>
+                <div style="font-size:.76rem;color:var(--text-lt);margin-bottom:.7rem">Em vez de colar manualmente, leia direto de um Google Doc publicado (Arquivo → Compartilhar → Publicar na Web) que recebe as mensagens/leituras automaticamente. O texto encontrado cai no campo acima e passa pela mesma conferência de IA antes de salvar — nada é gravado sem sua confirmação.</div>
+                <div style="display:flex;gap:.6rem;align-items:end;flex-wrap:wrap">
+                  <div class="flt-grp" style="flex:1;min-width:260px"><label>URL do Doc publicado</label>
+                    <input type="text" id="pneuDocUrl" placeholder="https://docs.google.com/document/d/e/.../pub">
+                  </div>
+                  <button class="pneu-leitura-btn" id="pneuDocBuscarBtn" style="width:auto;padding:.6rem 1.2rem"><i class="fas fa-cloud-arrow-down"></i> Buscar agora</button>
+                </div>
+                <label style="display:flex;align-items:center;gap:.4rem;font-size:.74rem;color:var(--text-lt);margin-top:.6rem;cursor:pointer">
+                  <input type="checkbox" id="pneuDocAutoCheck" style="width:auto"> Verificar automaticamente a cada 5 minutos (enquanto esta aba estiver aberta no navegador)
+                </label>
+                <div id="pneuDocStatus" style="font-size:.76rem;margin-top:.5rem;color:var(--text-lt)"></div>
+              </div>
             </div>
           </div>
 
@@ -1790,6 +1805,12 @@ const DEFAULT_FATURAMENTO_DOCS = [
   1079171289, 125211003, 2028303270, 1843129283, 850971004, 1461140453
 ].map(gid => `${FAT_DOC}?gid=${gid}&single=true&output=csv`);
 const DEFAULT_FATURAMENTO = DEFAULT_FATURAMENTO_DOCS.join("\n");
+
+// Doc do Google publicado que recebe automaticamente as mensagens/leituras
+// de pneus (ex.: robô que replica o grupo de WhatsApp para um Doc). É lido
+// via proxy CORS (mesma lista de proxies dos outros módulos) e o texto
+// extraído passa pelo MESMO parser de IA usado na colagem manual.
+const DEFAULT_PNEU_DOC = "https://docs.google.com/document/d/e/2PACX-1vR4rIhekIETB7y1_F-G53do706ALJ0ByTBMhFxYxRSqADTsOMhgKJbu-Y5NgrA8Lq2Zl4tEaEQWiX8k/pub";
 
 let URL_FIN  = localStorage.getItem("urlFinanceiro")  || DEFAULT_FINANCEIRO;
 let URL_BAT  = localStorage.getItem("urlBaterias")    || DEFAULT_BATERIAS;
@@ -3219,6 +3240,8 @@ async function pneuImportarTexto(){
     const chavesValidas = PNEU_POS.map(p => p.key).join(', ');
     const prompt = `Você é um assistente de controle de frota. Extraia dados de pneus do texto abaixo. Pode ser: (a) mensagem de grupo de WhatsApp com bullets "*" ou marcador "📌 Placa X"; (b) planilha colada como texto puro (colunas separadas por TAB, vírgula ou ponto-e-vírgula); (c) uma leitura pontual de campo ("KM atual", "sulco", "trocou pneu", "mandou pra recapagem" etc). Reconheça qualquer um desses formatos, inclusive misturados no mesmo texto.
 
+O texto pode vir colado manualmente OU extraído automaticamente de um Google Doc que replica um grupo de WhatsApp; nesse caso cada mensagem pode vir precedida de remetente/hora (ex.: "[14:32, 03/08] João:" ou "João - 14:32") — ignore esses prefixos de remetente/hora ao extrair os dados, eles não são parte da leitura em si.
+
 TEXTO:
 """
 ${texto}
@@ -3268,6 +3291,102 @@ Regras importantes: não invente informação que não esteja no texto — omita
   }
 }
 
+// ═══════════════════════════════════════════════════════════
+// PNEUS — leitura automática de um Google Doc publicado
+// ═══════════════════════════════════════════════════════════
+let pneuDocAutoTimer = null;
+
+// Busca o HTML do Doc publicado com o mesmo esquema de proxies/timeout
+// usado para as planilhas (fetchComTimeout + CORS_PROXIES).
+async function pneuFetchDocRaw(url){
+  const attempts = [url, ...CORS_PROXIES.map(fn => fn(url))];
+  let lastErr;
+  for (const attemptUrl of attempts) {
+    try {
+      const res = await fetchComTimeout(attemptUrl, 9000);
+      if (!res.ok) { lastErr = new Error('HTTP ' + res.status); continue; }
+      const html = await res.text();
+      if (!html || html.trim().length < 20) { lastErr = new Error('Resposta vazia'); continue; }
+      return html;
+    } catch(e) {
+      lastErr = e.name === 'AbortError' ? new Error('Tempo esgotado ao conectar') : e;
+      continue;
+    }
+  }
+  throw lastErr || new Error('Falha ao buscar o documento');
+}
+
+// Extrai só o texto útil do HTML do Doc publicado, descartando o "casco"
+// padrão da página (título duplicado, avisos de rodapé do Google etc).
+function pneuExtrairTextoDoc(html){
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  doc.querySelectorAll('script,style,link,meta,title').forEach(el => el.remove());
+  let texto = (doc.body ? doc.body.innerText : doc.documentElement.textContent) || '';
+  const linhasIgnorar = [
+    /^published using google docs$/i,
+    /^publicado usando o google docs$/i,
+    /^report abuse$/i,
+    /^denunciar abuso$/i,
+    /^learn more$/i,
+    /^saiba mais$/i,
+    /^updated automatically every \d+ minutes?$/i,
+    /^atualizado automaticamente a cada \d+ minutos?$/i,
+  ];
+  return texto.split('\n').map(l => l.trim())
+    .filter(l => l && !linhasIgnorar.some(rx => rx.test(l)))
+    .join('\n').trim();
+}
+
+// Hash simples (djb2-like) só para detectar se o conteúdo do Doc mudou
+// desde a última leitura, sem precisar guardar o texto inteiro.
+function pneuHashTexto(str){
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
+  return h + '_' + str.length;
+}
+
+async function pneuBuscarDoc(opts = {}){
+  const manual = !!opts.manual;
+  const urlInput = document.getElementById('pneuDocUrl');
+  const url = (urlInput.value || DEFAULT_PNEU_DOC).trim();
+  const statusEl = document.getElementById('pneuDocStatus');
+  const btn = document.getElementById('pneuDocBuscarBtn');
+  const agora = () => new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+  if (!url) { statusEl.innerHTML = '<span style="color:#dc2626">Informe a URL do Doc publicado.</span>'; return; }
+  if (btn) btn.disabled = true;
+  statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando conteúdo do Doc...';
+  try {
+    const html = await pneuFetchDocRaw(url);
+    const texto = pneuExtrairTextoDoc(html);
+    if (!texto || texto.length < 3) {
+      statusEl.innerHTML = `<span style="color:var(--text-lt)">Doc encontrado, mas ainda sem conteúdo de texto (últ. verificação ${agora()}).</span>`;
+      return;
+    }
+    const hash = pneuHashTexto(texto);
+    const hashSalvo = localStorage.getItem('pneu_doc_last_hash');
+    if (hash === hashSalvo && !manual) {
+      statusEl.innerHTML = `<span style="color:var(--text-lt)">Sem novidades no Doc (últ. verificação ${agora()}).</span>`;
+      return;
+    }
+    localStorage.setItem('pneu_doc_last_hash', hash);
+    document.getElementById('pneuWaTexto').value = texto;
+    statusEl.innerHTML = `<span style="color:#16a34a">${texto.length} caractere(s) lido(s) do Doc — interpretando com IA... (últ. verificação ${agora()})</span>`;
+    await pneuImportarTexto();
+    statusEl.innerHTML = `<span style="color:#16a34a">Leitura do Doc processada às ${agora()} — confira o resultado acima antes de salvar.</span>`;
+  } catch(err) {
+    console.error(err);
+    statusEl.innerHTML = `<span style="color:#dc2626">Não consegui buscar o Doc (${err.message || 'erro desconhecido'}).</span>`;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function pneuDocAutoToggle(ativar){
+  if (pneuDocAutoTimer) { clearInterval(pneuDocAutoTimer); pneuDocAutoTimer = null; }
+  localStorage.setItem('pneu_doc_auto', ativar ? '1' : '0');
+  if (ativar) pneuDocAutoTimer = setInterval(() => pneuBuscarDoc({ manual:false }), 5 * 60 * 1000);
+}
+
 function pneuInit(){
   const select = document.getElementById('pneuVeiculoSelect');
   if (!pneuInited) {
@@ -3283,6 +3402,15 @@ function pneuInit(){
     document.getElementById('pneuFiltroGrupo').addEventListener('change', pneuApplyFilters);
 
     document.getElementById('pneuWaImportar').addEventListener('click', pneuImportarTexto);
+
+    const docUrlInput = document.getElementById('pneuDocUrl');
+    docUrlInput.value = localStorage.getItem('pneu_doc_url') || DEFAULT_PNEU_DOC;
+    docUrlInput.addEventListener('change', () => localStorage.setItem('pneu_doc_url', docUrlInput.value.trim() || DEFAULT_PNEU_DOC));
+    document.getElementById('pneuDocBuscarBtn').addEventListener('click', () => pneuBuscarDoc({ manual:true }));
+    const autoCheck = document.getElementById('pneuDocAutoCheck');
+    autoCheck.checked = localStorage.getItem('pneu_doc_auto') === '1';
+    if (autoCheck.checked) pneuDocAutoToggle(true);
+    autoCheck.addEventListener('change', () => pneuDocAutoToggle(autoCheck.checked));
 
     pneuBuildCustosTable();
     pneuBuildCadastroGeral();
