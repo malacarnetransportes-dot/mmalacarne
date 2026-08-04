@@ -5362,11 +5362,14 @@ function fatUpdateResumoMes(totalFaturamento, totalReceber, totalDiarias, totalV
   const totalDespesas = fatFiltered.reduce((s, r) => s + (r.despesasMot || 0), 0);
   const saldoLiquido = totalReceber - totalDespesas;
 
-  // Médias por motorista no período filtrado (evita divisão por zero quando
-  // não há nenhum motorista com lançamento).
-  const qtdMot = motoristasSet.size || 0;
-  const mediaReceber = qtdMot ? totalReceber / qtdMot : 0;
-  const mediaSaldoLiquido = qtdMot ? saldoLiquido / qtdMot : 0;
+  // Média do período = soma dividida pela quantidade de meses distintos
+  // presentes no período filtrado (ex.: filtrando um ano inteiro com
+  // lançamentos em 8 meses, a média é dividida por 8; filtrando um único
+  // mês, a média = o próprio total, pois o período tem 1 mês).
+  const mesesSet = new Set(fatFiltered.map(r => `${r.ano}-${r.mes}`));
+  const qtdMeses = mesesSet.size || 1;
+  const mediaReceber = totalReceber / qtdMeses;
+  const mediaSaldoLiquido = saldoLiquido / qtdMeses;
 
   periodoEl.innerHTML = `<i class="fas fa-filter"></i> ${periodoTxt} — ${fatFiltered.length} lançamento${fatFiltered.length===1?'':'s'}`;
 
@@ -5378,8 +5381,8 @@ function fatUpdateResumoMes(totalFaturamento, totalReceber, totalDiarias, totalV
     { icon:'fa-percent', cls:'brown', val: fmtMoney(totalComissao), lbl:'Comissão' },
     { icon:'fa-scale-balanced', cls: saldoLiquido >= 0 ? 'green' : 'red', val: fmtMoney(saldoLiquido), lbl:'Saldo Líquido (Receber − Desp.)' },
     { icon:'fa-user', cls:'brown', val: motoristasSet.size, lbl:'Motoristas no Período' },
-    { icon:'fa-calculator', cls:'yellow', val: fmtMoney(mediaReceber), lbl:'Média Total a Receber (por motorista)' },
-    { icon:'fa-calculator', cls: mediaSaldoLiquido >= 0 ? 'green' : 'red', val: fmtMoney(mediaSaldoLiquido), lbl:'Média Saldo Líquido (por motorista)' }
+    { icon:'fa-calculator', cls:'yellow', val: fmtMoney(mediaReceber), lbl:`Média Total a Receber / mês (${qtdMeses} ${qtdMeses===1?'mês':'meses'})` },
+    { icon:'fa-calculator', cls: mediaSaldoLiquido >= 0 ? 'green' : 'red', val: fmtMoney(mediaSaldoLiquido), lbl:`Média Saldo Líquido / mês (${qtdMeses} ${qtdMeses===1?'mês':'meses'})` }
   ];
 
   gridEl.innerHTML = itens.map(it => `
