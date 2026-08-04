@@ -5362,6 +5362,12 @@ function fatUpdateResumoMes(totalFaturamento, totalReceber, totalDiarias, totalV
   const totalDespesas = fatFiltered.reduce((s, r) => s + (r.despesasMot || 0), 0);
   const saldoLiquido = totalReceber - totalDespesas;
 
+  // Médias por motorista no período filtrado (evita divisão por zero quando
+  // não há nenhum motorista com lançamento).
+  const qtdMot = motoristasSet.size || 0;
+  const mediaReceber = qtdMot ? totalReceber / qtdMot : 0;
+  const mediaSaldoLiquido = qtdMot ? saldoLiquido / qtdMot : 0;
+
   periodoEl.innerHTML = `<i class="fas fa-filter"></i> ${periodoTxt} — ${fatFiltered.length} lançamento${fatFiltered.length===1?'':'s'}`;
 
   const itens = [
@@ -5371,7 +5377,9 @@ function fatUpdateResumoMes(totalFaturamento, totalReceber, totalDiarias, totalV
     { icon:'fa-hand-holding-dollar', cls:'red', val: fmtMoney(totalVales), lbl:'Vales / Manobra' },
     { icon:'fa-percent', cls:'brown', val: fmtMoney(totalComissao), lbl:'Comissão' },
     { icon:'fa-scale-balanced', cls: saldoLiquido >= 0 ? 'green' : 'red', val: fmtMoney(saldoLiquido), lbl:'Saldo Líquido (Receber − Desp.)' },
-    { icon:'fa-user', cls:'brown', val: motoristasSet.size, lbl:'Motoristas no Período' }
+    { icon:'fa-user', cls:'brown', val: motoristasSet.size, lbl:'Motoristas no Período' },
+    { icon:'fa-calculator', cls:'yellow', val: fmtMoney(mediaReceber), lbl:'Média Total a Receber (por motorista)' },
+    { icon:'fa-calculator', cls: mediaSaldoLiquido >= 0 ? 'green' : 'red', val: fmtMoney(mediaSaldoLiquido), lbl:'Média Saldo Líquido (por motorista)' }
   ];
 
   gridEl.innerHTML = itens.map(it => `
