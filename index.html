@@ -1811,7 +1811,7 @@ const DEFAULT_FATURAMENTO = DEFAULT_FATURAMENTO_DOCS.join("\n");
 // de pneus (ex.: robô que replica o grupo de WhatsApp para um Doc). É lido
 // via proxy CORS (mesma lista de proxies dos outros módulos) e o texto
 // extraído passa pelo MESMO parser de IA usado na colagem manual.
-const DEFAULT_PNEU_DOC = "https://docs.google.com/document/d/1b1HeGvFFYrSY5wbwB8ry6y9NGGtUMbu2z1s-KqJDhm0/edit?usp=sharing";
+const DEFAULT_PNEU_DOC = "https://docs.google.com/document/d/e/2PACX-1vR4rIhekIETB7y1_F-G53do706ALJ0ByTBMhFxYxRSqADTsOMhgKJbu-Y5NgrA8Lq2Zl4tEaEQWiX8k/pub";
 
 let URL_FIN  = localStorage.getItem("urlFinanceiro")  || DEFAULT_FINANCEIRO;
 let URL_BAT  = localStorage.getItem("urlBaterias")    || DEFAULT_BATERIAS;
@@ -2706,64 +2706,114 @@ const PNEU_POS = [
 ];
 
 const PNEU_DATA = {
+  // ── RYE7J36 — Tração 4x BOR XBRi Forza ──
   'RYE7J36': {
     posicoes: {
-      'tracao-ldf': { numeroFogo:'032', marca:'BOR', tipo:'Radial', modelo:'XBRi Forza (top de linha)', status:'novo', kmInstalado:372870 },
-      'tracao-ldd': { numeroFogo:'031', marca:'BOR', tipo:'Radial', modelo:'XBRi Forza (top de linha)', status:'novo', kmInstalado:372870 },
-      'tracao-lef': { numeroFogo:'030', marca:'BOR', tipo:'Radial', modelo:'XBRi Forza (top de linha)', status:'novo', kmInstalado:372870 },
-      'tracao-led': { numeroFogo:'029', marca:'BOR', tipo:'Radial', modelo:'XBRi Forza (top de linha)', status:'novo', kmInstalado:372870 },
+      'tracao-ldf': { numeroFogo:'032', marca:'Bridgestone/BOR', tipo:'Radial', modelo:'XBRi Forza', status:'novo', kmInstalado:372870 },
+      'tracao-ldd': { numeroFogo:'031', marca:'Bridgestone/BOR', tipo:'Radial', modelo:'XBRi Forza', status:'novo', kmInstalado:372870 },
+      'tracao-lef': { numeroFogo:'030', marca:'Bridgestone/BOR', tipo:'Radial', modelo:'XBRi Forza', status:'novo', kmInstalado:372870 },
+      'tracao-led': { numeroFogo:'029', marca:'Bridgestone/BOR', tipo:'Radial', modelo:'XBRi Forza', status:'novo', kmInstalado:372870 },
     },
     historico: [
-      { data:'01/04/2026', km:'372.870', desc:'Eixo tração – 4 pneus novos BOR XBRi Forza (top de linha)' },
+      { data:'01/04/2026', km:'372.870', desc:'Eixo tração — 4 pneus novos BOR XBRi Forza (top de linha). Fogo: 032 LDF · 031 LDD · 030 LEF · 029 LED' },
       { data:'Abril/2026', desc:'Borracharia Canadá — serviço/ajuste', custo:38.00 },
     ]
   },
+
+  // ── RYE7J76 — Tração 4x Iron Head Borrachudo ──
   'RYE7J76': {
     posicoes: {
       'tracao-ldf': { numeroFogo:'57', marca:'Iron Head', tipo:'Radial', modelo:'Borrachudo', status:'novo', kmInstalado:356080 },
       'tracao-ldd': { numeroFogo:'58', marca:'Iron Head', tipo:'Radial', modelo:'Borrachudo', status:'novo', kmInstalado:356080 },
       'tracao-lef': { numeroFogo:'59', marca:'Iron Head', tipo:'Radial', modelo:'Borrachudo', status:'novo', kmInstalado:356080 },
       'tracao-led': { numeroFogo:'60', marca:'Iron Head', tipo:'Radial', modelo:'Borrachudo', status:'novo', kmInstalado:356080 },
-      'truck-ldf':  { marca:'Apollo/Goodyear', status:'recapado', obs:'Recebeu pneu retirado da tração' },
-      'truck-ldd':  { marca:'Apollo/Goodyear', status:'recapado', obs:'Recebeu pneu retirado da tração' },
-      'carreta2-lef': { marca:'Apollo/Goodyear', status:'recapado', obs:'2 pneus recapados enviados ao eixo do meio da carreta' },
-      'carreta2-led': { marca:'Apollo/Goodyear', status:'recapado', obs:'2 pneus recapados enviados ao eixo do meio da carreta' },
+      'truck-ldf':  { marca:'Apollo', modelo:'Borrachudo', status:'recapado', obs:'Pneu retirado da tração → truck LD frente' },
+      'truck-ldd':  { marca:'Apollo', modelo:'Borrachudo', status:'recapado', obs:'Pneu retirado da tração → truck LD detrás' },
+      'carreta2-lef': { marca:'Apollo/Goodyear', status:'recapado', obs:'Recapado enviado ao eixo do meio da carreta' },
+      'carreta2-led': { marca:'Apollo/Goodyear', status:'recapado', obs:'Recapado enviado ao eixo do meio da carreta' },
     },
     historico: [
-      { km:'356.080', desc:'4 pneus tração Iron Head Borrachudo novos' },
+      { data:'03/06/2026', km:'356.080', desc:'4 pneus tração Iron Head Borrachudo novos. Fogo: 57 LDF · 58 LDD · 59 LEF · 60 LED' },
       { desc:'4 pneus retirados da tração foram para o eixo truck (auxiliar) do cavalo' },
-      { desc:'2 Apollo Borrachudo (primeira vida) enviados para recapagem' },
-      { desc:'2 recapados foram para o eixo do meio da carreta' },
-      { desc:'2 Goodyear (primeira vida) enviados para recapagem' },
+      { desc:'2 Apollo Borrachudo 1ª vida enviados para recapagem' },
+      { desc:'2 do truck já recapados foram para o eixo do meio da carreta' },
+      { desc:'2 Goodyear 1ª vida enviados para recapagem' },
       { desc:'Ficou 1 pneu com pouca borracha — encaminhado para vulcanizar', alerta:true },
     ]
   },
+
+  // ── QJY0640 — Alerta tração (Hildo) ──
   'QJY0640': {
     alerta: true,
-    numeroFogo: '495735',
     posicoes: {
-      'tracao-ldf': { numeroFogo:'495735', status:'alerta', obs:'Hildo precisa pneu tração' },
+      'tracao-ldf': { numeroFogo:'495735', status:'alerta', obs:'Hildo precisa pneu tração — PENDENTE' },
     },
     historico: [
       { desc:'Número fogo registrado: 495735' },
       { desc:'Hildo precisa pneu tração — PENDENTE', alerta:true },
     ]
   },
+
+  // ── RLB3C26 — Dianteiros Bridgestone ──
   'RLB3C26': {
     posicoes: {
-      'dianteiro-fe': { marca:'Bridgestone', tipo:'Radial', lado:'Motorista', status:'novo', kmInstalado:337517 },
-      'dianteiro-fd': { marca:'Bridgestone', tipo:'Radial', lado:'Carona', status:'novo', kmInstalado:337517 },
-      'truck-ldf': { status:'recapado', obs:'Recebeu pneu dianteiro usado retirado desta placa (lado direito)' },
-      'truck-ldd': { status:'recapado', obs:'Recebeu pneu dianteiro usado retirado desta placa (lado direito)' },
+      'dianteiro-fe': { numeroFogo:'61', marca:'Bridgestone', tipo:'Radial', lado:'Motorista', status:'novo', kmInstalado:337517 },
+      'dianteiro-fd': { numeroFogo:'62', marca:'Bridgestone', tipo:'Radial', lado:'Carona', status:'novo', kmInstalado:337517 },
+      'truck-ldf': { status:'recapado', obs:'Dianteiro antigo retirado desta placa → truck lado direito frente' },
+      'truck-ldd': { status:'recapado', obs:'Dianteiro antigo retirado desta placa → truck lado direito detrás' },
     },
     historico: [
-      { data:'27/02/2026', km:'337.517', desc:'2 pneus dianteiros Bridgestone novos', motorista:'Adriano Vaz' },
+      { data:'27/02/2026', km:'337.517', desc:'2 pneus dianteiros Bridgestone novos. Fogo: 61 (motorista) · 62 (carona)', motorista:'Adriano Vaz' },
       { desc:'2 dianteiros antigos retirados e montados no eixo truck, lado direito' },
       { data:'Abril/2026', desc:'Borracharia Canadá — serviço/ajuste', custo:116.00 },
     ]
   },
+
+  // ── RYE7J26 — Dianteiros trocados 2x (Adriano 02/2026 e Cristiano 07/2026) ──
+  'RYE7J26': {
+    posicoes: {
+      'dianteiro-fe': { marca:'Xbri', modelo:'Curve Plus', tipo:'Radial', lado:'Motorista', status:'novo', kmInstalado:337517 },
+      'dianteiro-fd': { marca:'Xbri', modelo:'Curve Plus', tipo:'Radial', lado:'Carona', status:'novo', kmInstalado:337517 },
+      'truck-ldf': { status:'recapado', obs:'Dianteiros antigos retirados (21/07/2026) — estoque, ainda rodam ~60 mil km' },
+      'truck-ldd': { status:'recapado', obs:'Dianteiros antigos retirados (21/07/2026) — estoque, ainda rodam ~60 mil km' },
+    },
+    historico: [
+      { data:'27/02/2026', km:'337.517', desc:'2 pneus dianteiros trocados. Fogo: 001 (lado esquerdo/motorista) · 002 (lado direito/carona). Dianteiros retirados → truck lado direito', motorista:'Adriano Vaz' },
+      { data:'21/07/2026', km:'337.517', desc:'2 pneus dianteiros Xbri Curve Plus instalados. Fogo: 001 (motorista) · 002 (carona). Dianteiros retirados → estoque (pipoqueira), ~60 mil km restantes, irão para truck', motorista:'Cristiano' },
+      { data:'Abril/2026', desc:'Borracharia Canadá — serviço/ajuste', custo:146.00 },
+    ]
+  },
+
+  // ── RLB3E26 — Tração 4x Iron Head (nova entrada 03/08/2026) ──
+  'RLB3E26': {
+    posicoes: {
+      'tracao-ldf': { numeroFogo:'66', marca:'Iron Head', tipo:'Radial', status:'novo', kmInstalado:462976 },
+      'tracao-ldd': { numeroFogo:'65', marca:'Iron Head', tipo:'Radial', status:'novo', kmInstalado:462976 },
+      'tracao-lef': { numeroFogo:'67', marca:'Iron Head', tipo:'Radial', status:'novo', kmInstalado:462976 },
+      'tracao-led': { numeroFogo:'68', marca:'Iron Head', tipo:'Radial', status:'novo', kmInstalado:462976 },
+      'truck-lef': { status:'recapado', obs:'2 da tração saíram para truck' },
+      'truck-led': { status:'recapado', obs:'2 da tração saíram para truck' },
+    },
+    historico: [
+      { data:'03/08/2026', km:'462.976', desc:'4 pneus tração Iron Head novos. Fogo: 66 LDF · 65 LDD · 67 LEF · 68 LED. 2 da tração → truck; 2 da tração → Borracharia Canadá p/ recapar. 2 do truck → Canadá p/ recapar.', motorista:'Mariano' },
+    ]
+  },
+
+  // ── MLZ0B00 — Tração 4x BRI (nov/2024) ──
+  'MLZ0B00': {
+    posicoes: {
+      'tracao-lef': { marca:'Bridgestone/BRI', tipo:'Radial', status:'novo', kmInstalado:96200 },
+      'tracao-led': { marca:'Bridgestone/BRI', tipo:'Radial', status:'novo', kmInstalado:96200 },
+      'tracao-ldf': { marca:'Bridgestone/BRI', tipo:'Radial', status:'novo', kmInstalado:96200 },
+      'tracao-ldd': { marca:'Bridgestone/BRI', tipo:'Radial', status:'novo', kmInstalado:96200 },
+    },
+    historico: [
+      { data:'10/11/2024', km:'96.200', desc:'4 pneus tração BRI novos (4x BRI). Compra: Brumax / Masscco' },
+    ]
+  },
+
+  // ── Registros só com custo (Borracharia Canadá Abril/2026) ──
   'RLB3E46': { historico: [{ data:'Abril/2026', desc:'Borracharia Canadá — serviço/ajuste', custo:190.00 }] },
-  'RYE7J26': { historico: [{ data:'Abril/2026', desc:'Borracharia Canadá — serviço/ajuste', custo:146.00 }] },
   'QJM1350': { historico: [{ data:'Abril/2026', desc:'Borracharia Canadá — serviço/ajuste', custo:286.00 }] },
   'QJC0B40': { historico: [{ data:'Abril/2026', desc:'Borracharia Canadá — serviço/ajuste', custo:206.00 }] },
 };
