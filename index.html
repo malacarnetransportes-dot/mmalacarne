@@ -3128,31 +3128,106 @@ function pneuNormalizeChave(str){
   return String(str||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
 }
 
-// Tenta corrigir uma chave de posição que a IA não escreveu exatamente igual à lista válida
-// (ex.: "tracao_LDF", "Tração LDF", "eixo-tracao-ldf") comparando por aproximação.
+// Tenta corrigir uma chave de posição que a IA não escreveu exatamente igual à lista válida.
+// Cobre variações como: "tracao_LDF", "Tração LDF", "eixo-tracao-ldf",
+// "carreta1LDF", "carreta 1 LD F", "Eixo Carreta 1 LDF", "dianteiro FE", etc.
 function pneuResolverChave(chaveBruta, eixoPadrao){
   if (!chaveBruta) return null;
   const alvo = pneuNormalizeChave(chaveBruta);
+
+  // 1) Match exato normalizado
   const direta = PNEU_POS.find(p => pneuNormalizeChave(p.key) === alvo);
   if (direta) return direta.key;
-  // Tenta casar por grupo + lado (label), ignorando separadores/acentos
+
+  // 2) Tabela de aliases manuais para variações comuns da IA
+  const ALIASES = {
+    'fe':'dianteiro-fe','fd':'dianteiro-fd',
+    'dianteirofe':'dianteiro-fe','diranteirof e':'dianteiro-fe',
+    'dianteirofd':'dianteiro-fd',
+    'lefsemeixo':null, // ambíguo demais
+    // tração
+    'tracaolef':'tracao-lef','tracaoled':'tracao-led',
+    'tracaoldf':'tracao-ldf','tracaoldd':'tracao-ldd',
+    'tracao_lef':'tracao-lef','tracao_led':'tracao-led',
+    'tracao_ldf':'tracao-ldf','tracao_ldd':'tracao-ldd',
+    // truck
+    'trucklef':'truck-lef','trucklef':'truck-lef',
+    'truckled':'truck-led','truckldf':'truck-ldf','truckldd':'truck-ldd',
+    'auxiliarlef':'truck-lef','auxiliarled':'truck-led',
+    'auxiliarldf':'truck-ldf','auxiliarldd':'truck-ldd',
+    // carreta (com número)
+    'carreta1lef':'carreta1-lef','carreta1led':'carreta1-led',
+    'carreta1ldf':'carreta1-ldf','carreta1ldd':'carreta1-ldd',
+    'carreta2lef':'carreta2-lef','carreta2led':'carreta2-led',
+    'carreta2ldf':'carreta2-ldf','carreta2ldd':'carreta2-ldd',
+    'carreta3lef':'carreta3-lef','carreta3led':'carreta3-led',
+    'carreta3ldf':'carreta3-ldf','carreta3ldd':'carreta3-ldd',
+    // carreta sem número ("carreta lef" → usa eixo padrão ou carreta1)
+    'carretalef':'carreta1-lef','carretaled':'carreta1-led',
+    'carretaldf':'carreta1-ldf','carretaldd':'carreta1-ldd',
+  };
+  if (ALIASES[alvo]) return ALIASES[alvo];
+
+  // 3) Tenta extrair eixo + label da string bruta
+  // Mapeia variações textuais para prefixo de chave
+  const EIXO_MAP = [
+    { rx:/diant/,       pref:'dianteiro' },
+    { rx:/traca|traco/, pref:'tracao'    },
+    { rx:/truck|auxili/,pref:'truck'     },
+    { rx:/carreta\s*1|dianteira\s+carreta|carreta\s+diant/, pref:'carreta1' },
+    { rx:/carreta\s*2|meio\s+carreta|carreta\s+mei/,        pref:'carreta2' },
+    { rx:/carreta\s*3|traseira\s+carreta|carreta\s+tras/,   pref:'carreta3' },
+    { rx:/carreta/,     pref:'carreta1' }, // genérico
+  ];
+  const LADO_MAP = [
+    { rx:/lef|esq.*fre|fre.*esq/, suf:'lef' },
+    { rx:/led|esq.*det|det.*esq/, suf:'led' },
+    { rx:/ldf|dir.*fre|fre.*dir/, suf:'ldf' },
+    { rx:/ldd|dir.*det|det.*dir/, suf:'ldd' },
+    { rx:/\bfe\b|\bfe$/,          suf:'fe'  },  // dianteiro esquerdo
+    { rx:/\bfd\b|\bfd$/,          suf:'fd'  },  // dianteiro direito
+  ];
+  const chaveLower = String(chaveBruta).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  let prefEncontrado = null, sufEncontrado = null;
+  for (const e of EIXO_MAP) { if (e.rx.test(chaveLower)) { prefEncontrado = e.pref; break; } }
+  for (const l of LADO_MAP) { if (l.rx.test(chaveLower)) { sufEncontrado = l.suf; break; } }
+
+  if (prefEncontrado && sufEncontrado) {
+    const tentativa = `${prefEncontrado}-${sufEncontrado}`;
+    const encontrado = PNEU_POS.find(p => p.key === tentativa);
+    if (encontrado) return encontrado.key;
+  }
+
+  // 4) Fallback: candidatos por label (LEF, LED, LDF, LDD, FE, FD)
   const candidatos = PNEU_POS.filter(p => alvo.includes(pneuNormalizeChave(p.label)));
   if (candidatos.length === 1) return candidatos[0].key;
   if (candidatos.length > 1) {
-    // desempata pelo eixo padrão escolhido pelo usuário no formulário
     const doEixoPadrao = candidatos.find(p => p.key.startsWith(eixoPadrao));
     if (doEixoPadrao) return doEixoPadrao.key;
   }
   return null;
 }
 
-// Extrai o maior bloco JSON válido de uma resposta que pode vir com texto/markdown ao redor
+// Extrai o maior bloco JSON válido de uma resposta que pode vir com texto/markdown ao redor.
+// Usa ###JSON### como âncora preferencial (conforme o prompt solicita),
+// mas cai para busca por chaves se o marcador não aparecer.
 function pneuExtrairJSON(saidaBruta){
-  const semMarkdown = saidaBruta.replace(/```json|```/gi, '').trim();
-  const ini = semMarkdown.indexOf('{');
-  const fim = semMarkdown.lastIndexOf('}');
-  if (ini === -1 || fim === -1 || fim <= ini) throw new Error('JSON não encontrado na resposta.');
-  return JSON.parse(semMarkdown.slice(ini, fim + 1));
+  let texto = saidaBruta.replace(/```json|```/gi, '').trim();
+  // Prefere o trecho após ###JSON###, para não pegar JSON parcial dos bullets de revisão
+  const marcador = texto.indexOf('###JSON###');
+  if (marcador !== -1) texto = texto.slice(marcador + 10).trim();
+  const ini = texto.indexOf('{');
+  const fim = texto.lastIndexOf('}');
+  if (ini === -1 || fim === -1 || fim <= ini) throw new Error('JSON não encontrado na resposta da IA.');
+  try {
+    return JSON.parse(texto.slice(ini, fim + 1));
+  } catch(e) {
+    // Tenta reparar JSON truncado ou com vírgulas extras (caso comum em respostas longas)
+    const tentativa = texto.slice(ini, fim + 1)
+      .replace(/,\s*([\]}])/g, '$1')   // vírgula antes de fechar
+      .replace(/[\u0000-\u001F]/g, ' '); // caracteres de controle
+    return JSON.parse(tentativa);
+  }
 }
 
 // Valida e normaliza o JSON retornado pela IA: corrige chaves de posição, remove lixo,
@@ -3239,41 +3314,66 @@ async function pneuImportarTexto(){
   resultEl.innerHTML = '<div style="font-size:.8rem;color:var(--text-lt)"><i class="fas fa-spinner fa-spin"></i> Lendo e organizando os dados...</div>';
   try {
     const chavesValidas = PNEU_POS.map(p => p.key).join(', ');
-    const prompt = `Você é um assistente extremamente cuidadoso de controle de frota, especialista em extrair dados de pneus de textos desorganizados sem perder nem inventar nenhuma informação. Extraia dados de pneus do texto abaixo. Pode ser: (a) mensagem de grupo de WhatsApp com bullets "*" ou marcador "📌 Placa X"; (b) planilha colada como texto puro (colunas separadas por TAB, vírgula ou ponto-e-vírgula); (c) uma leitura pontual de campo ("KM atual", "sulco", "trocou pneu", "mandou pra recapagem" etc); (d) uma sequência de várias entradas soltas, uma atrás da outra, tipo "001 pneu... 002 pneu... Data 27... Motorista ADRIAN... Km 337... Troca de... marca... PLACA... 65 TRA... 66 TRA...". Reconheça qualquer um desses formatos, inclusive todos misturados no mesmo texto, e trate cada entrada numerada/repetida como um registro separado — nunca funda dois registros diferentes em um só, e nunca pule um registro achando que é duplicado sem ter certeza.
+    const prompt = `Você é um assistente extremamente cuidadoso de controle de frota, especialista em extrair dados de pneus de textos desorganizados sem perder nem inventar nenhuma informação.
 
-O texto pode vir colado manualmente OU extraído automaticamente de um Google Doc que replica um grupo de WhatsApp; nesse caso cada mensagem pode vir precedida de remetente/hora (ex.: "[14:32, 03/08] João:" ou "João - 14:32") — ignore esses prefixos de remetente/hora ao extrair os dados, eles não são parte da leitura em si.
+Extraia dados de pneus do texto abaixo. Formatos possíveis:
+(a) Mensagem de grupo de WhatsApp com bullets "*" ou marcador "📌 Placa X";
+(b) Planilha colada como texto puro (colunas separadas por TAB, vírgula ou ponto-e-vírgula);
+(c) Leitura pontual de campo ("KM atual", "sulco", "trocou pneu", "mandou pra recapagem" etc);
+(d) Sequência de entradas soltas: "001 pneu... 002 pneu... Data 27... Motorista ADRIAN... Km 337...";
+(e) Texto de Google Doc que replica mensagens de WhatsApp — pode ter prefixos de remetente/hora como "[14:32, 03/08] João:" ou "João - 14:32" — IGNORE esses prefixos ao extrair dados.
+Trate cada entrada numerada/repetida como registro separado. Nunca funda dois registros diferentes, nunca pule um registro achando que é duplicado.
 
-Exemplo rápido (formato, não os dados reais) — texto de entrada:
+CHAVES DE POSIÇÃO VÁLIDAS — use EXATAMENTE uma destas strings, sem variações:
+${chavesValidas}
+
+MAPEAMENTO DE EIXO (prefixo da chave):
+• "dianteiro" = eixo dianteiro/direção do cavalo (2 pneus: -fe e -fd)
+• "tracao" = eixo tração do cavalo (4 pneus: -lef, -led, -ldf, -ldd)
+• "truck" = eixo truck/auxiliar do cavalo (4 pneus: -lef, -led, -ldf, -ldd)
+• "carreta1" = eixo dianteiro da carreta (4 pneus)
+• "carreta2" = eixo do meio da carreta (4 pneus)
+• "carreta3" = eixo traseiro da carreta (4 pneus)
+Se o texto citar eixo genérico sem indicar qual (ex: "Tração:" sem especificar cavalo/carreta), use prefixo padrão: "${eixoPadrao}".
+
+MAPEAMENTO DE LADO (sufixo da chave):
+• LEF = lado esquerdo frente  • LED = lado esquerdo detrás
+• LDF = lado direito frente   • LDD = lado direito detrás
+• FE = frente esquerdo (só dianteiro)  • FD = frente direito (só dianteiro)
+
+Exemplo — texto de entrada:
 """
 📌 Placa ABC1234
-Motorista: Carlos
-Km atual eixo tração: 145000
-LDF: pneu novo, marca Pirelli, custo 1800
+Motorista: Carlos / Km: 145000
+Tração LDF: pneu novo, marca Pirelli, custo 1800
 """
-Saída esperada (parte do JSON, ilustrativo):
-{"veiculos":[{"placa":"ABC1234","posicoes":{"tracao_LDF":{"marca":"Pirelli","status":"novo","custoUnit":1800,"kmAtual":145000}},"historico":[{"desc":"Pneu novo instalado","motorista":"Carlos","custo":1800}]}],"custos":[{"placa":"ABC1234","valor":1800}]}
+Saída esperada (ilustrativo — use as chaves EXATAS da lista acima):
+{"veiculos":[{"placa":"ABC1234","posicoes":{"tracao-ldf":{"marca":"Pirelli","status":"novo","custoUnit":1800,"kmAtual":145000}},"historico":[{"desc":"Pneu novo instalado na tração LDF","motorista":"Carlos","custo":1800}]}],"custos":[{"placa":"ABC1234","valor":1800}]}
 
 TEXTO:
 """
 ${texto}
 """
 
-Chaves de posição válidas (cada uma é um pneu do conjunto cavalo 6x2 + carreta) — use EXATAMENTE uma destas strings, sem variações: ${chavesValidas}
-Mapeamento de lado: "LDF"/"Lado direito F" = lado direito frente; "LDD"/"Lado direito D" = lado direito detrás; "LEF"/"Lado esquerdo F" = lado esquerdo frente; "LED"/"Lado esquerdo D" = lado esquerdo detrás.
-Se o texto citar um eixo genérico (ex: "Tração:", "Dianteiro:") sem indicar se é do cavalo ou da carreta, use como prefixo padrão: "${eixoPadrao}".
-Se o texto trouxer apenas uma atualização de leitura (KM atual, profundidade de sulco em mm, custo de serviço) para um pneu já existente, ainda assim retorne no mesmo formato, preenchendo só os campos citados (não invente marca/modelo se não foram ditos).
-Datas: normalize para "DD/MM/AAAA" quando o ano não for dito, assuma o ano atual do texto ou omita o campo "data" se não for possível saber.
+Regras:
+• Não invente informação — omita o campo se não estiver no texto.
+• Se só houver leitura de KM/sulco/custo para pneu já existente, preencha só esses campos (kmAtual, sulcoAtual, custoUnit) sem inventar marca/modelo.
+• Datas: normalize para "DD/MM/AAAA"; se o ano não estiver claro, omita o campo "data".
+• Se não houver veículos: "veiculos": []. Se não houver custos: "custos": [].
+• Nunca use chave de posição fora da lista fornecida.
+• Não esqueça nenhuma placa, mesmo que o texto seja longo.
 
-Antes de responder, revise mentalmente TODAS as placas, números de entrada e leituras que aparecem no texto (mesmo as que parecem fragmentadas ou cortadas) e escreva um resumo curto em bullets (uma linha por placa/entrada encontrada) — isso ajuda a não esquecer nenhuma. DEPOIS desse resumo, escreva a linha "###JSON###" sozinha, e em seguida o JSON final.
+PASSO 1 — Antes de gerar o JSON, escreva um resumo em bullets: uma linha por placa/entrada encontrada (ex: "• ABC1234: troca tração LDF Pirelli, km 145000").
+PASSO 2 — Escreva exatamente a linha: ###JSON###
+PASSO 3 — Escreva o JSON final completo (sem markdown, sem texto depois).
 
-Formato do JSON final, exatamente assim:
+Formato do JSON:
 {
   "veiculos": [
-    { "placa": "XXX0000", "posicoes": { "<chave_valida>": { "numeroFogo": "", "marca": "", "modelo": "", "tipo": "", "status": "novo|recapado|atencao|alerta|semdados", "kmInstalado": 0, "kmAtual": 0, "sulcoAtual": 0, "custoUnit": 0 } }, "historico": [ { "data": "", "km": "", "desc": "", "custo": 0, "motorista": "", "alerta": false } ], "alerta": false, "numeroFogo": "" }
+    { "placa": "XXX0000", "posicoes": { "<chave_exata>": { "numeroFogo": "", "marca": "", "modelo": "", "tipo": "", "status": "novo|recapado|atencao|alerta|semdados", "kmInstalado": 0, "kmAtual": 0, "sulcoAtual": 0, "custoUnit": 0 } }, "historico": [ { "data": "", "km": "", "desc": "", "custo": 0, "motorista": "", "alerta": false } ], "alerta": false }
   ],
   "custos": [ { "placa": "XXX0000", "valor": 0 } ]
-}
-Regras importantes: não invente informação que não esteja no texto — omita o campo se não existir. Se não houver veículos, use "veiculos": []. Se não houver lista de custos, use "custos": []. Nunca use uma chave de posição fora da lista fornecida. Não esqueça nenhuma placa ou entrada do texto, mesmo que o texto seja longo.`;
+}`;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -3331,8 +3431,12 @@ function pneuExtrairIdDoc(url){
 async function pneuFetchDocRaw(url){
   const idReal = pneuExtrairIdDoc(url);
   const candidatos = [];
+  // 1ª tentativa: /export?format=txt (funciona se Doc for "Qualquer pessoa com o link pode ver")
   if (idReal) candidatos.push({ tipo:'export', url:`https://docs.google.com/document/d/${idReal}/export?format=txt` });
-  candidatos.push({ tipo:'pub', url });
+  // 2ª tentativa: /pub (link "Publicar na Web") — converte link de edição para pub se for o caso
+  let pubUrl = url;
+  if (idReal && /\/edit/.test(url)) pubUrl = `https://docs.google.com/document/d/${idReal}/pub`;
+  candidatos.push({ tipo:'pub', url: pubUrl });
 
   let lastErr;
   for (const cand of candidatos) {
@@ -3362,8 +3466,9 @@ async function pneuFetchDocRaw(url){
 function pneuExtrairTextoDoc(resultado){
   if (resultado.tipo === 'export') return resultado.conteudo.trim();
   const doc = new DOMParser().parseFromString(resultado.conteudo, 'text/html');
-  doc.querySelectorAll('script,style,link,meta,title').forEach(el => el.remove());
-  let texto = (doc.body ? doc.body.innerText : doc.documentElement.textContent) || '';
+  doc.querySelectorAll('script,style,link,meta,title,noscript').forEach(el => el.remove());
+  // DOMParser não executa JS, então innerText seria undefined — usar textContent
+  let texto = (doc.body ? doc.body.textContent : doc.documentElement.textContent) || '';
   const linhasIgnorar = [
     /^published using google docs$/i,
     /^publicado usando o google docs$/i,
@@ -3418,7 +3523,11 @@ async function pneuBuscarDoc(opts = {}){
     statusEl.innerHTML = `<span style="color:#16a34a">Leitura do Doc processada às ${agora()} (${origem}) — confira o resultado acima antes de salvar.</span>`;
   } catch(err) {
     console.error(err);
-    statusEl.innerHTML = `<span style="color:#dc2626">Não consegui buscar o Doc (${err.message || 'erro desconhecido'}).</span>`;
+    const msgErro = err.message || 'erro desconhecido';
+    const dicaSemPermissao = /permiss|login|sem acesso|ServiceLogin/i.test(msgErro);
+    statusEl.innerHTML = `<span style="color:#dc2626">Não consegui buscar o Doc: ${msgErro}.${dicaSemPermissao
+      ? ' <b>Verifique se o documento está compartilhado como "Qualquer pessoa com o link pode ver" no Google Docs.</b>'
+      : ' Tente copiar o texto do Doc e cole manualmente na caixa de texto acima.'}</span>`;
   } finally {
     if (btn) btn.disabled = false;
   }
