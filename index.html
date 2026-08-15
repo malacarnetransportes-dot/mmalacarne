@@ -887,6 +887,7 @@ footer a{color:var(--accent);text-decoration:none;}
         <button class="pa-nav-item" data-tab="tabChecklist"><i class="fas fa-clipboard-check"></i> Checklist Veículos</button>
         <button class="pa-nav-item" data-tab="tabAuditoria"><i class="fas fa-clipboard-check"></i> Auditoria</button>
         <button class="pa-nav-item" data-tab="tabNfe"><i class="fas fa-file-invoice"></i> NF-e / Abast.</button>
+        <button class="pa-nav-item" data-tab="tabVelocidade"><i class="fas fa-gauge-high"></i> Controle de Velocidade</button>
       </nav>
       <div class="pa-sidebar-footer">
         <button class="pa-nav-item" id="openSlideModeBtn" style="font-size:.8rem;color:var(--accent)"><i class="fas fa-tv"></i> Gestão à Vista (Slide)</button>
@@ -1763,6 +1764,80 @@ footer a{color:var(--accent);text-decoration:none;}
           </div>
         </div><!-- /tabChecklist -->
 
+        <!-- ── TAB CONTROLE DE VELOCIDADE ── -->
+        <div id="tabVelocidade" class="tab-pane">
+          <datalist id="dlVelPlacas"></datalist>
+          <datalist id="dlVelMotoristas"></datalist>
+
+          <div class="kpi-grid">
+            <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-gauge-high"></i></div><div><div class="kpi-val" id="vel-total">—</div><div class="kpi-lbl">Ocorrências no Período</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-id-card"></i></div><div><div class="kpi-val" id="vel-motoristas">—</div><div class="kpi-lbl">Motoristas com Excesso</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon brown"><i class="fas fa-truck"></i></div><div><div class="kpi-val" id="vel-placas">—</div><div class="kpi-lbl">Placas com Excesso</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-chart-simple"></i></div><div><div class="kpi-val" id="vel-media">—</div><div class="kpi-lbl">Velocidade Média</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-triangle-exclamation"></i></div><div><div class="kpi-val" id="vel-max">—</div><div class="kpi-lbl">Velocidade Máxima Registrada</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon" style="background:rgba(239,68,68,.15);color:#991b1b"><i class="fas fa-skull-crossbones"></i></div><div><div class="kpi-val" id="vel-graves">—</div><div class="kpi-lbl">Excessos Graves (≥90 km/h)</div></div></div>
+          </div>
+
+          <div class="dash-card">
+            <div class="filters-bar">
+              <div class="flt-grp"><label>Data Início</label><input type="date" id="velDataInicio"></div>
+              <div class="flt-grp"><label>Data Fim</label><input type="date" id="velDataFim"></div>
+              <div class="flt-grp"><label>Placa</label><input type="text" id="velPlaca" list="dlVelPlacas" placeholder="Todas"></div>
+              <div class="flt-grp"><label>Motorista</label><input type="text" id="velMotorista" list="dlVelMotoristas" placeholder="Todos"></div>
+              <div class="flt-grp"><label>Vel. Mínima (km/h)</label><input type="number" id="velMinVelocidade" placeholder="ex: 85" min="0"></div>
+              <button class="btn btn-accent" onclick="velApplyFilters()"><i class="fas fa-search"></i> Filtrar</button>
+              <button class="btn btn-gray" onclick="velResetFilters()"><i class="fas fa-times"></i> Limpar</button>
+              <button class="btn btn-success btn-sm" onclick="exportCSV(velFiltered.map(r=>({Placa:r.placa,'Data/Hora':r.dataStr,'Localização':r.local,'Velocidade Excedida (Km/h)':r.velocidade,Motorista:r.motorista})),'controle_velocidade')"><i class="fas fa-download"></i> CSV</button>
+            </div>
+          </div>
+
+          <div id="velLoading" class="loading-spinner"><div class="spinner"></div> Carregando dados de velocidade...</div>
+
+          <div id="velContent" style="display:none">
+            <div class="charts-grid">
+              <div class="dash-card">
+                <div class="dash-card-title"><i class="fas fa-ranking-star"></i> Ranking de Ocorrências por Motorista (Top 10)</div>
+                <div class="chart-box" style="height:280px"><canvas id="velChartMotorista"></canvas></div>
+              </div>
+              <div class="dash-card">
+                <div class="dash-card-title"><i class="fas fa-truck-fast"></i> Ranking de Ocorrências por Placa (Top 10)</div>
+                <div class="chart-box" style="height:280px"><canvas id="velChartPlaca"></canvas></div>
+              </div>
+              <div class="dash-card">
+                <div class="dash-card-title"><i class="fas fa-chart-line"></i> Evolução Diária de Excessos</div>
+                <div class="chart-box" style="height:280px"><canvas id="velChartEvolucao"></canvas></div>
+              </div>
+              <div class="dash-card">
+                <div class="dash-card-title"><i class="fas fa-chart-column"></i> Distribuição por Faixa de Velocidade</div>
+                <div class="chart-box" style="height:280px"><canvas id="velChartFaixa"></canvas></div>
+              </div>
+            </div>
+
+            <div class="dash-card" id="velRankingCard">
+              <div class="man-body" style="padding:0">
+                <div>
+                  <div class="dash-card-title" style="margin-bottom:.5rem"><i class="fas fa-user-clock"></i> Top 10 Motoristas — Mais Ocorrências</div>
+                  <ol class="rank-list" id="velRankMotorista"></ol>
+                </div>
+                <div>
+                  <div class="dash-card-title" style="margin-bottom:.5rem"><i class="fas fa-id-card"></i> Top 10 Placas — Mais Ocorrências</div>
+                  <ol class="rank-list" id="velRankPlaca"></ol>
+                </div>
+              </div>
+            </div>
+
+            <div class="dash-card">
+              <div class="dash-card-title"><i class="fas fa-table"></i> Ocorrências de Excesso de Velocidade <span id="velCount" style="background:var(--gray-100);padding:.15rem .6rem;border-radius:30px;font-size:.75rem;margin-left:.5rem"></span></div>
+              <div class="tbl-wrap">
+                <table class="data-table">
+                  <thead><tr><th>Placa</th><th>Data/Hora</th><th>Localização</th><th>Velocidade</th><th>Motorista</th></tr></thead>
+                  <tbody id="velTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div><!-- /tabVelocidade -->
+
       </div><!-- /pa-main -->
     </div><!-- /pa-content -->
   </div><!-- /pa-layout -->
@@ -2374,7 +2449,8 @@ const pageTitles = {
   tabPneus: '<i class="fas fa-circle-dot" style="color:var(--accent)"></i> Controle de Pneus',
   tabVencimentos: '<i class="fas fa-triangle-exclamation" style="color:var(--accent)"></i> Controle de Vencimentos',
   tabVagas: '<i class="fas fa-user-tie" style="color:var(--accent)"></i> Vagas / Entrevistas',
-  tabChecklist: '<i class="fas fa-clipboard-check" style="color:var(--accent)"></i> Checklist de Veículos'
+  tabChecklist: '<i class="fas fa-clipboard-check" style="color:var(--accent)"></i> Checklist de Veículos',
+  tabVelocidade: '<i class="fas fa-gauge-high" style="color:var(--accent)"></i> Controle de Velocidade'
 };
 
 document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
@@ -2394,6 +2470,7 @@ document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
     if (btn.dataset.tab === 'tabVencimentos') setTimeout(vencInit, 50);
     if (btn.dataset.tab === 'tabVagas') setTimeout(vagaInit, 50);
     if (btn.dataset.tab === 'tabChecklist') setTimeout(checklistInit, 50);
+    if (btn.dataset.tab === 'tabVelocidade') setTimeout(velInit, 50);
     if (btn.dataset.tab === 'tabFaturamento') setTimeout(fatApplyFilters, 50);
     if (btn.dataset.tab === 'tabFinanceiro') setTimeout(orcInit, 50);
     if (btn.dataset.tab === 'tabFinanceiro') setTimeout(manRender, 50);
@@ -9147,6 +9224,231 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
 
   window.__initMAX = init; // chamado pelo login, não roda no carregamento do site público
 })();
+</script>
+<script>
+// ═══════════════════════════════════════════════════════════
+// CONTROLE DE VELOCIDADE
+// Lê a planilha de excesso de velocidade (rastreador/telemetria) e monta
+// KPIs, rankings, gráficos e tabela filtrável por data/placa/motorista.
+// ═══════════════════════════════════════════════════════════
+const VEL_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS2C2TpY3nOHV-yMCt8O2lzRLJ7DpAq_UtAxhwWIYap9pZvuqN527U0RZHJXIdXxg/pub?output=csv";
+let velRaw = [];
+let velFiltered = [];
+let velLoaded = false;
+let velChartMotoristaObj = null, velChartPlacaObj = null, velChartEvolucaoObj = null, velChartFaixaObj = null;
+
+async function velInit() {
+  if (velLoaded) { velApplyFilters(); return; }
+  const loadingEl = document.getElementById('velLoading');
+  const contentEl = document.getElementById('velContent');
+  loadingEl.style.display = 'flex';
+  contentEl.style.display = 'none';
+  try {
+    const rows = await fetchCSV(VEL_URL);
+    if (!rows.length) throw new Error('Planilha sem dados');
+    const headers = Object.keys(rows[0]);
+    const colPlaca = findCol(headers, ['placa']);
+    const colData = findCol(headers, ['data/hora', 'data hora', 'data']);
+    const colLocal = findCol(headers, ['localizacao', 'local', 'endereco']);
+    const colVel = findCol(headers, ['velocidade excedida', 'velocidade', 'km/h']);
+    const colMot = findCol(headers, ['motorista', 'condutor']);
+    const colLat = findCol(headers, ['latitude']);
+    const colLng = findCol(headers, ['longitude']);
+    velRaw = rows.map(r => {
+      const d = colData ? parseDate(r[colData]) : null;
+      const vNum = colVel ? parseFloat(String(r[colVel]).replace(',', '.')) : NaN;
+      return {
+        placa: colPlaca ? String(r[colPlaca] || '').trim().toUpperCase() : '',
+        dataHora: d,
+        dataStr: colData ? String(r[colData] || '').trim() : '',
+        local: colLocal ? String(r[colLocal] || '').trim() : '',
+        velocidade: isNaN(vNum) ? null : vNum,
+        motorista: colMot ? String(r[colMot] || '').trim().toUpperCase() : '',
+        lat: colLat ? r[colLat] : '',
+        lng: colLng ? r[colLng] : ''
+      };
+    }).filter(r => r.placa && r.velocidade !== null);
+
+    // Datalists de sugestão específicos dos dados de telemetria
+    const placasSet = new Set(), motoristasSet = new Set();
+    velRaw.forEach(r => { if (r.placa) placasSet.add(r.placa); if (r.motorista && r.motorista !== 'PARADO') motoristasSet.add(r.motorista); });
+    document.getElementById('dlVelPlacas').innerHTML = [...placasSet].sort().map(v => `<option value="${v}">`).join('');
+    document.getElementById('dlVelMotoristas').innerHTML = [...motoristasSet].sort().map(v => `<option value="${v}">`).join('');
+
+    velLoaded = true;
+    velApplyFilters();
+  } catch (e) {
+    loadingEl.innerHTML = `<div style="color:var(--danger)"><i class="fas fa-triangle-exclamation"></i> Falha ao carregar dados de velocidade: ${escapeHTML(e.message || String(e))}</div>`;
+    return;
+  }
+}
+
+function velResetFilters() {
+  document.getElementById('velDataInicio').value = '';
+  document.getElementById('velDataFim').value = '';
+  document.getElementById('velPlaca').value = '';
+  document.getElementById('velMotorista').value = '';
+  document.getElementById('velMinVelocidade').value = '';
+  velApplyFilters();
+}
+
+function velApplyFilters() {
+  if (!velLoaded) return;
+  const di = document.getElementById('velDataInicio').value ? new Date(document.getElementById('velDataInicio').value + 'T00:00:00') : null;
+  const df = document.getElementById('velDataFim').value ? new Date(document.getElementById('velDataFim').value + 'T23:59:59') : null;
+  const placaFiltro = document.getElementById('velPlaca').value.trim().toUpperCase();
+  const motoristaFiltro = document.getElementById('velMotorista').value.trim().toUpperCase();
+  const velMin = parseFloat(document.getElementById('velMinVelocidade').value);
+
+  velFiltered = velRaw.filter(r => {
+    if (di && (!r.dataHora || r.dataHora < di)) return false;
+    if (df && (!r.dataHora || r.dataHora > df)) return false;
+    if (placaFiltro && !r.placa.includes(placaFiltro)) return false;
+    if (motoristaFiltro && !r.motorista.includes(motoristaFiltro)) return false;
+    if (!isNaN(velMin) && r.velocidade < velMin) return false;
+    return true;
+  });
+
+  document.getElementById('velLoading').style.display = 'none';
+  document.getElementById('velContent').style.display = 'block';
+  velRender();
+}
+
+function velRender() {
+  const dados = velFiltered;
+
+  // ── KPIs ──
+  const totalOcorrencias = dados.length;
+  const motoristasUnicos = new Set(dados.map(r => r.motorista).filter(m => m && m !== 'PARADO'));
+  const placasUnicas = new Set(dados.map(r => r.placa));
+  const somaVel = dados.reduce((acc, r) => acc + r.velocidade, 0);
+  const mediaVel = totalOcorrencias ? somaVel / totalOcorrencias : 0;
+  const maxVel = totalOcorrencias ? Math.max(...dados.map(r => r.velocidade)) : 0;
+  const graves = dados.filter(r => r.velocidade >= 90).length;
+
+  document.getElementById('vel-total').textContent = totalOcorrencias.toLocaleString('pt-BR');
+  document.getElementById('vel-motoristas').textContent = motoristasUnicos.size;
+  document.getElementById('vel-placas').textContent = placasUnicas.size;
+  document.getElementById('vel-media').textContent = totalOcorrencias ? mediaVel.toLocaleString('pt-BR', {maximumFractionDigits: 1}) + ' km/h' : '—';
+  document.getElementById('vel-max').textContent = totalOcorrencias ? maxVel.toLocaleString('pt-BR', {maximumFractionDigits: 0}) + ' km/h' : '—';
+  document.getElementById('vel-graves').textContent = graves.toLocaleString('pt-BR');
+
+  document.getElementById('velCount').textContent = totalOcorrencias.toLocaleString('pt-BR') + ' registro(s)';
+
+  // ── Ranking por Motorista ──
+  const porMotorista = {};
+  dados.forEach(r => {
+    if (!r.motorista || r.motorista === 'PARADO') return;
+    if (!porMotorista[r.motorista]) porMotorista[r.motorista] = { count: 0, max: 0, placas: new Set() };
+    porMotorista[r.motorista].count++;
+    porMotorista[r.motorista].max = Math.max(porMotorista[r.motorista].max, r.velocidade);
+    porMotorista[r.motorista].placas.add(r.placa);
+  });
+  const rankMotoristaArr = Object.entries(porMotorista).sort((a, b) => b[1].count - a[1].count).slice(0, 10);
+
+  document.getElementById('velRankMotorista').innerHTML = rankMotoristaArr.length
+    ? rankMotoristaArr.map(([nome, v]) =>
+        `<li><span>${escapeHTML(nome)}<br><span style="font-size:.7rem;color:var(--text-lt)">${[...v.placas].join(', ')}</span></span><span style="font-weight:700;color:var(--danger)">${v.count}x <span style="font-weight:400;color:var(--text-lt);font-size:.72rem">(máx ${v.max} km/h)</span></span></li>`
+      ).join('')
+    : '<li style="justify-content:center;color:var(--text-lt)">Sem ocorrências no período.</li>';
+
+  // ── Ranking por Placa ──
+  const porPlaca = {};
+  dados.forEach(r => {
+    if (!porPlaca[r.placa]) porPlaca[r.placa] = { count: 0, max: 0, motoristas: new Set() };
+    porPlaca[r.placa].count++;
+    porPlaca[r.placa].max = Math.max(porPlaca[r.placa].max, r.velocidade);
+    if (r.motorista && r.motorista !== 'PARADO') porPlaca[r.placa].motoristas.add(r.motorista);
+  });
+  const rankPlacaArr = Object.entries(porPlaca).sort((a, b) => b[1].count - a[1].count).slice(0, 10);
+
+  document.getElementById('velRankPlaca').innerHTML = rankPlacaArr.length
+    ? rankPlacaArr.map(([placa, v]) =>
+        `<li><span>${escapeHTML(placa)}<br><span style="font-size:.7rem;color:var(--text-lt)">${[...v.motoristas].join(', ') || '—'}</span></span><span style="font-weight:700;color:var(--danger)">${v.count}x <span style="font-weight:400;color:var(--text-lt);font-size:.72rem">(máx ${v.max} km/h)</span></span></li>`
+      ).join('')
+    : '<li style="justify-content:center;color:var(--text-lt)">Sem ocorrências no período.</li>';
+
+  // ── Gráfico: Ranking por Motorista ──
+  if (velChartMotoristaObj) velChartMotoristaObj.destroy();
+  const ctxMot = document.getElementById('velChartMotorista').getContext('2d');
+  velChartMotoristaObj = new Chart(ctxMot, {
+    type: 'bar',
+    data: {
+      labels: rankMotoristaArr.map(([nome]) => nome.length > 18 ? nome.slice(0, 16) + '…' : nome),
+      datasets: [{ label: 'Ocorrências', data: rankMotoristaArr.map(([, v]) => v.count), backgroundColor: 'rgba(212,175,55,.8)', borderColor: 'rgba(184,148,31,1)', borderWidth: 1, borderRadius: 4 }]
+    },
+    options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
+  });
+
+  // ── Gráfico: Ranking por Placa ──
+  if (velChartPlacaObj) velChartPlacaObj.destroy();
+  const ctxPlaca = document.getElementById('velChartPlaca').getContext('2d');
+  velChartPlacaObj = new Chart(ctxPlaca, {
+    type: 'bar',
+    data: {
+      labels: rankPlacaArr.map(([placa]) => placa),
+      datasets: [{ label: 'Ocorrências', data: rankPlacaArr.map(([, v]) => v.count), backgroundColor: 'rgba(139,115,85,.8)', borderColor: 'rgba(107,83,58,1)', borderWidth: 1, borderRadius: 4 }]
+    },
+    options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
+  });
+
+  // ── Gráfico: Evolução Diária ──
+  const porDia = {};
+  dados.forEach(r => {
+    if (!r.dataHora) return;
+    const key = r.dataHora.toISOString().slice(0, 10);
+    porDia[key] = (porDia[key] || 0) + 1;
+  });
+  const diasOrdenados = Object.keys(porDia).sort();
+  const diasLabels = diasOrdenados.map(k => { const [y, m, d] = k.split('-'); return `${d}/${m}`; });
+  if (velChartEvolucaoObj) velChartEvolucaoObj.destroy();
+  const ctxEvo = document.getElementById('velChartEvolucao').getContext('2d');
+  velChartEvolucaoObj = new Chart(ctxEvo, {
+    type: 'line',
+    data: {
+      labels: diasLabels,
+      datasets: [{ label: 'Ocorrências', data: diasOrdenados.map(k => porDia[k]), borderColor: 'rgba(239,68,68,1)', backgroundColor: 'rgba(239,68,68,.15)', fill: true, tension: .3, pointRadius: 3 }]
+    },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+  });
+
+  // ── Gráfico: Distribuição por Faixa de Velocidade ──
+  const faixas = [
+    { label: '80–84 km/h', min: 80, max: 84 },
+    { label: '85–89 km/h', min: 85, max: 89 },
+    { label: '90–94 km/h', min: 90, max: 94 },
+    { label: '95–99 km/h', min: 95, max: 99 },
+    { label: '100+ km/h', min: 100, max: Infinity }
+  ];
+  const faixaCounts = faixas.map(f => dados.filter(r => r.velocidade >= f.min && r.velocidade <= f.max).length);
+  if (velChartFaixaObj) velChartFaixaObj.destroy();
+  const ctxFaixa = document.getElementById('velChartFaixa').getContext('2d');
+  velChartFaixaObj = new Chart(ctxFaixa, {
+    type: 'bar',
+    data: {
+      labels: faixas.map(f => f.label),
+      datasets: [{
+        label: 'Ocorrências',
+        data: faixaCounts,
+        backgroundColor: ['rgba(212,175,55,.8)', 'rgba(245,158,11,.8)', 'rgba(239,68,68,.7)', 'rgba(220,38,38,.8)', 'rgba(153,27,27,.9)'],
+        borderRadius: 4
+      }]
+    },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+  });
+
+  // ── Tabela ──
+  const ordenados = [...dados].sort((a, b) => (b.dataHora || 0) - (a.dataHora || 0)).slice(0, 500);
+  document.getElementById('velTableBody').innerHTML = ordenados.length
+    ? ordenados.map(r => {
+        const badgeClass = r.velocidade >= 95 ? 'badge-danger' : r.velocidade >= 88 ? 'badge-warning' : 'badge-gray';
+        return `<tr><td><strong>${escapeHTML(r.placa)}</strong></td><td>${escapeHTML(r.dataStr)}</td><td>${escapeHTML(r.local)}</td><td><span class="badge ${badgeClass}">${r.velocidade} km/h</span></td><td>${escapeHTML(r.motorista)}</td></tr>`;
+      }).join('')
+    : '<tr><td colspan="5" style="text-align:center;color:var(--text-lt)">Nenhuma ocorrência encontrada para os filtros selecionados.</td></tr>';
+  if (dados.length > 500) {
+    document.getElementById('velTableBody').innerHTML += `<tr><td colspan="5" style="text-align:center;color:var(--text-lt);font-size:.78rem">Mostrando os 500 registros mais recentes de ${dados.length.toLocaleString('pt-BR')}. Use os filtros ou exporte o CSV para ver tudo.</td></tr>`;
+  }
+}
 </script>
 </body>
 </html>
