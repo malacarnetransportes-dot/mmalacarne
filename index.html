@@ -888,6 +888,7 @@ footer a{color:var(--accent);text-decoration:none;}
         <button class="pa-nav-item" data-tab="tabAuditoria"><i class="fas fa-clipboard-check"></i> Auditoria</button>
         <button class="pa-nav-item" data-tab="tabNfe"><i class="fas fa-file-invoice"></i> NF-e / Abast.</button>
         <button class="pa-nav-item" data-tab="tabVelocidade"><i class="fas fa-gauge-high"></i> Controle de Velocidade</button>
+        <button class="pa-nav-item" data-tab="tabJornada"><i class="fas fa-money-check-dollar"></i> Jornada e Compensação</button>
       </nav>
       <div class="pa-sidebar-footer">
         <button class="pa-nav-item" id="openSlideModeBtn" style="font-size:.8rem;color:var(--accent)"><i class="fas fa-tv"></i> Gestão à Vista (Slide)</button>
@@ -1838,6 +1839,81 @@ footer a{color:var(--accent);text-decoration:none;}
           </div>
         </div><!-- /tabVelocidade -->
 
+        <div id="tabJornada" class="tab-pane">
+          <datalist id="dlJorMotoristas"></datalist>
+
+          <div class="kpi-grid">
+            <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-users"></i></div><div><div class="kpi-val" id="jor-funcionarios">—</div><div class="kpi-lbl">Funcionários no Período</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-sack-dollar"></i></div><div><div class="kpi-val" id="jor-venc">—</div><div class="kpi-lbl">Total de Vencimentos</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-arrow-trend-down"></i></div><div><div class="kpi-val" id="jor-desc">—</div><div class="kpi-lbl">Total de Descontos</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-hand-holding-dollar"></i></div><div><div class="kpi-val" id="jor-liq">—</div><div class="kpi-lbl">Total Líquido (Folha)</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon brown"><i class="fas fa-chart-simple"></i></div><div><div class="kpi-val" id="jor-ticket">—</div><div class="kpi-lbl">Ticket Médio / Funcionário</div></div></div>
+          </div>
+
+          <div class="dash-card">
+            <div class="filters-bar">
+              <div class="flt-grp"><label>Competência</label><select id="jorCompetencia"><option value="">Todas</option></select></div>
+              <div class="flt-grp"><label>Motorista / Funcionário</label><input type="text" id="jorMotorista" list="dlJorMotoristas" placeholder="Todos"></div>
+              <div class="flt-grp"><label>Empresa</label><select id="jorEmpresa"><option value="">Todas</option></select></div>
+              <div class="flt-grp"><label>Tipo</label><select id="jorTipo"><option value="">Vencimentos + Descontos</option><option value="vencimento">Somente Vencimentos</option><option value="desconto">Somente Descontos</option></select></div>
+              <button class="btn btn-accent" onclick="jorApplyFilters()"><i class="fas fa-search"></i> Filtrar</button>
+              <button class="btn btn-gray" onclick="jorResetFilters()"><i class="fas fa-times"></i> Limpar</button>
+              <button class="btn btn-success btn-sm" onclick="jorExportCSV()"><i class="fas fa-download"></i> CSV</button>
+              <button class="btn btn-gray btn-sm" onclick="document.getElementById('jorPdfInput').click()"><i class="fas fa-file-pdf"></i> Importar Recibos (PDF)</button>
+              <input type="file" id="jorPdfInput" accept="application/pdf" multiple style="display:none" onchange="jorHandlePdfUpload(event)">
+            </div>
+            <div class="filters-bar" style="border-top:1px solid var(--gray-200)">
+              <div class="flt-grp" style="flex:1;min-width:280px"><label>Pasta do Google Drive (PDFs de recibos)</label><input type="text" id="jorDriveUrl" placeholder="Link da pasta pública do Drive"></div>
+              <button class="btn btn-accent btn-sm" onclick="jorBuscarPastaDrive()"><i class="fas fa-cloud-arrow-down"></i> Buscar da Pasta do Drive</button>
+            </div>
+            <div id="jorDrivePdfList" style="display:none;padding:.4rem 1rem 1rem;border-top:1px solid var(--gray-200)"></div>
+            <div id="jorImportStatus" style="display:none;padding:.6rem 1rem;font-size:.8rem;border-top:1px solid var(--gray-200)"></div>
+          </div>
+
+          <div id="jorContent">
+            <div class="charts-grid">
+              <div class="dash-card">
+                <div class="dash-card-title"><i class="fas fa-ranking-star"></i> Ranking por Descrição (Rubrica) — Top 15 por Valor</div>
+                <div class="chart-box" style="height:340px"><canvas id="jorChartRanking"></canvas></div>
+              </div>
+              <div class="dash-card">
+                <div class="dash-card-title"><i class="fas fa-scale-balanced"></i> Vencimentos x Descontos por Competência</div>
+                <div class="chart-box" style="height:340px"><canvas id="jorChartMes"></canvas></div>
+              </div>
+            </div>
+
+            <div class="dash-card" id="jorRankingCard">
+              <div class="dash-card-title"><i class="fas fa-list-ol"></i> Ranking por Descrição <span id="jorRankCount" style="background:var(--gray-100);padding:.15rem .6rem;border-radius:30px;font-size:.75rem;margin-left:.5rem"></span></div>
+              <div class="tbl-wrap">
+                <table class="data-table">
+                  <thead><tr><th>#</th><th>Descrição</th><th>Tipo</th><th>Ocorrências</th><th>Valor Total</th><th>Valor Médio</th></tr></thead>
+                  <tbody id="jorRankingBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="dash-card">
+              <div class="dash-card-title"><i class="fas fa-id-card"></i> Resumo por Funcionário <span id="jorEmpCount" style="background:var(--gray-100);padding:.15rem .6rem;border-radius:30px;font-size:.75rem;margin-left:.5rem"></span></div>
+              <div class="tbl-wrap">
+                <table class="data-table">
+                  <thead><tr><th>Competência</th><th>Empresa</th><th>Motorista / Funcionário</th><th>Cargo</th><th>Vencimentos</th><th>Descontos</th><th>Líquido</th></tr></thead>
+                  <tbody id="jorEmpBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="dash-card">
+              <div class="dash-card-title"><i class="fas fa-table"></i> Dados Detalhados (Rubricas) <span id="jorDetCount" style="background:var(--gray-100);padding:.15rem .6rem;border-radius:30px;font-size:.75rem;margin-left:.5rem"></span></div>
+              <div class="tbl-wrap">
+                <table class="data-table">
+                  <thead><tr><th>Competência</th><th>Motorista / Funcionário</th><th>Código</th><th>Descrição</th><th>Referência</th><th>Valor</th><th>Tipo</th></tr></thead>
+                  <tbody id="jorDetBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div><!-- /tabJornada -->
+
       </div><!-- /pa-main -->
     </div><!-- /pa-content -->
   </div><!-- /pa-layout -->
@@ -2450,7 +2526,8 @@ const pageTitles = {
   tabVencimentos: '<i class="fas fa-triangle-exclamation" style="color:var(--accent)"></i> Controle de Vencimentos',
   tabVagas: '<i class="fas fa-user-tie" style="color:var(--accent)"></i> Vagas / Entrevistas',
   tabChecklist: '<i class="fas fa-clipboard-check" style="color:var(--accent)"></i> Checklist de Veículos',
-  tabVelocidade: '<i class="fas fa-gauge-high" style="color:var(--accent)"></i> Controle de Velocidade'
+  tabVelocidade: '<i class="fas fa-gauge-high" style="color:var(--accent)"></i> Controle de Velocidade',
+  tabJornada: '<i class="fas fa-money-check-dollar" style="color:var(--accent)"></i> Jornada e Compensação'
 };
 
 document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
@@ -2471,6 +2548,7 @@ document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
     if (btn.dataset.tab === 'tabVagas') setTimeout(vagaInit, 50);
     if (btn.dataset.tab === 'tabChecklist') setTimeout(checklistInit, 50);
     if (btn.dataset.tab === 'tabVelocidade') setTimeout(velInit, 50);
+    if (btn.dataset.tab === 'tabJornada')    setTimeout(jorInit, 50);
     if (btn.dataset.tab === 'tabFaturamento') setTimeout(fatApplyFilters, 50);
     if (btn.dataset.tab === 'tabFinanceiro') setTimeout(orcInit, 50);
     if (btn.dataset.tab === 'tabFinanceiro') setTimeout(manRender, 50);
@@ -9449,6 +9527,424 @@ function velRender() {
     document.getElementById('velTableBody').innerHTML += `<tr><td colspan="5" style="text-align:center;color:var(--text-lt);font-size:.78rem">Mostrando os 500 registros mais recentes de ${dados.length.toLocaleString('pt-BR')}. Use os filtros ou exporte o CSV para ver tudo.</td></tr>`;
   }
 }
+const JORNADA_SEED = [{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"32","nome":"ADRIANO VAZ DOS SANTOS","cbo":"782510","departamento":"5","filial":"1","cargo":"MOTORISTA DE CARRETA","admissao":"23/10/2023","totalVencimentos":9480.32,"totalDescontos":1650.24,"valorLiquido":7830.08,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"208:52","valor":2594.08,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"2","descricao":"HORAS NOTURNAS","referencia":"18:28","valor":229.4,"tipo":"vencimento","categoria":"HORAS NOTURNAS"},{"codigo":"250","descricao":"REFLEXO EXTRAS DSR","referencia":"0,00","valor":156.28,"tipo":"vencimento","categoria":"REFLEXO EXTRAS DSR"},{"codigo":"1769","descricao":"REFLEXO ADICIONAL NOTURNO DSR","referencia":"0,00","valor":8.82,"tipo":"vencimento","categoria":"REFLEXO ADICIONAL NOTURNO DSR"},{"codigo":"1997","descricao":"GRATIFICACAO PERFORMANCE ACT","referencia":"1.473,71","valor":1473.71,"tipo":"vencimento","categoria":"GRATIFICACAO PERFORMANCE ACT"},{"codigo":"1998","descricao":"GRATIFICACAO CONSUMO COMBUSTIVEL ACT","referencia":"1.500,00","valor":1500.0,"tipo":"vencimento","categoria":"GRATIFICACAO CONSUMO COMBUSTIVEL ACT"},{"codigo":"150","descricao":"HORAS EXTRAS 50% DIURNAS","referencia":"15:41","valor":301.86,"tipo":"vencimento","categoria":"HORAS EXTRAS 50% DIURNAS"},{"codigo":"200","descricao":"HORAS EXTRAS 100% DIURNA","referencia":"19:54","valor":510.79,"tipo":"vencimento","categoria":"HORAS EXTRAS 100% DIURNA"},{"codigo":"1730","descricao":"ADICIONAL NOTURNO","referencia":"20,00","valor":45.88,"tipo":"vencimento","categoria":"ADICIONAL NOTURNO"},{"codigo":"8883","descricao":"DIARIAS","referencia":"2.659,50","valor":2659.5,"tipo":"vencimento","categoria":"DIARIAS"},{"codigo":"8247","descricao":"DESCONTO ANTECIPACAO SALARIAL","referencia":"1.300,00","valor":1300.0,"tipo":"desconto","categoria":"DESCONTO ANTECIPACAO SALARIAL"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"9,10","valor":350.24,"tipo":"desconto","categoria":"I.N.S.S."}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"53","nome":"ANDERSON LUIS VEIGA DO SANTOS","cbo":"782510","departamento":"5","filial":"1","cargo":"MOTORISTA DE CARRETA","admissao":"21/05/2026","totalVencimentos":7888.89,"totalDescontos":1465.91,"valorLiquido":6422.98,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"211:46","valor":2630.1,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"2","descricao":"HORAS NOTURNAS","referencia":"15:34","valor":193.38,"tipo":"vencimento","categoria":"HORAS NOTURNAS"},{"codigo":"250","descricao":"REFLEXO EXTRAS DSR","referencia":"0,00","valor":178.48,"tipo":"vencimento","categoria":"REFLEXO EXTRAS DSR"},{"codigo":"1769","descricao":"REFLEXO ADICIONAL NOTURNO DSR","referencia":"0,00","valor":7.69,"tipo":"vencimento","categoria":"REFLEXO ADICIONAL NOTURNO DSR"},{"codigo":"1997","descricao":"GRATIFICACAO PERFORMANCE ACT","referencia":"1.448,68","valor":1448.68,"tipo":"vencimento","categoria":"GRATIFICACAO PERFORMANCE ACT"},{"codigo":"150","descricao":"HORAS EXTRAS 50% DIURNAS","referencia":"13:27","valor":258.93,"tipo":"vencimento","categoria":"HORAS EXTRAS 50% DIURNAS"},{"codigo":"200","descricao":"HORAS EXTRAS 100% DIURNA","referencia":"26:04","valor":669.16,"tipo":"vencimento","categoria":"HORAS EXTRAS 100% DIURNA"},{"codigo":"26","descricao":"ADICIONAL NOTURNO","referencia":"15:34","valor":39.97,"tipo":"vencimento","categoria":"ADICIONAL NOTURNO"},{"codigo":"8883","descricao":"DIARIAS","referencia":"2.462,50","valor":2462.5,"tipo":"vencimento","categoria":"DIARIAS"},{"codigo":"8247","descricao":"DESCONTO ANTECIPACAO SALARIAL","referencia":"1.100,00","valor":1100.0,"tipo":"desconto","categoria":"DESCONTO ANTECIPACAO SALARIAL"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"9,20","valor":365.91,"tipo":"desconto","categoria":"I.N.S.S."}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"9","nome":"ANDRESSA SUZIN MALACARNE DA VEIGA","cbo":"123110","departamento":"6","filial":"1","cargo":"SOCIO ADMINISTRADOR","admissao":"01/07/2021","totalVencimentos":3750.0,"totalDescontos":231.0,"valorLiquido":3519.0,"rubricas":[{"codigo":"100","descricao":"PRO LABORE","referencia":"227:20","valor":2100.0,"tipo":"vencimento","categoria":"PRO LABORE"},{"codigo":"220","descricao":"AJUDA DE CUSTO","referencia":"1.000,00","valor":1000.0,"tipo":"vencimento","categoria":"AJUDA DE CUSTO"},{"codigo":"938","descricao":"PRÊMIO","referencia":"650,00","valor":650.0,"tipo":"vencimento","categoria":"PRÊMIO"},{"codigo":"843","descricao":"INSS EMPREGADOR.","referencia":"11,00","valor":231.0,"tipo":"desconto","categoria":"INSS EMPREGADOR."}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"54","nome":"CRISTIANO DE ALMEIDA","cbo":"782510","departamento":"2","filial":"1","cargo":"MOTORISTA DE CARRETA","admissao":"23/06/2026","totalVencimentos":6662.06,"totalDescontos":4833.43,"valorLiquido":1828.63,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"215:56","valor":2681.89,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"2","descricao":"HORAS NOTURNAS","referencia":"11:24","valor":141.59,"tipo":"vencimento","categoria":"HORAS NOTURNAS"},{"codigo":"250","descricao":"REFLEXO EXTRAS DSR","referencia":"0,00","valor":136.88,"tipo":"vencimento","categoria":"REFLEXO EXTRAS DSR"},{"codigo":"1769","descricao":"REFLEXO ADICIONAL NOTURNO DSR","referencia":"0,00","valor":5.63,"tipo":"vencimento","categoria":"REFLEXO ADICIONAL NOTURNO DSR"},{"codigo":"1997","descricao":"GRATIFICACAO PERFORMANCE ACT","referencia":"492,54","valor":492.54,"tipo":"vencimento","categoria":"GRATIFICACAO PERFORMANCE ACT"},{"codigo":"150","descricao":"HORAS EXTRAS 50% DIURNAS","referencia":"18:48","valor":361.92,"tipo":"vencimento","categoria":"HORAS EXTRAS 50% DIURNAS"},{"codigo":"200","descricao":"HORAS EXTRAS 100% DIURNA","referencia":"13:38","valor":349.85,"tipo":"vencimento","categoria":"HORAS EXTRAS 100% DIURNA"},{"codigo":"26","descricao":"ADICIONAL NOTURNO","referencia":"11:24","valor":29.26,"tipo":"vencimento","categoria":"ADICIONAL NOTURNO"},{"codigo":"8883","descricao":"DIARIAS","referencia":"2.462,50","valor":2462.5,"tipo":"vencimento","categoria":"DIARIAS"},{"codigo":"8247","descricao":"DESCONTO ANTECIPACAO SALARIAL","referencia":"4.500,00","valor":4500.0,"tipo":"desconto","categoria":"DESCONTO ANTECIPACAO SALARIAL"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"8,99","valor":333.43,"tipo":"desconto","categoria":"I.N.S.S."}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"4","nome":"DIOMAR DA VEIGA","cbo":"411010","departamento":"3","filial":"1","cargo":"COORDENADOR ADMINSITRATIVO","admissao":"01/11/2011","totalVencimentos":6134.86,"totalDescontos":469.28,"valorLiquido":5665.58,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"227:20","valor":3407.04,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"220","descricao":"AJUDA DE CUSTO","referencia":"1.365,00","valor":1365.0,"tipo":"vencimento","categoria":"AJUDA DE CUSTO"},{"codigo":"202","descricao":"GRATIFICAÇÃO DE FUNÇÃO 40%","referencia":"40,00","valor":1362.82,"tipo":"vencimento","categoria":"GRATIFICAÇÃO DE FUNÇÃO 40%"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"9,84","valor":469.28,"tipo":"desconto","categoria":"I.N.S.S."}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"49","nome":"GILSON MARGOTTI","cbo":"782510","departamento":"5","filial":"1","cargo":"MOTORISTA DE CARRETA","admissao":"23/09/2025","totalVencimentos":2823.48,"totalDescontos":2823.48,"valorLiquido":0.0,"rubricas":[{"codigo":"8","descricao":"HORAS AFAST S/ VENCTO","referencia":"227:20","valor":2823.48,"tipo":"vencimento","categoria":"HORAS AFAST S/ VENCTO"},{"codigo":"988","descricao":"DESCONTO HORAS AFASTADAS","referencia":"227:20","valor":2823.48,"tipo":"desconto","categoria":"DESCONTO HORAS AFASTADAS"}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"21","nome":"HILDO ANTONIO DE ALMEIDA","cbo":"782510","departamento":"5","filial":"1","cargo":"MOTORISTA DE CARRETA","admissao":"26/02/2023","totalVencimentos":7830.96,"totalDescontos":378.61,"valorLiquido":7452.35,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"221:27","valor":2750.45,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"2","descricao":"HORAS NOTURNAS","referencia":"5:53","valor":73.03,"tipo":"vencimento","categoria":"HORAS NOTURNAS"},{"codigo":"250","descricao":"REFLEXO EXTRAS DSR","referencia":"0,00","valor":200.43,"tipo":"vencimento","categoria":"REFLEXO EXTRAS DSR"},{"codigo":"1769","descricao":"REFLEXO ADICIONAL NOTURNO DSR","referencia":"0,00","valor":2.81,"tipo":"vencimento","categoria":"REFLEXO ADICIONAL NOTURNO DSR"},{"codigo":"1997","descricao":"GRATIFICACAO PERFORMANCE ACT","referencia":"1.186,38","valor":1186.38,"tipo":"vencimento","categoria":"GRATIFICACAO PERFORMANCE ACT"},{"codigo":"150","descricao":"HORAS EXTRAS 50% DIURNAS","referencia":"20:47","valor":400.04,"tipo":"vencimento","categoria":"HORAS EXTRAS 50% DIURNAS"},{"codigo":"200","descricao":"HORAS EXTRAS 100% DIURNA","referencia":"25:01","valor":642.21,"tipo":"vencimento","categoria":"HORAS EXTRAS 100% DIURNA"},{"codigo":"1730","descricao":"ADICIONAL NOTURNO","referencia":"20,00","valor":14.61,"tipo":"vencimento","categoria":"ADICIONAL NOTURNO"},{"codigo":"8883","descricao":"DIARIAS","referencia":"2.561,00","valor":2561.0,"tipo":"vencimento","categoria":"DIARIAS"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"9,27","valor":378.61,"tipo":"desconto","categoria":"I.N.S.S."}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"55","nome":"ITAMIR ANTONIO DELLALIBERA","cbo":"782510","departamento":"5","filial":"1","cargo":"MOTORISTA DE CARRETA","admissao":"13/07/2026","totalVencimentos":1730.52,"totalDescontos":131.42,"valorLiquido":1599.1,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"139:20","valor":1730.52,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"7,59","valor":131.42,"tipo":"desconto","categoria":"I.N.S.S."}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"22","nome":"JORGE ODAIR LOPES","cbo":"782510","departamento":"5","filial":"1","cargo":"MOTORISTA DE CARRETA","admissao":"08/07/2023","totalVencimentos":2823.48,"totalDescontos":2823.48,"valorLiquido":0.0,"rubricas":[{"codigo":"8","descricao":"HORAS AFAST S/ VENCTO","referencia":"227:20","valor":2823.48,"tipo":"vencimento","categoria":"HORAS AFAST S/ VENCTO"},{"codigo":"988","descricao":"DESCONTO HORAS AFASTADAS","referencia":"227:20","valor":2823.48,"tipo":"desconto","categoria":"DESCONTO HORAS AFASTADAS"}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"13","nome":"JOSIAS FERREIRA DOS SANTOS","cbo":"782510","departamento":"5","filial":"1","cargo":"MOTORISTA DE CARRETA","admissao":"22/08/2023","totalVencimentos":1447.98,"totalDescontos":309.14,"valorLiquido":1138.84,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"88:00","valor":1092.96,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"1997","descricao":"GRATIFICACAO PERFORMANCE ACT","referencia":"175,62","valor":175.62,"tipo":"vencimento","categoria":"GRATIFICACAO PERFORMANCE ACT"},{"codigo":"9754","descricao":"ESTORNO DESC PROV EMPRESTIMO TRAB FERIAS","referencia":"179,40","valor":179.4,"tipo":"vencimento","categoria":"ESTORNO DESC PROV EMPRESTIMO TRAB FERIAS"},{"codigo":"821","descricao":"INSS DIFERENCA FERIAS","referencia":"0,00","valor":38.33,"tipo":"desconto","categoria":"INSS DIFERENCA FERIAS"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"7,50","valor":81.97,"tipo":"desconto","categoria":"I.N.S.S."},{"codigo":"9750","descricao":"DESC. EMP. CRED. TRAB Nº 27892819","referencia":"9,44","valor":9.44,"tipo":"desconto","categoria":"DESC. EMP. CRED. TRAB"},{"codigo":"9751","descricao":"DESC EMP CRED TRAB FE Nº 27892819","referencia":"179,40","valor":179.4,"tipo":"desconto","categoria":"DESC EMP CRED TRAB FE"}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"52","nome":"MARIANO MATEUS DE SOUZA","cbo":"782510","departamento":"5","filial":"1","cargo":"MOTORISTA DE CARRETA","admissao":"19/11/2025","totalVencimentos":7229.4,"totalDescontos":3204.28,"valorLiquido":4025.12,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"219:53","valor":2730.95,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"2","descricao":"HORAS NOTURNAS","referencia":"7:27","valor":92.53,"tipo":"vencimento","categoria":"HORAS NOTURNAS"},{"codigo":"250","descricao":"REFLEXO EXTRAS DSR","referencia":"0,00","valor":161.7,"tipo":"vencimento","categoria":"REFLEXO EXTRAS DSR"},{"codigo":"1769","descricao":"REFLEXO ADICIONAL NOTURNO DSR","referencia":"0,00","valor":3.68,"tipo":"vencimento","categoria":"REFLEXO ADICIONAL NOTURNO DSR"},{"codigo":"1997","descricao":"GRATIFICACAO PERFORMANCE ACT","referencia":"918,10","valor":918.1,"tipo":"vencimento","categoria":"GRATIFICACAO PERFORMANCE ACT"},{"codigo":"150","descricao":"HORAS EXTRAS 50% DIURNAS","referencia":"11:03","valor":212.72,"tipo":"vencimento","categoria":"HORAS EXTRAS 50% DIURNAS"},{"codigo":"200","descricao":"HORAS EXTRAS 100% DIURNA","referencia":"24:28","valor":628.1,"tipo":"vencimento","categoria":"HORAS EXTRAS 100% DIURNA"},{"codigo":"26","descricao":"ADICIONAL NOTURNO","referencia":"7:27","valor":19.12,"tipo":"vencimento","categoria":"ADICIONAL NOTURNO"},{"codigo":"8883","descricao":"DIARIAS","referencia":"2.462,50","valor":2462.5,"tipo":"vencimento","categoria":"DIARIAS"},{"codigo":"8247","descricao":"DESCONTO ANTECIPACAO SALARIAL","referencia":"2.100,00","valor":2100.0,"tipo":"desconto","categoria":"DESCONTO ANTECIPACAO SALARIAL"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"9,11","valor":350.44,"tipo":"desconto","categoria":"I.N.S.S."},{"codigo":"2180","descricao":"DESC.2 EMPREST. CREDIT TRABALHADOR 4","referencia":"78,51","valor":78.51,"tipo":"desconto","categoria":"DESC.2 EMPREST. CREDIT TRABALHADOR 4"},{"codigo":"9750","descricao":"DESC. EMP. CRED. TRAB Nº 6057744977","referencia":"675,33","valor":675.33,"tipo":"desconto","categoria":"DESC. EMP. CRED. TRAB"}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"44","nome":"RAFAEL DE FRANCA RAMOS","cbo":"782510","departamento":"5","filial":"1","cargo":"MOTORISTA DE CARRETA","admissao":"12/11/2024","totalVencimentos":2823.48,"totalDescontos":2823.48,"valorLiquido":0.0,"rubricas":[{"codigo":"8","descricao":"HORAS AFAST S/ VENCTO","referencia":"227:20","valor":2823.48,"tipo":"vencimento","categoria":"HORAS AFAST S/ VENCTO"},{"codigo":"988","descricao":"DESCONTO HORAS AFASTADAS","referencia":"227:20","valor":2823.48,"tipo":"desconto","categoria":"DESCONTO HORAS AFASTADAS"}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"3","nome":"RODRIGO DA ROSA","cbo":"782510","departamento":"5","filial":"1","cargo":"MOTORISTA DE CARRETA","admissao":"02/01/2010","totalVencimentos":10813.27,"totalDescontos":1000.27,"valorLiquido":9813.0,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"217:47","valor":2704.87,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"2","descricao":"HORAS NOTURNAS","referencia":"9:33","valor":118.61,"tipo":"vencimento","categoria":"HORAS NOTURNAS"},{"codigo":"250","descricao":"REFLEXO EXTRAS DSR","referencia":"0,00","valor":227.79,"tipo":"vencimento","categoria":"REFLEXO EXTRAS DSR"},{"codigo":"1769","descricao":"REFLEXO ADICIONAL NOTURNO DSR","referencia":"0,00","valor":4.56,"tipo":"vencimento","categoria":"REFLEXO ADICIONAL NOTURNO DSR"},{"codigo":"1997","descricao":"GRATIFICACAO PERFORMANCE ACT","referencia":"2.291,21","valor":2291.21,"tipo":"vencimento","categoria":"GRATIFICACAO PERFORMANCE ACT"},{"codigo":"1998","descricao":"GRATIFICACAO CONSUMO COMBUSTIVEL ACT","referencia":"1.500,00","valor":1500.0,"tipo":"vencimento","categoria":"GRATIFICACAO CONSUMO COMBUSTIVEL ACT"},{"codigo":"150","descricao":"HORAS EXTRAS 50% DIURNAS","referencia":"29:34","valor":569.25,"tipo":"vencimento","categoria":"HORAS EXTRAS 50% DIURNAS"},{"codigo":"200","descricao":"HORAS EXTRAS 100% DIURNA","referencia":"23:58","valor":615.26,"tipo":"vencimento","categoria":"HORAS EXTRAS 100% DIURNA"},{"codigo":"1730","descricao":"ADICIONAL NOTURNO","referencia":"20,00","valor":23.72,"tipo":"vencimento","categoria":"ADICIONAL NOTURNO"},{"codigo":"8883","descricao":"DIARIAS","referencia":"2.758,00","valor":2758.0,"tipo":"vencimento","categoria":"DIARIAS"},{"codigo":"8247","descricao":"DESCONTO ANTECIPACAO SALARIAL","referencia":"600,00","valor":600.0,"tipo":"desconto","categoria":"DESCONTO ANTECIPACAO SALARIAL"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"9,39","valor":400.27,"tipo":"desconto","categoria":"I.N.S.S."}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"14","nome":"RONALDO ROANI","cbo":"411010","departamento":"3","filial":"1","cargo":"COORDENADOR ADMINSITRATIVO","admissao":"03/12/2007","totalVencimentos":5179.87,"totalDescontos":413.63,"valorLiquido":4766.24,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"227:20","valor":3123.12,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"220","descricao":"AJUDA DE CUSTO","referencia":"807,50","valor":807.5,"tipo":"vencimento","categoria":"AJUDA DE CUSTO"},{"codigo":"202","descricao":"GRATIFICAÇÃO DE FUNÇÃO 40%","referencia":"40,00","valor":1249.25,"tipo":"vencimento","categoria":"GRATIFICAÇÃO DE FUNÇÃO 40%"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"9,46","valor":413.63,"tipo":"desconto","categoria":"I.N.S.S."}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"6","nome":"VINICIUS CAMPOS PIRES","cbo":"411005","departamento":"3","filial":"1","cargo":"AUXILIAR ADMINISTRATIVO","admissao":"08/03/2018","totalVencimentos":4271.36,"totalDescontos":883.17,"valorLiquido":3388.19,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"227:20","valor":2271.36,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"938","descricao":"PRÊMIO","referencia":"2.000,00","valor":2000.0,"tipo":"vencimento","categoria":"PRÊMIO"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"7,93","valor":180.1,"tipo":"desconto","categoria":"I.N.S.S."},{"codigo":"2180","descricao":"DESC.2 EMPREST. CREDIT TRABALHADOR 9","referencia":"162,54","valor":162.54,"tipo":"desconto","categoria":"DESC.2 EMPREST. CREDIT TRABALHADOR 9"},{"codigo":"2182","descricao":"DESC 3 EMPREST CREDITO TRABALHADOR 5","referencia":"103,84","valor":103.84,"tipo":"desconto","categoria":"DESC 3 EMPREST CREDITO TRABALHADOR 5"},{"codigo":"9750","descricao":"DESC. EMP. CRED. TRAB Nº 0180706410VCP","referencia":"436,69","valor":436.69,"tipo":"desconto","categoria":"DESC. EMP. CRED. TRAB"}]},{"empresa":"D2A TRANSPORTE E INCORPORADORA LTDA","cnpj":"40.893.087/0001-98","competencia":"2026-07","matricula":"5","nome":"ERI ORLANDO GUILLEN ROMERO","cbo":"782510","departamento":"5","filial":"1","cargo":"MOTORISTA DE CARRETA","admissao":"20/11/2025","totalVencimentos":9830.21,"totalDescontos":453.07,"valorLiquido":9377.14,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"216:08","valor":2684.38,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"2","descricao":"HORAS NOTURNAS","referencia":"11:12","valor":139.1,"tipo":"vencimento","categoria":"HORAS NOTURNAS"},{"codigo":"250","descricao":"REFLEXO EXTRAS DSR","referencia":"0,00","valor":289.73,"tipo":"vencimento","categoria":"REFLEXO EXTRAS DSR"},{"codigo":"1769","descricao":"REFLEXO ADICIONAL NOTURNO DSR","referencia":"0,00","valor":5.53,"tipo":"vencimento","categoria":"REFLEXO ADICIONAL NOTURNO DSR"},{"codigo":"1997","descricao":"GRATIFICACAO PERFORMANCE ACT","referencia":"1.319,64","valor":1319.64,"tipo":"vencimento","categoria":"GRATIFICACAO PERFORMANCE ACT"},{"codigo":"1998","descricao":"GRATIFICACAO CONSUMO COMBUSTIVEL ACT","referencia":"1.000,00","valor":1000.0,"tipo":"vencimento","categoria":"GRATIFICACAO CONSUMO COMBUSTIVEL ACT"},{"codigo":"150","descricao":"HORAS EXTRAS 50% DIURNAS","referencia":"37:54","valor":729.61,"tipo":"vencimento","categoria":"HORAS EXTRAS 50% DIURNAS"},{"codigo":"200","descricao":"HORAS EXTRAS 100% DIURNA","referencia":"30:16","valor":776.97,"tipo":"vencimento","categoria":"HORAS EXTRAS 100% DIURNA"},{"codigo":"26","descricao":"ADICIONAL NOTURNO","referencia":"11:12","valor":28.75,"tipo":"vencimento","categoria":"ADICIONAL NOTURNO"},{"codigo":"8883","descricao":"DIARIAS","referencia":"2.856,50","valor":2856.5,"tipo":"vencimento","categoria":"DIARIAS"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"9,73","valor":453.07,"tipo":"desconto","categoria":"I.N.S.S."}]},{"empresa":"D2A TRANSPORTE E INCORPORADORA LTDA","cnpj":"40.893.087/0001-98","competencia":"2026-07","matricula":"2","nome":"LEANDRO LUCIO KLEE","cbo":"782510","departamento":"5","filial":"1","cargo":"MOTORISTA","admissao":"26/10/2023","totalVencimentos":11073.69,"totalDescontos":669.01,"valorLiquido":10404.68,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"194:20","valor":2413.62,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"2","descricao":"HORAS NOTURNAS","referencia":"33:00","valor":409.86,"tipo":"vencimento","categoria":"HORAS NOTURNAS"},{"codigo":"250","descricao":"REFLEXO EXTRAS DSR","referencia":"0,00","valor":258.35,"tipo":"vencimento","categoria":"REFLEXO EXTRAS DSR"},{"codigo":"1769","descricao":"REFLEXO ADICIONAL NOTURNO DSR","referencia":"0,00","valor":15.76,"tipo":"vencimento","categoria":"REFLEXO ADICIONAL NOTURNO DSR"},{"codigo":"1997","descricao":"GRATIFICACAO PERFORMANCE ACT","referencia":"2.500,00","valor":2500.0,"tipo":"vencimento","categoria":"GRATIFICACAO PERFORMANCE ACT"},{"codigo":"1998","descricao":"GRATIFICACAO CONSUMO COMBUSTIVEL ACT","referencia":"1.292,73","valor":1292.73,"tipo":"vencimento","categoria":"GRATIFICACAO CONSUMO COMBUSTIVEL ACT"},{"codigo":"150","descricao":"HORAS EXTRAS 50% DIURNAS","referencia":"55:27","valor":1067.47,"tipo":"vencimento","categoria":"HORAS EXTRAS 50% DIURNAS"},{"codigo":"200","descricao":"HORAS EXTRAS 100% DIURNA","referencia":"10:45","valor":275.93,"tipo":"vencimento","categoria":"HORAS EXTRAS 100% DIURNA"},{"codigo":"1730","descricao":"ADICIONAL NOTURNO","referencia":"20,00","valor":81.97,"tipo":"vencimento","categoria":"ADICIONAL NOTURNO"},{"codigo":"8883","descricao":"DIARIAS","referencia":"2.758,00","valor":2758.0,"tipo":"vencimento","categoria":"DIARIAS"},{"codigo":"8247","descricao":"DESCONTO ANTECIPACAO SALARIAL","referencia":"234,30","valor":234.3,"tipo":"desconto","categoria":"DESCONTO ANTECIPACAO SALARIAL"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"9,61","valor":434.71,"tipo":"desconto","categoria":"I.N.S.S."}]}];
+
+
+// ═══════════════════════════════════════════════════════════
+// JORNADA E COMPENSAÇÃO — folha de pagamento / holerites
+// ═══════════════════════════════════════════════════════════
+// JORNADA_SEED = funcionários já lidos (competência 2026-07, M. MALACARNE + D2A).
+// JORNADA_EXTRA = folhas importadas pela tela (PDF -> API Claude), persistidas
+// no localStorage para não precisar reimportar a cada visita.
+function jorLoadExtra() {
+  try { return JSON.parse(localStorage.getItem('jornadaExtraFolhas') || '[]'); } catch(e) { return []; }
+}
+function jorSaveExtra(arr) {
+  try { localStorage.setItem('jornadaExtraFolhas', JSON.stringify(arr)); } catch(e) {}
+}
+let JORNADA_EXTRA = jorLoadExtra();
+
+function jorChaveFunc(f) {
+  return f.competencia + '|' + f.matricula + '|' + (f.empresa || '').trim().toUpperCase();
+}
+function jorTodosFuncionarios() {
+  const chavesExtra = new Set(JORNADA_EXTRA.map(jorChaveFunc));
+  const seedSemDuplicar = JORNADA_SEED.filter(f => !chavesExtra.has(jorChaveFunc(f)));
+  return [...seedSemDuplicar, ...JORNADA_EXTRA];
+}
+
+// Achata para uma linha por rubrica (o "dado detalhado" que alimenta os
+// filtros, o ranking por descrição e a tabela de detalhe).
+function jorLinhas() {
+  const linhas = [];
+  jorTodosFuncionarios().forEach(f => {
+    (f.rubricas || []).forEach(r => {
+      linhas.push({
+        competencia: f.competencia, empresa: f.empresa, matricula: f.matricula,
+        nome: f.nome, cargo: f.cargo, departamento: f.departamento, filial: f.filial,
+        codigo: r.codigo, descricao: r.descricao, categoria: r.categoria || r.descricao,
+        referencia: r.referencia, valor: r.valor, tipo: r.tipo
+      });
+    });
+  });
+  return linhas;
+}
+
+let jorLoaded = false;
+let jorFiltrados = [];
+let jorChartRankingObj = null, jorChartMesObj = null;
+
+function jorCompetenciaLabel(c) {
+  if (!c || !/^\d{4}-\d{2}$/.test(c)) return c || '—';
+  const [ano, mes] = c.split('-');
+  const nomes = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  return `${nomes[parseInt(mes,10)]} de ${ano}`;
+}
+
+function jorInit() {
+  if (jorLoaded) { jorApplyFilters(); return; }
+
+  const driveUrlEl = document.getElementById('jorDriveUrl');
+  if (driveUrlEl && !driveUrlEl.value) driveUrlEl.value = jorDriveFolderUrl();
+
+  // Competências
+  const competencias = [...new Set(jorTodosFuncionarios().map(f => f.competencia))].sort().reverse();
+  document.getElementById('jorCompetencia').innerHTML = '<option value="">Todas</option>' +
+    competencias.map(c => `<option value="${c}">${jorCompetenciaLabel(c)}</option>`).join('');
+
+  // Empresas
+  const empresas = [...new Set(jorTodosFuncionarios().map(f => f.empresa))].sort();
+  document.getElementById('jorEmpresa').innerHTML = '<option value="">Todas</option>' +
+    empresas.map(e => `<option value="${escapeHTML(e)}">${escapeHTML(e)}</option>`).join('');
+
+  // Datalist de motoristas/funcionários
+  const nomes = [...new Set(jorTodosFuncionarios().map(f => f.nome))].sort();
+  document.getElementById('dlJorMotoristas').innerHTML = nomes.map(n => `<option value="${escapeHTML(n)}">`).join('');
+
+  jorLoaded = true;
+  jorApplyFilters();
+}
+
+function jorResetFilters() {
+  document.getElementById('jorCompetencia').value = '';
+  document.getElementById('jorMotorista').value = '';
+  document.getElementById('jorEmpresa').value = '';
+  document.getElementById('jorTipo').value = '';
+  jorApplyFilters();
+}
+
+function jorApplyFilters() {
+  if (!jorLoaded) return;
+  const competencia = document.getElementById('jorCompetencia').value;
+  const motorista = document.getElementById('jorMotorista').value.trim().toUpperCase();
+  const empresa = document.getElementById('jorEmpresa').value;
+  const tipo = document.getElementById('jorTipo').value;
+
+  jorFiltrados = jorLinhas().filter(l => {
+    if (competencia && l.competencia !== competencia) return false;
+    if (motorista && !l.nome.toUpperCase().includes(motorista)) return false;
+    if (empresa && l.empresa !== empresa) return false;
+    if (tipo && l.tipo !== tipo) return false;
+    return true;
+  });
+
+  jorRender();
+}
+
+function jorRender() {
+  const dados = jorFiltrados;
+
+  // ── KPIs (por funcionário único no conjunto filtrado) ──
+  const funcMap = new Map();
+  dados.forEach(l => {
+    const key = l.competencia + '|' + l.matricula + '|' + l.empresa;
+    if (!funcMap.has(key)) funcMap.set(key, { ...l, venc: 0, desc: 0 });
+    const f = funcMap.get(key);
+    if (l.tipo === 'vencimento') f.venc += l.valor; else f.desc += l.valor;
+  });
+  const funcionarios = [...funcMap.values()];
+  const totalVenc = funcionarios.reduce((a, f) => a + f.venc, 0);
+  const totalDesc = funcionarios.reduce((a, f) => a + f.desc, 0);
+  const totalLiq = totalVenc - totalDesc;
+
+  document.getElementById('jor-funcionarios').textContent = funcionarios.length;
+  document.getElementById('jor-venc').textContent = fmtMoney(totalVenc);
+  document.getElementById('jor-desc').textContent = fmtMoney(totalDesc);
+  document.getElementById('jor-liq').textContent = fmtMoney(totalLiq);
+  document.getElementById('jor-ticket').textContent = funcionarios.length ? fmtMoney(totalLiq / funcionarios.length) : fmtMoney(0);
+
+  // ── Ranking por Descrição (categoria) ──
+  const porCategoria = {};
+  dados.forEach(l => {
+    const key = l.categoria + '||' + l.tipo;
+    if (!porCategoria[key]) porCategoria[key] = { descricao: l.categoria, tipo: l.tipo, count: 0, total: 0 };
+    porCategoria[key].count++;
+    porCategoria[key].total += l.valor;
+  });
+  const rankingArr = Object.values(porCategoria).sort((a, b) => b.total - a.total);
+
+  document.getElementById('jorRankCount').textContent = rankingArr.length + ' rubrica(s)';
+  document.getElementById('jorRankingBody').innerHTML = rankingArr.length
+    ? rankingArr.map((r, i) => {
+        const badge = r.tipo === 'desconto' ? 'badge-danger' : 'badge-success';
+        return `<tr><td>${i+1}</td><td>${escapeHTML(r.descricao)}</td><td><span class="badge ${badge}">${r.tipo === 'desconto' ? 'Desconto' : 'Vencimento'}</span></td><td>${r.count}</td><td><strong>${fmtMoney(r.total)}</strong></td><td>${fmtMoney(r.total / r.count)}</td></tr>`;
+      }).join('')
+    : '<tr><td colspan="6" style="text-align:center;color:var(--text-lt)">Nenhum dado para os filtros selecionados.</td></tr>';
+
+  // ── Gráfico: Ranking por Descrição (Top 15) ──
+  const top15 = rankingArr.slice(0, 15);
+  if (jorChartRankingObj) jorChartRankingObj.destroy();
+  const ctxRank = document.getElementById('jorChartRanking').getContext('2d');
+  jorChartRankingObj = new Chart(ctxRank, {
+    type: 'bar',
+    data: {
+      labels: top15.map(r => r.descricao.length > 26 ? r.descricao.slice(0, 24) + '…' : r.descricao),
+      datasets: [{
+        label: 'Valor Total (R$)',
+        data: top15.map(r => r.total),
+        backgroundColor: top15.map(r => r.tipo === 'desconto' ? 'rgba(239,68,68,.75)' : 'rgba(34,197,94,.75)'),
+        borderColor: top15.map(r => r.tipo === 'desconto' ? 'rgba(185,28,28,1)' : 'rgba(21,128,61,1)'),
+        borderWidth: 1, borderRadius: 4
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => fmtMoney(ctx.parsed.x) } } },
+      scales: { x: { beginAtZero: true, ticks: { callback: (v) => v.toLocaleString('pt-BR') } } }
+    }
+  });
+
+  // ── Gráfico: Vencimentos x Descontos por Competência ──
+  const porMes = {};
+  dados.forEach(l => {
+    if (!porMes[l.competencia]) porMes[l.competencia] = { venc: 0, desc: 0 };
+    if (l.tipo === 'vencimento') porMes[l.competencia].venc += l.valor; else porMes[l.competencia].desc += l.valor;
+  });
+  const mesesOrdenados = Object.keys(porMes).sort();
+  if (jorChartMesObj) jorChartMesObj.destroy();
+  const ctxMes = document.getElementById('jorChartMes').getContext('2d');
+  jorChartMesObj = new Chart(ctxMes, {
+    type: 'bar',
+    data: {
+      labels: mesesOrdenados.map(jorCompetenciaLabel),
+      datasets: [
+        { label: 'Vencimentos', data: mesesOrdenados.map(m => porMes[m].venc), backgroundColor: 'rgba(34,197,94,.8)', borderRadius: 4 },
+        { label: 'Descontos', data: mesesOrdenados.map(m => porMes[m].desc), backgroundColor: 'rgba(239,68,68,.8)', borderRadius: 4 }
+      ]
+    },
+    options: { plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { callback: (v) => v.toLocaleString('pt-BR') } } } }
+  });
+
+  // ── Resumo por Funcionário ──
+  const funcOrdenados = [...funcionarios].sort((a, b) => (b.venc - b.desc) - (a.venc - a.desc));
+  document.getElementById('jorEmpCount').textContent = funcOrdenados.length + ' registro(s)';
+  document.getElementById('jorEmpBody').innerHTML = funcOrdenados.length
+    ? funcOrdenados.map(f => `<tr><td>${jorCompetenciaLabel(f.competencia)}</td><td>${escapeHTML(f.empresa)}</td><td><strong>${escapeHTML(f.nome)}</strong></td><td>${escapeHTML(f.cargo || '—')}</td><td>${fmtMoney(f.venc)}</td><td style="color:var(--danger)">${fmtMoney(f.desc)}</td><td><strong>${fmtMoney(f.venc - f.desc)}</strong></td></tr>`).join('')
+    : '<tr><td colspan="7" style="text-align:center;color:var(--text-lt)">Nenhum funcionário para os filtros selecionados.</td></tr>';
+
+  // ── Tabela Detalhada (rubricas) ──
+  const detOrdenados = [...dados].sort((a, b) => b.valor - a.valor).slice(0, 500);
+  document.getElementById('jorDetCount').textContent = dados.length.toLocaleString('pt-BR') + ' rubrica(s)';
+  document.getElementById('jorDetBody').innerHTML = detOrdenados.length
+    ? detOrdenados.map(l => {
+        const badge = l.tipo === 'desconto' ? 'badge-danger' : 'badge-success';
+        return `<tr><td>${jorCompetenciaLabel(l.competencia)}</td><td>${escapeHTML(l.nome)}</td><td>${escapeHTML(l.codigo)}</td><td>${escapeHTML(l.descricao)}</td><td>${escapeHTML(l.referencia)}</td><td>${fmtMoney(l.valor)}</td><td><span class="badge ${badge}">${l.tipo === 'desconto' ? 'Desconto' : 'Vencimento'}</span></td></tr>`;
+      }).join('')
+    : '<tr><td colspan="7" style="text-align:center;color:var(--text-lt)">Nenhuma rubrica encontrada para os filtros selecionados.</td></tr>';
+  if (dados.length > 500) {
+    document.getElementById('jorDetBody').innerHTML += `<tr><td colspan="7" style="text-align:center;color:var(--text-lt);font-size:.78rem">Mostrando as 500 rubricas de maior valor de ${dados.length.toLocaleString('pt-BR')}. Use os filtros ou exporte o CSV para ver tudo.</td></tr>`;
+  }
+}
+
+function jorExportCSV() {
+  exportCSV(jorFiltrados.map(l => ({
+    Competência: jorCompetenciaLabel(l.competencia), Empresa: l.empresa, Matrícula: l.matricula,
+    'Motorista/Funcionário': l.nome, Cargo: l.cargo, Código: l.codigo, Descrição: l.descricao,
+    Referência: l.referencia, Valor: l.valor, Tipo: l.tipo === 'desconto' ? 'Desconto' : 'Vencimento'
+  })), 'jornada_compensacao');
+}
+
+// ── Importação de novos recibos (PDF) via API Claude ──
+// Núcleo reutilizável: recebe o PDF já em base64 + um nome (só para exibir
+// status) e devolve quantos funcionários foram importados/atualizados.
+// Usado tanto pelo upload manual quanto pela busca automática no Drive.
+async function jorProcessarPdfBase64(base64, nomeArquivo, statusEl) {
+  if (statusEl) statusEl.innerHTML = `<i class="fas fa-robot" style="color:var(--accent)"></i> IA extraindo dados de <b>${escapeHTML(nomeArquivo)}</b>...`;
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 8000,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } },
+          {
+            type: 'text',
+            text: `Este PDF contém um ou mais Recibos de Pagamento (holerites) de folha mensal de uma empresa de transporte. Cada recibo pode aparecer DUAS VEZES no arquivo (2ª via idêntica) — extraia cada funcionário apenas UMA VEZ.
+
+Para cada funcionário, extraia TODAS as rubricas da tabela "Código / Descrição / Referência / Vencimentos / Descontos" (cada linha é uma rubrica: horas normais, horas extras, adicional noturno, diárias, gratificações, INSS, descontos de empréstimo, etc). NÃO invente rubricas nem valores. NÃO some ou arredonde — copie os valores exatamente como aparecem.
+
+Retorne APENAS um JSON válido (sem markdown, sem texto extra) no formato:
+{
+  "funcionarios": [
+    {
+      "empresa": "razão social completa (ex: M. MALACARNE TRANSPORTE E LOGISTICA LTDA)",
+      "cnpj": "CNPJ da empresa",
+      "competencia": "AAAA-MM (ex: 2026-07, extraído de 'Folha Mensal ... de AAAA')",
+      "matricula": "código do funcionário",
+      "nome": "nome do funcionário",
+      "cbo": "código CBO",
+      "departamento": "número do departamento",
+      "filial": "número da filial",
+      "cargo": "cargo/função",
+      "admissao": "DD/MM/AAAA",
+      "totalVencimentos": 0.00,
+      "totalDescontos": 0.00,
+      "valorLiquido": 0.00,
+      "rubricas": [
+        { "codigo": "código da rubrica", "descricao": "descrição exata da rubrica", "referencia": "valor de referência (horas HH:MM, percentual, ou dias)", "valor": 0.00, "tipo": "vencimento ou desconto", "categoria": "mesma descrição, mas sem número de contrato/empréstimo no final (ex: 'DESC. EMP. CRED. TRAB Nº 12345' vira 'DESC. EMP. CRED. TRAB')" }
+      ]
+    }
+  ]
+}
+Valores monetários devem ser números (ponto decimal, sem R$, sem separador de milhar). Retorne SOMENTE o JSON, sem texto antes ou depois.`
+          }
+        ]
+      }]
+    })
+  });
+  if (!response.ok) throw new Error('Falha na API (' + response.status + ')');
+  const data = await response.json();
+  const texto = (data.content || []).map(c => c.text || '').join('');
+  const clean = texto.replace(/```json|```/g, '').trim();
+  const parsed = JSON.parse(clean);
+  const novosFuncionarios = parsed.funcionarios || [];
+
+  if (novosFuncionarios.length) {
+    novosFuncionarios.forEach(novo => {
+      JORNADA_EXTRA = JORNADA_EXTRA.filter(f => jorChaveFunc(f) !== jorChaveFunc(novo));
+      JORNADA_EXTRA.push(novo);
+    });
+    jorSaveExtra(JORNADA_EXTRA);
+  }
+  return novosFuncionarios.length;
+}
+
+// Registros já existentes (mesma competência + matrícula + empresa) são
+// substituídos, não duplicados — controlado por jorChaveFunc/jorProcessarPdfBase64.
+async function jorHandlePdfUpload(event) {
+  const files = [...(event.target.files || [])];
+  if (!files.length) return;
+  const statusEl = document.getElementById('jorImportStatus');
+  statusEl.style.display = 'block';
+
+  for (const file of files) {
+    statusEl.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Lendo <b>${escapeHTML(file.name)}</b>...`;
+    try {
+      const base64 = await new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload = () => res(reader.result.split(',')[1]);
+        reader.onerror = rej;
+        reader.readAsDataURL(file);
+      });
+      const n = await jorProcessarPdfBase64(base64, file.name, statusEl);
+      if (!n) {
+        statusEl.innerHTML = `<span style="color:#dc2626"><i class="fas fa-triangle-exclamation"></i> Não encontrei funcionários reconhecíveis em ${escapeHTML(file.name)}.</span>`;
+        continue;
+      }
+      statusEl.innerHTML = `<span style="color:#16a34a"><i class="fas fa-check-circle"></i> ${n} funcionário(s) importado(s) de ${escapeHTML(file.name)}.</span>`;
+    } catch (err) {
+      console.error(err);
+      statusEl.innerHTML = `<span style="color:#dc2626"><i class="fas fa-triangle-exclamation"></i> Não consegui ler ${escapeHTML(file.name)} (${escapeHTML(err.message || 'erro desconhecido')}).</span>`;
+    }
+  }
+
+  event.target.value = '';
+  jorLoaded = false; // força reconstrução das listas de filtro (novas competências/nomes)
+  jorInit();
+}
+
+// ── Importação automática a partir de uma pasta do Google Drive ──
+// Reaproveita extrairFolderIdDrive/listarPDFsDrive (já usados no Faturamento).
+// A pasta precisa estar compartilhada como "Qualquer pessoa com o link".
+const JOR_DRIVE_FOLDER_DEFAULT = 'https://drive.google.com/drive/folders/104YRCz0KifkwDqQKQ_LCVuIKj97_9z00?usp=sharing';
+let jorDrivePdfs = [];
+
+function jorDriveFolderUrl() {
+  return localStorage.getItem('urlJornadaDrive') || JOR_DRIVE_FOLDER_DEFAULT;
+}
+
+async function jorBuscarPastaDrive() {
+  const inputEl = document.getElementById('jorDriveUrl');
+  const url = (inputEl && inputEl.value.trim()) || jorDriveFolderUrl();
+  localStorage.setItem('urlJornadaDrive', url);
+
+  const statusEl = document.getElementById('jorImportStatus');
+  const listEl = document.getElementById('jorDrivePdfList');
+  statusEl.style.display = 'block';
+  listEl.style.display = 'block';
+
+  const folderId = extrairFolderIdDrive(url);
+  if (!folderId) {
+    statusEl.innerHTML = '<span style="color:var(--danger)"><i class="fas fa-exclamation-circle"></i> Não consegui identificar o ID da pasta nesse link.</span>';
+    return;
+  }
+
+  statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Listando PDFs da pasta do Drive...';
+  listEl.innerHTML = '';
+
+  let arquivos = [];
+  try {
+    arquivos = await listarPDFsDrive(folderId);
+  } catch (e) {
+    statusEl.innerHTML = `<span style="color:var(--warning)"><i class="fas fa-exclamation-triangle"></i> Não consegui listar a pasta automaticamente (limitação de CORS do Drive, ou a pasta não está pública). Baixe os PDFs e use "Importar Recibos (PDF)" manualmente.</span>`;
+    return;
+  }
+
+  jorDrivePdfs = arquivos.filter(a => a.nome.toLowerCase().endsWith('.pdf'));
+  if (!jorDrivePdfs.length) {
+    statusEl.innerHTML = '<span style="color:var(--warning)"><i class="fas fa-folder-open"></i> Nenhum PDF encontrado nessa pasta.</span>';
+    return;
+  }
+
+  statusEl.innerHTML = `<i class="fas fa-check-circle" style="color:var(--success)"></i> <b>${jorDrivePdfs.length} PDF(s)</b> encontrado(s) na pasta.`;
+  listEl.innerHTML = jorDrivePdfs.map(a => `
+    <div id="jorpdfcard_${a.id}" style="background:var(--gray-100);border-radius:var(--r12);padding:.7rem 1rem;border:1px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-top:.4rem">
+      <div style="display:flex;align-items:center;gap:.5rem;min-width:0">
+        <i class="fas fa-file-pdf" style="color:#e74c3c"></i>
+        <span style="font-size:.8rem;font-weight:600;word-break:break-all">${escapeHTML(a.nome)}</span>
+      </div>
+      <div style="display:flex;gap:.4rem;align-items:center;flex-shrink:0">
+        <span id="jorpdfstatus_${a.id}" style="font-size:.72rem;color:var(--text-lt)"></span>
+        <button class="btn btn-accent btn-sm" onclick="jorProcessarPdfDrive('${a.id}')"><i class="fas fa-robot"></i> Processar</button>
+      </div>
+    </div>`).join('') +
+    `<button class="btn btn-success btn-sm" style="margin-top:.6rem" onclick="jorProcessarTodosPdfsDrive()"><i class="fas fa-layer-group"></i> Processar TODOS</button>`;
+}
+
+async function jorBaixarPdfDrive(arquivo) {
+  const proxyUrl = `https://corsproxy.io/?${arquivo.urlDownload}`;
+  const resp = await fetch(proxyUrl);
+  if (!resp.ok) throw new Error(`Erro ao baixar ${arquivo.nome}`);
+  const blob = await resp.blob();
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload = () => res(reader.result.split(',')[1]);
+    reader.onerror = rej;
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function jorProcessarPdfDrive(id) {
+  const arquivo = jorDrivePdfs.find(a => a.id === id);
+  if (!arquivo) return;
+  const cardStatusEl = document.getElementById(`jorpdfstatus_${id}`);
+  try {
+    if (cardStatusEl) cardStatusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> baixando...';
+    const base64 = await jorBaixarPdfDrive(arquivo);
+    if (cardStatusEl) cardStatusEl.innerHTML = '<i class="fas fa-robot" style="color:var(--accent)"></i> IA lendo...';
+    const n = await jorProcessarPdfBase64(base64, arquivo.nome);
+    if (cardStatusEl) cardStatusEl.innerHTML = n
+      ? `<span style="color:#16a34a"><i class="fas fa-check-circle"></i> ${n} importado(s)</span>`
+      : `<span style="color:#dc2626">nenhum funcionário reconhecido</span>`;
+  } catch (err) {
+    console.error(err);
+    if (cardStatusEl) cardStatusEl.innerHTML = `<span style="color:#dc2626"><i class="fas fa-triangle-exclamation"></i> erro: ${escapeHTML(err.message || 'desconhecido')}</span>`;
+  }
+  jorLoaded = false;
+  jorInit();
+}
+
+async function jorProcessarTodosPdfsDrive() {
+  for (const a of jorDrivePdfs) {
+    await jorProcessarPdfDrive(a.id);
+  }
+}
+
+
 </script>
 </body>
 </html>
