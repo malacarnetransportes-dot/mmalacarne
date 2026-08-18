@@ -1866,14 +1866,60 @@ footer a{color:var(--accent);text-decoration:none;}
           </div>
 
           <div id="jorContent">
-            <div class="charts-grid">
-              <div class="dash-card">
-                <div class="dash-card-title"><i class="fas fa-ranking-star"></i> Ranking por Descrição (Rubrica) — Top 15 por Valor</div>
-                <div class="chart-box" style="height:340px"><canvas id="jorChartRanking"></canvas></div>
-              </div>
-              <div class="dash-card">
-                <div class="dash-card-title"><i class="fas fa-scale-balanced"></i> Vencimentos x Descontos por Competência</div>
-                <div class="chart-box" style="height:340px"><canvas id="jorChartMes"></canvas></div>
+            <!-- Ranking por Descrição (Top 15) -->
+            <div class="dash-card">
+              <div class="dash-card-title"><i class="fas fa-ranking-star"></i> Ranking por Descrição (Rubrica) — Top 15 por Valor Total</div>
+              <div class="chart-box" style="height:420px"><canvas id="jorChartRanking"></canvas></div>
+            </div>
+
+            <!-- Gráficos das Rubricas Padrão individuais -->
+            <div class="dash-card">
+              <div class="dash-card-title"><i class="fas fa-chart-bar"></i> Rubricas Padrão — Valor por Funcionário</div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1.2rem;margin-top:.6rem">
+                <div>
+                  <div style="font-size:.78rem;font-weight:700;color:var(--text-lt);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.4rem"><i class="fas fa-circle" style="color:#22c55e;font-size:.55rem;margin-right:.3rem"></i> DESCONTO ANTECIPAÇÃO SALARIAL</div>
+                  <div class="chart-box" style="height:200px"><canvas id="jorChartAnticipacao"></canvas></div>
+                </div>
+                <div>
+                  <div style="font-size:.78rem;font-weight:700;color:var(--text-lt);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.4rem"><i class="fas fa-circle" style="color:#22c55e;font-size:.55rem;margin-right:.3rem"></i> HORAS NORMAIS</div>
+                  <div class="chart-box" style="height:200px"><canvas id="jorChartHorasNormais"></canvas></div>
+                </div>
+                <div>
+                  <div style="font-size:.78rem;font-weight:700;color:var(--text-lt);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.4rem"><i class="fas fa-circle" style="color:#22c55e;font-size:.55rem;margin-right:.3rem"></i> DIÁRIAS</div>
+                  <div class="chart-box" style="height:200px"><canvas id="jorChartDiarias"></canvas></div>
+                </div>
+                <div>
+                  <div style="font-size:.78rem;font-weight:700;color:var(--text-lt);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.4rem"><i class="fas fa-circle" style="color:#22c55e;font-size:.55rem;margin-right:.3rem"></i> GRATIFICAÇÃO PERFORMANCE ACT</div>
+                  <div class="chart-box" style="height:200px"><canvas id="jorChartGratiPerf"></canvas></div>
+                </div>
+                <div>
+                  <div style="font-size:.78rem;font-weight:700;color:var(--text-lt);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.4rem"><i class="fas fa-circle" style="color:#22c55e;font-size:.55rem;margin-right:.3rem"></i> HORAS EXTRAS 50% DIURNAS</div>
+                  <div class="chart-box" style="height:200px"><canvas id="jorChartHE50"></canvas></div>
+                </div>
+                <div>
+                  <div style="font-size:.78rem;font-weight:700;color:var(--text-lt);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.4rem"><i class="fas fa-circle" style="color:#22c55e;font-size:.55rem;margin-right:.3rem"></i> HORAS EXTRAS 100% DIURNA</div>
+                  <div class="chart-box" style="height:200px"><canvas id="jorChartHE100"></canvas></div>
+                </div>
+                <div>
+                  <div style="font-size:.78rem;font-weight:700;color:var(--text-lt);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.4rem"><i class="fas fa-circle" style="color:#ef4444;font-size:.55rem;margin-right:.3rem"></i> I.N.S.S.</div>
+                  <div class="chart-box" style="height:200px"><canvas id="jorChartInss"></canvas></div>
+                </div>
+                <div>
+                  <div style="font-size:.78rem;font-weight:700;color:var(--text-lt);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.4rem"><i class="fas fa-circle" style="color:#22c55e;font-size:.55rem;margin-right:.3rem"></i> HORAS NOTURNAS</div>
+                  <div class="chart-box" style="height:200px"><canvas id="jorChartHorasNot"></canvas></div>
+                </div>
+                <div>
+                  <div style="font-size:.78rem;font-weight:700;color:var(--text-lt);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.4rem"><i class="fas fa-circle" style="color:#22c55e;font-size:.55rem;margin-right:.3rem"></i> REFLEXO EXTRAS DSR</div>
+                  <div class="chart-box" style="height:200px"><canvas id="jorChartReflexoExtras"></canvas></div>
+                </div>
+                <div>
+                  <div style="font-size:.78rem;font-weight:700;color:var(--text-lt);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.4rem"><i class="fas fa-circle" style="color:#22c55e;font-size:.55rem;margin-right:.3rem"></i> ADICIONAL NOTURNO</div>
+                  <div class="chart-box" style="height:200px"><canvas id="jorChartAdicNoturn"></canvas></div>
+                </div>
+                <div>
+                  <div style="font-size:.78rem;font-weight:700;color:var(--text-lt);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.4rem"><i class="fas fa-circle" style="color:#22c55e;font-size:.55rem;margin-right:.3rem"></i> REFLEXO ADICIONAL NOTURNO DSR</div>
+                  <div class="chart-box" style="height:200px"><canvas id="jorChartReflexoAdicNot"></canvas></div>
+                </div>
               </div>
             </div>
 
@@ -1888,15 +1934,12 @@ footer a{color:var(--accent);text-decoration:none;}
             </div>
 
             <div class="dash-card" id="jorRankPadraoCard">
-              <div class="dash-card-title"><i class="fas fa-star"></i> Ranking de Rubricas Padrão <span id="jorRankPadraoCount" style="background:var(--gray-100);padding:.15rem .6rem;border-radius:30px;font-size:.75rem;margin-left:.5rem"></span></div>
-              <div class="charts-grid" style="grid-template-columns:1.1fr 1fr">
-                <div class="chart-box" style="height:320px"><canvas id="jorChartPadrao"></canvas></div>
-                <div class="tbl-wrap">
-                  <table class="data-table">
-                    <thead><tr><th>#</th><th>Rubrica</th><th>Tipo</th><th>Ocorrências</th><th>Valor Total</th></tr></thead>
-                    <tbody id="jorRankPadraoBody"></tbody>
-                  </table>
-                </div>
+              <div class="dash-card-title"><i class="fas fa-star"></i> Ranking Consolidado — Rubricas Padrão <span id="jorRankPadraoCount" style="background:var(--gray-100);padding:.15rem .6rem;border-radius:30px;font-size:.75rem;margin-left:.5rem"></span></div>
+              <div class="tbl-wrap">
+                <table class="data-table">
+                  <thead><tr><th>#</th><th>Rubrica</th><th>Tipo</th><th>Ocorrências</th><th>Valor Total</th></tr></thead>
+                  <tbody id="jorRankPadraoBody"></tbody>
+                </table>
               </div>
             </div>
 
@@ -9575,20 +9618,39 @@ function jorLinhas() {
 
 let jorLoaded = false;
 let jorFiltrados = [];
-let jorChartRankingObj = null, jorChartMesObj = null, jorChartPadraoObj = null;
+let jorChartRankingObj = null;
+// Gráficos individuais das rubricas padrão
+const jorChartRubricaObjs = {};
+const JOR_RUBRICA_CHART_IDS = {
+  'DESCONTO ANTECIPACAO SALARIAL':  { id: 'jorChartAnticipacao',    cor: 'rgba(239,68,68,.75)',    bord: 'rgba(185,28,28,1)' },
+  'HORAS NORMAIS':                  { id: 'jorChartHorasNormais',   cor: 'rgba(34,197,94,.75)',    bord: 'rgba(21,128,61,1)' },
+  'DIARIAS':                        { id: 'jorChartDiarias',        cor: 'rgba(99,102,241,.75)',   bord: 'rgba(67,56,202,1)' },
+  'GRATIFICACAO PERFORMANCE ACT':   { id: 'jorChartGratiPerf',      cor: 'rgba(212,175,55,.85)',   bord: 'rgba(184,148,31,1)' },
+  'HORAS EXTRAS 50% DIURNAS':       { id: 'jorChartHE50',           cor: 'rgba(249,115,22,.75)',   bord: 'rgba(194,65,12,1)' },
+  'HORAS EXTRAS 100% DIURNA':       { id: 'jorChartHE100',          cor: 'rgba(249,115,22,.75)',   bord: 'rgba(194,65,12,1)' },
+  'I.N.S.S.':                       { id: 'jorChartInss',           cor: 'rgba(239,68,68,.75)',    bord: 'rgba(185,28,28,1)' },
+  'HORAS NOTURNAS':                 { id: 'jorChartHorasNot',       cor: 'rgba(99,102,241,.75)',   bord: 'rgba(67,56,202,1)' },
+  'REFLEXO EXTRAS DSR':             { id: 'jorChartReflexoExtras',  cor: 'rgba(20,184,166,.75)',   bord: 'rgba(15,118,110,1)' },
+  'ADICIONAL NOTURNO':              { id: 'jorChartAdicNoturn',     cor: 'rgba(139,92,246,.75)',   bord: 'rgba(109,40,217,1)' },
+  'REFLEXO ADICIONAL NOTURNO DSR':  { id: 'jorChartReflexoAdicNot', cor: 'rgba(139,92,246,.75)',   bord: 'rgba(109,40,217,1)' },
+};
 
 // ── Rubricas padrão da folha (lista fixa para o "Ranking de Rubricas Padrão") ──
 // Ordenadas da mais específica para a mais genérica: a checagem para no
 // primeiro alvo cuja versão normalizada esteja contida na descrição da rubrica.
+// ATENÇÃO: ordem do mais específico para o mais genérico para evitar falsos matches
+// Ex: "REFLEXO ADICIONAL NOTURNO DSR" deve casar ANTES de "ADICIONAL NOTURNO"
+//     "HORAS EXTRAS 50% DIURNAS" deve casar ANTES de "HORAS NORMAIS"
+//     "HORAS NOTURNAS" deve casar ANTES de "HORAS NORMAIS"
 const JOR_RUBRICAS_PADRAO = [
-  'REFLEXO ADICIONAL NOTURNO DSR',
-  'DESCONTO ANTECIPACAO SALARIAL',
+  'DESCONTO ANTECIPACAO SALARIAL',   // desconto
+  'REFLEXO ADICIONAL NOTURNO DSR',   // mais específico que ADICIONAL NOTURNO
+  'REFLEXO EXTRAS DSR',              // mais específico que REFLEXO
+  'HORAS EXTRAS 50% DIURNAS',        // mais específico que HORAS EXTRAS
+  'HORAS EXTRAS 100% DIURNA',        // mais específico que HORAS EXTRAS
   'GRATIFICACAO PERFORMANCE ACT',
-  'HORAS EXTRAS 50% DIURNAS',
-  'HORAS EXTRAS 100% DIURNA',
-  'REFLEXO EXTRAS DSR',
-  'ADICIONAL NOTURNO',
-  'HORAS NOTURNAS',
+  'ADICIONAL NOTURNO',               // depois dos REFLEXO ADICIONAL NOTURNO
+  'HORAS NOTURNAS',                  // antes de HORAS NORMAIS
   'HORAS NORMAIS',
   'I.N.S.S.',
   'DIARIAS'
@@ -9699,14 +9761,14 @@ function jorRender() {
       }).join('')
     : '<tr><td colspan="6" style="text-align:center;color:var(--text-lt)">Nenhum dado para os filtros selecionados.</td></tr>';
 
-  // ── Gráfico: Ranking por Descrição (Top 15) ──
+  // ── Gráfico: Ranking por Descrição (Top 15, horizontal) ──
   const top15 = rankingArr.slice(0, 15);
   if (jorChartRankingObj) jorChartRankingObj.destroy();
   const ctxRank = document.getElementById('jorChartRanking').getContext('2d');
   jorChartRankingObj = new Chart(ctxRank, {
     type: 'bar',
     data: {
-      labels: top15.map(r => r.descricao.length > 26 ? r.descricao.slice(0, 24) + '…' : r.descricao),
+      labels: top15.map(r => r.descricao.length > 30 ? r.descricao.slice(0, 28) + '…' : r.descricao),
       datasets: [{
         label: 'Valor Total (R$)',
         data: top15.map(r => r.total),
@@ -9717,30 +9779,67 @@ function jorRender() {
     },
     options: {
       indexAxis: 'y',
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => fmtMoney(ctx.parsed.x) } } },
-      scales: { x: { beginAtZero: true, ticks: { callback: (v) => v.toLocaleString('pt-BR') } } }
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: (ctx) => ' ' + fmtMoney(ctx.parsed.x) } }
+      },
+      scales: {
+        x: { beginAtZero: true, ticks: { callback: (v) => 'R$ ' + v.toLocaleString('pt-BR') } },
+        y: { ticks: { font: { size: 11 } } }
+      }
     }
   });
 
-  // ── Gráfico: Vencimentos x Descontos por Competência ──
-  const porMes = {};
-  dados.forEach(l => {
-    if (!porMes[l.competencia]) porMes[l.competencia] = { venc: 0, desc: 0 };
-    if (l.tipo === 'vencimento') porMes[l.competencia].venc += l.valor; else porMes[l.competencia].desc += l.valor;
-  });
-  const mesesOrdenados = Object.keys(porMes).sort();
-  if (jorChartMesObj) jorChartMesObj.destroy();
-  const ctxMes = document.getElementById('jorChartMes').getContext('2d');
-  jorChartMesObj = new Chart(ctxMes, {
-    type: 'bar',
-    data: {
-      labels: mesesOrdenados.map(jorCompetenciaLabel),
-      datasets: [
-        { label: 'Vencimentos', data: mesesOrdenados.map(m => porMes[m].venc), backgroundColor: 'rgba(34,197,94,.8)', borderRadius: 4 },
-        { label: 'Descontos', data: mesesOrdenados.map(m => porMes[m].desc), backgroundColor: 'rgba(239,68,68,.8)', borderRadius: 4 }
-      ]
-    },
-    options: { plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { callback: (v) => v.toLocaleString('pt-BR') } } } }
+  // ── Gráficos individuais das rubricas padrão (por funcionário, valor individual) ──
+  // Agrupamos por funcionário (nome+competência) para mostrar distribuição entre pessoas
+  Object.entries(JOR_RUBRICA_CHART_IDS).forEach(([rubrica, cfg]) => {
+    const normRubrica = jorNormalizar(rubrica);
+    // Filtrar linhas que pertencem a essa rubrica padrão
+    const linhasRubrica = dados.filter(l => {
+      const norm = jorNormalizar(l.categoria || l.descricao);
+      return norm.includes(normRubrica);
+    });
+
+    // Agrupar por funcionário (nome + competência)
+    const porFunc = {};
+    linhasRubrica.forEach(l => {
+      const key = l.nome + (linhasRubrica.some(x => x.competencia !== l.competencia) ? ' (' + jorCompetenciaLabel(l.competencia) + ')' : '');
+      if (!porFunc[key]) porFunc[key] = 0;
+      porFunc[key] += l.valor;
+    });
+
+    const entries = Object.entries(porFunc).sort((a, b) => b[1] - a[1]);
+    const labels = entries.map(([k]) => k.length > 20 ? k.slice(0, 18) + '…' : k);
+    const values = entries.map(([, v]) => v);
+
+    if (jorChartRubricaObjs[cfg.id]) jorChartRubricaObjs[cfg.id].destroy();
+    const canvas = document.getElementById(cfg.id);
+    if (!canvas) return;
+    jorChartRubricaObjs[cfg.id] = new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: rubrica,
+          data: values,
+          backgroundColor: cfg.cor,
+          borderColor: cfg.bord,
+          borderWidth: 1,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: (ctx) => ' ' + fmtMoney(ctx.parsed.x) } }
+        },
+        scales: {
+          x: { beginAtZero: true, ticks: { callback: (v) => 'R$ ' + v.toLocaleString('pt-BR'), font: { size: 10 }, maxTicksLimit: 5 } },
+          y: { ticks: { font: { size: 10 } } }
+        }
+      }
+    });
   });
 
   // ── Resumo por Funcionário ──
@@ -9750,7 +9849,7 @@ function jorRender() {
     ? funcOrdenados.map(f => `<tr><td>${jorCompetenciaLabel(f.competencia)}</td><td>${escapeHTML(f.empresa)}</td><td><strong>${escapeHTML(f.nome)}</strong></td><td>${escapeHTML(f.cargo || '—')}</td><td>${fmtMoney(f.venc)}</td><td style="color:var(--danger)">${fmtMoney(f.desc)}</td><td><strong>${fmtMoney(f.venc - f.desc)}</strong></td></tr>`).join('')
     : '<tr><td colspan="7" style="text-align:center;color:var(--text-lt)">Nenhum funcionário para os filtros selecionados.</td></tr>';
 
-  // ── Ranking de Rubricas Padrão (categorias fixas da folha) ──
+  // ── Ranking de Rubricas Padrão consolidado (tabela) ──
   const porPadrao = {};
   dados.forEach(l => {
     const alvo = jorClassificarPadrao(l.categoria || l.descricao);
@@ -9761,7 +9860,6 @@ function jorRender() {
     porPadrao[key].total += l.valor;
   });
   const rankingPadraoArr = Object.values(porPadrao).sort((a, b) => b.total - a.total);
-
   document.getElementById('jorRankPadraoCount').textContent = rankingPadraoArr.length + ' rubrica(s)';
   document.getElementById('jorRankPadraoBody').innerHTML = rankingPadraoArr.length
     ? rankingPadraoArr.map((r, i) => {
@@ -9769,27 +9867,6 @@ function jorRender() {
         return `<tr><td>${i+1}</td><td>${escapeHTML(r.descricao)}</td><td><span class="badge ${badge}">${r.tipo === 'desconto' ? 'Desconto' : 'Vencimento'}</span></td><td>${r.count}</td><td><strong>${fmtMoney(r.total)}</strong></td></tr>`;
       }).join('')
     : '<tr><td colspan="5" style="text-align:center;color:var(--text-lt)">Nenhuma das rubricas padrão encontrada para os filtros selecionados.</td></tr>';
-
-  if (jorChartPadraoObj) jorChartPadraoObj.destroy();
-  const ctxPadrao = document.getElementById('jorChartPadrao').getContext('2d');
-  jorChartPadraoObj = new Chart(ctxPadrao, {
-    type: 'bar',
-    data: {
-      labels: rankingPadraoArr.map(r => r.descricao.length > 24 ? r.descricao.slice(0, 22) + '…' : r.descricao),
-      datasets: [{
-        label: 'Valor Total (R$)',
-        data: rankingPadraoArr.map(r => r.total),
-        backgroundColor: rankingPadraoArr.map(r => r.tipo === 'desconto' ? 'rgba(239,68,68,.75)' : 'rgba(34,197,94,.75)'),
-        borderColor: rankingPadraoArr.map(r => r.tipo === 'desconto' ? 'rgba(185,28,28,1)' : 'rgba(21,128,61,1)'),
-        borderWidth: 1, borderRadius: 4
-      }]
-    },
-    options: {
-      indexAxis: 'y',
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => fmtMoney(ctx.parsed.x) } } },
-      scales: { x: { beginAtZero: true, ticks: { callback: (v) => v.toLocaleString('pt-BR') } } }
-    }
-  });
 
   // ── Resumo do Motorista (card), só aparece ao filtrar por um motorista específico ──
   const motoristaFiltro = (document.getElementById('jorMotorista').value || '').trim();
