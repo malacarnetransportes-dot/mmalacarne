@@ -1866,6 +1866,17 @@ footer a{color:var(--accent);text-decoration:none;}
           </div>
 
           <div id="jorContent">
+
+            <!-- ══ RESUMO DO MOTORISTA — DESTAQUE NO TOPO ══ -->
+            <div class="dash-card" id="jorResumoCard" style="border:2px solid var(--accent);background:linear-gradient(135deg,#fffdf0 0%,#fff 60%);box-shadow:0 6px 24px rgba(212,175,55,.18);">
+              <div class="dash-card-title" style="font-size:1rem;color:#1e2a3a;gap:.5rem">
+                <i class="fas fa-id-badge" style="color:var(--accent-dk)"></i>
+                Resumo do Motorista
+                <span id="jorResumoCount" style="background:rgba(212,175,55,.15);color:var(--accent-dk);padding:.15rem .7rem;border-radius:30px;font-size:.75rem;margin-left:.3rem;font-weight:700;border:1px solid rgba(212,175,55,.3)"></span>
+              </div>
+              <div id="jorResumoBody"></div>
+            </div>
+
             <!-- Ranking por Descrição (Top 15) -->
             <div class="dash-card">
               <div class="dash-card-title"><i class="fas fa-ranking-star"></i> Ranking por Descrição (Rubrica) — Top 15 por Valor Total</div>
@@ -1953,10 +1964,6 @@ footer a{color:var(--accent);text-decoration:none;}
               </div>
             </div>
 
-            <div class="dash-card">
-              <div class="dash-card-title"><i class="fas fa-id-badge"></i> Resumo do Motorista <span id="jorResumoCount" style="background:var(--gray-100);padding:.15rem .6rem;border-radius:30px;font-size:.75rem;margin-left:.5rem"></span></div>
-              <div id="jorResumoBody"></div>
-            </div>
           </div>
         </div><!-- /tabJornada -->
 
@@ -9873,9 +9880,9 @@ function jorRender() {
   const resumoBodyEl = document.getElementById('jorResumoBody');
   if (!motoristaFiltro) {
     document.getElementById('jorResumoCount').textContent = '';
-    resumoBodyEl.innerHTML = `<div style="text-align:center;color:var(--text-lt);padding:2rem 1rem">
-      <i class="fas fa-filter" style="font-size:1.4rem;display:block;margin-bottom:.5rem"></i>
-      Filtre por um motorista/funcionário específico acima para ver o resumo detalhado em card.
+    resumoBodyEl.innerHTML = `<div style="display:flex;align-items:center;gap:.8rem;padding:1rem 1.2rem;background:rgba(212,175,55,.06);border-radius:var(--r8);border:1px dashed rgba(212,175,55,.35);color:var(--text-lt);font-size:.85rem">
+      <i class="fas fa-user-magnifying-glass" style="font-size:1.3rem;color:var(--accent);flex:none"></i>
+      <span>Digite o nome de um <strong style="color:var(--text)">motorista/funcionário</strong> no filtro acima e clique <strong style="color:var(--text)">Filtrar</strong> para ver o resumo detalhado por competência.</span>
     </div>`;
   } else {
     const grupos = new Map();
