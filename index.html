@@ -1862,11 +1862,6 @@ footer a{color:var(--accent);text-decoration:none;}
               <button class="btn btn-gray btn-sm" onclick="document.getElementById('jorPdfInput').click()"><i class="fas fa-file-pdf"></i> Importar Recibos (PDF)</button>
               <input type="file" id="jorPdfInput" accept="application/pdf" multiple style="display:none" onchange="jorHandlePdfUpload(event)">
             </div>
-            <div class="filters-bar" style="border-top:1px solid var(--gray-200)">
-              <div class="flt-grp" style="flex:1;min-width:280px"><label>Pasta do Google Drive (PDFs de recibos)</label><input type="text" id="jorDriveUrl" placeholder="Link da pasta pública do Drive"></div>
-              <button class="btn btn-accent btn-sm" onclick="jorBuscarPastaDrive()"><i class="fas fa-cloud-arrow-down"></i> Buscar da Pasta do Drive</button>
-            </div>
-            <div id="jorDrivePdfList" style="display:none;padding:.4rem 1rem 1rem;border-top:1px solid var(--gray-200)"></div>
             <div id="jorImportStatus" style="display:none;padding:.6rem 1rem;font-size:.8rem;border-top:1px solid var(--gray-200)"></div>
           </div>
 
@@ -1892,6 +1887,19 @@ footer a{color:var(--accent);text-decoration:none;}
               </div>
             </div>
 
+            <div class="dash-card" id="jorRankPadraoCard">
+              <div class="dash-card-title"><i class="fas fa-star"></i> Ranking de Rubricas Padrão <span id="jorRankPadraoCount" style="background:var(--gray-100);padding:.15rem .6rem;border-radius:30px;font-size:.75rem;margin-left:.5rem"></span></div>
+              <div class="charts-grid" style="grid-template-columns:1.1fr 1fr">
+                <div class="chart-box" style="height:320px"><canvas id="jorChartPadrao"></canvas></div>
+                <div class="tbl-wrap">
+                  <table class="data-table">
+                    <thead><tr><th>#</th><th>Rubrica</th><th>Tipo</th><th>Ocorrências</th><th>Valor Total</th></tr></thead>
+                    <tbody id="jorRankPadraoBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
             <div class="dash-card">
               <div class="dash-card-title"><i class="fas fa-id-card"></i> Resumo por Funcionário <span id="jorEmpCount" style="background:var(--gray-100);padding:.15rem .6rem;border-radius:30px;font-size:.75rem;margin-left:.5rem"></span></div>
               <div class="tbl-wrap">
@@ -1903,13 +1911,8 @@ footer a{color:var(--accent);text-decoration:none;}
             </div>
 
             <div class="dash-card">
-              <div class="dash-card-title"><i class="fas fa-table"></i> Dados Detalhados (Rubricas) <span id="jorDetCount" style="background:var(--gray-100);padding:.15rem .6rem;border-radius:30px;font-size:.75rem;margin-left:.5rem"></span></div>
-              <div class="tbl-wrap">
-                <table class="data-table">
-                  <thead><tr><th>Competência</th><th>Motorista / Funcionário</th><th>Código</th><th>Descrição</th><th>Referência</th><th>Valor</th><th>Tipo</th></tr></thead>
-                  <tbody id="jorDetBody"></tbody>
-                </table>
-              </div>
+              <div class="dash-card-title"><i class="fas fa-id-badge"></i> Resumo do Motorista <span id="jorResumoCount" style="background:var(--gray-100);padding:.15rem .6rem;border-radius:30px;font-size:.75rem;margin-left:.5rem"></span></div>
+              <div id="jorResumoBody"></div>
             </div>
           </div>
         </div><!-- /tabJornada -->
@@ -9572,7 +9575,35 @@ function jorLinhas() {
 
 let jorLoaded = false;
 let jorFiltrados = [];
-let jorChartRankingObj = null, jorChartMesObj = null;
+let jorChartRankingObj = null, jorChartMesObj = null, jorChartPadraoObj = null;
+
+// ── Rubricas padrão da folha (lista fixa para o "Ranking de Rubricas Padrão") ──
+// Ordenadas da mais específica para a mais genérica: a checagem para no
+// primeiro alvo cuja versão normalizada esteja contida na descrição da rubrica.
+const JOR_RUBRICAS_PADRAO = [
+  'REFLEXO ADICIONAL NOTURNO DSR',
+  'DESCONTO ANTECIPACAO SALARIAL',
+  'GRATIFICACAO PERFORMANCE ACT',
+  'HORAS EXTRAS 50% DIURNAS',
+  'HORAS EXTRAS 100% DIURNA',
+  'REFLEXO EXTRAS DSR',
+  'ADICIONAL NOTURNO',
+  'HORAS NOTURNAS',
+  'HORAS NORMAIS',
+  'I.N.S.S.',
+  'DIARIAS'
+];
+function jorNormalizar(s) {
+  return (s || '').toString()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove acentos
+    .toUpperCase().replace(/[.\-]/g, '').replace(/\s+/g, ' ').trim();
+}
+const JOR_RUBRICAS_PADRAO_NORM = JOR_RUBRICAS_PADRAO.map(r => ({ label: r, norm: jorNormalizar(r) }));
+function jorClassificarPadrao(descricao) {
+  const norm = jorNormalizar(descricao);
+  const alvo = JOR_RUBRICAS_PADRAO_NORM.find(a => norm.includes(a.norm));
+  return alvo ? alvo.label : null;
+}
 
 function jorCompetenciaLabel(c) {
   if (!c || !/^\d{4}-\d{2}$/.test(c)) return c || '—';
@@ -9583,9 +9614,6 @@ function jorCompetenciaLabel(c) {
 
 function jorInit() {
   if (jorLoaded) { jorApplyFilters(); return; }
-
-  const driveUrlEl = document.getElementById('jorDriveUrl');
-  if (driveUrlEl && !driveUrlEl.value) driveUrlEl.value = jorDriveFolderUrl();
 
   // Competências
   const competencias = [...new Set(jorTodosFuncionarios().map(f => f.competencia))].sort().reverse();
@@ -9722,17 +9750,96 @@ function jorRender() {
     ? funcOrdenados.map(f => `<tr><td>${jorCompetenciaLabel(f.competencia)}</td><td>${escapeHTML(f.empresa)}</td><td><strong>${escapeHTML(f.nome)}</strong></td><td>${escapeHTML(f.cargo || '—')}</td><td>${fmtMoney(f.venc)}</td><td style="color:var(--danger)">${fmtMoney(f.desc)}</td><td><strong>${fmtMoney(f.venc - f.desc)}</strong></td></tr>`).join('')
     : '<tr><td colspan="7" style="text-align:center;color:var(--text-lt)">Nenhum funcionário para os filtros selecionados.</td></tr>';
 
-  // ── Tabela Detalhada (rubricas) ──
-  const detOrdenados = [...dados].sort((a, b) => b.valor - a.valor).slice(0, 500);
-  document.getElementById('jorDetCount').textContent = dados.length.toLocaleString('pt-BR') + ' rubrica(s)';
-  document.getElementById('jorDetBody').innerHTML = detOrdenados.length
-    ? detOrdenados.map(l => {
-        const badge = l.tipo === 'desconto' ? 'badge-danger' : 'badge-success';
-        return `<tr><td>${jorCompetenciaLabel(l.competencia)}</td><td>${escapeHTML(l.nome)}</td><td>${escapeHTML(l.codigo)}</td><td>${escapeHTML(l.descricao)}</td><td>${escapeHTML(l.referencia)}</td><td>${fmtMoney(l.valor)}</td><td><span class="badge ${badge}">${l.tipo === 'desconto' ? 'Desconto' : 'Vencimento'}</span></td></tr>`;
+  // ── Ranking de Rubricas Padrão (categorias fixas da folha) ──
+  const porPadrao = {};
+  dados.forEach(l => {
+    const alvo = jorClassificarPadrao(l.categoria || l.descricao);
+    if (!alvo) return;
+    const key = alvo + '||' + l.tipo;
+    if (!porPadrao[key]) porPadrao[key] = { descricao: alvo, tipo: l.tipo, count: 0, total: 0 };
+    porPadrao[key].count++;
+    porPadrao[key].total += l.valor;
+  });
+  const rankingPadraoArr = Object.values(porPadrao).sort((a, b) => b.total - a.total);
+
+  document.getElementById('jorRankPadraoCount').textContent = rankingPadraoArr.length + ' rubrica(s)';
+  document.getElementById('jorRankPadraoBody').innerHTML = rankingPadraoArr.length
+    ? rankingPadraoArr.map((r, i) => {
+        const badge = r.tipo === 'desconto' ? 'badge-danger' : 'badge-success';
+        return `<tr><td>${i+1}</td><td>${escapeHTML(r.descricao)}</td><td><span class="badge ${badge}">${r.tipo === 'desconto' ? 'Desconto' : 'Vencimento'}</span></td><td>${r.count}</td><td><strong>${fmtMoney(r.total)}</strong></td></tr>`;
       }).join('')
-    : '<tr><td colspan="7" style="text-align:center;color:var(--text-lt)">Nenhuma rubrica encontrada para os filtros selecionados.</td></tr>';
-  if (dados.length > 500) {
-    document.getElementById('jorDetBody').innerHTML += `<tr><td colspan="7" style="text-align:center;color:var(--text-lt);font-size:.78rem">Mostrando as 500 rubricas de maior valor de ${dados.length.toLocaleString('pt-BR')}. Use os filtros ou exporte o CSV para ver tudo.</td></tr>`;
+    : '<tr><td colspan="5" style="text-align:center;color:var(--text-lt)">Nenhuma das rubricas padrão encontrada para os filtros selecionados.</td></tr>';
+
+  if (jorChartPadraoObj) jorChartPadraoObj.destroy();
+  const ctxPadrao = document.getElementById('jorChartPadrao').getContext('2d');
+  jorChartPadraoObj = new Chart(ctxPadrao, {
+    type: 'bar',
+    data: {
+      labels: rankingPadraoArr.map(r => r.descricao.length > 24 ? r.descricao.slice(0, 22) + '…' : r.descricao),
+      datasets: [{
+        label: 'Valor Total (R$)',
+        data: rankingPadraoArr.map(r => r.total),
+        backgroundColor: rankingPadraoArr.map(r => r.tipo === 'desconto' ? 'rgba(239,68,68,.75)' : 'rgba(34,197,94,.75)'),
+        borderColor: rankingPadraoArr.map(r => r.tipo === 'desconto' ? 'rgba(185,28,28,1)' : 'rgba(21,128,61,1)'),
+        borderWidth: 1, borderRadius: 4
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => fmtMoney(ctx.parsed.x) } } },
+      scales: { x: { beginAtZero: true, ticks: { callback: (v) => v.toLocaleString('pt-BR') } } }
+    }
+  });
+
+  // ── Resumo do Motorista (card), só aparece ao filtrar por um motorista específico ──
+  const motoristaFiltro = (document.getElementById('jorMotorista').value || '').trim();
+  const resumoBodyEl = document.getElementById('jorResumoBody');
+  if (!motoristaFiltro) {
+    document.getElementById('jorResumoCount').textContent = '';
+    resumoBodyEl.innerHTML = `<div style="text-align:center;color:var(--text-lt);padding:2rem 1rem">
+      <i class="fas fa-filter" style="font-size:1.4rem;display:block;margin-bottom:.5rem"></i>
+      Filtre por um motorista/funcionário específico acima para ver o resumo detalhado em card.
+    </div>`;
+  } else {
+    const grupos = new Map();
+    dados.forEach(l => {
+      const key = l.competencia + '|' + l.matricula + '|' + l.empresa;
+      if (!grupos.has(key)) grupos.set(key, { ...l, venc: 0, desc: 0, rubricas: [] });
+      const g = grupos.get(key);
+      if (l.tipo === 'vencimento') g.venc += l.valor; else g.desc += l.valor;
+      g.rubricas.push(l);
+    });
+    const gruposOrdenados = [...grupos.values()].sort((a, b) => b.competencia.localeCompare(a.competencia));
+
+    document.getElementById('jorResumoCount').textContent = gruposOrdenados.length + ' competência(s)';
+    resumoBodyEl.innerHTML = gruposOrdenados.length
+      ? gruposOrdenados.map(g => {
+          const rubricasHtml = [...g.rubricas].sort((a, b) => b.valor - a.valor).map(r => `
+            <div style="display:flex;justify-content:space-between;gap:.6rem;font-size:.82rem;padding:.32rem 0;border-bottom:1px dashed var(--gray-200)">
+              <span>${escapeHTML(r.descricao)}</span>
+              <span style="font-weight:600;white-space:nowrap;color:${r.tipo === 'desconto' ? 'var(--danger)' : 'var(--success)'}">${r.tipo === 'desconto' ? '−' : ''}${fmtMoney(r.valor)}</span>
+            </div>`).join('');
+          return `
+          <div style="background:var(--gray-100);border:1px solid var(--gray-200);border-radius:var(--r12);padding:1rem 1.2rem;margin-bottom:1rem">
+            <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:.7rem;border-bottom:1px solid var(--gray-200);padding-bottom:.6rem">
+              <div>
+                <div style="font-weight:700;font-size:1rem">${escapeHTML(g.nome)}</div>
+                <div style="font-size:.78rem;color:var(--text-lt)">${escapeHTML(g.cargo || '—')} · ${escapeHTML(g.empresa)}</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-weight:700;font-size:.85rem">${jorCompetenciaLabel(g.competencia)}</div>
+                <div style="font-size:.78rem;color:var(--text-lt)">Matrícula ${escapeHTML(g.matricula)}</div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:0 1.5rem">${rubricasHtml}</div>
+            <div style="display:flex;justify-content:flex-end;flex-wrap:wrap;gap:1.4rem;margin-top:.8rem;padding-top:.6rem;border-top:1px solid var(--gray-200);font-size:.85rem">
+              <div>Vencimentos: <strong style="color:var(--success)">${fmtMoney(g.venc)}</strong></div>
+              <div>Descontos: <strong style="color:var(--danger)">${fmtMoney(g.desc)}</strong></div>
+              <div>Líquido: <strong>${fmtMoney(g.venc - g.desc)}</strong></div>
+            </div>
+          </div>`;
+        }).join('')
+      : '<div style="text-align:center;color:var(--text-lt);padding:1.5rem">Nenhum registro para esse motorista nos filtros selecionados.</div>';
   }
 }
 
@@ -9846,104 +9953,6 @@ async function jorHandlePdfUpload(event) {
   jorLoaded = false; // força reconstrução das listas de filtro (novas competências/nomes)
   jorInit();
 }
-
-// ── Importação automática a partir de uma pasta do Google Drive ──
-// Reaproveita extrairFolderIdDrive/listarPDFsDrive (já usados no Faturamento).
-// A pasta precisa estar compartilhada como "Qualquer pessoa com o link".
-const JOR_DRIVE_FOLDER_DEFAULT = 'https://drive.google.com/drive/folders/104YRCz0KifkwDqQKQ_LCVuIKj97_9z00?usp=sharing';
-let jorDrivePdfs = [];
-
-function jorDriveFolderUrl() {
-  return localStorage.getItem('urlJornadaDrive') || JOR_DRIVE_FOLDER_DEFAULT;
-}
-
-async function jorBuscarPastaDrive() {
-  const inputEl = document.getElementById('jorDriveUrl');
-  const url = (inputEl && inputEl.value.trim()) || jorDriveFolderUrl();
-  localStorage.setItem('urlJornadaDrive', url);
-
-  const statusEl = document.getElementById('jorImportStatus');
-  const listEl = document.getElementById('jorDrivePdfList');
-  statusEl.style.display = 'block';
-  listEl.style.display = 'block';
-
-  const folderId = extrairFolderIdDrive(url);
-  if (!folderId) {
-    statusEl.innerHTML = '<span style="color:var(--danger)"><i class="fas fa-exclamation-circle"></i> Não consegui identificar o ID da pasta nesse link.</span>';
-    return;
-  }
-
-  statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Listando PDFs da pasta do Drive...';
-  listEl.innerHTML = '';
-
-  let arquivos = [];
-  try {
-    arquivos = await listarPDFsDrive(folderId);
-  } catch (e) {
-    statusEl.innerHTML = `<span style="color:var(--warning)"><i class="fas fa-exclamation-triangle"></i> Não consegui listar a pasta automaticamente (limitação de CORS do Drive, ou a pasta não está pública). Baixe os PDFs e use "Importar Recibos (PDF)" manualmente.</span>`;
-    return;
-  }
-
-  jorDrivePdfs = arquivos.filter(a => a.nome.toLowerCase().endsWith('.pdf'));
-  if (!jorDrivePdfs.length) {
-    statusEl.innerHTML = '<span style="color:var(--warning)"><i class="fas fa-folder-open"></i> Nenhum PDF encontrado nessa pasta.</span>';
-    return;
-  }
-
-  statusEl.innerHTML = `<i class="fas fa-check-circle" style="color:var(--success)"></i> <b>${jorDrivePdfs.length} PDF(s)</b> encontrado(s) na pasta.`;
-  listEl.innerHTML = jorDrivePdfs.map(a => `
-    <div id="jorpdfcard_${a.id}" style="background:var(--gray-100);border-radius:var(--r12);padding:.7rem 1rem;border:1px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-top:.4rem">
-      <div style="display:flex;align-items:center;gap:.5rem;min-width:0">
-        <i class="fas fa-file-pdf" style="color:#e74c3c"></i>
-        <span style="font-size:.8rem;font-weight:600;word-break:break-all">${escapeHTML(a.nome)}</span>
-      </div>
-      <div style="display:flex;gap:.4rem;align-items:center;flex-shrink:0">
-        <span id="jorpdfstatus_${a.id}" style="font-size:.72rem;color:var(--text-lt)"></span>
-        <button class="btn btn-accent btn-sm" onclick="jorProcessarPdfDrive('${a.id}')"><i class="fas fa-robot"></i> Processar</button>
-      </div>
-    </div>`).join('') +
-    `<button class="btn btn-success btn-sm" style="margin-top:.6rem" onclick="jorProcessarTodosPdfsDrive()"><i class="fas fa-layer-group"></i> Processar TODOS</button>`;
-}
-
-async function jorBaixarPdfDrive(arquivo) {
-  const proxyUrl = `https://corsproxy.io/?${arquivo.urlDownload}`;
-  const resp = await fetch(proxyUrl);
-  if (!resp.ok) throw new Error(`Erro ao baixar ${arquivo.nome}`);
-  const blob = await resp.blob();
-  return new Promise((res, rej) => {
-    const reader = new FileReader();
-    reader.onload = () => res(reader.result.split(',')[1]);
-    reader.onerror = rej;
-    reader.readAsDataURL(blob);
-  });
-}
-
-async function jorProcessarPdfDrive(id) {
-  const arquivo = jorDrivePdfs.find(a => a.id === id);
-  if (!arquivo) return;
-  const cardStatusEl = document.getElementById(`jorpdfstatus_${id}`);
-  try {
-    if (cardStatusEl) cardStatusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> baixando...';
-    const base64 = await jorBaixarPdfDrive(arquivo);
-    if (cardStatusEl) cardStatusEl.innerHTML = '<i class="fas fa-robot" style="color:var(--accent)"></i> IA lendo...';
-    const n = await jorProcessarPdfBase64(base64, arquivo.nome);
-    if (cardStatusEl) cardStatusEl.innerHTML = n
-      ? `<span style="color:#16a34a"><i class="fas fa-check-circle"></i> ${n} importado(s)</span>`
-      : `<span style="color:#dc2626">nenhum funcionário reconhecido</span>`;
-  } catch (err) {
-    console.error(err);
-    if (cardStatusEl) cardStatusEl.innerHTML = `<span style="color:#dc2626"><i class="fas fa-triangle-exclamation"></i> erro: ${escapeHTML(err.message || 'desconhecido')}</span>`;
-  }
-  jorLoaded = false;
-  jorInit();
-}
-
-async function jorProcessarTodosPdfsDrive() {
-  for (const a of jorDrivePdfs) {
-    await jorProcessarPdfDrive(a.id);
-  }
-}
-
 
 </script>
 </body>
