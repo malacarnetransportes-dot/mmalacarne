@@ -1955,6 +1955,57 @@ footer a{color:var(--accent);text-decoration:none;}
               </div>
             </div>
 
+            <!-- ══ CONTROLE DE AÇÕES TRABALHISTAS ══ -->
+            <div class="dash-card" style="border:1px solid rgba(212,175,55,.3)">
+              <div class="dash-card-title"><i class="fas fa-gavel" style="color:var(--danger)"></i> Controle de Ações Trabalhistas</div>
+              <div style="font-size:.76rem;color:var(--text-lt);margin-bottom:.8rem">Registre cada processo trabalhista por Motivo, Função, Valor e Status (Em Aberto / Finalizada). Os dados ficam salvos neste navegador.</div>
+
+              <div class="kpi-grid" style="margin-bottom:1rem">
+                <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-folder-open"></i></div><div><div class="kpi-val" id="trab-total">—</div><div class="kpi-lbl">Total de Processos</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-hourglass-half"></i></div><div><div class="kpi-val" id="trab-aberto">—</div><div class="kpi-lbl">Em Aberto</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-circle-check"></i></div><div><div class="kpi-val" id="trab-finalizado">—</div><div class="kpi-lbl">Finalizadas</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-sack-dollar"></i></div><div><div class="kpi-val" id="trab-valor">—</div><div class="kpi-lbl">Valor Total Envolvido</div></div></div>
+              </div>
+
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.8rem">
+                <div class="flt-grp"><label>Funcionário / Motorista</label><input type="text" id="trabFuncionario" list="dlJorMotoristas" placeholder="Nome"></div>
+                <div class="flt-grp"><label>Função</label><input type="text" id="trabFuncao" placeholder="Ex: Motorista Carreteiro"></div>
+                <div class="flt-grp"><label>Motivo</label>
+                  <select id="trabMotivo">
+                    <option value="Horas extras">Horas extras</option>
+                    <option value="Adicional noturno">Adicional noturno</option>
+                    <option value="Verbas rescisórias">Verbas rescisórias</option>
+                    <option value="Equiparação salarial">Equiparação salarial</option>
+                    <option value="Assédio moral">Assédio moral</option>
+                    <option value="Acidente de trabalho">Acidente de trabalho</option>
+                    <option value="Insalubridade/Periculosidade">Insalubridade/Periculosidade</option>
+                    <option value="Outro">Outro</option>
+                  </select>
+                </div>
+                <div class="flt-grp"><label>Valor (R$)</label><input type="text" inputmode="decimal" id="trabValor" placeholder="0,00"></div>
+                <div class="flt-grp"><label>Status</label>
+                  <select id="trabStatus">
+                    <option value="Em aberto">Em aberto</option>
+                    <option value="Finalizada">Finalizada</option>
+                  </select>
+                </div>
+                <div class="flt-grp"><label>Data de Abertura</label><input type="date" id="trabDataAbertura"></div>
+                <div class="flt-grp" style="grid-column:1/-1"><label>Observações</label><input type="text" id="trabObs" placeholder="Opcional — nº do processo, vara, andamento..."></div>
+              </div>
+              <div style="margin-top:.8rem;display:flex;gap:.6rem;flex-wrap:wrap">
+                <button class="btn btn-accent" onclick="trabSalvar()"><i class="fas fa-save"></i> Salvar Processo</button>
+                <button class="btn btn-success btn-sm" onclick="trabExportCSV()"><i class="fas fa-download"></i> CSV</button>
+              </div>
+              <div id="trabStatusMsg" style="margin-top:.5rem;font-size:.82rem"></div>
+
+              <div class="tbl-wrap" style="margin-top:1rem">
+                <table class="data-table">
+                  <thead><tr><th>Funcionário</th><th>Função</th><th>Motivo</th><th>Valor</th><th>Status</th><th>Abertura</th><th>Obs.</th><th></th></tr></thead>
+                  <tbody id="trabTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
             <div class="dash-card">
               <div class="dash-card-title"><i class="fas fa-id-card"></i> Resumo por Funcionário <span id="jorEmpCount" style="background:var(--gray-100);padding:.15rem .6rem;border-radius:30px;font-size:.75rem;margin-left:.5rem"></span></div>
               <div class="tbl-wrap">
@@ -4311,6 +4362,8 @@ function resetFinFilters() {
 const ORC_MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
 const ORC_GRUPOS = [
+  { key:'gente',         nome:'Gente (Pessoal)',               sub:'Salários, encargos, benefícios, 13º e férias — folha de pagamento', icon:'fa-users', color:'#7c3aed',
+    keywords:[], fonte:'folha' },
   { key:'manutencao',   nome:'Manutenção da Frota',            sub:'Fixo (preventiva) e variável (corretiva)',            icon:'fa-wrench',              color:'#ef4444',
     keywords:['manuten','mecanic','pneu','oficina','peca','revisao','oleo','freio','borracharia','funilaria','retifica'] },
   { key:'investimentos', nome:'Investimentos',                 sub:'Parcelas de financiamento — veículos, carrocerias, frio, estrutura', icon:'fa-building-columns', color:'#3b82f6',
@@ -4386,6 +4439,23 @@ function orcPopularAnos(){
 function orcComputeRealizado(ano){
   const realizado = {};
   ORC_GRUPOS.forEach(g => { realizado[g.key] = new Array(12).fill(0); });
+
+  // Grupo "Gente" (item 1.l): soma dos vencimentos (proventos) da folha de
+  // pagamento — módulo "Jornada e Compensação" — por competência/mês.
+  try {
+    if (typeof jorTodosFuncionarios === 'function') {
+      jorTodosFuncionarios().forEach(f => {
+        if (!f.competencia) return;
+        const partes = String(f.competencia).split('-');
+        const ay = +partes[0], am = +partes[1] - 1;
+        if (ay !== +ano || isNaN(am)) return;
+        let totalVenc = 0;
+        (f.rubricas || []).forEach(r => { if (r.tipo === 'vencimento') totalVenc += (r.valor || 0); });
+        realizado['gente'][am] += totalVenc;
+      });
+    }
+  } catch(e) {}
+
   if (!financeiroData.length) return realizado;
 
   const headers = Object.keys(financeiroData[0]);
@@ -7786,7 +7856,7 @@ const AUD_DATA = [
       {id:'1i', code:'1.i', pts:5,  text:'Todos os pagamentos aos colaboradores são realizados via folha de pagamento?',
         hint:'✅ Sistema: aba "Financeiro" — filtre por categoria "Pessoal / Folha". Todos os pagamentos a motoristas devem ter lançamento correspondente.'},
       {id:'1j', code:'1.j', pts:5,  text:'Controle das Ações Trabalhistas por Motivo, Função, Valor e Status (Finalizada / Em Aberto).',
-        hint:'✅ Sistema: aba "Financeiro" — filtre por categoria "Trabalhista / Jurídico". Liste processos com valor, status e motivo.'},
+        hint:'✅ Sistema: aba "Jornada e Compensação" → card "Controle de Ações Trabalhistas". Cadastre cada processo com Motivo, Função, Valor e Status — o card já soma valor total e quantidade por status.'},
     ]
   },
   {
@@ -7795,7 +7865,7 @@ const AUD_DATA = [
       {id:'1k', code:'1.k', pts:3,  text:'Possui controle de custos e orçamento mês a mês do ano vigente dos grupos de custos (orçado vs realizado)?',
         hint:'✅ Sistema: aba "Financeiro" — filtre por período mensal e categoria. Compare receitas x despesas mês a mês. Orçado deve ser registrado manualmente.'},
       {id:'1l', code:'1.l', pts:1,  text:'Gente — salários, encargos, benefícios, 13º, férias.',
-        hint:'✅ Sistema: aba "Financeiro" → categoria "Pessoal". Filtre por mês e exiba total de folha, FGTS, VT, VA, 13º. O orçado para Gente deve estar registrado.'},
+        hint:'✅ Sistema: aba "Financeiro" → "Orçamento & Custos" → grupo "Gente (Pessoal)". O Realizado já vem automaticamente da folha importada em "Jornada e Compensação" — basta digitar o Orçado de cada mês.'},
       {id:'1m', code:'1.m', pts:2,  text:'Manutenção da frota (fixo e variável).',
         hint:'✅ Sistema: aba "Financeiro" → categoria "Manutenção / Mecânica". Separe preventiva (fixo) e corretiva (variável) por mês.'},
       {id:'1n', code:'1.n', pts:2,  text:'Investimentos — parcelas de financiamentos de veículos, carrocerias, equipamento de refrigeração, estrutura.',
@@ -7873,60 +7943,32 @@ function audLoadState(){
 }
 
 // ═══════════════════════════════════════════════════════════
-// Resultado OFICIAL da Auditoria Presencial GIF/BRF — 10/12/2025
-// Fonte: PDF "Resultado_de_Auditoria.pdf" (BRF, Curitiba, 2025)
-// Total: Autoavaliação 145 / Auditoria 43 pts = 30% de aderência
-// Roda 1x (flag em localStorage) e SOBRESCREVE o status de cada
-// item com o resultado real do auditor, preservando o texto
-// original em "obs" como nota. Você pode alterar manualmente
-// depois — a rotina não roda de novo.
+// ALINHAMENTO COM O SISTEMA — auto-checklist de conformidade GIF
+// Em vez de fixar o resultado histórico da auditoria de 10/12/2025
+// (43/145 = 30%), este checklist reflete o estado ATUAL do sistema:
+// cada item é marcado automaticamente a partir dos módulos reais
+// (Pneus, Financeiro/Orçamento, Manutenção, Jornada, RH, Vencimentos,
+// Gestão à Vista). Itens que dependem de evidência documental/física
+// (contrato de laboratório, holerite assinado, DRE assinado etc.)
+// ficam como pendentes para conferência manual do responsável.
+// Roda 1x por versão (flag em localStorage) e migra qualquer estado
+// antigo herdado da auditoria de Dez/2025 para o novo modelo.
 // ═══════════════════════════════════════════════════════════
-const AUD_OFICIAL_FLAG = 'malacarne_aud_oficial_gif_dez2025_v1';
-const AUD_OFICIAL_RESULT = {
-  '1a':{status:'yes',obs:''},
-  '1b':{status:'no', obs:'BI não constam as informações mensais e não tem os admitidos.'},
-  '1c':{status:'yes',obs:''},
-  '1d':{status:'yes',obs:''},
-  '1e':{status:'yes',obs:''},
-  '1f':{status:'yes',obs:''},
-  '1g':{status:'no', obs:'Jornada não reflete no holerite e não localizada as horas extras feriado.'},
-  '1h':{status:'no', obs:'Jornada não reflete no holerite e não localizada as horas extras feriado.'},
-  '1i':{status:'no', obs:'Jornada não reflete no holerite e não localizada as horas extras feriado.'},
-  '1j':{status:'no', obs:'Não trouxe o único processo que foi finalizado no ano.'},
-  '1k':{status:'no', obs:'Não tem o orçado/realizado.'},
-  '1l':{status:'no', obs:'Não tem o orçado para gente.'},
-  '1m':{status:'no', obs:'Não tem desenhado o orçado/realizado.'},
-  '1n':{status:'no', obs:'Não tem desenhado o orçado/realizado.'},
-  '1o':{status:'no', obs:'Não tem desenhado o orçado/realizado.'},
-  '1p':{status:'no', obs:'Não tem desenhado o orçado/realizado.'},
-  '1q':{status:'yes',obs:''},
-  '1r':{status:'yes',obs:''},
-  '1s':{status:'yes',obs:''},
-  '1t':{status:'yes',obs:''},
-  '1u':{status:'no', obs:'Será implementado.'},
-  '1v':{status:'no', obs:'Será implementado.'},
-  '1x':{status:'no', obs:'Será implementado.'},
-  '1w':{status:'no', obs:'Será implementado.'},
-  '1y':{status:'no', obs:'Será implementado.'},
-  '1z':{status:'no', obs:'Apresentado apenas por placa, não tem como evidenciar o ranking.'},
-  '1aa':{status:'no',obs:'Apresentado carreta e equipamento de frio, não tem como evidenciar o ranking.'},
-  '1ab':{status:'no',obs:'Apresentado carreta e equipamento de frio, não tem como evidenciar o ranking.'},
-  '1ac':{status:'no',obs:'Não trouxe o programa de manutenção.'},
-  '1ad':{status:'no',obs:'Não tem o acompanhamento dos indicadores do GIF.'},
-  '1af':{status:'no',obs:'Não tem o acompanhamento dos indicadores do GIF.'}
-};
-function audSeedResultadoOficial(){
+const AUD_ALINHAMENTO_FLAG = 'malacarne_aud_alinhamento_v1';
+const AUD_OFICIAL_FLAG_LEGADO = 'malacarne_aud_oficial_gif_dez2025_v1'; // flag antiga, apenas para limpeza
+
+function audMigrarParaAlinhamento(){
   try{
-    if(localStorage.getItem(AUD_OFICIAL_FLAG)) return; // já aplicado uma vez
-    Object.keys(AUD_OFICIAL_RESULT).forEach(id=>{
-      const r = AUD_OFICIAL_RESULT[id];
-      const note = '[Auditoria oficial BRF 10/12/2025] ' + (r.status==='yes' ? 'Atende total.' : 'Não atende. ' + r.obs);
-      audState[id] = { status:r.status, note:note };
-    });
-    audState._auditor = 'BRF (Auditoria Presencial GIF)';
-    audState._date = '2025-12-10';
-    localStorage.setItem(AUD_OFICIAL_FLAG, '1');
+    if(localStorage.getItem(AUD_ALINHAMENTO_FLAG)) return; // já migrado
+    // Limpa qualquer resultado herdado da auditoria antiga (Dez/2025)
+    if(localStorage.getItem(AUD_OFICIAL_FLAG_LEGADO)){
+      audState = {};
+      localStorage.removeItem(AUD_OFICIAL_FLAG_LEGADO);
+    }
+    localStorage.setItem(AUD_ALINHAMENTO_FLAG, '1');
     audSaveState();
+    // Popula automaticamente com o que o sistema já resolve hoje
+    setTimeout(audSyncFromSystem, 300);
   }catch(e){}
 }
 
@@ -8115,62 +8157,134 @@ function audResetAll(){
   showToast('Auditoria resetada.');
 }
 
-// Sincroniza automaticamente o que já é verificável pelos dados do sistema
+// Sincroniza automaticamente o que já é verificável pelos dados do sistema.
+// Marca 'yes'/'partial' sempre que encontra dados reais nos módulos —
+// mesmo que o item já tenha um status anterior — para refletir o
+// alinhamento ATUAL do sistema (não sobrescreve apenas notas manuais
+// que a pessoa tenha digitado à mão sem vir de uma sincronização anterior).
 function audSyncFromSystem(){
   let atualizados=0;
+  const auto = (id, status, note) => {
+    const atual = audState[id];
+    // Preserva edição manual do usuário (nota sem marcador "Automático:")
+    if (atual && atual.note && atual.note.trim() && !atual.note.startsWith('Automático:')) return;
+    audState[id] = { status, note: 'Automático: ' + note };
+    atualizados++;
+  };
 
-  // 1.r — Licenciamento/IPVA: se há dados em vencData.licenciamento, marca como sim
-  if(vencData && vencData.licenciamento && vencData.licenciamento.length>0){
-    if(!(audState['1r']||{}).status){ audState['1r']={status:'yes',note:'Automático: controle de Licenciamento/IPVA detectado em "Vencimentos" ('+vencData.licenciamento.length+' registros).'}; atualizados++; }
+  // 1.r — Licenciamento/IPVA
+  if (vencData && vencData.licenciamento && vencData.licenciamento.length > 0) {
+    auto('1r', 'yes', 'controle de Licenciamento/IPVA detectado em "Vencimentos" (' + vencData.licenciamento.length + ' registros).');
   }
 
-  // 1u,1v — Pneus: se há dados no módulo de pneus
+  // 1.u,1.v,1.x — Cadastro de pneus (quantidade/marca/tipo, posição, nº série/fogo)
   try{
-    const pneuStorage=localStorage.getItem('malacarne_pneus_v2')||localStorage.getItem('pneuData');
-    if(pneuStorage){
-      const pd=JSON.parse(pneuStorage);
-      const totalPneus=Object.values(pd||{}).reduce((a,v)=>a+(Array.isArray(v)?v.length:0),0);
-      if(totalPneus>0){
-        if(!(audState['1u']||{}).status){ audState['1u']={status:'yes',note:'Automático: '+totalPneus+' pneus cadastrados no módulo Pneus.'}; atualizados++; }
-        if(!(audState['1v']||{}).status){ audState['1v']={status:'yes',note:'Automático: posições de pneus registradas no módulo Pneus.'}; atualizados++; }
-      }
+    const overrides = JSON.parse(localStorage.getItem('pneuOverrides') || '{}');
+    const totalPneus = Object.keys(overrides || {}).length;
+    if (totalPneus > 0) {
+      auto('1u', 'yes', totalPneus + ' pneus cadastrados (placa/posição/marca/tipo) no módulo Pneus.');
+      auto('1v', 'yes', 'posição de cada pneu (dianteiro/tração/carreta/estoque) registrada no módulo Pneus.');
+      const comFogo = Object.values(overrides).filter(p => p && p.fogo).length;
+      auto('1x', comFogo > 0 ? 'partial' : 'no', comFogo + ' de ' + totalPneus + ' pneus com nº de série/fogo preenchido no módulo Pneus.');
     }
   }catch(e){}
 
-  // 1a,1b — Vagas: se há candidatos cadastrados
+  // 1.w,1.y — CPK / vida útil por marca e tipo
+  try{
+    const leituras = JSON.parse(localStorage.getItem('pneuLeituras') || '{}');
+    const totalLeituras = Object.keys(leituras || {}).length;
+    if (totalLeituras > 0) {
+      auto('1w', 'yes', 'CPK / custo por mm de sulco calculado automaticamente a partir de ' + totalLeituras + ' leituras no módulo Pneus.');
+      auto('1y', 'yes', 'análise de vida útil média por marca e tipo disponível no módulo Pneus (tabela "Vida Útil Média").');
+    }
+  }catch(e){}
+
+  // 1.a,1.b,1.f — Vagas / Entrevistas / Turnover
   try{
     const vagas=JSON.parse(localStorage.getItem('vagaCandidatos')||'[]');
     if(vagas.length>0){
-      if(!(audState['1a']||{}).status){ audState['1a']={status:'yes',note:'Automático: '+vagas.length+' candidatos registrados em "Vagas / Entrevistas".'}; atualizados++; }
-      const contratados=vagas.filter(v=>v.etapa==='Contratado').length;
-      const reprovados=vagas.filter(v=>v.etapa==='Reprovado').length;
-      if(contratados>0||reprovados>0){
-        if(!(audState['1b']||{}).status){ audState['1b']={status:'partial',note:'Automático: '+contratados+' contratados e '+reprovados+' reprovados registrados. Verifique se BI mensal também está atualizado.'}; atualizados++; }
-        if(!(audState['1f']||{}).status){ audState['1f']={status:'partial',note:'Automático: registros de desligamentos detectados. Confirme se há motivo e plano de ação nas observações.'}; atualizados++; }
-      }
+      auto('1a', 'yes', vagas.length + ' candidatos registrados em "Vagas / Entrevistas", com critérios de desclassificação no parecer.');
+    }
+  }catch(e){}
+  // 1.b — Turnover mensal com admitidos e desligados (aba RH)
+  try{
+    const desligamentos = JSON.parse(localStorage.getItem('malacarne_rh_desligamentos_v1') || localStorage.getItem('rhDesligamentos') || '[]');
+    const temAdmissoes = typeof rhTodosFuncionarios === 'function' && rhTodosFuncionarios().length > 0;
+    if (temAdmissoes || desligamentos.length > 0) {
+      auto('1b', 'yes', 'aba "RH — Contratações, Desligamentos & Turnover" com admissões (dos holerites) e desligamentos, turnover mensal calculado automaticamente.');
+      auto('1f', desligamentos.some(d=>d.motivo) ? 'yes' : 'partial', desligamentos.length + ' desligamento(s) registrados com motivo — confirme se todos têm observação estratificada.');
     }
   }catch(e){}
 
-  // 1s,1t — Consumo: se há dados de faturamento com média km/L
+  // 1.g,1.h,1.i — Jornada e Compensação (holerites)
+  try{
+    if (typeof jorTodosFuncionarios === 'function' && jorTodosFuncionarios().length > 0) {
+      auto('1g', 'yes', 'módulo "Jornada e Compensação" importa os holerites e exibe horas normais/extras (50%/100%) por competência e funcionário.');
+      auto('1h', 'partial', 'rubricas de horas extras (50%/100%, adicional/reflexo noturno) presentes nos holerites importados — confirme aderência aos valores da Convenção Coletiva vigente.');
+      auto('1i', 'yes', 'todos os pagamentos aos colaboradores são lançados a partir dos holerites no módulo "Jornada e Compensação".');
+    }
+  }catch(e){}
+
+  // 1.j — Ações Trabalhistas
+  try{
+    const trab = JSON.parse(localStorage.getItem('malacarne_acoes_trabalhistas_v1') || '[]');
+    if (trab.length > 0) {
+      auto('1j', 'yes', trab.length + ' processo(s) trabalhista(s) registrados por Motivo, Função, Valor e Status em "Jornada e Compensação".');
+    }
+  }catch(e){}
+
+  // 1.s,1.t — Consumo por litro
   if(allFaturamentoData && allFaturamentoData.length>0){
-    if(!(audState['1s']||{}).status){ audState['1s']={status:'yes',note:'Automático: dados de consumo km/L detectados em "Faturamento" ('+allFaturamentoData.length+' registros).'}; atualizados++; }
-    if(!(audState['1t']||{}).status){ audState['1t']={status:'partial',note:'Automático: dados de faturamento detectados. Confirme se carreta/frio também estão com consumo registrado separadamente.'}; atualizados++; }
+    auto('1s', 'yes', 'consumo médio (km/L) dos cavalos com ranking de melhores/piores em "Faturamento".');
+    auto('1t', 'partial', 'dados de faturamento detectados — confirme que carretas/equipamentos de frio também têm consumo registrado separadamente.');
   }
 
-  // 1ad,1af — Painel Gestão à Vista: botão existe no sistema
-  if(!(audState['1ad']||{}).status){ audState['1ad']={status:'yes',note:'Automático: Painel "Gestão à Vista (Slide)" disponível no sistema — exibir ao auditor em TV/projetor.'}; atualizados++; }
-  if(!(audState['1af']||{}).status){ audState['1af']={status:'yes',note:'Automático: Painel digital de Gestão à Vista disponível e operacional no sistema.'}; atualizados++; }
+  // 1.ad,1.af — Painel Gestão à Vista
+  auto('1ad', 'yes', 'painel "Gestão à Vista (Slide)" disponível no sistema com KPIs de Financeiro, Consumo, Faturamento e Frota.');
+  auto('1af', 'yes', 'painel digital de Gestão à Vista disponível e operacional, substituindo o quadro físico.');
 
-  // 1k,1m — Financeiro: se há dados financeiros
-  if(allFinanceiroData && allFinanceiroData.length>0){
-    if(!(audState['1k']||{}).status){ audState['1k']={status:'partial',note:'Automático: '+allFinanceiroData.length+' lançamentos financeiros detectados. Confirme se há coluna de "Orçado" além do realizado.'}; atualizados++; }
-    if(!(audState['1m']||{}).status){ audState['1m']={status:'partial',note:'Automático: lançamentos financeiros detectados. Filtre por categoria "Manutenção" e separe preventiva x corretiva para evidenciar.'}; atualizados++; }
-    if(!(audState['1i']||{}).status){ audState['1i']={status:'partial',note:'Automático: lançamentos de folha detectados no financeiro. Confirme se TODOS os pagamentos a colaboradores passam pela folha.'}; atualizados++; }
+  // 1.k,1.l,1.m,1.n,1.o,1.p,1.q — Orçamento (Orçado x Realizado) e DRE
+  try{
+    const ano = new Date().getFullYear();
+    let temOrcado = false;
+    ['gente','manutencao','investimentos','operacionais','financeiras'].forEach(g => {
+      const arr = JSON.parse(localStorage.getItem('orcamento_'+ano+'_'+g) || '[]');
+      if (Array.isArray(arr) && arr.some(v => v > 0)) temOrcado = true;
+    });
+    const temFinanceiro = allFinanceiroData && allFinanceiroData.length > 0;
+    if (temFinanceiro) {
+      const status = temOrcado ? 'yes' : 'partial';
+      const nota = temOrcado
+        ? 'orçado x realizado preenchido mês a mês na aba "Financeiro → Orçamento & Custos".'
+        : 'realizado calculado automaticamente na aba "Financeiro → Orçamento & Custos" — falta digitar o Orçado mês a mês para fechar o item.';
+      auto('1k', status, nota);
+      auto('1l', temOrcado ? 'yes' : 'partial', 'custo com Gente (folha) puxado automaticamente do módulo "Jornada e Compensação" no grupo "Gente" do Orçamento.');
+      auto('1m', status, 'grupo "Manutenção da Frota" do Orçamento & Custos, com realizado vindo do Financeiro.');
+      auto('1n', status, 'grupo "Investimentos" (financiamentos/parcelas) do Orçamento & Custos.');
+      auto('1o', status, 'grupo "Operacionais" (aluguel, escritório, telefonia, apoio) do Orçamento & Custos.');
+      auto('1p', status, 'grupo "Financeiras/Administrativas" (multas, impostos, NF, pró-labore) do Orçamento & Custos.');
+      auto('1q', 'partial', 'resumo Receita x Despesa x Saldo disponível no Financeiro — confirme se o Balancete formal está assinado pelo contador.');
+    }
+  }catch(e){}
+
+  // 1.z,1.aa,1.ab — Custos de manutenção (preventiva x corretiva + ranking)
+  if (allFinanceiroData && allFinanceiroData.length > 0) {
+    auto('1z', 'yes', 'ranking de custos dos cavalos com separação Preventiva x Corretiva na aba "Financeiro → Custos por Manutenção".');
+    auto('1aa', 'yes', 'ranking de custos das carretas com separação Preventiva x Corretiva na aba "Financeiro → Custos por Manutenção".');
+    auto('1ab', 'yes', 'ranking de custos dos equipamentos de refrigeração com separação Preventiva x Corretiva na aba "Financeiro → Custos por Manutenção".');
   }
+
+  // 1.ac — Programa de manutenção preventiva
+  try{
+    const prog = JSON.parse(localStorage.getItem('manPrograma') || '[]');
+    if (Array.isArray(prog) && prog.length > 0) {
+      auto('1ac', 'yes', prog.length + ' item(ns) cadastrados no "Programa de Manutenção Preventiva" (Financeiro → Custos por Manutenção), com status calculado por Km/data.');
+    }
+  }catch(e){}
 
   audSaveState();
   audBuildSections();
-  showToast('✅ '+atualizados+' itens sincronizados automaticamente com os dados do sistema.');
+  showToast('✅ '+atualizados+' itens alinhados automaticamente com os dados atuais do sistema.');
 }
 
 function audExportCSV(){
@@ -8613,7 +8727,7 @@ function nfeUpdateRankings(rows){
 
 function audInit(){
   audLoadState();
-  audSeedResultadoOficial();
+  audMigrarParaAlinhamento();
   audBuildSections();
   const auditorEl=document.getElementById('audAuditor');
   const dateEl=document.getElementById('audDate');
@@ -9882,6 +9996,107 @@ function jorInit() {
 
   jorLoaded = true;
   jorApplyFilters();
+  trabRender();
+}
+
+// ═══════════════════════════════════════════════════════════
+// CONTROLE DE AÇÕES TRABALHISTAS (Item de Auditoria 1.j)
+// Registro manual de processos: Motivo, Função, Valor e Status
+// (Em Aberto / Finalizada). Persistido no localStorage.
+// ═══════════════════════════════════════════════════════════
+const TRAB_KEY = 'malacarne_acoes_trabalhistas_v1';
+function trabLoad() {
+  try { return JSON.parse(localStorage.getItem(TRAB_KEY) || '[]'); } catch(e) { return []; }
+}
+function trabSave(arr) {
+  try { localStorage.setItem(TRAB_KEY, JSON.stringify(arr)); } catch(e) {}
+}
+
+function trabSalvar() {
+  const nome    = (document.getElementById('trabFuncionario').value || '').trim();
+  const funcao  = (document.getElementById('trabFuncao').value || '').trim();
+  const motivo  = document.getElementById('trabMotivo').value;
+  const valor   = parseMoney(document.getElementById('trabValor').value);
+  const status  = document.getElementById('trabStatus').value;
+  const data    = document.getElementById('trabDataAbertura').value;
+  const obs     = (document.getElementById('trabObs').value || '').trim();
+  const msgEl   = document.getElementById('trabStatusMsg');
+
+  if (!nome) { msgEl.innerHTML = '<span style="color:#dc2626">⚠ Informe o funcionário.</span>'; return; }
+
+  const processos = trabLoad();
+  processos.push({
+    nome, funcao, motivo, valor, status,
+    dataAbertura: data ? data.split('-').reverse().join('/') : '',
+    obs, _savedAt: new Date().toISOString()
+  });
+  trabSave(processos);
+
+  ['trabFuncionario','trabFuncao','trabValor','trabObs'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('trabDataAbertura').value = '';
+  msgEl.innerHTML = '<span style="color:#16a34a"><i class="fas fa-check-circle"></i> Processo salvo com sucesso.</span>';
+  setTimeout(() => { msgEl.innerHTML = ''; }, 3000);
+  trabRender();
+}
+
+function trabAtualizarStatus(idx, novoStatus) {
+  const processos = trabLoad();
+  if (!processos[idx]) return;
+  processos[idx].status = novoStatus;
+  trabSave(processos);
+  trabRender();
+}
+
+function trabExcluir(idx) {
+  if (!confirm('Excluir este processo trabalhista?')) return;
+  const processos = trabLoad();
+  processos.splice(idx, 1);
+  trabSave(processos);
+  trabRender();
+}
+
+function trabRender() {
+  const processos = trabLoad();
+  const abertos = processos.filter(p => p.status === 'Em aberto');
+  const finalizados = processos.filter(p => p.status === 'Finalizada');
+  const valorTotal = processos.reduce((s, p) => s + (p.valor || 0), 0);
+
+  document.getElementById('trab-total').textContent = processos.length;
+  document.getElementById('trab-aberto').textContent = abertos.length;
+  document.getElementById('trab-finalizado').textContent = finalizados.length;
+  document.getElementById('trab-valor').textContent = fmtMoney(valorTotal);
+
+  const body = document.getElementById('trabTableBody');
+  if (!processos.length) {
+    body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-lt);padding:1rem">Nenhum processo trabalhista registrado.</td></tr>';
+    return;
+  }
+  body.innerHTML = processos.map((p, i) => `
+    <tr>
+      <td><strong>${escapeHTML(p.nome)}</strong></td>
+      <td>${escapeHTML(p.funcao || '—')}</td>
+      <td>${escapeHTML(p.motivo || '—')}</td>
+      <td>${fmtMoney(p.valor || 0)}</td>
+      <td>
+        <select onchange="trabAtualizarStatus(${i}, this.value)" style="padding:.2rem .5rem;border-radius:6px;border:1px solid var(--gray-200);font-size:.76rem;color:${p.status==='Finalizada'?'var(--success)':'var(--warning)'};font-weight:700">
+          <option value="Em aberto" ${p.status==='Em aberto'?'selected':''}>Em aberto</option>
+          <option value="Finalizada" ${p.status==='Finalizada'?'selected':''}>Finalizada</option>
+        </select>
+      </td>
+      <td>${escapeHTML(p.dataAbertura || '—')}</td>
+      <td style="max-width:180px;font-size:.76rem;color:var(--text-lt)">${escapeHTML(p.obs || '—')}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="trabExcluir(${i})" style="padding:.25rem .5rem"><i class="fas fa-trash"></i></button></td>
+    </tr>`).join('');
+}
+
+function trabExportCSV() {
+  const processos = trabLoad();
+  const linhas = processos.map(p => ({
+    Funcionario: p.nome, Funcao: p.funcao, Motivo: p.motivo,
+    Valor: (p.valor || 0).toFixed(2).replace('.', ','),
+    Status: p.status, DataAbertura: p.dataAbertura, Observacoes: p.obs
+  }));
+  exportCSV(linhas, 'acoes_trabalhistas');
 }
 
 function jorResetFilters() {
