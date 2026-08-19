@@ -7872,6 +7872,64 @@ function audLoadState(){
   try{ const raw=localStorage.getItem(AUD_STORAGE_KEY); if(raw) audState=JSON.parse(raw); }catch(e){ audState={}; }
 }
 
+// ═══════════════════════════════════════════════════════════
+// Resultado OFICIAL da Auditoria Presencial GIF/BRF — 10/12/2025
+// Fonte: PDF "Resultado_de_Auditoria.pdf" (BRF, Curitiba, 2025)
+// Total: Autoavaliação 145 / Auditoria 43 pts = 30% de aderência
+// Roda 1x (flag em localStorage) e SOBRESCREVE o status de cada
+// item com o resultado real do auditor, preservando o texto
+// original em "obs" como nota. Você pode alterar manualmente
+// depois — a rotina não roda de novo.
+// ═══════════════════════════════════════════════════════════
+const AUD_OFICIAL_FLAG = 'malacarne_aud_oficial_gif_dez2025_v1';
+const AUD_OFICIAL_RESULT = {
+  '1a':{status:'yes',obs:''},
+  '1b':{status:'no', obs:'BI não constam as informações mensais e não tem os admitidos.'},
+  '1c':{status:'yes',obs:''},
+  '1d':{status:'yes',obs:''},
+  '1e':{status:'yes',obs:''},
+  '1f':{status:'yes',obs:''},
+  '1g':{status:'no', obs:'Jornada não reflete no holerite e não localizada as horas extras feriado.'},
+  '1h':{status:'no', obs:'Jornada não reflete no holerite e não localizada as horas extras feriado.'},
+  '1i':{status:'no', obs:'Jornada não reflete no holerite e não localizada as horas extras feriado.'},
+  '1j':{status:'no', obs:'Não trouxe o único processo que foi finalizado no ano.'},
+  '1k':{status:'no', obs:'Não tem o orçado/realizado.'},
+  '1l':{status:'no', obs:'Não tem o orçado para gente.'},
+  '1m':{status:'no', obs:'Não tem desenhado o orçado/realizado.'},
+  '1n':{status:'no', obs:'Não tem desenhado o orçado/realizado.'},
+  '1o':{status:'no', obs:'Não tem desenhado o orçado/realizado.'},
+  '1p':{status:'no', obs:'Não tem desenhado o orçado/realizado.'},
+  '1q':{status:'yes',obs:''},
+  '1r':{status:'yes',obs:''},
+  '1s':{status:'yes',obs:''},
+  '1t':{status:'yes',obs:''},
+  '1u':{status:'no', obs:'Será implementado.'},
+  '1v':{status:'no', obs:'Será implementado.'},
+  '1x':{status:'no', obs:'Será implementado.'},
+  '1w':{status:'no', obs:'Será implementado.'},
+  '1y':{status:'no', obs:'Será implementado.'},
+  '1z':{status:'no', obs:'Apresentado apenas por placa, não tem como evidenciar o ranking.'},
+  '1aa':{status:'no',obs:'Apresentado carreta e equipamento de frio, não tem como evidenciar o ranking.'},
+  '1ab':{status:'no',obs:'Apresentado carreta e equipamento de frio, não tem como evidenciar o ranking.'},
+  '1ac':{status:'no',obs:'Não trouxe o programa de manutenção.'},
+  '1ad':{status:'no',obs:'Não tem o acompanhamento dos indicadores do GIF.'},
+  '1af':{status:'no',obs:'Não tem o acompanhamento dos indicadores do GIF.'}
+};
+function audSeedResultadoOficial(){
+  try{
+    if(localStorage.getItem(AUD_OFICIAL_FLAG)) return; // já aplicado uma vez
+    Object.keys(AUD_OFICIAL_RESULT).forEach(id=>{
+      const r = AUD_OFICIAL_RESULT[id];
+      const note = '[Auditoria oficial BRF 10/12/2025] ' + (r.status==='yes' ? 'Atende total.' : 'Não atende. ' + r.obs);
+      audState[id] = { status:r.status, note:note };
+    });
+    audState._auditor = 'BRF (Auditoria Presencial GIF)';
+    audState._date = '2025-12-10';
+    localStorage.setItem(AUD_OFICIAL_FLAG, '1');
+    audSaveState();
+  }catch(e){}
+}
+
 function audSaveState(){
   const auditor=document.getElementById('audAuditor');
   const dt=document.getElementById('audDate');
@@ -8555,6 +8613,7 @@ function nfeUpdateRankings(rows){
 
 function audInit(){
   audLoadState();
+  audSeedResultadoOficial();
   audBuildSections();
   const auditorEl=document.getElementById('audAuditor');
   const dateEl=document.getElementById('audDate');
@@ -10197,6 +10256,55 @@ const RH_DESL_SEED = [
     empresa: 'M. MALACARNE TRANSPORTE E LOGISTICA LTDA',
     cargo: '', admissao: '', dataDesligamento: '09/06/2026',
     motivo: 'Demissão sem justa causa', obs: '', _savedAt: '2026-06-09T00:00:00.000Z'
+  },
+  // ── Importados do relatório "Controle de Turnover" (AI Studio) — Ano 2025 ──
+  {
+    nome: 'PAULO VILAS BOAS', matricula: '',
+    empresa: 'M. MALACARNE TRANSPORTE E LOGISTICA LTDA',
+    cargo: 'MOTORISTA', admissao: '01/11/2016', dataDesligamento: '15/09/2025',
+    motivo: 'Questões Pessoais/Familiares',
+    obs: 'Esposa com problemas de saúde, necessita de tempo para cuidados familiares.',
+    _savedAt: '2025-09-15T00:00:00.000Z'
+  },
+  {
+    nome: 'MARCEL AUGUSTO OLDONI', matricula: '',
+    empresa: 'M. MALACARNE TRANSPORTE E LOGISTICA LTDA',
+    cargo: 'MOTORISTA', admissao: '14/01/2023', dataDesligamento: '28/01/2025',
+    motivo: 'Oportunidade de Mercado',
+    obs: 'Recebeu proposta de emprego com salário superior.',
+    _savedAt: '2025-01-28T00:00:00.000Z'
+  },
+  {
+    nome: 'ANDERSON PANDOLFO', matricula: '',
+    empresa: 'M. MALACARNE TRANSPORTE E LOGISTICA LTDA',
+    cargo: 'MOTORISTA', admissao: '26/09/2023', dataDesligamento: '18/03/2025',
+    motivo: 'Oportunidade de Mercado',
+    obs: 'Proposta de emprego em outra transportadora.',
+    _savedAt: '2025-03-18T00:00:00.000Z'
+  },
+  {
+    nome: 'FABIO LUIS VIVAN', matricula: '',
+    empresa: 'M. MALACARNE TRANSPORTE E LOGISTICA LTDA',
+    cargo: 'MOTORISTA', admissao: '26/10/2023', dataDesligamento: '02/10/2025',
+    motivo: 'Oportunidade de Mercado',
+    obs: 'Aceitou proposta de emprego mais próxima de sua residência.',
+    _savedAt: '2025-10-02T00:00:00.000Z'
+  },
+  {
+    nome: 'MARCOS ROBERTO DE MOURA', matricula: '',
+    empresa: 'M. MALACARNE TRANSPORTE E LOGISTICA LTDA',
+    cargo: 'MOTORISTA', admissao: '01/08/2024', dataDesligamento: '26/02/2025',
+    motivo: 'Baixa Performance/Metas',
+    obs: 'Baixa produtividade, alta taxa de avarias e consumo excessivo de combustível.',
+    _savedAt: '2025-02-26T00:00:00.000Z'
+  },
+  {
+    nome: 'PAULO JOELCIO DE SOUZA', matricula: '',
+    empresa: 'M. MALACARNE TRANSPORTE E LOGISTICA LTDA',
+    cargo: 'MOTORISTA', admissao: '03/12/2024', dataDesligamento: '31/03/2025',
+    motivo: 'Descumprimento de Regras',
+    obs: 'Não seguimento de protocolos de segurança e regras BRF (Desvio de rota).',
+    _savedAt: '2025-03-31T00:00:00.000Z'
   }
 ];
 (function rhSeedDesligamentos() {
