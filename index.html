@@ -6688,7 +6688,8 @@ function vencTipoPlaca(placaTexto) {
   const isCavalo = FROTA_DATA.some(f => String(f.placa||'').toUpperCase().replace(/[^A-Z0-9]/g,'') === p);
   if (isCavalo) return 'cavalo';
   // Verifica se bate com uma carreta (campo carreta do FROTA_DATA)
-  const isCarreta = FROTA_DATA.some(f => String(f.carreta||'').toUpperCase().replace(/[^A-Z0-9]/g,'').includes(p) && p.length >= 6);
+  // Extrai só a placa do campo carreta (remove sufixos como "— 30 pal. Van") e compara por igualdade exata
+  const isCarreta = FROTA_DATA.some(f => String(f.carreta||'').split(/\s/)[0].toUpperCase().replace(/[^A-Z0-9]/g,'') === p);
   if (isCarreta) return 'carreta';
   // Heurística pelo formato: placas Mercosul (ABC1D23) e antigas (ABC1234) são cavalos;
   // carretas geralmente têm formatos menos padronizados na frota desta empresa
@@ -7499,7 +7500,7 @@ const FROTA_DATA = [
     cavaloMarca:'SCANIA', cavaloModelo:'SCANIA/R450 A6X2', cavaloAno:2022, carretaMarca:'RANDON', carretaAno:2018, refrigMarca:'THERMOKING', refrigModelo:'SLX 400i', refrigAno:2018},
   {motorista:'ANDERSON VEIGA SANTOS',       placa:'QTM0G30', carreta:'RYQ7I03 — 30 pal. Van',    paletes:'30', celular:'42 - 99832-0501', cpf:'012.273.449-10',
     cavaloMarca:'VOLVO', cavaloModelo:'VOLVO / FH 460 6X2T', cavaloAno:'2019/2020', carretaMarca:'RANDON', carretaAno:2023, refrigMarca:'CARRIER', refrigModelo:'X4 7500', refrigAno:2023},
-  {motorista:'CRISTIANO DE ALMEIDA',        placa:'QIG7598', carreta:'OKD8A19',                  paletes:'28', celular:'49 - 99110-7517', cpf:'029.395.799-11',
+  {motorista:'CRISTIANO DE ALMEIDA',        placa:'QIG7598', carreta:'RXQ4H32',                  paletes:'28', celular:'49 - 99110-7517', cpf:'029.395.799-11',
     cavaloMarca:'IVECO', cavaloModelo:'IVECO / HI WAY STRALIS 600 S44T', cavaloAno:2018, carretaMarca:'RANDON', carretaAno:2018, refrigMarca:'THERMOKING', refrigModelo:'SB200', refrigAno:null},
   {motorista:'ERI ORLANDO ROMERO',          placa:'QJC0B40', carreta:'MLB0J76',                  paletes:'28', celular:'92 - 99220-9993', cpf:'706.920.112-50',
     cavaloMarca:'SCANIA', cavaloModelo:'SCANIA / RH 400 A6X2', cavaloAno:2018, carretaMarca:'FACCHINI', carretaAno:2013, refrigMarca:'THERMOKING', refrigModelo:'SB210', refrigAno:2014},
@@ -7520,7 +7521,7 @@ const FROTA_DATA = [
   {motorista:'RODRIGO DA ROSA',             placa:'RYE7J36', carreta:'RDS9H31',                  paletes:'30', celular:'49 - 99922-8442', cpf:'944.742.309-49',
     cavaloMarca:'SCANIA', cavaloModelo:'SCANIA/R450 A6X2', cavaloAno:2022, carretaMarca:'RANDON', carretaAno:2020, refrigMarca:'CARRIER', refrigModelo:'X4 7500', refrigAno:2020},
   // ── VEÍCULOS PARADOS ──
-  {motorista:'—',                           placa:'QJL8F70', carreta:'RXQ4H32',                  paletes:'28', celular:'49 - 99927-1817', cpf:'560.043.389-15',
+  {motorista:'—',                           placa:'QJL8F70', carreta:'RXS3D84',                  paletes:'28', celular:'49 - 99927-1817', cpf:'560.043.389-15',
     cavaloMarca:'IVECO', cavaloModelo:'IVECO / HI WAY STRALIS 600 S44T', cavaloAno:2019, carretaMarca:'FACCHINI', carretaAno:2022, refrigMarca:'THERMOKING', refrigModelo:'SB 190', refrigAno:2022},
   {motorista:'—',                           placa:'RLB3E26', carreta:'MGG7C96 — 30 pal. Van',    paletes:'28', celular:'',               cpf:'',
     cavaloMarca:'SCANIA', cavaloModelo:'SCANIA/R450 A6X2', cavaloAno:2021, carretaMarca:'RANDON', carretaAno:2010, refrigMarca:'CARRIER', refrigModelo:'X 1800', refrigAno:2010},
