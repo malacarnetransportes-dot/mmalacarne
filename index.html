@@ -3196,7 +3196,7 @@ const PNEU_DATA = {
 
   // ── Registros só com custo (Borracharia Canadá Abril/2026) ──
   'RLB3E46': { historico: [{ data:'Abril/2026', desc:'Borracharia Canadá — serviço/ajuste', custo:190.00 }] },
-  'QJM1350': { historico: [{ data:'Abril/2026', desc:'Borracharia Canadá — serviço/ajuste', custo:286.00 }] },
+  'QIG7598': { historico: [{ data:'Abril/2026', desc:'Borracharia Canadá — serviço/ajuste', custo:286.00 }] },
   'QJC0B40': { historico: [{ data:'Abril/2026', desc:'Borracharia Canadá — serviço/ajuste', custo:206.00 }] },
 };
 
@@ -3204,7 +3204,7 @@ const PNEU_CUSTOS = [
   { placa:'RYE7J36', valor:38.00 },
   { placa:'RLB3E46', valor:190.00 },
   { placa:'RYE7J26', valor:146.00 },
-  { placa:'QJM1350', valor:286.00 },
+  { placa:'QIG7598', valor:286.00 },
   { placa:'QJC0B40', valor:206.00 },
   { placa:'RLB3C26', valor:116.00 },
 ];
@@ -6736,10 +6736,10 @@ function vencCalcularStatusLinha(row, cat, headers, colId, colData, colSituacao,
       const colMes = headers.find(h => String(h).trim().toUpperCase() === MESES_NOME[mesCal - 1].toUpperCase());
       if (colMes) dataAnotada = vencExtrairDataEmTexto(row[colMes]);
     }
-    // Placas de cavalo (mecânico) pagam o IPVA sempre parcelado em 3x, com
-    // vencimento no dia 10 de cada mês: a 1ª parcela cai no mês SEGUINTE ao
-    // mês-calendário da placa (mesCal), a 2ª no mês seguinte a essa, e a 3ª
-    // no mês seguinte à 2ª.
+    // Placas de cavalo (mecânico) pagam o IPVA sempre parcelado em 3x, dia 10:
+    //   1ª parcela → mês ANTERIOR ao vencimento calendário (mesCal - 1)
+    //   2ª parcela → mês do vencimento calendário (mesCal)
+    //   3ª parcela → mês SEGUINTE ao vencimento calendário (mesCal + 1)
     // Detecção: pela presença de colunas PARCELA na planilha, OU pela
     // identificação da placa como cavalo no FROTA_DATA.
     const colsParcelas = vencColunasParcelas(headers);
@@ -6751,7 +6751,8 @@ function vencCalcularStatusLinha(row, cat, headers, colId, colData, colSituacao,
     // ou por a placa não ter sido reconhecida como carreta no FROTA_DATA).
     const parcelado = !ehCarretaFrota && mesCal && (colsParcelas.some(c => String(row[c] || '').trim() !== '') || ehCavaloFrota);
     if (parcelado) {
-      parcelas = [1, 2, 3].map(off => new Date(now.getFullYear(), (mesCal - 1) + off, 10));
+      // off = 0 → mesCal-1 (mês anterior); off = 1 → mesCal; off = 2 → mesCal+1
+      parcelas = [0, 1, 2].map(off => new Date(now.getFullYear(), (mesCal - 2) + off, 10));
     }
     // Data usada para o status: a anotada manualmente > a 1ª parcela pendente > o mês único.
     if (dataAnotada) {
@@ -7498,7 +7499,7 @@ const FROTA_DATA = [
     cavaloMarca:'SCANIA', cavaloModelo:'SCANIA/R450 A6X2', cavaloAno:2022, carretaMarca:'RANDON', carretaAno:2018, refrigMarca:'THERMOKING', refrigModelo:'SLX 400i', refrigAno:2018},
   {motorista:'ANDERSON VEIGA SANTOS',       placa:'QTM0G30', carreta:'RYQ7I03 — 30 pal. Van',    paletes:'30', celular:'42 - 99832-0501', cpf:'012.273.449-10',
     cavaloMarca:'VOLVO', cavaloModelo:'VOLVO / FH 460 6X2T', cavaloAno:'2019/2020', carretaMarca:'RANDON', carretaAno:2023, refrigMarca:'CARRIER', refrigModelo:'X4 7500', refrigAno:2023},
-  {motorista:'CRISTIANO DE ALMEIDA',        placa:'QJM1350', carreta:'OKD8A19',                  paletes:'28', celular:'49 - 99110-7517', cpf:'029.395.799-11',
+  {motorista:'CRISTIANO DE ALMEIDA',        placa:'QIG7598', carreta:'OKD8A19',                  paletes:'28', celular:'49 - 99110-7517', cpf:'029.395.799-11',
     cavaloMarca:'IVECO', cavaloModelo:'IVECO / HI WAY STRALIS 600 S44T', cavaloAno:2018, carretaMarca:'RANDON', carretaAno:2018, refrigMarca:'THERMOKING', refrigModelo:'SB200', refrigAno:null},
   {motorista:'ERI ORLANDO ROMERO',          placa:'QJC0B40', carreta:'MLB0J76',                  paletes:'28', celular:'92 - 99220-9993', cpf:'706.920.112-50',
     cavaloMarca:'SCANIA', cavaloModelo:'SCANIA / RH 400 A6X2', cavaloAno:2018, carretaMarca:'FACCHINI', carretaAno:2013, refrigMarca:'THERMOKING', refrigModelo:'SB210', refrigAno:2014},
