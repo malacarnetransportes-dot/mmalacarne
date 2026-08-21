@@ -139,11 +139,12 @@ footer a{color:var(--accent);text-decoration:none;}
 .link-card-go{color:var(--text-lt);font-size:.85rem;}
 
 /* ── GESTÃO À VISTA / MODO SLIDE ── */
-/* Tela cheia com identidade própria: Poppins (sans geométrica arredondada,
-   estilo Product Sans) para títulos e
-   marca (peso editorial, premium), Inter para dados/rótulos (limpa,
-   ótima para números tabulares). Fundo marfim quente em vez de cinza
-   frio, para reforçar a paleta dourada já usada no resto do site. */
+/* Layout "branco premium": fundo puro, sem véus dourados pesados — só
+   um fio de linha de assinatura da marca. Poppins pros títulos/números
+   grandes (geométrica, editorial), Inter pra rótulos/dados tabulares.
+   A faixa de data/hora vira um "hero" de topo, com muito mais espaço,
+   no estilo painel de aeroporto: dia da semana, dia/mês/ano e relógio
+   grande, tudo separado por divisores finos. */
 .slide-overlay{
   position:fixed;inset:0;
   background:#ffffff;
@@ -152,27 +153,38 @@ footer a{color:var(--accent);text-decoration:none;}
   /* fundo absolutamente branco — sem nenhuma névoa escura */
 }
 .slide-overlay.active{display:flex;}
-/* Fundo branco esfumaçado: nuvens suaves e desfocadas em vez de cortes
-   diagonais duros — só um sopro de dourado da marca, nada de bordas. */
+/* Um sopro mínimo de dourado nos cantos — praticamente imperceptível,
+   só pra não ficar um branco chapado, sem tirar a leitura "premium". */
 .slide-overlay::before{content:'';position:absolute;inset:-12%;
   background:
-    radial-gradient(32% 26% at 14% 18%, rgba(212,175,55,.07), transparent 70%),
-    radial-gradient(26% 22% at 88% 12%, rgba(139,115,85,.05), transparent 70%),
-    radial-gradient(34% 30% at 78% 88%, rgba(212,175,55,.05), transparent 70%),
-    radial-gradient(26% 24% at 8% 90%, rgba(184,148,31,.04), transparent 70%),
-    radial-gradient(20% 18% at 50% 50%, rgba(139,115,85,.02), transparent 70%);
-  filter:blur(70px);pointer-events:none;z-index:0;}
-.slide-topbar,.slide-body,.slide-dots,.slide-progress{position:relative;z-index:1;}
-.slide-topbar{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 2.8rem;position:relative;background:rgba(255,255,255,.98);}
-.slide-topbar::after{content:'';position:absolute;left:2.8rem;right:2.8rem;bottom:0;height:2px;
-  background:linear-gradient(90deg,transparent,rgba(212,175,55,.8) 18%,rgba(184,148,31,1) 50%,rgba(212,175,55,.8) 82%,transparent);}
-.slide-brand{display:flex;align-items:center;gap:.85rem;font-family:'Poppins',system-ui,sans-serif;font-size:1.3rem;color:#1c2333;}
-.slide-logo{height:40px;width:40px;object-fit:cover;border-radius:10px;box-shadow:0 6px 16px rgba(139,115,85,.28);}
+    radial-gradient(28% 22% at 10% 10%, rgba(212,175,55,.04), transparent 70%),
+    radial-gradient(24% 20% at 92% 8%, rgba(139,115,85,.03), transparent 70%),
+    radial-gradient(30% 26% at 82% 92%, rgba(212,175,55,.03), transparent 70%);
+  filter:blur(80px);pointer-events:none;z-index:0;}
+.slide-topbar,.slide-datebar,.slide-body,.slide-dots,.slide-progress{position:relative;z-index:1;}
+.slide-topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 2.8rem;position:relative;background:#ffffff;}
+.slide-brand{display:flex;align-items:center;gap:.85rem;font-family:'Poppins',system-ui,sans-serif;font-size:1.2rem;color:#1c2333;}
+.slide-logo{height:36px;width:36px;object-fit:cover;border-radius:9px;box-shadow:0 6px 16px rgba(139,115,85,.28);}
 .slide-brand .brand-mark{font-weight:800;letter-spacing:1.1px;}
 .slide-brand .brand-sep{color:var(--accent);font-weight:400;margin:0 .15rem;font-family:'Inter',sans-serif;}
-.slide-brand .brand-sub{font-family:'Inter',sans-serif;font-weight:500;font-size:.95rem;color:var(--text-lt);letter-spacing:.2px;}
-.slide-close{background:rgba(255,255,255,.7);border:1px solid rgba(139,115,85,.2);color:#1c2333;width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:1rem;transition:.2s;}
+.slide-brand .brand-sub{font-family:'Inter',sans-serif;font-weight:500;font-size:.9rem;color:var(--text-lt);letter-spacing:.2px;}
+.slide-close{background:#fff;border:1px solid rgba(139,115,85,.2);color:#1c2333;width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:1rem;transition:.2s;}
 .slide-close:hover{background:#fff;border-color:var(--accent);color:var(--accent-dk);}
+/* ── Faixa de data/hora: o novo "hero" do topo, bem maior que antes ── */
+.slide-datebar{
+  display:flex;align-items:center;justify-content:center;gap:2.4rem;
+  padding:1.6rem 2.8rem 1.9rem;background:#ffffff;position:relative;
+}
+.slide-datebar::after{content:'';position:absolute;left:2.8rem;right:2.8rem;bottom:0;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(212,175,55,.8) 18%,rgba(184,148,31,1) 50%,rgba(212,175,55,.8) 82%,transparent);}
+.slide-db-weekday{font-family:'Poppins',system-ui,sans-serif;font-size:1.5rem;font-weight:700;color:var(--accent-dk);text-transform:uppercase;letter-spacing:2px;}
+.slide-db-sep{width:1px;align-self:stretch;min-height:56px;background:linear-gradient(180deg,transparent,rgba(139,115,85,.25),transparent);}
+.slide-db-daymonth{display:flex;align-items:center;gap:1rem;}
+.slide-db-day{font-family:'Poppins',system-ui,sans-serif;font-size:4.6rem;font-weight:800;color:#1c2333;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-1px;}
+.slide-db-monthyear{display:flex;flex-direction:column;gap:.15rem;text-align:left;}
+.slide-db-month{font-family:'Inter',sans-serif;font-size:1.15rem;font-weight:800;color:#1c2333;text-transform:uppercase;letter-spacing:1.4px;}
+.slide-db-year{font-family:'Inter',sans-serif;font-size:.95rem;font-weight:600;color:var(--text-lt);letter-spacing:1px;}
+.slide-db-clock{font-family:'Poppins',system-ui,sans-serif;font-size:4rem;font-weight:700;color:#1c2333;font-variant-numeric:tabular-nums;letter-spacing:.5px;}
 .slide-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease;}
 .slide-body.show{opacity:1;transform:translateY(0);}
 /* Título com emblema circular dourado (referência: selo/ícone do capa) e
@@ -200,11 +212,7 @@ footer a{color:var(--accent);text-decoration:none;}
 .slide-dot.active{background:var(--accent-dk);width:22px;border-radius:5px;}
 .slide-progress{height:3px;background:rgba(139,115,85,.1);}
 .slide-progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-dk));width:0%;transition:width .1s linear;}
-.slide-counter{font-family:'Inter',sans-serif;font-size:.8rem;font-weight:800;color:#1c2333;letter-spacing:1.2px;padding:.4rem 1rem;border:1.5px solid rgba(184,148,31,.5);border-radius:20px;white-space:nowrap;background:rgba(255,255,255,.9);}
-.slide-datetime{display:flex;flex-direction:column;align-items:flex-end;gap:.15rem;line-height:1;}
-.slide-date{font-family:'Inter',sans-serif;font-size:.88rem;font-weight:700;color:#1c2333;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;}
-.slide-date b{color:var(--accent-dk);font-weight:800;}
-.slide-clock{font-family:'Poppins',system-ui,sans-serif;font-size:2.6rem;font-weight:700;color:#1c2333;font-variant-numeric:tabular-nums;letter-spacing:.5px;margin-top:.1rem;text-shadow:0 1px 3px rgba(0,0,0,.08);}
+.slide-counter{font-family:'Inter',sans-serif;font-size:.8rem;font-weight:800;color:#1c2333;letter-spacing:1.2px;padding:.4rem 1rem;border:1.5px solid rgba(184,148,31,.5);border-radius:20px;white-space:nowrap;background:#fff;}
 
 /* ── Visão consolidada de status (vencimentos, alertas) ── */
 .slide-kpi-card.is-danger .slide-kpi-val{color:var(--danger)!important;}
@@ -604,14 +612,21 @@ footer a{color:var(--accent);text-decoration:none;}
 <div id="slideOverlay" class="slide-overlay">
   <div class="slide-topbar">
     <div class="slide-brand"><img class="slide-logo" src="Screenshot_2.jpg" alt="M-Malacarne" onerror="this.style.display='none'"> <span class="brand-mark">M-MALACARNE</span><span class="brand-sep">·</span><span class="brand-sub">Gestão à Vista</span></div>
-    <div style="display:flex;align-items:center;gap:1.6rem">
-      <div class="slide-datetime">
-        <div class="slide-date" id="slideDateLine">—, --/--/----</div>
-        <div class="slide-clock" id="slideClock">--:--:--</div>
-      </div>
-      <div class="slide-counter" id="slideCounter"></div>
-    </div>
+    <div class="slide-counter" id="slideCounter"></div>
     <button class="slide-close" id="slideCloseBtn" title="Fechar (Esc)"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="slide-datebar">
+    <div class="slide-db-weekday" id="slideWeekday">—</div>
+    <div class="slide-db-sep"></div>
+    <div class="slide-db-daymonth">
+      <div class="slide-db-day" id="slideDay">--</div>
+      <div class="slide-db-monthyear">
+        <div class="slide-db-month" id="slideMonth">—</div>
+        <div class="slide-db-year" id="slideYear">----</div>
+      </div>
+    </div>
+    <div class="slide-db-sep"></div>
+    <div class="slide-db-clock" id="slideClock">--:--:--</div>
   </div>
   <div class="slide-body" id="slideBody"></div>
   <div class="slide-dots" id="slideDots"></div>
@@ -2760,7 +2775,7 @@ document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
 // "Possui quadro de gestão à vista? (Painel Impresso / TV / Telas)"
 // ═══════════════════════════════════════════════════════════
 let slideTimer = null, slideProgressTimer = null, slideIdx = 0;
-const SLIDE_DURATION = 8000; // ms por slide
+const SLIDE_DURATION = 18000; // ms por slide (8s originais + 10s pedidos)
 
 function slideText(id, fallback){
   const el = document.getElementById(id);
@@ -2967,9 +2982,13 @@ function slideBuildSlides(){
       ],
       lista: conjuntos
     },
-    // 4) Vencimentos — as 7 categorias juntas em um único painel, em vez de telas repetidas
-    { title: '<i class="fas fa-triangle-exclamation"></i> Vencimentos — Documentos e Certificações', type: 'venc-overview',
-      categorias: vencResumo, totalVencidos, totalProximos },
+    // 4) Vencimentos — separado em um slide por categoria (Licenciamento/IPVA,
+    // CNH, ASO, Toxicológico, Direção Defensiva, Percepção de Riscos,
+    // Prevenção de Tombamentos), em vez de um único painel com tudo junto.
+    ...vencResumo.map(c => ({
+      title: `<i class="fas ${c.icon}"></i> Vencimentos — ${c.label}`,
+      type: 'venc-single', categoria: c
+    })),
     // 5) RH — Turnover
     { title: '<i class="fas fa-people-arrows"></i> RH — Contratações, Desligamentos & Turnover', type: 'rh-resumo' },
     // 6) Controle de Velocidade
@@ -3042,22 +3061,18 @@ function slideRender(){
       slideRenderDots(slides, idx);
       return;
     }
-    if (s.type === 'venc-overview') {
+    if (s.type === 'venc-single') {
+      const c = s.categoria;
+      const total = c.vencidos + c.proximos + c.ok;
+      const pct = n => total ? (n/total*100) : 0;
       body.innerHTML = `<div class="slide-section-title">${s.title}</div>
-        <div class="slide-status-grid">
-          ${s.categorias.map(c => {
-            const total = c.vencidos + c.proximos + c.ok;
-            const pct = n => total ? (n/total*100) : 0;
-            return `<div class="slide-status-card">
-              <div class="slide-status-card-head"><i class="fas ${c.icon}"></i> ${c.label}</div>
-              <div class="slide-status-rows">
-                <div class="slide-status-row danger"><span>Vencidos</span><span class="n">${c.vencidos}</span></div>
-                <div class="slide-status-row warning"><span>Próx. 30 dias</span><span class="n">${c.proximos}</span></div>
-                <div class="slide-status-row ok"><span>Em dia</span><span class="n">${c.ok}</span></div>
-              </div>
-              <div class="slide-status-bar"><span style="width:${pct(c.vencidos)}%;background:var(--danger)"></span><span style="width:${pct(c.proximos)}%;background:var(--warning)"></span><span style="width:${pct(c.ok)}%;background:var(--success)"></span></div>
-            </div>`;
-          }).join('')}
+        <div class="slide-kpi-grid" style="max-width:900px;margin-bottom:1rem">
+          <div class="slide-kpi-card${c.vencidos > 0 ? ' is-danger' : ''}"><div class="slide-kpi-val">${c.vencidos}</div><div class="slide-kpi-lbl">Vencidos</div></div>
+          <div class="slide-kpi-card${c.proximos > 0 ? ' is-warning' : ''}"><div class="slide-kpi-val">${c.proximos}</div><div class="slide-kpi-lbl">Próx. 30 dias</div></div>
+          <div class="slide-kpi-card is-ok"><div class="slide-kpi-val">${c.ok}</div><div class="slide-kpi-lbl">Em dia</div></div>
+        </div>
+        <div class="slide-status-bar" style="max-width:760px;width:100%;height:10px;margin-top:1.2rem">
+          <span style="width:${pct(c.vencidos)}%;background:var(--danger)"></span><span style="width:${pct(c.proximos)}%;background:var(--warning)"></span><span style="width:${pct(c.ok)}%;background:var(--success)"></span>
         </div>`;
       requestAnimationFrame(() => body.classList.add('show'));
       slideRenderDots(slides, idx);
@@ -3216,13 +3231,14 @@ function slideUpdateClock(){
   const now = new Date();
   const clockEl = document.getElementById('slideClock');
   if (clockEl) clockEl.textContent = now.toLocaleTimeString('pt-BR');
-  const dateEl = document.getElementById('slideDateLine');
-  if (dateEl) {
-    let weekday = now.toLocaleDateString('pt-BR', { weekday: 'long' });
-    weekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
-    const dataNum = now.toLocaleDateString('pt-BR'); // DD/MM/AAAA
-    dateEl.innerHTML = `<b>${weekday}</b>, ${dataNum}`;
-  }
+  const weekdayEl = document.getElementById('slideWeekday');
+  if (weekdayEl) weekdayEl.textContent = now.toLocaleDateString('pt-BR', { weekday: 'long' });
+  const dayEl = document.getElementById('slideDay');
+  if (dayEl) dayEl.textContent = String(now.getDate()).padStart(2, '0');
+  const monthEl = document.getElementById('slideMonth');
+  if (monthEl) monthEl.textContent = now.toLocaleDateString('pt-BR', { month: 'long' });
+  const yearEl = document.getElementById('slideYear');
+  if (yearEl) yearEl.textContent = String(now.getFullYear());
 }
 
 function openSlideMode(){
@@ -4600,9 +4616,13 @@ function orcLocalKey(ano, grupoKey){
 }
 
 // Retorna o orçado salvo manualmente. Se não houver nada digitado,
-// calcula automaticamente a média do realizado dos meses disponíveis
-// e usa esse valor como orçado de referência (sem salvar — só leitura).
-// Meses com realizado próprio usam o próprio valor; meses sem dado usam a média.
+// calcula automaticamente — mês a mês — a média do REALIZADO dos meses
+// ANTERIORES daquele ano (nunca olha pra meses futuros: o orçado de
+// março, por exemplo, é a média de jan+fev, não do ano inteiro).
+// Meses com realizado próprio usam o próprio valor. Só quando não existe
+// nenhum mês anterior com dado (ex: janeiro, ou o primeiro mês com
+// movimento) é que cai no fallback de usar a média de todos os meses do
+// ano disponíveis até então, só pra não começar zerado.
 // Se o usuário digitar qualquer valor, esse passa a prevalecer (localStorage).
 function orcGetBudget(ano, grupoKey, realizado){
   try {
@@ -4612,14 +4632,20 @@ function orcGetBudget(ano, grupoKey, realizado){
       if (Array.isArray(arr) && arr.length === 12 && arr.some(v => v > 0)) return arr;
     }
   } catch(e){}
-  // Sem orçado manual: retorna média do realizado como estimativa automática
+  // Sem orçado manual: estima cada mês pela média do realizado dos meses anteriores
   if (realizado) {
     const real = realizado[grupoKey] || [];
-    const comDados = real.filter(v => v > 0);
-    if (comDados.length > 0) {
-      const media = comDados.reduce((a,b) => a+b, 0) / comDados.length;
-      return real.map(v => v > 0 ? v : media);
-    }
+    return real.map((v, i) => {
+      if (v > 0) return v;
+      const anteriores = real.slice(0, i).filter(x => x > 0);
+      if (anteriores.length > 0) {
+        return anteriores.reduce((a,b) => a+b, 0) / anteriores.length;
+      }
+      // Fallback: nenhum mês anterior com dado ainda (ex: janeiro) —
+      // usa a média de todos os meses do ano que já têm realizado
+      const comDados = real.filter(x => x > 0);
+      return comDados.length ? comDados.reduce((a,b) => a+b, 0) / comDados.length : 0;
+    });
   }
   return new Array(12).fill(0);
 }
@@ -4755,7 +4781,7 @@ function orcRender(){
       // isAuto: sem override manual salvo → valor vem da média automática
       const isAuto = !orcadoManualArr && o > 0;
       const inputStyle = isAuto ? 'color:#b08a20;font-style:italic' : '';
-      const inputTitle = isAuto ? 'Orçado automático (média do realizado) — clique para editar' : 'Orçado manual';
+      const inputTitle = isAuto ? 'Orçado automático (média do realizado dos meses anteriores) — clique para editar' : 'Orçado manual';
       return `<tr>
         <td>${mes}</td>
         <td><input type="text" inputmode="decimal" class="orc-input" data-grupo="${g.key}" data-mes="${i}" value="${o ? o.toFixed(2).replace('.',',') : ''}" placeholder="0,00" style="${inputStyle}" title="${inputTitle}" onchange="orcOnInputChange(this,${ano})"></td>
@@ -4773,7 +4799,7 @@ function orcRender(){
       <div class="orc-group-head">
         <div class="orc-group-title">
           <div class="orc-group-icon"><i class="fas ${g.icon}"></i></div>
-          <div>${g.nome}<div class="orc-group-sub">${g.sub}</div>${!orcadoManualArr && real && real.some(v=>v>0) ? `<div style="font-size:.62rem;color:#b08a20;margin-top:.2rem;font-style:italic"><i class="fas fa-calculator"></i> Orçado em itálico = média automática do realizado — clique no valor para editar</div>` : ""}</div>
+          <div>${g.nome}<div class="orc-group-sub">${g.sub}</div>${!orcadoManualArr && real && real.some(v=>v>0) ? `<div style="font-size:.62rem;color:#b08a20;margin-top:.2rem;font-style:italic"><i class="fas fa-calculator"></i> Orçado em itálico = média automática do realizado dos meses anteriores — clique no valor para editar</div>` : ""}</div>
         </div>
         <div class="orc-group-totals">
           <div class="orc-mini-stat"><div class="lbl">Orçado</div><div class="val">${fmtMoney(somaOrcado)}</div></div>
