@@ -1306,35 +1306,6 @@ footer a{color:var(--accent);text-decoration:none;}
             </div>
           </div>
 
-          <!-- Cadastrar novo motorista/veículo -->
-          <div class="dash-card" style="margin-bottom:1.4rem">
-            <div class="dash-card-title" id="frotaFormTitulo"><i class="fas fa-user-plus"></i> Agregar Motorista / Veículo à Frota</div>
-            <div style="font-size:.75rem;color:var(--text-lt);margin-bottom:.6rem">Cadastre um veículo novo ou clique em "Editar" num card/linha da tabela abaixo pra completar dados que estejam faltando (marca, modelo, ano, celular, CPF...).</div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.7rem">
-              <div class="flt-grp"><label>Motorista</label><input type="text" id="frotaNovoMotorista" placeholder="Nome completo"></div>
-              <div class="flt-grp"><label>Placa Cavalo *</label><input type="text" id="frotaNovoPlaca" placeholder="Ex: RYE7J26" style="text-transform:uppercase"></div>
-              <div class="flt-grp"><label>Marca Cavalo</label><input type="text" id="frotaNovoCavaloMarca" placeholder="Ex: SCANIA"></div>
-              <div class="flt-grp"><label>Modelo Cavalo</label><input type="text" id="frotaNovoCavaloModelo" placeholder="Ex: R450 A6X2"></div>
-              <div class="flt-grp"><label>Ano Cavalo</label><input type="text" id="frotaNovoCavaloAno" placeholder="Ex: 2022"></div>
-              <div class="flt-grp"><label>Placa Carreta</label><input type="text" id="frotaNovoCarreta" placeholder="Ex: QJH0591" style="text-transform:uppercase"></div>
-              <div class="flt-grp"><label>Marca Carreta</label><input type="text" id="frotaNovoCarretaMarca" placeholder="Ex: RANDON"></div>
-              <div class="flt-grp"><label>Ano Carreta</label><input type="text" id="frotaNovoCarretaAno" placeholder="Ex: 2018"></div>
-              <div class="flt-grp"><label>Marca Refrigeração</label><input type="text" id="frotaNovoRefrigMarca" placeholder="Ex: THERMOKING"></div>
-              <div class="flt-grp"><label>Modelo Refrigeração</label><input type="text" id="frotaNovoRefrigModelo" placeholder="Ex: SLX 400i"></div>
-              <div class="flt-grp"><label>Ano Refrigeração</label><input type="text" id="frotaNovoRefrigAno" placeholder="Ex: 2018"></div>
-              <div class="flt-grp"><label>Paletes</label>
-                <select id="frotaNovoPaletes"><option value="28">28 paletes</option><option value="30">30 paletes (Van)</option></select>
-              </div>
-              <div class="flt-grp" style="align-self:end"><label style="display:flex;align-items:center;gap:.4rem;cursor:pointer"><input type="checkbox" id="frotaNovoVan"> É carreta Van?</label></div>
-              <div class="flt-grp"><label>Celular</label><input type="text" id="frotaNovoCelular" placeholder="Ex: 49 - 99999-9999"></div>
-              <div class="flt-grp"><label>CPF</label><input type="text" id="frotaNovoCpf" placeholder="Ex: 000.000.000-00"></div>
-            </div>
-            <div style="margin-top:.9rem;display:flex;gap:.6rem">
-              <button class="btn btn-primary" id="frotaSalvarBtn" onclick="frotaExtraAdd()"><i class="fas fa-plus"></i> Adicionar à Frota</button>
-              <button class="btn btn-gray" id="frotaCancelarBtn" style="display:none" onclick="frotaEditarCancelar()"><i class="fas fa-times"></i> Cancelar edição</button>
-            </div>
-          </div>
-
           <!-- Cards de motoristas -->
           <div id="frotaCards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.1rem"></div>
 
@@ -2858,6 +2829,109 @@ function slideFinResumo(){
   return { totalGeral, total6m, totalMes, rankingMes };
 }
 
+// RH — Turnover: mesmo cálculo do filtro padrão da aba RH (últimos 12
+// meses), lido direto dos dados globais para não depender de a aba já
+// ter sido aberta.
+function slideRhResumo(){
+  const hoje = new Date();
+  const corte = new Date(hoje.getFullYear(), hoje.getMonth() - 12, 1);
+  const desligamentos = rhLoadDesligamentos();
+  const allFuncs = rhTodosFuncionarios();
+  const deslKeys = new Set(desligamentos.map(d =>
+    (d.matricula || d.nome || '').toString().trim().toUpperCase() + '||' + (d.empresa || '').trim().toUpperCase()
+  ));
+  const ativos = allFuncs.filter(f => {
+    const key = (f.matricula || '').toString().trim().toUpperCase() + '||' + (f.empresa || '').trim().toUpperCase();
+    return !deslKeys.has(key);
+  });
+  const admitidosPeriodo = allFuncs.filter(f => { const d = rhParseDate(f.admissao); return d && d >= corte; });
+  const desligadosPeriodo = desligamentos.filter(d => { const dt = rhParseDate(d.dataDesligamento); return dt && dt >= corte; });
+  const quadroMedio = (ativos.length + (ativos.length + desligadosPeriodo.length)) / 2 || 1;
+  const turnover = (admitidosPeriodo.length + desligadosPeriodo.length) / 2 / quadroMedio * 100;
+  const temposDias = ativos
+    .map(f => { const d = rhParseDate(f.admissao); return d ? rhDiasEntreDatas(d, hoje) : null; })
+    .filter(d => d !== null && d >= 0);
+  const mediaDias = temposDias.length ? temposDias.reduce((a,b) => a+b, 0) / temposDias.length : 0;
+  const mediaAnos = Math.floor(mediaDias / 365);
+  const mediaMeses = Math.floor((mediaDias % 365) / 30);
+  const tempoMedioStr = temposDias.length ? (mediaAnos > 0 ? `${mediaAnos}a ${mediaMeses}m` : `${mediaMeses}m`) : '—';
+  const motivos = {};
+  desligadosPeriodo.forEach(d => { const m = d.motivo || 'Não informado'; motivos[m] = (motivos[m] || 0) + 1; });
+  const rankingMotivos = Object.entries(motivos).sort((a,b) => b[1]-a[1]);
+  return { admitidos: admitidosPeriodo.length, desligados: desligadosPeriodo.length, ativos: ativos.length, turnover, tempoMedioStr, rankingMotivos };
+}
+
+// Controle de Velocidade: usa os dados já carregados (velRaw). Se a aba
+// ainda não foi aberta nesta sessão os dados não existem ainda — nesse
+// caso o slide mostra um estado de espera e openSlideMode() dispara o
+// carregamento em segundo plano (ver mais abaixo).
+function slideVelResumo(){
+  if (!velLoaded || !velRaw.length) return null;
+  const velocidades = velRaw.map(r => r.velocidade).filter(v => v !== null && !isNaN(v));
+  const motoristasSet = new Set(velRaw.filter(r => r.motorista && r.motorista !== 'PARADO').map(r => r.motorista));
+  const placasSet = new Set(velRaw.map(r => r.placa));
+  const media = velocidades.length ? velocidades.reduce((a,b) => a+b, 0) / velocidades.length : 0;
+  const max = velocidades.length ? Math.max(...velocidades) : 0;
+  const graves = velRaw.filter(r => r.velocidade >= 90).length;
+  const porMotorista = {};
+  velRaw.forEach(r => { if (!r.motorista || r.motorista === 'PARADO') return; porMotorista[r.motorista] = (porMotorista[r.motorista] || 0) + 1; });
+  const ranking = Object.entries(porMotorista).sort((a,b) => b[1]-a[1]).slice(0,5);
+  return { total: velRaw.length, motoristas: motoristasSet.size, placas: placasSet.size, media, max, graves, ranking };
+}
+
+// Resumo de Pneus: varre PNEU_DATA (+ ajustes salvos no localStorage)
+// igual à aba Pneus faz, sem depender de a aba já ter sido aberta.
+function slidePneuResumo(){
+  const placas = pneuAllPlacas();
+  let comMarca = 0, cpkSum = 0, cpkCount = 0;
+  const statusCount = { novo:0, recapado:0, atencao:0, alerta:0, semdados:0 };
+  let melhor = null, pior = null;
+  placas.forEach(placa => {
+    const pos = pneuGetVeiculo(placa).posicoes || {};
+    PNEU_POS.forEach(p => {
+      const info = pos[p.key];
+      if (!info || !info.marca) { statusCount.semdados++; return; }
+      comMarca++;
+      const st = info.status || 'semdados';
+      statusCount[st] = (statusCount[st] || 0) + 1;
+      const calc = pneuCalcTire(placa, p.key, info);
+      if (calc.cpk) {
+        cpkSum += calc.cpk; cpkCount++;
+        if (!melhor || calc.cpk < melhor.cpk) melhor = { placa, pos: p.label, marca: info.marca, cpk: calc.cpk };
+        if (!pior || calc.cpk > pior.cpk) pior = { placa, pos: p.label, marca: info.marca, cpk: calc.cpk };
+      }
+    });
+  });
+  const cpkMedio = cpkCount ? (cpkSum / cpkCount) : null;
+  return { totalVeiculos: placas.length, comMarca, cpkMedio, melhor, pior, statusCount };
+}
+
+// Jornada e Compensação: resumo da competência mais recente já
+// importada (independe dos filtros que o usuário deixou selecionados
+// na aba, para o slide sempre mostrar o mês mais atual).
+function slideJornadaResumo(){
+  const linhas = jorLinhas();
+  if (!linhas.length) return null;
+  const competencias = [...new Set(linhas.map(l => l.competencia))].sort();
+  const ultimaComp = competencias[competencias.length - 1];
+  const dados = linhas.filter(l => l.competencia === ultimaComp);
+  const funcMap = new Map();
+  dados.forEach(l => {
+    const key = l.matricula + '|' + l.empresa;
+    if (!funcMap.has(key)) funcMap.set(key, { venc: 0, desc: 0 });
+    const f = funcMap.get(key);
+    if (l.tipo === 'vencimento') f.venc += l.valor; else f.desc += l.valor;
+  });
+  const funcionarios = [...funcMap.values()];
+  const totalVenc = funcionarios.reduce((a,f) => a+f.venc, 0);
+  const totalDesc = funcionarios.reduce((a,f) => a+f.desc, 0);
+  const totalLiq = totalVenc - totalDesc;
+  const porCategoria = {};
+  dados.forEach(l => { if (l.tipo !== 'vencimento') return; porCategoria[l.categoria] = (porCategoria[l.categoria] || 0) + l.valor; });
+  const ranking = Object.entries(porCategoria).sort((a,b) => b[1]-a[1]).slice(0,6);
+  return { competenciaLabel: jorCompetenciaLabel(ultimaComp), funcionarios: funcionarios.length, totalVenc, totalDesc, totalLiq, ranking };
+}
+
 function slideBuildSlides(){
   // Conjunto completo: motorista + placa (cavalo) + carreta, sem cortar em 8 —
   // a tela cheia tem espaço de sobra e o pedido foi mostrar tudo de uma vez.
@@ -2896,6 +2970,14 @@ function slideBuildSlides(){
     // 4) Vencimentos — as 7 categorias juntas em um único painel, em vez de telas repetidas
     { title: '<i class="fas fa-triangle-exclamation"></i> Vencimentos — Documentos e Certificações', type: 'venc-overview',
       categorias: vencResumo, totalVencidos, totalProximos },
+    // 5) RH — Turnover
+    { title: '<i class="fas fa-people-arrows"></i> RH — Contratações, Desligamentos & Turnover', type: 'rh-resumo' },
+    // 6) Controle de Velocidade
+    { title: '<i class="fas fa-gauge-high"></i> Controle de Velocidade', type: 'vel-resumo' },
+    // 7) Resumo de Pneus
+    { title: '<i class="fas fa-circle-dot"></i> Resumo de Pneus', type: 'pneu-resumo' },
+    // 8) Jornada e Compensação
+    { title: '<i class="fas fa-money-check-dollar"></i> Jornada e Compensação', type: 'jornada-resumo' },
   ];
 }
 
@@ -2981,6 +3063,124 @@ function slideRender(){
       slideRenderDots(slides, idx);
       return;
     }
+    if (s.type === 'rh-resumo') {
+      const d = slideRhResumo();
+      body.innerHTML = `<div class="slide-section-title">${s.title}</div>
+        <div class="slide-kpi-grid" style="margin-bottom:1.6rem;max-width:1050px">
+          <div class="slide-kpi-card"><div class="slide-kpi-val">${d.admitidos}</div><div class="slide-kpi-lbl">Admitidos (12 meses)</div></div>
+          <div class="slide-kpi-card${d.desligados > 0 ? ' is-warning' : ''}"><div class="slide-kpi-val">${d.desligados}</div><div class="slide-kpi-lbl">Desligados (12 meses)</div></div>
+          <div class="slide-kpi-card"><div class="slide-kpi-val">${d.ativos}</div><div class="slide-kpi-lbl">Quadro Ativo Atual</div></div>
+          <div class="slide-kpi-card"><div class="slide-kpi-val">${d.turnover.toFixed(1)}%</div><div class="slide-kpi-lbl">Turnover (12 meses)</div></div>
+          <div class="slide-kpi-card"><div class="slide-kpi-val">${d.tempoMedioStr}</div><div class="slide-kpi-lbl">Tempo Médio de Casa</div></div>
+        </div>
+        ${d.rankingMotivos.length ? `<div class="slide-status-card" style="max-width:620px;width:100%;text-align:left">
+          <div class="slide-status-card-head"><i class="fas fa-ranking-star"></i> Motivos de Desligamento (12 meses)</div>
+          <div class="slide-status-rows">
+            ${d.rankingMotivos.map(([motivo,qtd]) => `<div class="slide-status-row"><span>${escapeHTML(motivo)}</span><span class="n">${qtd}</span></div>`).join('')}
+          </div>
+        </div>` : `<div class="slide-status-card" style="max-width:520px;width:100%;text-align:center;color:var(--text-lt)">Sem desligamentos nos últimos 12 meses.</div>`}`;
+      requestAnimationFrame(() => body.classList.add('show'));
+      slideRenderDots(slides, idx);
+      return;
+    }
+    if (s.type === 'vel-resumo') {
+      const d = slideVelResumo();
+      if (!d) {
+        body.innerHTML = `<div class="slide-section-title">${s.title}</div>
+          <div class="slide-status-card" style="max-width:520px;width:100%;text-align:center;color:var(--text-lt)">
+            <i class="fas fa-spinner fa-spin" style="font-size:1.4rem;margin-bottom:.6rem"></i><br>
+            Carregando dados de telemetria...
+          </div>`;
+        if (typeof velInit === 'function') velInit();
+        requestAnimationFrame(() => body.classList.add('show'));
+        slideRenderDots(slides, idx);
+        return;
+      }
+      body.innerHTML = `<div class="slide-section-title">${s.title}</div>
+        <div class="slide-kpi-grid" style="margin-bottom:1.6rem;max-width:1050px">
+          <div class="slide-kpi-card"><div class="slide-kpi-val">${d.total}</div><div class="slide-kpi-lbl">Ocorrências no Período</div></div>
+          <div class="slide-kpi-card"><div class="slide-kpi-val">${d.motoristas}</div><div class="slide-kpi-lbl">Motoristas com Excesso</div></div>
+          <div class="slide-kpi-card"><div class="slide-kpi-val">${d.placas}</div><div class="slide-kpi-lbl">Placas com Excesso</div></div>
+          <div class="slide-kpi-card"><div class="slide-kpi-val">${d.media.toFixed(1)} km/h</div><div class="slide-kpi-lbl">Velocidade Média</div></div>
+          <div class="slide-kpi-card is-warning"><div class="slide-kpi-val">${d.max.toFixed(0)} km/h</div><div class="slide-kpi-lbl">Velocidade Máxima</div></div>
+          <div class="slide-kpi-card${d.graves > 0 ? ' is-danger' : ''}"><div class="slide-kpi-val">${d.graves}</div><div class="slide-kpi-lbl">Excessos Graves (≥90 km/h)</div></div>
+        </div>
+        ${d.ranking.length ? `<div class="slide-status-card" style="max-width:560px;width:100%;text-align:left">
+          <div class="slide-status-card-head"><i class="fas fa-ranking-star"></i> Top 5 Motoristas — Mais Ocorrências</div>
+          <div class="slide-status-rows">
+            ${d.ranking.map(([nome,qtd]) => `<div class="slide-status-row"><span>${escapeHTML(nome)}</span><span class="n">${qtd}</span></div>`).join('')}
+          </div>
+        </div>` : ''}`;
+      requestAnimationFrame(() => body.classList.add('show'));
+      slideRenderDots(slides, idx);
+      return;
+    }
+    if (s.type === 'pneu-resumo') {
+      const d = slidePneuResumo();
+      const statusLabels = [
+        { key: 'novo',     label: 'Novo',      color: 'var(--success)' },
+        { key: 'recapado', label: 'Recapado',  color: 'var(--info)' },
+        { key: 'atencao',  label: 'Atenção',   color: 'var(--warning)' },
+        { key: 'alerta',   label: 'Alerta',    color: 'var(--danger)' },
+      ];
+      body.innerHTML = `<div class="slide-section-title">${s.title}</div>
+        <div class="slide-kpi-grid" style="margin-bottom:1.6rem;max-width:800px">
+          <div class="slide-kpi-card"><div class="slide-kpi-val">${d.totalVeiculos}</div><div class="slide-kpi-lbl">Veículos Cadastrados</div></div>
+          <div class="slide-kpi-card"><div class="slide-kpi-val">${d.comMarca}</div><div class="slide-kpi-lbl">Pneus com Cadastro</div></div>
+          <div class="slide-kpi-card"><div class="slide-kpi-val">${d.cpkMedio ? 'R$ ' + d.cpkMedio.toFixed(4) : '—'}</div><div class="slide-kpi-lbl">CPK Médio</div></div>
+        </div>
+        <div class="slide-status-grid" style="margin-bottom:1.4rem">
+          <div class="slide-status-card">
+            <div class="slide-status-card-head"><i class="fas fa-layer-group"></i> Situação dos Pneus</div>
+            <div class="slide-status-rows">
+              ${statusLabels.map(st => `<div class="slide-status-row"><span>${st.label}</span><span class="n" style="color:${st.color}">${d.statusCount[st.key] || 0}</span></div>`).join('')}
+            </div>
+          </div>
+          ${d.melhor ? `<div class="slide-status-card">
+            <div class="slide-status-card-head"><i class="fas fa-arrow-trend-down" style="color:var(--success)"></i> Melhor CPK</div>
+            <div class="slide-status-rows">
+              <div class="slide-status-row"><span>${escapeHTML(d.melhor.placa)} / ${escapeHTML(d.melhor.pos)}</span><span class="n" style="color:var(--success)">R$ ${d.melhor.cpk.toFixed(4)}/km</span></div>
+              <div class="slide-status-row"><span>Marca</span><span class="n">${escapeHTML(d.melhor.marca)}</span></div>
+            </div>
+          </div>` : ''}
+          ${d.pior ? `<div class="slide-status-card">
+            <div class="slide-status-card-head"><i class="fas fa-arrow-trend-up" style="color:var(--danger)"></i> Pior CPK</div>
+            <div class="slide-status-rows">
+              <div class="slide-status-row"><span>${escapeHTML(d.pior.placa)} / ${escapeHTML(d.pior.pos)}</span><span class="n" style="color:var(--danger)">R$ ${d.pior.cpk.toFixed(4)}/km</span></div>
+              <div class="slide-status-row"><span>Marca</span><span class="n">${escapeHTML(d.pior.marca)}</span></div>
+            </div>
+          </div>` : ''}
+        </div>`;
+      requestAnimationFrame(() => body.classList.add('show'));
+      slideRenderDots(slides, idx);
+      return;
+    }
+    if (s.type === 'jornada-resumo') {
+      const d = slideJornadaResumo();
+      if (!d) {
+        body.innerHTML = `<div class="slide-section-title">${s.title}</div>
+          <div class="slide-status-card" style="max-width:520px;width:100%;text-align:center;color:var(--text-lt)">Sem dados de folha importados ainda.</div>`;
+        requestAnimationFrame(() => body.classList.add('show'));
+        slideRenderDots(slides, idx);
+        return;
+      }
+      body.innerHTML = `<div class="slide-section-title">${s.title} — ${d.competenciaLabel}</div>
+        <div class="slide-kpi-grid" style="margin-bottom:1.6rem;max-width:1050px">
+          <div class="slide-kpi-card"><div class="slide-kpi-val">${d.funcionarios}</div><div class="slide-kpi-lbl">Funcionários na Competência</div></div>
+          <div class="slide-kpi-card"><div class="slide-kpi-val">${fmtMoney(d.totalVenc)}</div><div class="slide-kpi-lbl">Total de Vencimentos</div></div>
+          <div class="slide-kpi-card is-warning"><div class="slide-kpi-val">${fmtMoney(d.totalDesc)}</div><div class="slide-kpi-lbl">Total de Descontos</div></div>
+          <div class="slide-kpi-card is-ok"><div class="slide-kpi-val">${fmtMoney(d.totalLiq)}</div><div class="slide-kpi-lbl">Total Líquido (Folha)</div></div>
+        </div>
+        ${d.ranking.length ? `<div class="slide-status-card" style="max-width:620px;width:100%;text-align:left">
+          <div class="slide-status-card-head"><i class="fas fa-ranking-star"></i> Top Rubricas de Vencimento</div>
+          <div class="slide-status-rows">
+            ${d.ranking.map(([nome,valor]) => `<div class="slide-status-row"><span style="max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHTML(nome)}">${escapeHTML(nome)}</span><span class="n" style="color:var(--accent-dk)">${fmtMoney(valor)}</span></div>`).join('')}
+          </div>
+        </div>` : ''}`;
+      requestAnimationFrame(() => body.classList.add('show'));
+      slideRenderDots(slides, idx);
+      return;
+    }
     body.innerHTML = `<div class="slide-section-title">${s.title}</div>
          <div class="slide-kpi-grid">
            ${s.kpis.map(slideKpiCard).join('')}
@@ -3027,6 +3227,10 @@ function slideUpdateClock(){
 
 function openSlideMode(){
   slideIdx = 0;
+  // Dispara o carregamento da telemetria de velocidade em segundo plano
+  // assim que o painel abre, para o slide de Controle de Velocidade já
+  // ter dados prontos quando a rotação chegar nele.
+  if (!velLoaded && typeof velInit === 'function') velInit();
   document.getElementById('slideOverlay').classList.add('active');
   document.getElementById('slideBody').classList.remove('show');
   slideRender();
@@ -4362,16 +4566,16 @@ function resetFinFilters() {
 const ORC_MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
 const ORC_GRUPOS = [
-  { key:'gente',         nome:'Gente (Pessoal)',               sub:'Salários, encargos, benefícios, 13º e férias — folha de pagamento', icon:'fa-users', color:'#7c3aed',
+  { key:'gente',         nome:'Gente (Pessoal)',               sub:'Líquido a receber da folha — salários, diárias, gratificações, descontos (INSS, adiantamentos)', icon:'fa-users', color:'#7c3aed',
     keywords:[], fonte:'folha' },
   { key:'manutencao',   nome:'Manutenção da Frota',            sub:'Fixo (preventiva) e variável (corretiva)',            icon:'fa-wrench',              color:'#ef4444',
-    keywords:['manuten','mecanic','pneu','oficina','peca','revisao','oleo','freio','borracharia','funilaria','retifica'] },
-  { key:'investimentos', nome:'Investimentos',                 sub:'Parcelas de financiamento — veículos, carrocerias, frio, estrutura', icon:'fa-building-columns', color:'#3b82f6',
-    keywords:['financiamento','investimento','parcela','prestacao','consorcio','carroceria','refrigeracao','frigorif','estrutura','implemento'] },
-  { key:'operacionais',  nome:'Operacionais',                  sub:'Aluguel, material de escritório, telefonia, veículos de apoio', icon:'fa-briefcase', color:'#10b981',
-    keywords:['aluguel','escritorio','telefonia','telefone','internet','apoio','operacional','material de escritorio','copa','limpeza'] },
-  { key:'financeiras',   nome:'Financeiras / Administrativas',  sub:'Multas, impostos, notas fiscais, passivo trabalhista, pró-labore', icon:'fa-file-invoice-dollar', color:'#8B7355',
-    keywords:['multa','imposto','nota fiscal','notafiscal','trabalhista','pro-labore','prolabore','pro labore','administrativo','fiscal','taxa','juro','tarifa bancaria','cartorio','contabil'] },
+    keywords:['manuten','mecanic','pneu','oficina','peca','revisao','oleo','freio','borracharia','funilaria','retifica','alinhamento','balanceamento','filtro','correia','embreagem','suspensao','diferencial','caixa de cambio','injecao','eletrica','radiador','pastilha','lona','arla','bateria','borracha','vedacao','rolamento'] },
+  { key:'investimentos', nome:'Investimentos',                 sub:'Parcelas de financiamento — veículos, carretas, refrigeração, consórcios, benfeitorias', icon:'fa-building-columns', color:'#3b82f6',
+    keywords:['financiamento','investimento','parcela','prestacao','consorcio','carroceria','refrigeracao','frigorif','estrutura','implemento','leasing','aquisicao','banco bradesco','banco itau','banco santander','banco sicredi','banco sicoob','banco safra','banco abc','scania financ','volvo financ','iveco financ','mercedes financ','volkswagen financ','bb leasing','caixa leasing','finame','bndes'] },
+  { key:'operacionais',  nome:'Operacionais',                  sub:'Aluguel, combustível frota apoio, telefonia, material de escritório, seguros, pedágios, rastreamento', icon:'fa-briefcase', color:'#10b981',
+    keywords:['aluguel','escritorio','telefonia','telefone','internet','apoio','operacional','material de escritorio','copa','limpeza','seguro','pedagio','rastreamento','onixsat','rastreador','combustivel apoio','gasolina apoio','manutencao apoio','veiculo apoio','assinatura','mensalidade','software','sistema','licenca','vigilancia','seguranca','uniforme','epi','equipamento de protecao','vistoria','despachante'] },
+  { key:'financeiras',   nome:'Financeiras / Administrativas',  sub:'Multas, impostos, contabilidade, notas fiscais, passivo trabalhista, pró-labore, tarifas bancárias', icon:'fa-file-invoice-dollar', color:'#8B7355',
+    keywords:['multa','imposto','nota fiscal','notafiscal','trabalhista','pro-labore','prolabore','pro labore','administrativo','fiscal','taxa','juro','tarifa bancaria','cartorio','contabil','honorario','advocac','sindicato','contribuicao','fgts','inss empresa','irpj','csll','pis','cofins','issqn','icms','dpvat','iptu','alvara','licenca ambiental'] },
 ];
 
 let orcChartGeralObj = null;
@@ -4395,15 +4599,37 @@ function orcLocalKey(ano, grupoKey){
   return `orcamento_${ano}_${grupoKey}`;
 }
 
-function orcGetBudget(ano, grupoKey){
+// Retorna o orçado salvo manualmente. Se não houver nada digitado,
+// calcula automaticamente a média do realizado dos meses disponíveis
+// e usa esse valor como orçado de referência (sem salvar — só leitura).
+// Meses com realizado próprio usam o próprio valor; meses sem dado usam a média.
+// Se o usuário digitar qualquer valor, esse passa a prevalecer (localStorage).
+function orcGetBudget(ano, grupoKey, realizado){
   try {
     const raw = localStorage.getItem(orcLocalKey(ano, grupoKey));
     if (raw) {
       const arr = JSON.parse(raw);
-      if (Array.isArray(arr) && arr.length === 12) return arr;
+      if (Array.isArray(arr) && arr.length === 12 && arr.some(v => v > 0)) return arr;
     }
   } catch(e){}
+  // Sem orçado manual: retorna média do realizado como estimativa automática
+  if (realizado) {
+    const real = realizado[grupoKey] || [];
+    const comDados = real.filter(v => v > 0);
+    if (comDados.length > 0) {
+      const media = comDados.reduce((a,b) => a+b, 0) / comDados.length;
+      return real.map(v => v > 0 ? v : media);
+    }
+  }
   return new Array(12).fill(0);
+}
+
+// Limpa o orçado manual salvo — volta a usar a média automática do realizado
+function orcLimparBudget(ano, grupoKey){
+  if (!confirm('Limpar orçado manual e voltar à média automática?')) return;
+  localStorage.removeItem(orcLocalKey(ano, grupoKey));
+  orcRender();
+  showToast('Orçado zerado — voltando à média automática.');
 }
 
 function orcSetBudgetValor(ano, grupoKey, mesIdx, valor){
@@ -4440,8 +4666,9 @@ function orcComputeRealizado(ano){
   const realizado = {};
   ORC_GRUPOS.forEach(g => { realizado[g.key] = new Array(12).fill(0); });
 
-  // Grupo "Gente" (item 1.l): soma dos vencimentos (proventos) da folha de
-  // pagamento — módulo "Jornada e Compensação" — por competência/mês.
+  // Grupo "Gente" (item 1.l): soma do LÍQUIDO A RECEBER da folha de pagamento
+  // — campo valorLiquido do módulo "Jornada e Compensação" — por competência/mês.
+  // Representa o desembolso real de caixa com pessoal (líquido = vencimentos − descontos).
   try {
     if (typeof jorTodosFuncionarios === 'function') {
       jorTodosFuncionarios().forEach(f => {
@@ -4449,9 +4676,7 @@ function orcComputeRealizado(ano){
         const partes = String(f.competencia).split('-');
         const ay = +partes[0], am = +partes[1] - 1;
         if (ay !== +ano || isNaN(am)) return;
-        let totalVenc = 0;
-        (f.rubricas || []).forEach(r => { if (r.tipo === 'vencimento') totalVenc += (r.valor || 0); });
-        realizado['gente'][am] += totalVenc;
+        realizado['gente'][am] += (f.valorLiquido || 0);
       });
     }
   } catch(e) {}
@@ -4509,10 +4734,16 @@ function orcRender(){
 
   const wrap = document.getElementById('orcGroupsWrap');
   wrap.innerHTML = ORC_GRUPOS.map(g => {
-    const orcado = orcGetBudget(ano, g.key);
+    const orcado = orcGetBudget(ano, g.key, realizado);
     const real = realizado[g.key];
     let somaOrcado = 0, somaReal = 0;
 
+    // Verifica se há override manual salvo para diferenciar média auto vs digitado
+    let orcadoManualArr = null;
+    try {
+      const rawM = localStorage.getItem(orcLocalKey(ano, g.key));
+      if (rawM) { const a = JSON.parse(rawM); if (Array.isArray(a) && a.some(v=>v>0)) orcadoManualArr = a; }
+    } catch(e){}
     const linhas = ORC_MESES.map((mes, i) => {
       const o = orcado[i] || 0;
       const r = real[i] || 0;
@@ -4521,9 +4752,13 @@ function orcRender(){
       const saldo = o - r;
       const pct = o ? Math.round((r / o) * 100) : (r > 0 ? 999 : 0);
       const saldoClass = saldo >= 0 ? 'orc-saldo-pos' : 'orc-saldo-neg';
+      // isAuto: sem override manual salvo → valor vem da média automática
+      const isAuto = !orcadoManualArr && o > 0;
+      const inputStyle = isAuto ? 'color:#b08a20;font-style:italic' : '';
+      const inputTitle = isAuto ? 'Orçado automático (média do realizado) — clique para editar' : 'Orçado manual';
       return `<tr>
         <td>${mes}</td>
-        <td><input type="text" inputmode="decimal" class="orc-input" data-grupo="${g.key}" data-mes="${i}" value="${o ? o.toFixed(2).replace('.',',') : ''}" placeholder="0,00" onchange="orcOnInputChange(this,${ano})"></td>
+        <td><input type="text" inputmode="decimal" class="orc-input" data-grupo="${g.key}" data-mes="${i}" value="${o ? o.toFixed(2).replace('.',',') : ''}" placeholder="0,00" style="${inputStyle}" title="${inputTitle}" onchange="orcOnInputChange(this,${ano})"></td>
         <td>${fmtMoney(r)}</td>
         <td class="${saldoClass}">${fmtMoney(saldo)}</td>
         <td>${o ? pct+'%' : (r>0?'—':'0%')}<span class="orc-bar-track"><span class="orc-bar-fill" style="width:${Math.min(pct,100)}%;background:${orcBarColor(pct)}"></span></span></td>
@@ -4538,13 +4773,14 @@ function orcRender(){
       <div class="orc-group-head">
         <div class="orc-group-title">
           <div class="orc-group-icon"><i class="fas ${g.icon}"></i></div>
-          <div>${g.nome}<div class="orc-group-sub">${g.sub}</div></div>
+          <div>${g.nome}<div class="orc-group-sub">${g.sub}</div>${!orcadoManualArr && real && real.some(v=>v>0) ? `<div style="font-size:.62rem;color:#b08a20;margin-top:.2rem;font-style:italic"><i class="fas fa-calculator"></i> Orçado em itálico = média automática do realizado — clique no valor para editar</div>` : ""}</div>
         </div>
         <div class="orc-group-totals">
           <div class="orc-mini-stat"><div class="lbl">Orçado</div><div class="val">${fmtMoney(somaOrcado)}</div></div>
           <div class="orc-mini-stat"><div class="lbl">Realizado</div><div class="val">${fmtMoney(somaReal)}</div></div>
-          <div class="orc-mini-stat"><div class="lbl">Saldo</div><div class="val" style="color:${saldoGrupo>=0?'var(--success)':'var(--danger)'}">${fmtMoney(saldoGrupo)}</div></div>
+          <div class="orc-mini-stat"><div class="lbl">Saldo</div><div class="val" style="color:${saldoGrupo>=0?'var(--success)':'var(--danger)'}"> ${fmtMoney(saldoGrupo)}</div></div>
           <div class="orc-mini-stat"><div class="lbl">% Usado</div><div class="val" style="color:${orcBarColor(pctGrupo)}">${somaOrcado? pctGrupo+'%' : '—'}</div></div>
+
         </div>
       </div>
       <div class="orc-table-wrap">
@@ -4602,7 +4838,7 @@ function orcExportCSV(){
   const realizado = orcComputeRealizado(ano);
   const linhas = [];
   ORC_GRUPOS.forEach(g => {
-    const orcado = orcGetBudget(ano, g.key);
+    const orcado = orcGetBudget(ano, g.key, realizado);
     const real = realizado[g.key];
     ORC_MESES.forEach((mes, i) => {
       linhas.push({
@@ -6679,20 +6915,27 @@ const MESES_NOME = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out',
 
 // ── Identifica se uma placa é cavalo ou carreta usando o FROTA_DATA ──
 // Cavalos pagam IPVA 3x (parcelado); carretas pagam 1x (à vista).
+// Lista explícita de placas de carreta da frota (Cadastro Padrão Gentrex).
+// Garante que placas de carreta não registradas no campo carreta do FROTA_DATA
+// (ex: veículos parados ou D2A) sejam sempre identificadas como CARRETA (1x à vista)
+// e nunca como cavalo (3x parcelado).
+const CARRETA_PLACAS_FIXAS = new Set([
+  'IWV8B19','MFR1475','MGG7C96','MHF6475','MHF6E75','MIP7569','MKB0A39',
+  'MLB0J76','MME7C92','OKD8A19','QHA1357','QHI5B08','QIW2885','QJH0591',
+  'RDS9G71','RDS9H31','RLO9G15','RXQ4H32','RXS3D84','RYQ7I03',
+]);
+
 function vencTipoPlaca(placaTexto) {
   const p = String(placaTexto || '').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
   if (!p) return 'desconhecido';
-  // Verifica se a placa bate com um cavalo (campo placa do FROTA_DATA)
-  // .toUpperCase() aqui também, pra não depender de o cadastro estar sempre
-  // digitado em maiúsculas (ex.: "RYQ7i03" continua batendo com "RYQ7I03").
+  // 1. Verifica se a placa bate com um cavalo (campo placa do FROTA_DATA)
   const isCavalo = FROTA_DATA.some(f => String(f.placa||'').toUpperCase().replace(/[^A-Z0-9]/g,'') === p);
   if (isCavalo) return 'cavalo';
-  // Verifica se bate com uma carreta (campo carreta do FROTA_DATA)
-  // Extrai só a placa do campo carreta (remove sufixos como "— 30 pal. Van") e compara por igualdade exata
+  // 2. Verifica lista fixa de carretas (cobre veículos D2A, parados e outros não vinculados)
+  if (CARRETA_PLACAS_FIXAS.has(p)) return 'carreta';
+  // 3. Verifica se bate com uma carreta (campo carreta do FROTA_DATA)
   const isCarreta = FROTA_DATA.some(f => String(f.carreta||'').split(/\s/)[0].toUpperCase().replace(/[^A-Z0-9]/g,'') === p);
   if (isCarreta) return 'carreta';
-  // Heurística pelo formato: placas Mercosul (ABC1D23) e antigas (ABC1234) são cavalos;
-  // carretas geralmente têm formatos menos padronizados na frota desta empresa
   return 'desconhecido';
 }
 
@@ -7631,6 +7874,10 @@ function filtrarFrota() {
     const ini = getInitials(r.motorista);
     const isVan = r.carreta.includes('Van') || r.paletes === '30';
     const tel = r.celular.replace(/\D/g,'');
+    const carretaPlaca = r.carreta.split('—')[0].trim();
+    const cavaloDesc = [r.cavaloMarca, r.cavaloModelo, r.cavaloAno].filter(Boolean).join(' · ');
+    const carretaDesc = [r.carretaMarca, r.carretaAno ? `${r.carretaAno}` : ''].filter(Boolean).join(' · ');
+    const refrigDesc = [r.refrigMarca, r.refrigModelo, r.refrigAno ? `${r.refrigAno}` : ''].filter(Boolean).join(' · ');
     return `
     <div style="background:#fff;border-radius:16px;border:1px solid rgba(0,0,0,.06);overflow:hidden;transition:.2s;box-shadow:0 2px 8px rgba(0,0,0,.06)" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.12)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 8px rgba(0,0,0,.06)'">
       <!-- Header colorido -->
@@ -7644,34 +7891,43 @@ function filtrarFrota() {
       </div>
       <!-- Body -->
       <div style="padding:1rem 1.2rem">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem .5rem;margin-bottom:.9rem">
-          <div>
-            <div style="font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-lt);margin-bottom:.2rem">Cavalo</div>
-            <div style="font-size:.85rem;font-weight:700;color:#1e2a3a;font-family:monospace;letter-spacing:.5px">${r.placa}</div>
+        <!-- Placas principais -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.85rem">
+          <div style="background:#f0f4fa;border-radius:10px;padding:.55rem .75rem">
+            <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-lt);margin-bottom:.2rem">🚛 Cavalo</div>
+            <div style="font-size:.9rem;font-weight:800;color:#1e2a3a;font-family:monospace;letter-spacing:.5px">${r.placa}</div>
+            ${cavaloDesc ? `<div style="font-size:.66rem;color:var(--text-lt);margin-top:.2rem;line-height:1.3">${cavaloDesc}</div>` : ''}
           </div>
-          <div>
-            <div style="font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-lt);margin-bottom:.2rem">Carreta</div>
-            <div style="font-size:.82rem;font-weight:600;color:#1e2a3a;font-family:monospace">${r.carreta.split('—')[0].trim()}</div>
-          </div>
-          <div>
-            <div style="font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-lt);margin-bottom:.2rem">Paletes</div>
-            <div style="display:inline-flex;align-items:center;gap:.3rem">
-              <span style="font-size:.85rem;font-weight:700;color:#1e2a3a">${r.paletes}</span>
-              <span style="font-size:.65rem;background:var(--gray-100);color:var(--text-lt);padding:.1rem .45rem;border-radius:20px">paletes</span>
-            </div>
-          </div>
-          <div>
-            <div style="font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-lt);margin-bottom:.2rem">CPF</div>
-            <div style="font-size:.78rem;color:var(--text-lt)">${r.cpf}</div>
+          <div style="background:#f0f4fa;border-radius:10px;padding:.55rem .75rem">
+            <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-lt);margin-bottom:.2rem">🚚 Carreta</div>
+            <div style="font-size:.9rem;font-weight:800;color:#1e2a3a;font-family:monospace;letter-spacing:.5px">${carretaPlaca}</div>
+            ${carretaDesc ? `<div style="font-size:.66rem;color:var(--text-lt);margin-top:.2rem;line-height:1.3">${carretaDesc}</div>` : ''}
           </div>
         </div>
-        <!-- Footer com whatsapp -->
-        <div style="border-top:1px solid var(--gray-200);padding-top:.75rem;display:flex;align-items:center;justify-content:space-between">
-          <div style="font-size:.82rem;color:var(--text-lt)"><i class="fas fa-phone" style="font-size:.72rem;margin-right:.35rem;color:var(--success)"></i>${r.celular}</div>
+        <!-- Refrigeração + Paletes + CPF -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.85rem">
+          <div style="background:#f8faf5;border-radius:10px;padding:.55rem .75rem">
+            <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-lt);margin-bottom:.2rem">❄️ Refrigeração</div>
+            ${refrigDesc ? `<div style="font-size:.72rem;font-weight:600;color:#1e2a3a;line-height:1.35">${refrigDesc}</div>` : `<div style="font-size:.72rem;color:var(--text-lt)">—</div>`}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:.5rem">
+            <div style="background:#fafaf0;border-radius:10px;padding:.45rem .75rem">
+              <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-lt);margin-bottom:.1rem">📦 Paletes</div>
+              <div style="font-size:.82rem;font-weight:700;color:#1e2a3a">${r.paletes}<span style="font-size:.65rem;font-weight:400;color:var(--text-lt);margin-left:.3rem">pal.</span></div>
+            </div>
+            <div style="background:#f8f8f8;border-radius:10px;padding:.45rem .75rem">
+              <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-lt);margin-bottom:.1rem">CPF</div>
+              <div style="font-size:.72rem;color:var(--text-lt);font-family:monospace">${r.cpf || '—'}</div>
+            </div>
+          </div>
+        </div>
+        <!-- Footer com contatos -->
+        <div style="border-top:1px solid var(--gray-200);padding-top:.75rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap">
+          <div style="font-size:.82rem;color:var(--text-lt)"><i class="fas fa-phone" style="font-size:.72rem;margin-right:.35rem;color:var(--success)"></i>${r.celular || '—'}</div>
           <div style="display:flex;gap:.4rem">
             <a href="https://wa.me/55${tel}" target="_blank" rel="noopener noreferrer" style="background:#25D366;color:#fff;border:none;border-radius:8px;padding:.3rem .7rem;font-size:.72rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem"><i class="fab fa-whatsapp"></i> WA</a>
             <a href="tel:${tel}" style="background:var(--info);color:#fff;border:none;border-radius:8px;padding:.3rem .7rem;font-size:.72rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem"><i class="fas fa-phone"></i></a>
-            <button onclick="frotaEditarAbrir('${r.placa}')" style="background:var(--gray-200);color:#1e2a3a;border:none;border-radius:8px;padding:.3rem .55rem;font-size:.72rem;font-weight:700;cursor:pointer" title="Completar/editar dados"><i class="fas fa-pen"></i></button>
+            <button onclick="frotaEditarAbrir('${r.placa}')" style="background:var(--gray-200);color:#1e2a3a;border:none;border-radius:8px;padding:.3rem .55rem;font-size:.72rem;font-weight:700;cursor:pointer" title="Editar dados"><i class="fas fa-pen"></i></button>
           </div>
         </div>
       </div>
@@ -7702,72 +7958,82 @@ function filtrarFrota() {
 // Abre o formulário no modo edição, preenchendo com os dados atuais do
 // motorista/veículo selecionado — usado tanto pra completar informação que
 // falta quanto pra corrigir algo já cadastrado.
+// ── Modal de edição de cadastro de frota (substituiu o formulário fixo) ──
 function frotaEditarAbrir(placa){
   const r = FROTA_DATA.find(f => f.placa === placa);
   if (!r) return;
   frotaEditandoPlaca = placa;
-
-  document.getElementById('frotaNovoMotorista').value    = r.motorista === '—' ? '' : (r.motorista || '');
-  document.getElementById('frotaNovoPlaca').value        = r.placa || '';
-  document.getElementById('frotaNovoCarreta').value      = String(r.carreta || '').split('—')[0].trim();
-  document.getElementById('frotaNovoCavaloMarca').value  = r.cavaloMarca || '';
-  document.getElementById('frotaNovoCavaloModelo').value = r.cavaloModelo || '';
-  document.getElementById('frotaNovoCavaloAno').value    = r.cavaloAno || '';
-  document.getElementById('frotaNovoCarretaMarca').value = r.carretaMarca || '';
-  document.getElementById('frotaNovoCarretaAno').value   = r.carretaAno || '';
-  document.getElementById('frotaNovoRefrigMarca').value  = r.refrigMarca || '';
-  document.getElementById('frotaNovoRefrigModelo').value = r.refrigModelo || '';
-  document.getElementById('frotaNovoRefrigAno').value    = r.refrigAno || '';
-  document.getElementById('frotaNovoCelular').value      = r.celular || '';
-  document.getElementById('frotaNovoCpf').value          = r.cpf || '';
-  document.getElementById('frotaNovoPaletes').value      = r.paletes === '30' ? '30' : '28';
-  document.getElementById('frotaNovoVan').checked         = String(r.carreta || '').includes('Van');
-
-  document.getElementById('frotaFormTitulo').innerHTML = `<i class="fas fa-pen"></i> Completando cadastro: ${r.placa}`;
-  document.getElementById('frotaSalvarBtn').innerHTML = '<i class="fas fa-check"></i> Salvar Alterações';
-  document.getElementById('frotaCancelarBtn').style.display = 'inline-flex';
-  document.getElementById('frotaNovoPlaca').scrollIntoView({ behavior:'smooth', block:'center' });
+  const carretaPlacaVal = String(r.carreta || '').split('—')[0].trim();
+  const isVanVal = String(r.carreta || '').includes('Van');
+  // Remove modal anterior se existir
+  const antigo = document.getElementById('frotaEditModal');
+  if (antigo) antigo.remove();
+  const modal = document.createElement('div');
+  modal.id = 'frotaEditModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.22);width:100%;max-width:680px;max-height:90vh;overflow-y:auto;padding:1.6rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem">
+        <div style="font-weight:800;font-size:1rem;color:#1e2a3a"><i class="fas fa-pen" style="color:var(--accent);margin-right:.5rem"></i>Editar Cadastro — ${r.placa}</div>
+        <button onclick="frotaEditarCancelar()" style="background:var(--gray-200);border:none;border-radius:8px;padding:.35rem .7rem;cursor:pointer;font-size:.85rem"><i class="fas fa-times"></i></button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.7rem;margin-bottom:1rem">
+        <div class="flt-grp"><label>Motorista</label><input type="text" id="frotaNovoMotorista" value="${r.motorista === '—' ? '' : (r.motorista || '')}" placeholder="Nome completo"></div>
+        <div class="flt-grp"><label>Placa Cavalo</label><input type="text" id="frotaNovoPlaca" value="${r.placa || ''}" style="text-transform:uppercase" readonly></div>
+        <div class="flt-grp"><label>Marca Cavalo</label><input type="text" id="frotaNovoCavaloMarca" value="${r.cavaloMarca || ''}" placeholder="Ex: SCANIA"></div>
+        <div class="flt-grp"><label>Modelo Cavalo</label><input type="text" id="frotaNovoCavaloModelo" value="${r.cavaloModelo || ''}" placeholder="Ex: R450 A6X2"></div>
+        <div class="flt-grp"><label>Ano Cavalo</label><input type="text" id="frotaNovoCavaloAno" value="${r.cavaloAno || ''}" placeholder="Ex: 2022"></div>
+        <div class="flt-grp"><label>Placa Carreta</label><input type="text" id="frotaNovoCarreta" value="${carretaPlacaVal}" style="text-transform:uppercase" placeholder="Ex: QJH0591"></div>
+        <div class="flt-grp"><label>Marca Carreta</label><input type="text" id="frotaNovoCarretaMarca" value="${r.carretaMarca || ''}" placeholder="Ex: RANDON"></div>
+        <div class="flt-grp"><label>Ano Carreta</label><input type="text" id="frotaNovoCarretaAno" value="${r.carretaAno || ''}" placeholder="Ex: 2018"></div>
+        <div class="flt-grp"><label>Marca Refrigeração</label><input type="text" id="frotaNovoRefrigMarca" value="${r.refrigMarca || ''}" placeholder="Ex: THERMOKING"></div>
+        <div class="flt-grp"><label>Modelo Refrigeração</label><input type="text" id="frotaNovoRefrigModelo" value="${r.refrigModelo || ''}" placeholder="Ex: SLX 400i"></div>
+        <div class="flt-grp"><label>Ano Refrigeração</label><input type="text" id="frotaNovoRefrigAno" value="${r.refrigAno || ''}" placeholder="Ex: 2018"></div>
+        <div class="flt-grp"><label>Paletes</label><select id="frotaNovoPaletes"><option value="28" ${r.paletes!=='30'?'selected':''}>28 paletes</option><option value="30" ${r.paletes==='30'?'selected':''}>30 paletes (Van)</option></select></div>
+        <div class="flt-grp" style="align-self:end"><label style="display:flex;align-items:center;gap:.4rem;cursor:pointer"><input type="checkbox" id="frotaNovoVan" ${isVanVal?'checked':''}> É carreta Van?</label></div>
+        <div class="flt-grp"><label>Celular</label><input type="text" id="frotaNovoCelular" value="${r.celular || ''}" placeholder="Ex: 49 - 99999-9999"></div>
+        <div class="flt-grp"><label>CPF</label><input type="text" id="frotaNovoCpf" value="${r.cpf || ''}" placeholder="Ex: 000.000.000-00"></div>
+      </div>
+      <div style="display:flex;gap:.6rem;justify-content:flex-end">
+        <button class="btn btn-gray" onclick="frotaEditarCancelar()"><i class="fas fa-times"></i> Cancelar</button>
+        <button class="btn btn-primary" onclick="frotaExtraAdd()"><i class="fas fa-check"></i> Salvar Alterações</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) frotaEditarCancelar(); });
 }
 
 function frotaEditarCancelar(){
   frotaEditandoPlaca = null;
-  ['frotaNovoMotorista','frotaNovoPlaca','frotaNovoCarreta','frotaNovoCelular','frotaNovoCpf',
-   'frotaNovoCavaloMarca','frotaNovoCavaloModelo','frotaNovoCavaloAno',
-   'frotaNovoCarretaMarca','frotaNovoCarretaAno',
-   'frotaNovoRefrigMarca','frotaNovoRefrigModelo','frotaNovoRefrigAno'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-  document.getElementById('frotaNovoPaletes').selectedIndex = 0;
-  document.getElementById('frotaNovoVan').checked = false;
-  document.getElementById('frotaFormTitulo').innerHTML = '<i class="fas fa-user-plus"></i> Agregar Motorista / Veículo à Frota';
-  document.getElementById('frotaSalvarBtn').innerHTML = '<i class="fas fa-plus"></i> Adicionar à Frota';
-  document.getElementById('frotaCancelarBtn').style.display = 'none';
+  const modal = document.getElementById('frotaEditModal');
+  if (modal) modal.remove();
 }
 
-// Adiciona um motorista/veículo novo, OU — se frotaEditandoPlaca estiver
-// setado — salva as alterações/complementos no registro já existente
-// (seja ele um cadastro base do código ou um cadastro extra da tela).
+// Salva edição do modal (frotaEditandoPlaca setado) ou adiciona novo (sem modal, chamado externamente)
 function frotaExtraAdd(){
-  const motorista = (document.getElementById('frotaNovoMotorista').value || '').trim().toUpperCase();
-  const placa     = (document.getElementById('frotaNovoPlaca').value || '').trim().toUpperCase();
+  const gEl = id => document.getElementById(id);
+  const motorista = (gEl('frotaNovoMotorista')?.value || '').trim().toUpperCase();
+  const placa     = (gEl('frotaNovoPlaca')?.value || '').trim().toUpperCase();
   if (!placa) { showToast('Informe ao menos a placa do cavalo.'); return; }
 
-  const carretaPlaca = (document.getElementById('frotaNovoCarreta').value || '').trim().toUpperCase();
-  const paletes       = document.getElementById('frotaNovoPaletes').value || '28';
-  const isVan         = paletes === '30' && document.getElementById('frotaNovoVan').checked;
+  const carretaPlaca = (gEl('frotaNovoCarreta')?.value || '').trim().toUpperCase();
+  const paletes       = gEl('frotaNovoPaletes')?.value || '28';
+  const isVan         = paletes === '30' && (gEl('frotaNovoVan')?.checked || false);
   const carreta       = carretaPlaca ? (carretaPlaca + (isVan ? ' — 30 pal. Van' : '')) : '';
 
   const campos = {
     motorista: motorista || '—',
     placa, carreta, paletes,
-    celular: (document.getElementById('frotaNovoCelular').value || '').trim(),
-    cpf:     (document.getElementById('frotaNovoCpf').value || '').trim(),
-    cavaloMarca:  (document.getElementById('frotaNovoCavaloMarca').value || '').trim().toUpperCase(),
-    cavaloModelo: (document.getElementById('frotaNovoCavaloModelo').value || '').trim(),
-    cavaloAno:    (document.getElementById('frotaNovoCavaloAno').value || '').trim(),
-    carretaMarca: (document.getElementById('frotaNovoCarretaMarca').value || '').trim().toUpperCase(),
-    carretaAno:   (document.getElementById('frotaNovoCarretaAno').value || '').trim(),
-    refrigMarca:  (document.getElementById('frotaNovoRefrigMarca').value || '').trim().toUpperCase(),
-    refrigModelo: (document.getElementById('frotaNovoRefrigModelo').value || '').trim(),
-    refrigAno:    (document.getElementById('frotaNovoRefrigAno').value || '').trim(),
+    celular: (gEl('frotaNovoCelular')?.value || '').trim(),
+    cpf:     (gEl('frotaNovoCpf')?.value || '').trim(),
+    cavaloMarca:  (gEl('frotaNovoCavaloMarca')?.value || '').trim().toUpperCase(),
+    cavaloModelo: (gEl('frotaNovoCavaloModelo')?.value || '').trim(),
+    cavaloAno:    (gEl('frotaNovoCavaloAno')?.value || '').trim(),
+    carretaMarca: (gEl('frotaNovoCarretaMarca')?.value || '').trim().toUpperCase(),
+    carretaAno:   (gEl('frotaNovoCarretaAno')?.value || '').trim(),
+    refrigMarca:  (gEl('frotaNovoRefrigMarca')?.value || '').trim().toUpperCase(),
+    refrigModelo: (gEl('frotaNovoRefrigModelo')?.value || '').trim(),
+    refrigAno:    (gEl('frotaNovoRefrigAno')?.value || '').trim(),
   };
 
   if (frotaEditandoPlaca) {
@@ -7775,11 +8041,9 @@ function frotaExtraAdd(){
     if (registro) {
       Object.assign(registro, campos);
       if (registro._custom) {
-        // Cadastro extra: regrava o objeto inteiro no localStorage de extras.
         const extras = frotaExtraGetAll().map(f => f.placa === frotaEditandoPlaca ? Object.assign({}, f, campos) : f);
         frotaExtraSaveAll(extras);
       } else {
-        // Cadastro base do código: grava só o "patch" de complemento, por placa.
         const overrides = frotaOverridesGetAll();
         overrides[frotaEditandoPlaca] = campos;
         frotaOverridesSaveAll(overrides);
@@ -7798,14 +8062,6 @@ function frotaExtraAdd(){
   extras.push(novo);
   frotaExtraSaveAll(extras);
   FROTA_DATA.push(novo);
-
-  ['frotaNovoMotorista','frotaNovoPlaca','frotaNovoCarreta','frotaNovoCelular','frotaNovoCpf',
-   'frotaNovoCavaloMarca','frotaNovoCavaloModelo','frotaNovoCavaloAno',
-   'frotaNovoCarretaMarca','frotaNovoCarretaAno',
-   'frotaNovoRefrigMarca','frotaNovoRefrigModelo','frotaNovoRefrigAno'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-  document.getElementById('frotaNovoPaletes').selectedIndex = 0;
-  document.getElementById('frotaNovoVan').checked = false;
-
   popularSugestoesFrota();
   filtrarFrota();
   if (document.getElementById('manAno')) manRender();
