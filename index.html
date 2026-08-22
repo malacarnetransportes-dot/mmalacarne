@@ -904,6 +904,7 @@ footer a{color:var(--accent);text-decoration:none;}
         <button class="pa-nav-item" data-tab="tabNfe"><i class="fas fa-file-invoice"></i> NF-e / Abast.</button>
         <button class="pa-nav-item" data-tab="tabVelocidade"><i class="fas fa-gauge-high"></i> Controle de Velocidade</button>
         <button class="pa-nav-item" data-tab="tabJornada"><i class="fas fa-money-check-dollar"></i> Jornada e Compensação</button>
+        <button class="pa-nav-item" data-tab="tabDiaria"><i class="fas fa-route"></i> Controle de Diária</button>
         <button class="pa-nav-item" data-tab="tabRH"><i class="fas fa-people-arrows"></i> RH — Turnover</button>
       </nav>
       <div class="pa-sidebar-footer">
@@ -2005,6 +2006,124 @@ footer a{color:var(--accent);text-decoration:none;}
           </div>
         </div><!-- /tabJornada -->
 
+        <!-- ── TAB CONTROLE DE DIÁRIA ── -->
+        <div id="tabDiaria" class="tab-pane">
+
+          <!-- KPIs -->
+          <div class="kpi-grid">
+            <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-route"></i></div><div><div class="kpi-val" id="dia-total-viagens">—</div><div class="kpi-lbl">Viagens Registradas</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-clock"></i></div><div><div class="kpi-val" id="dia-total-horas">—</div><div class="kpi-lbl">Total de Horas</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-sack-dollar"></i></div><div><div class="kpi-val" id="dia-total-valor">—</div><div class="kpi-lbl">Valor Total de Diárias</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-hourglass-half"></i></div><div><div class="kpi-val" id="dia-horas-extra">—</div><div class="kpi-lbl">Horas Extras (total)</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon brown"><i class="fas fa-chart-bar"></i></div><div><div class="kpi-val" id="dia-ticket-medio">—</div><div class="kpi-lbl">Ticket Médio / Viagem</div></div></div>
+          </div>
+
+          <!-- Filtros + Importar -->
+          <div class="dash-card">
+            <div class="filters-bar">
+              <div class="flt-grp"><label>Motorista</label><input type="text" id="diaFiltMotorista" list="dlDiaMotoristas" placeholder="Todos"><datalist id="dlDiaMotoristas"></datalist></div>
+              <div class="flt-grp"><label>Placa</label><input type="text" id="diaFiltPlaca" placeholder="Todas"></div>
+              <div class="flt-grp"><label>Período — De</label><input type="date" id="diaFiltDe"></div>
+              <div class="flt-grp"><label>Até</label><input type="date" id="diaFiltAte"></div>
+              <div class="flt-grp"><label>Status envio</label>
+                <select id="diaFiltStatus">
+                  <option value="">Todos</option>
+                  <option value="enviado">Enviados ao sistema</option>
+                  <option value="manual">Inserção manual</option>
+                </select>
+              </div>
+              <button class="btn btn-accent" onclick="diaAplicarFiltro()"><i class="fas fa-search"></i> Filtrar</button>
+              <button class="btn btn-gray" onclick="diaLimparFiltro()"><i class="fas fa-times"></i> Limpar</button>
+              <button class="btn btn-success btn-sm" onclick="diaExportCSV()"><i class="fas fa-download"></i> CSV</button>
+            </div>
+
+            <!-- Inserção manual -->
+            <div style="border-top:1px solid var(--gray-200);margin-top:.8rem;padding-top:.8rem">
+              <div style="font-size:.78rem;font-weight:700;color:var(--text-lt);text-transform:uppercase;letter-spacing:.7px;margin-bottom:.8rem">
+                <i class="fas fa-plus-circle" style="color:var(--accent)"></i> Lançamento Manual de Diária
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.7rem">
+                <div class="flt-grp"><label>Motorista</label><input type="text" id="diaNovoMotorista" list="dlDiaMotoristas" placeholder="Nome completo"></div>
+                <div class="flt-grp"><label>Placa</label><input type="text" id="diaNovoPlaca" placeholder="Ex: RYE7J26"></div>
+                <div class="flt-grp"><label>Origem</label><input type="text" id="diaNovoOrigem" placeholder="Cidade/local de saída"></div>
+                <div class="flt-grp"><label>Destino</label><input type="text" id="diaNovoDestino" placeholder="Cidade/local de chegada"></div>
+                <div class="flt-grp"><label>Data/Hora Início</label><input type="datetime-local" id="diaNovoInicio"></div>
+                <div class="flt-grp"><label>Data/Hora Fim</label><input type="datetime-local" id="diaNovoFim"></div>
+                <div class="flt-grp"><label>Valor R$ (opcional)</label><input type="text" inputmode="decimal" id="diaNovoValor" placeholder="Calculado automaticamente se vazio"></div>
+                <div class="flt-grp" style="align-self:end">
+                  <button class="btn btn-accent" style="width:100%" onclick="diaInserirManual()"><i class="fas fa-save"></i> Lançar Diária</button>
+                </div>
+              </div>
+              <div id="diaMsgManual" style="font-size:.8rem;margin-top:.4rem"></div>
+            </div>
+          </div>
+
+          <!-- Gráfico: Valor de diárias por motorista -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem">
+            <div class="dash-card">
+              <div class="dash-card-title"><i class="fas fa-chart-bar"></i> Valor de Diárias por Motorista</div>
+              <div class="chart-box" style="height:280px"><canvas id="diaChartMotorista"></canvas></div>
+            </div>
+            <div class="dash-card">
+              <div class="dash-card-title"><i class="fas fa-chart-line"></i> Viagens por Dia (últimos 30 dias)</div>
+              <div class="chart-box" style="height:280px"><canvas id="diaChartLinha"></canvas></div>
+            </div>
+          </div>
+
+          <!-- Tabela de registros -->
+          <div class="dash-card">
+            <div class="dash-card-title"><i class="fas fa-list"></i> Registros de Diária
+              <span id="diaRegistrosCount" style="background:var(--gray-100);padding:.15rem .6rem;border-radius:30px;font-size:.75rem;margin-left:.5rem;font-weight:700"></span>
+              <button class="btn btn-gray btn-sm" style="margin-left:auto" onclick="diaLimparTodos()" title="Apagar todos os registros do navegador"><i class="fas fa-trash"></i> Limpar localStorage</button>
+            </div>
+
+            <!-- Indicador de sincronização -->
+            <div id="diaSyncBar" style="display:none;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:.5rem .8rem;font-size:.78rem;color:#15803d;margin-bottom:.6rem">
+              <i class="fas fa-sync-alt fa-spin"></i> Sincronizando com a planilha...
+            </div>
+            <div id="diaSyncInfo" style="font-size:.75rem;color:var(--text-lt);margin-bottom:.6rem"></div>
+
+            <div class="tbl-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Data/Hora Início</th>
+                    <th>Data/Hora Fim</th>
+                    <th>Motorista</th>
+                    <th>Placa</th>
+                    <th>Origem</th>
+                    <th>Destino</th>
+                    <th>Horas</th>
+                    <th>H. Normais</th>
+                    <th>H. Extra</th>
+                    <th>Valor (R$)</th>
+                    <th>Origem do Dado</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="diaTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Card: integração com Jornada -->
+          <div class="dash-card" style="border:1px solid rgba(212,175,55,.3);background:linear-gradient(135deg,#fffdf0,#fff)">
+            <div class="dash-card-title" style="color:#1e2a3a">
+              <i class="fas fa-link" style="color:var(--accent-dk)"></i> Consolidado de Diárias por Motorista — Integração com Jornada e Compensação
+            </div>
+            <div style="font-size:.76rem;color:var(--text-lt);margin-bottom:.8rem">
+              Comparativo entre as diárias lançadas neste módulo (app/manual) e as rubricas DIÁRIAS da folha de pagamento (Jornada e Compensação).
+            </div>
+            <div class="tbl-wrap">
+              <table class="data-table">
+                <thead><tr><th>Motorista</th><th>Viagens (App/Manual)</th><th>Total Horas (App)</th><th>Valor Total (App, R$)</th><th>Diárias na Folha (R$)</th><th>Diferença (R$)</th></tr></thead>
+                <tbody id="diaConsolidadoBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+        </div><!-- /tabDiaria -->
+
         <!-- ── TAB RH — CONTRATAÇÕES, DESLIGAMENTOS & TURNOVER ── -->
         <div id="tabRH" class="tab-pane">
 
@@ -2739,6 +2858,7 @@ const pageTitles = {
   tabChecklist: '<i class="fas fa-clipboard-check" style="color:var(--accent)"></i> Checklist de Veículos',
   tabVelocidade: '<i class="fas fa-gauge-high" style="color:var(--accent)"></i> Controle de Velocidade',
   tabJornada: '<i class="fas fa-money-check-dollar" style="color:var(--accent)"></i> Jornada e Compensação',
+  tabDiaria: '<i class="fas fa-route" style="color:var(--accent)"></i> Controle de Diária',
   tabRH: '<i class="fas fa-people-arrows" style="color:var(--accent)"></i> RH — Contratações, Desligamentos & Turnover'
 };
 
@@ -2761,6 +2881,7 @@ document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
     if (btn.dataset.tab === 'tabChecklist') setTimeout(checklistInit, 50);
     if (btn.dataset.tab === 'tabVelocidade') setTimeout(velInit, 50);
     if (btn.dataset.tab === 'tabJornada')    setTimeout(jorInit, 50);
+    if (btn.dataset.tab === 'tabDiaria')     setTimeout(diaInit, 50);
     if (btn.dataset.tab === 'tabRH')         setTimeout(rhInit, 50);
     if (btn.dataset.tab === 'tabFaturamento') setTimeout(fatApplyFilters, 50);
     if (btn.dataset.tab === 'tabFinanceiro') setTimeout(orcInit, 50);
@@ -11259,6 +11380,476 @@ function rhExportCSV() {
   });
   exportCSV(rows, 'rh_turnover');
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONTROLE DE DIÁRIA — módulo integrado com o app do motorista
+   Armazena registros em localStorage (chave: mm_diaria_registros)
+   Recebe dados via Google Apps Script webhook (mesmo endpoint do app)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+// ── Constantes ──
+const DIA_KEY = 'mm_diaria_registros';
+const DIA_SYNC_KEY = 'mm_diaria_last_sync';
+
+// Valor hora padrão por motorista (espelho do CONFIG do app do motorista)
+const DIA_DRIVER_CONFIG = [
+  { nome: "ADRIANO VAZ DOS SANTOS",     valorHora: 12.42, valorHoraExtra: 22.84 },
+  { nome: "ANDERSON VEIGA SANTOS",      valorHora: 12.42, valorHoraExtra: 23.49 },
+  { nome: "ANDERSON LUIS VEIGA DO SANTOS", valorHora: 12.42, valorHoraExtra: 23.49 },
+  { nome: "CRISTIANO DE ALMEIDA",       valorHora: 12.42, valorHoraExtra: 21.95 },
+  { nome: "ERI ORLANDO ROMERO",         valorHora: 12.42, valorHoraExtra: 22.10 },
+  { nome: "ERI ORLANDO GUILLEN ROMERO", valorHora: 12.42, valorHoraExtra: 22.10 },
+  { nome: "GILSON MARGOTTI",            valorHora: 12.42, valorHoraExtra: 20.61 },
+  { nome: "HILDO ANTONIO ALMEIDA",      valorHora: 12.42, valorHoraExtra: 22.76 },
+  { nome: "HILDO ANTONIO DE ALMEIDA",   valorHora: 12.42, valorHoraExtra: 22.76 },
+  { nome: "JORGE ODAIR LOPES",          valorHora: 12.42, valorHoraExtra: 20.61 },
+  { nome: "JOSIAS FERREIRA DOS SANTOS", valorHora: 12.42, valorHoraExtra: 18.63 },
+  { nome: "LEANDRO L KLEE",             valorHora: 12.42, valorHoraExtra: 20.29 },
+  { nome: "LEANDRO LUCIO KLEE",         valorHora: 12.42, valorHoraExtra: 20.29 },
+  { nome: "MARIANO DE SOUZA",           valorHora: 12.42, valorHoraExtra: 23.67 },
+  { nome: "MARIANO MATEUS DE SOUZA",    valorHora: 12.42, valorHoraExtra: 23.67 },
+  { nome: "RAFAEL DE FRANÇA RAMOS",     valorHora: 12.42, valorHoraExtra: 20.61 },
+  { nome: "RAFAEL DE FRANCA RAMOS",     valorHora: 12.42, valorHoraExtra: 20.61 },
+  { nome: "RODRIGO DA ROSA",            valorHora: 12.42, valorHoraExtra: 22.13 },
+];
+const DIA_HORAS_NORMAL = 8;
+
+// ── Helpers ──
+function diaGetRegistros() {
+  return JSON.parse(localStorage.getItem(DIA_KEY) || '[]');
+}
+function diaSalvarRegistros(arr) {
+  localStorage.setItem(DIA_KEY, JSON.stringify(arr));
+}
+function diaFmtMoney(v) {
+  return 'R$ ' + (v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function diaFmtHoras(h) {
+  const hrs = Math.floor(h);
+  const min = Math.round((h - hrs) * 60);
+  return `${String(hrs).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+}
+function diaFmtDatetime(isoStr) {
+  if (!isoStr) return '—';
+  const d = new Date(isoStr);
+  return d.toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+function diaDriverCfg(nome) {
+  const n = (nome||'').toUpperCase().trim();
+  return DIA_DRIVER_CONFIG.find(d => d.nome === n) || { valorHora: 12.42, valorHoraExtra: 20.61 };
+}
+function diaCalcValor(nomeMotorista, horasDecimais) {
+  const cfg = diaDriverCfg(nomeMotorista);
+  const normal = Math.min(horasDecimais, DIA_HORAS_NORMAL);
+  const extra  = Math.max(0, horasDecimais - DIA_HORAS_NORMAL);
+  return {
+    normal, extra,
+    valor: (normal * cfg.valorHora) + (extra * cfg.valorHoraExtra)
+  };
+}
+
+// ── Receber registros do App do Motorista (via localStorage compartilhado ou import manual) ──
+// O App do motorista salva em mm_history e mm_queue.
+// Aqui, ao iniciar o módulo, sincronizamos esses dados automaticamente.
+function diaSyncFromAppLocalStorage() {
+  const appHistory = JSON.parse(localStorage.getItem('mm_history') || '[]');
+  if (!appHistory.length) return 0;
+  const registros = diaGetRegistros();
+  const existingIds = new Set(registros.map(r => r._id));
+  let novos = 0;
+  for (const h of appHistory) {
+    if (!h._id || existingIds.has(h._id)) continue;
+    // Só importa registros finalizados (que têm fim)
+    if (!h.fim) continue;
+    const horasDecimais = h.horas || 0;
+    const calc = h.valor !== undefined
+      ? { normal: h.horasNormais||0, extra: h.horasExtra||0, valor: h.valor }
+      : diaCalcValor(h.motorista, horasDecimais);
+    registros.push({
+      _id: h._id,
+      motorista: h.motorista || '',
+      placa: h.placa || '',
+      origem: h.origem || '',
+      destino: h.destino || '',
+      inicio: h.inicio,
+      fim: h.fim,
+      horas: horasDecimais,
+      horasNormais: calc.normal,
+      horasExtra: calc.extra,
+      valor: calc.valor,
+      origemDado: 'app-motorista',
+      _synced: !h._pending
+    });
+    existingIds.add(h._id);
+    novos++;
+  }
+  if (novos > 0) {
+    diaSalvarRegistros(registros);
+    localStorage.setItem(DIA_SYNC_KEY, new Date().toISOString());
+  }
+  return novos;
+}
+
+// ── Filtros ──
+let diaRegistrosFiltrados = [];
+
+function diaGetFiltros() {
+  return {
+    motorista: (document.getElementById('diaFiltMotorista')?.value || '').trim().toUpperCase(),
+    placa: (document.getElementById('diaFiltPlaca')?.value || '').trim().toUpperCase(),
+    de: document.getElementById('diaFiltDe')?.value || '',
+    ate: document.getElementById('diaFiltAte')?.value || '',
+    status: document.getElementById('diaFiltStatus')?.value || ''
+  };
+}
+
+function diaAplicarFiltro() {
+  const f = diaGetFiltros();
+  const todos = diaGetRegistros();
+  diaRegistrosFiltrados = todos.filter(r => {
+    if (f.motorista && !(r.motorista||'').toUpperCase().includes(f.motorista)) return false;
+    if (f.placa && !(r.placa||'').toUpperCase().includes(f.placa)) return false;
+    if (f.de && r.inicio && r.inicio < f.de + 'T00:00:00') return false;
+    if (f.ate && r.inicio && r.inicio > f.ate + 'T23:59:59') return false;
+    if (f.status === 'enviado' && r.origemDado !== 'app-motorista') return false;
+    if (f.status === 'manual' && r.origemDado !== 'manual') return false;
+    return true;
+  });
+  diaRenderTable();
+  diaRenderKPIs();
+  diaRenderCharts();
+  diaRenderConsolidado();
+}
+
+function diaLimparFiltro() {
+  ['diaFiltMotorista','diaFiltPlaca','diaFiltDe','diaFiltAte'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  const sel = document.getElementById('diaFiltStatus'); if(sel) sel.value = '';
+  diaAplicarFiltro();
+}
+
+// ── Render Tabela ──
+function diaRenderTable() {
+  const tbody = document.getElementById('diaTableBody');
+  if (!tbody) return;
+  const cnt = document.getElementById('diaRegistrosCount');
+  if (cnt) cnt.textContent = diaRegistrosFiltrados.length + ' registros';
+
+  if (!diaRegistrosFiltrados.length) {
+    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:var(--text-lt);padding:1.5rem">Nenhum registro encontrado.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = diaRegistrosFiltrados.map((r, i) => {
+    const origem = r.origemDado === 'app-motorista'
+      ? '<span class="badge" style="background:#e0f2fe;color:#0369a1">📱 App</span>'
+      : '<span class="badge" style="background:#f0fdf4;color:#15803d">✏️ Manual</span>';
+    return `<tr>
+      <td>${diaFmtDatetime(r.inicio)}</td>
+      <td>${diaFmtDatetime(r.fim)}</td>
+      <td style="font-weight:600">${r.motorista||'—'}</td>
+      <td><code>${r.placa||'—'}</code></td>
+      <td>${r.origem||'—'}</td>
+      <td>${r.destino||'—'}</td>
+      <td>${diaFmtHoras(r.horas||0)}</td>
+      <td>${diaFmtHoras(r.horasNormais||0)}</td>
+      <td style="color:${(r.horasExtra||0)>0?'var(--warning)':'var(--text-lt)'}">${diaFmtHoras(r.horasExtra||0)}</td>
+      <td style="font-weight:700;color:var(--success)">${diaFmtMoney(r.valor||0)}</td>
+      <td>${origem}</td>
+      <td><button class="btn btn-gray btn-sm" title="Excluir" onclick="diaExcluir('${r._id}')"><i class="fas fa-trash"></i></button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Render KPIs ──
+function diaRenderKPIs() {
+  const totalViagens = diaRegistrosFiltrados.length;
+  const totalHoras   = diaRegistrosFiltrados.reduce((s,r) => s + (r.horas||0), 0);
+  const totalValor   = diaRegistrosFiltrados.reduce((s,r) => s + (r.valor||0), 0);
+  const totalExtra   = diaRegistrosFiltrados.reduce((s,r) => s + (r.horasExtra||0), 0);
+  const ticketMedio  = totalViagens ? totalValor / totalViagens : 0;
+
+  const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+  set('dia-total-viagens', totalViagens);
+  set('dia-total-horas',   diaFmtHoras(totalHoras));
+  set('dia-total-valor',   diaFmtMoney(totalValor));
+  set('dia-horas-extra',   diaFmtHoras(totalExtra));
+  set('dia-ticket-medio',  diaFmtMoney(ticketMedio));
+}
+
+// ── Render Charts ──
+let diaChartMot = null, diaChartLinha = null;
+
+function diaRenderCharts() {
+  // Gráfico por motorista
+  const mapMot = {};
+  for (const r of diaRegistrosFiltrados) {
+    const n = r.motorista || 'Desconhecido';
+    mapMot[n] = (mapMot[n]||0) + (r.valor||0);
+  }
+  const motLabels = Object.keys(mapMot).sort((a,b) => mapMot[b]-mapMot[a]).slice(0,12);
+  const motVals   = motLabels.map(k => parseFloat(mapMot[k].toFixed(2)));
+
+  const ctxMot = document.getElementById('diaChartMotorista');
+  if (ctxMot) {
+    if (diaChartMot) diaChartMot.destroy();
+    diaChartMot = new Chart(ctxMot, {
+      type: 'bar',
+      data: {
+        labels: motLabels.map(l => l.split(' ')[0]),
+        datasets: [{ label:'Valor Diárias (R$)', data: motVals, backgroundColor:'rgba(212,175,55,.75)', borderColor:'rgba(184,148,31,1)', borderWidth:1.5, borderRadius:6 }]
+      },
+      options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+        scales:{ y:{ ticks:{ callback: v => 'R$ '+v.toLocaleString('pt-BR') } } } }
+    });
+  }
+
+  // Gráfico linha: viagens por dia
+  const ultimos30 = {};
+  const hoje = new Date();
+  for (let i=29; i>=0; i--) {
+    const d = new Date(hoje); d.setDate(d.getDate()-i);
+    ultimos30[d.toISOString().slice(0,10)] = 0;
+  }
+  for (const r of diaRegistrosFiltrados) {
+    if (!r.inicio) continue;
+    const dia = r.inicio.slice(0,10);
+    if (dia in ultimos30) ultimos30[dia]++;
+  }
+  const linhaLabels = Object.keys(ultimos30).map(k => k.slice(5));
+  const linhaVals   = Object.values(ultimos30);
+
+  const ctxLinha = document.getElementById('diaChartLinha');
+  if (ctxLinha) {
+    if (diaChartLinha) diaChartLinha.destroy();
+    diaChartLinha = new Chart(ctxLinha, {
+      type: 'line',
+      data: {
+        labels: linhaLabels,
+        datasets: [{ label:'Viagens', data: linhaVals, borderColor:'rgba(16,185,129,1)', backgroundColor:'rgba(16,185,129,.12)', fill:true, tension:.35, pointRadius:3, pointBackgroundColor:'rgba(16,185,129,1)' }]
+      },
+      options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+        scales:{ y:{ ticks:{ stepSize:1 }, beginAtZero:true } } }
+    });
+  }
+}
+
+// ── Render Consolidado (cruzamento com Jornada) ──
+function diaRenderConsolidado() {
+  const tbody = document.getElementById('diaConsolidadoBody');
+  if (!tbody) return;
+
+  // Agrupa registros do módulo por motorista (normalizado)
+  const mapApp = {};
+  for (const r of diaRegistrosFiltrados) {
+    const nome = (r.motorista||'').toUpperCase().trim();
+    if (!mapApp[nome]) mapApp[nome] = { viagens:0, horas:0, valor:0 };
+    mapApp[nome].viagens++;
+    mapApp[nome].horas += r.horas||0;
+    mapApp[nome].valor  += r.valor||0;
+  }
+
+  // Pega total de diárias da folha (JORNADA_SEED)
+  const mapFolha = {};
+  if (typeof JORNADA_SEED !== 'undefined') {
+    for (const f of JORNADA_SEED) {
+      const nome = (f.nome||'').toUpperCase().trim();
+      const rubDiaria = (f.rubricas||[]).find(r => r.categoria === 'DIARIAS');
+      if (rubDiaria) {
+        mapFolha[nome] = (mapFolha[nome]||0) + rubDiaria.valor;
+      }
+    }
+  }
+
+  // Monta set com todos os motoristas que aparecem em alguma das duas fontes
+  const todosMotoristas = new Set([...Object.keys(mapApp), ...Object.keys(mapFolha)]);
+  if (!todosMotoristas.size) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-lt)">Nenhum dado disponível.</td></tr>';
+    return;
+  }
+
+  const rows = [...todosMotoristas].sort().map(nome => {
+    const app   = mapApp[nome] || { viagens:0, horas:0, valor:0 };
+    const folha = mapFolha[nome] || 0;
+    const diff  = app.valor - folha;
+    const diffCls = diff > 0 ? 'color:var(--warning)' : diff < 0 ? 'color:var(--danger)' : 'color:var(--success)';
+    return `<tr>
+      <td style="font-weight:600">${nome}</td>
+      <td style="text-align:center">${app.viagens || '—'}</td>
+      <td>${app.horas ? diaFmtHoras(app.horas) : '—'}</td>
+      <td style="color:var(--success);font-weight:700">${app.valor ? diaFmtMoney(app.valor) : '—'}</td>
+      <td style="font-weight:700">${folha ? diaFmtMoney(folha) : '—'}</td>
+      <td style="font-weight:700;${diffCls}">${app.valor || folha ? (diff>=0?'+':'')+diaFmtMoney(diff) : '—'}</td>
+    </tr>`;
+  });
+  tbody.innerHTML = rows.join('');
+}
+
+// ── Inserção manual ──
+function diaInserirManual() {
+  const motorista = (document.getElementById('diaNovoMotorista')?.value||'').trim();
+  const placa     = (document.getElementById('diaNovoPlaca')?.value||'').trim().toUpperCase();
+  const origem    = (document.getElementById('diaNovoOrigem')?.value||'').trim();
+  const destino   = (document.getElementById('diaNovoDestino')?.value||'').trim();
+  const inicio    = document.getElementById('diaNovoInicio')?.value;
+  const fim       = document.getElementById('diaNovoFim')?.value;
+  const valorRaw  = (document.getElementById('diaNovoValor')?.value||'').replace(',','.');
+
+  const msg = document.getElementById('diaMsgManual');
+  const erro = (t) => { if(msg){ msg.style.color='var(--danger)'; msg.textContent='⚠️ '+t; } };
+  if (!motorista) { erro('Informe o nome do motorista.'); return; }
+  if (!placa)     { erro('Informe a placa.'); return; }
+  if (!origem)    { erro('Informe a origem.'); return; }
+  if (!destino)   { erro('Informe o destino.'); return; }
+  if (!inicio)    { erro('Informe data/hora de início.'); return; }
+  if (!fim)       { erro('Informe data/hora de fim.'); return; }
+
+  const tsInicio = new Date(inicio).getTime();
+  const tsFim    = new Date(fim).getTime();
+  if (tsFim <= tsInicio) { erro('Fim deve ser posterior ao início.'); return; }
+
+  const horasDecimais = (tsFim - tsInicio) / 3600000;
+  let valor, horasNormais, horasExtra;
+  if (valorRaw && !isNaN(parseFloat(valorRaw))) {
+    valor = parseFloat(valorRaw);
+    horasNormais = Math.min(horasDecimais, DIA_HORAS_NORMAL);
+    horasExtra   = Math.max(0, horasDecimais - DIA_HORAS_NORMAL);
+  } else {
+    const calc = diaCalcValor(motorista, horasDecimais);
+    valor = calc.valor; horasNormais = calc.normal; horasExtra = calc.extra;
+  }
+
+  const novo = {
+    _id: 'MAN-' + Date.now(),
+    motorista: motorista.toUpperCase(),
+    placa, origem, destino,
+    inicio: new Date(inicio).toISOString(),
+    fim: new Date(fim).toISOString(),
+    horas: horasDecimais,
+    horasNormais, horasExtra, valor,
+    origemDado: 'manual',
+    _synced: false
+  };
+
+  const arr = diaGetRegistros();
+  arr.unshift(novo);
+  diaSalvarRegistros(arr);
+
+  // Limpa campos
+  ['diaNovoMotorista','diaNovoPlaca','diaNovoOrigem','diaNovoDestino',
+   'diaNovoInicio','diaNovoFim','diaNovoValor'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  if (msg) { msg.style.color='var(--success)'; msg.textContent = `✅ Diária de ${motorista} lançada com sucesso — ${diaFmtMoney(valor)}`; }
+  setTimeout(() => { if(msg) msg.textContent = ''; }, 5000);
+
+  diaAplicarFiltro();
+}
+
+// ── Excluir registro ──
+function diaExcluir(id) {
+  if (!confirm('Excluir este registro de diária?')) return;
+  const arr = diaGetRegistros().filter(r => r._id !== id);
+  diaSalvarRegistros(arr);
+  diaAplicarFiltro();
+}
+
+// ── Limpar tudo ──
+function diaLimparTodos() {
+  if (!confirm('Apagar TODOS os registros de diária do navegador? Esta ação não pode ser desfeita.')) return;
+  localStorage.removeItem(DIA_KEY);
+  localStorage.removeItem(DIA_SYNC_KEY);
+  diaAplicarFiltro();
+}
+
+// ── Export CSV ──
+function diaExportCSV() {
+  const cols = ['inicio','fim','motorista','placa','origem','destino','horas','horasNormais','horasExtra','valor','origemDado'];
+  const labels = ['Início','Fim','Motorista','Placa','Origem','Destino','Horas','H.Normais','H.Extra','Valor (R$)','Origem do Dado'];
+  exportCSV(diaRegistrosFiltrados.map(r => {
+    const o = {};
+    cols.forEach((c,i) => { o[labels[i]] = c === 'valor' ? r[c].toFixed(2) : (r[c]||''); });
+    return o;
+  }), 'controle_diaria');
+}
+
+// ── Datalist de motoristas ──
+function diaPopulateDatalist() {
+  const dl = document.getElementById('dlDiaMotoristas');
+  if (!dl) return;
+  dl.innerHTML = '';
+  const nomes = new Set([
+    ...DIA_DRIVER_CONFIG.map(d => d.nome),
+    ...diaGetRegistros().map(r => (r.motorista||'').toUpperCase().trim()).filter(Boolean)
+  ]);
+  for (const n of [...nomes].sort()) {
+    const opt = document.createElement('option'); opt.value = n; dl.appendChild(opt);
+  }
+}
+
+// ── Info de sincronização ──
+function diaRenderSyncInfo() {
+  const el = document.getElementById('diaSyncInfo');
+  if (!el) return;
+  const ts = localStorage.getItem(DIA_SYNC_KEY);
+  const total = diaGetRegistros().length;
+  const appPendentes = JSON.parse(localStorage.getItem('mm_queue')||'[]').length;
+  el.innerHTML = [
+    ts ? `Última sincronização com o app: <strong>${new Date(ts).toLocaleString('pt-BR')}</strong>` : 'Nenhuma sincronização realizada ainda.',
+    `Total no banco local: <strong>${total}</strong> registros.`,
+    appPendentes > 0 ? `<span style="color:var(--warning)"><i class="fas fa-hourglass-half"></i> ${appPendentes} envio(s) pendente(s) no app do motorista.</span>` : ''
+  ].filter(Boolean).join(' &nbsp;·&nbsp; ');
+}
+
+// ── Init ──
+function diaInit() {
+  // Sincroniza automaticamente a partir do localStorage do app (se rodando no mesmo browser)
+  const novos = diaSyncFromAppLocalStorage();
+  if (novos > 0) {
+    const bar = document.getElementById('diaSyncBar');
+    if (bar) {
+      bar.style.display = 'block';
+      bar.innerHTML = `<i class="fas fa-check-circle"></i> ${novos} registro(s) importado(s) do app do motorista automaticamente.`;
+      setTimeout(() => { if(bar) bar.style.display = 'none'; }, 5000);
+    }
+  }
+  diaPopulateDatalist();
+  diaRenderSyncInfo();
+  diaLimparFiltro(); // renderiza tudo sem filtro
+}
+
+// ── Listener global para receber dados do App (postMessage — mesmo domínio) ──
+window.addEventListener('message', (event) => {
+  try {
+    const d = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+    if (!d || d.tipo !== 'FIM_DIARIA') return;
+    const registros = diaGetRegistros();
+    const id = d._id || ('MSG-' + Date.now());
+    if (registros.some(r => r._id === id)) return;
+    const horasDecimais = d.horasTrabalhadas || 0;
+    const calc = diaCalcValor(d.motorista, horasDecimais);
+    registros.unshift({
+      _id: id,
+      motorista: (d.motorista||'').toUpperCase().trim(),
+      placa: d.placa||'',
+      origem: d.origem||'',
+      destino: d.destino||'',
+      inicio: d.dataHoraInicio,
+      fim: d.dataHoraFim,
+      horas: horasDecimais,
+      horasNormais: d.horasNormais || calc.normal,
+      horasExtra:   d.horasExtra   || calc.extra,
+      valor: d.valorTotal || calc.valor,
+      origemDado: 'app-motorista',
+      _synced: true
+    });
+    diaSalvarRegistros(registros);
+    localStorage.setItem(DIA_SYNC_KEY, new Date().toISOString());
+    // Re-renderiza se a aba estiver ativa
+    const tabEl = document.getElementById('tabDiaria');
+    if (tabEl && tabEl.classList.contains('active')) diaInit();
+  } catch(e) {}
+});
 
 </script>
 </body>
