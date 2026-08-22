@@ -2025,11 +2025,11 @@ footer a{color:var(--accent);text-decoration:none;}
               <div class="flt-grp"><label>Placa</label><input type="text" id="diaFiltPlaca" placeholder="Todas"></div>
               <div class="flt-grp"><label>Período — De</label><input type="date" id="diaFiltDe"></div>
               <div class="flt-grp"><label>Até</label><input type="date" id="diaFiltAte"></div>
-              <div class="flt-grp"><label>Status envio</label>
+              <div class="flt-grp"><label>Origem</label>
                 <select id="diaFiltStatus">
-                  <option value="">Todos</option>
-                  <option value="enviado">Enviados ao sistema</option>
-                  <option value="manual">Inserção manual</option>
+                  <option value="">Todas</option>
+                  <option value="enviado">📱 App do Motorista</option>
+                  <option value="manual">✏️ Inserção Manual</option>
                 </select>
               </div>
               <button class="btn btn-accent" onclick="diaAplicarFiltro()"><i class="fas fa-search"></i> Filtrar</button>
@@ -11402,6 +11402,7 @@ const DIA_DRIVER_CONFIG = [
   { nome: "GILSON MARGOTTI",            valorHora: 12.42, valorHoraExtra: 20.61 },
   { nome: "HILDO ANTONIO ALMEIDA",      valorHora: 12.42, valorHoraExtra: 22.76 },
   { nome: "HILDO ANTONIO DE ALMEIDA",   valorHora: 12.42, valorHoraExtra: 22.76 },
+  { nome: "ITAMIR ANTONIO DELLALIBERA", valorHora: 12.42, valorHoraExtra: 20.61 },
   { nome: "JORGE ODAIR LOPES",          valorHora: 12.42, valorHoraExtra: 20.61 },
   { nome: "JOSIAS FERREIRA DOS SANTOS", valorHora: 12.42, valorHoraExtra: 18.63 },
   { nome: "LEANDRO L KLEE",             valorHora: 12.42, valorHoraExtra: 20.29 },
@@ -11793,29 +11794,21 @@ function diaRenderSyncInfo() {
   if (!el) return;
   const ts = localStorage.getItem(DIA_SYNC_KEY);
   const total = diaGetRegistros().length;
-  const appPendentes = JSON.parse(localStorage.getItem('mm_queue')||'[]').length;
   el.innerHTML = [
-    ts ? `Última sincronização com o app: <strong>${new Date(ts).toLocaleString('pt-BR')}</strong>` : 'Nenhuma sincronização realizada ainda.',
-    `Total no banco local: <strong>${total}</strong> registros.`,
-    appPendentes > 0 ? `<span style="color:var(--warning)"><i class="fas fa-hourglass-half"></i> ${appPendentes} envio(s) pendente(s) no app do motorista.</span>` : ''
-  ].filter(Boolean).join(' &nbsp;·&nbsp; ');
+    ts ? `Última atualização: <strong>${new Date(ts).toLocaleString('pt-BR')}</strong>` : 'Aguardando registros do app.',
+    `Total registrado: <strong>${total}</strong> diária(s).`
+  ].join(' &nbsp;·&nbsp; ');
 }
 
 // ── Init ──
 function diaInit() {
-  // Sincroniza automaticamente a partir do localStorage do app (se rodando no mesmo browser)
-  const novos = diaSyncFromAppLocalStorage();
-  if (novos > 0) {
-    const bar = document.getElementById('diaSyncBar');
-    if (bar) {
-      bar.style.display = 'block';
-      bar.innerHTML = `<i class="fas fa-check-circle"></i> ${novos} registro(s) importado(s) do app do motorista automaticamente.`;
-      setTimeout(() => { if(bar) bar.style.display = 'none'; }, 5000);
-    }
-  }
+  // Sincroniza automaticamente a partir do localStorage do app (mesmo browser)
+  // Não requer nenhuma ação manual — funciona sempre que os dois arquivos
+  // estão abertos no mesmo navegador.
+  diaSyncFromAppLocalStorage();
   diaPopulateDatalist();
   diaRenderSyncInfo();
-  diaLimparFiltro(); // renderiza tudo sem filtro
+  diaLimparFiltro();
 }
 
 // ── Listener global para receber dados do App (postMessage — mesmo domínio) ──
@@ -11823,33 +11816,122 @@ window.addEventListener('message', (event) => {
   try {
     const d = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
     if (!d || d.tipo !== 'FIM_DIARIA') return;
-    const registros = diaGetRegistros();
-    const id = d._id || ('MSG-' + Date.now());
-    if (registros.some(r => r._id === id)) return;
-    const horasDecimais = d.horasTrabalhadas || 0;
-    const calc = diaCalcValor(d.motorista, horasDecimais);
-    registros.unshift({
+    diaReceberRegistro(d);
+  } catch(e) {}
+});
+
+// ── BroadcastChannel — recebe do App do Motorista em outra aba do mesmo browser ──
+if (typeof BroadcastChannel !== 'undefined') {
+  const _diaBC = new BroadcastChannel('mm_diaria');
+  _diaBC.onmessage = (event) => {
+    try {
+      const d = event.data;
+      if (!d || d.tipo !== 'FIM_DIARIA') return;
+      diaReceberRegistro(d);
+      const bar = document.getElementById('diaSyncBar');
+      if (bar) {
+        bar.style.display = 'block';
+        bar.innerHTML = `<i class="fas fa-check-circle"></i> Nova diária recebida do app: <strong>${d.motorista}</strong> · R$ ${(d.valorTotal||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+        setTimeout(() => { if(bar) bar.style.display = 'none'; }, 6000);
+      }
+    } catch(e) {}
+  };
+}
+
+// ── Processar registro recebido (postMessage ou BroadcastChannel) ──
+function diaReceberRegistro(d) {
+  const registros = diaGetRegistros();
+  const id = d._id || ('MSG-' + Date.now());
+  if (registros.some(r => r._id === id)) return;
+  const horasDecimais = d.horasTrabalhadas || 0;
+  const calc = diaCalcValor(d.motorista, horasDecimais);
+  registros.unshift({
+    _id: id,
+    motorista: (d.motorista||'').toUpperCase().trim(),
+    placa: d.placa||'',
+    origem: d.origem||'',
+    destino: d.destino||'',
+    inicio: d.dataHoraInicio,
+    fim: d.dataHoraFim,
+    horas: horasDecimais,
+    horasNormais: d.horasNormais || calc.normal,
+    horasExtra:   d.horasExtra   || calc.extra,
+    valor: d.valorTotal || calc.valor,
+    origemDado: 'app-motorista',
+    _synced: true
+  });
+  diaSalvarRegistros(registros);
+  localStorage.setItem(DIA_SYNC_KEY, new Date().toISOString());
+  const tabEl = document.getElementById('tabDiaria');
+  if (tabEl && tabEl.classList.contains('active')) diaInit();
+}
+
+// ── Sincronizar com Google Sheets (Diarias_Motoristas) ──
+// Lê a planilha de destino e importa registros FIM_DIARIA que ainda não estão no localStorage
+const DIA_SHEETS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlEJIu_e8jmEdTb7MhG7xZXKMUPPuYtYDw9msDen-FvItUEbJD2yBk1PARgLnSwScjk_C8f3UM86BO/pub?output=csv';
+
+async function diaSyncFromSheets() {
+  const bar = document.getElementById('diaSyncBar');
+  if (bar) { bar.style.display = 'block'; bar.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Sincronizando com a planilha...'; }
+  const CORS = [
+    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  ];
+  let txt = null;
+  for (const proxy of CORS) {
+    try {
+      const r = await fetch(proxy(DIA_SHEETS_URL), { signal: AbortSignal.timeout(7000) });
+      if (r.ok) { txt = await r.text(); break; }
+    } catch(e) {}
+  }
+  if (bar) bar.style.display = 'none';
+  if (!txt) return;
+
+  const lines = txt.trim().split('\n').slice(1); // pula cabeçalho
+  const registros = diaGetRegistros();
+  const existingIds = new Set(registros.map(r => r._id));
+  let novos = 0;
+
+  for (const line of lines) {
+    // Colunas: Timestamp,Tipo,Motorista,Placa,Origem,Destino,DataHoraInicio,DataHoraFim,HorasTrabalhadas,HorasNormais,HorasExtra,ValorHora,ValorHoraExtra,ValorTotal,...
+    const cols = line.split(',').map(c => c.replace(/^"|"$/g,'').trim());
+    const tipo = cols[1];
+    if (tipo !== 'FIM_DIARIA') continue;
+    const id = 'SHEETS-' + cols[0] + '-' + (cols[2]||'').replace(/\s+/g,'');
+    if (existingIds.has(id)) continue;
+    const horas = parseFloat((cols[8]||'0').replace(',','.')) || 0;
+    registros.push({
       _id: id,
-      motorista: (d.motorista||'').toUpperCase().trim(),
-      placa: d.placa||'',
-      origem: d.origem||'',
-      destino: d.destino||'',
-      inicio: d.dataHoraInicio,
-      fim: d.dataHoraFim,
-      horas: horasDecimais,
-      horasNormais: d.horasNormais || calc.normal,
-      horasExtra:   d.horasExtra   || calc.extra,
-      valor: d.valorTotal || calc.valor,
+      motorista: (cols[2]||'').toUpperCase().trim(),
+      placa: cols[3]||'',
+      origem: cols[4]||'',
+      destino: cols[5]||'',
+      inicio: cols[6]||'',
+      fim: cols[7]||'',
+      horas,
+      horasNormais: parseFloat((cols[9]||'0').replace(',','.')) || 0,
+      horasExtra:   parseFloat((cols[10]||'0').replace(',','.')) || 0,
+      valor: parseFloat((cols[13]||'0').replace(',','.')) || 0,
       origemDado: 'app-motorista',
       _synced: true
     });
+    existingIds.add(id);
+    novos++;
+  }
+  if (novos > 0) {
     diaSalvarRegistros(registros);
     localStorage.setItem(DIA_SYNC_KEY, new Date().toISOString());
-    // Re-renderiza se a aba estiver ativa
-    const tabEl = document.getElementById('tabDiaria');
-    if (tabEl && tabEl.classList.contains('active')) diaInit();
-  } catch(e) {}
-});
+    diaRenderSyncInfo();
+    diaAplicarFiltro();
+    const bar2 = document.getElementById('diaSyncBar');
+    if (bar2) {
+      bar2.style.display = 'block';
+      bar2.innerHTML = `<i class="fas fa-check-circle"></i> ${novos} registro(s) importado(s) da planilha Google Sheets.`;
+      setTimeout(() => { if(bar2) bar2.style.display = 'none'; }, 5000);
+    }
+  }
+}
 
 </script>
 </body>
