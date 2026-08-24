@@ -484,6 +484,9 @@ footer a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--b
    CONFIGURAÇÃO — motoristas reais M-Malacarne
 ================================================================= */
 const CONFIG = {
+  // URL do Google Apps Script — cole aqui após publicar
+  WEBHOOK_URL: "https://script.google.com/macros/s/AKfycbyJeH_aIGRU3Opsj694hEuODgmlSr0IvfwchqR5Cv80mg6YWdP3ocxd9kTQD2N7QC7a/exec",
+
   HORAS_JORNADA_NORMAL: 8,
 
   // ── Motoristas reais (espelho do DIA_DRIVER_CONFIG do dashboard) ──
@@ -647,7 +650,7 @@ function getGPS(){
 function updateNetStatus(){
   const online = navigator.onLine;
   $('netDot').className = 'dot' + (online ? '' : ' off');
-  $('netText').textContent = online ? 'Online' : 'Sem conexão';
+  $('netText').textContent = online ? 'Online' : 'Sem conexão — sincronizará depois';
   updateQueueBadge();
   if(online) flushQueue();
 }
@@ -676,8 +679,6 @@ document.addEventListener('visibilitychange', ()=>{
 });
 
 /* ---- CANAL LOCAL (BroadcastChannel + postMessage) ---- */
-// Comunicação direta com o dashboard quando abertos no mesmo browser.
-// Não depende de nenhum servidor externo.
 const _bc = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('mm_diaria') : null;
 
 function notificarDashboard(record){
@@ -687,29 +688,65 @@ function notificarDashboard(record){
   }catch(e){}
 }
 
+/* ---- ENVIO AO APPS SCRIPT (Google Sheets) ---- */
+async function sendToSheets(record){
+  const url = CONFIG.WEBHOOK_URL;
+  if(!url || url.includes('COLE_AQUI')) return false;
+  try{
+    await fetch(url, {
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify(record)
+    });
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
 /* ---- REGISTRO E SINCRONIZAÇÃO ---- */
-// Salva o registro no histórico local e notifica o dashboard imediatamente.
-// Não há fila pendente — o localStorage compartilhado é a fonte de verdade.
-function queueAndSend(record){
-  // Notifica o dashboard via canal em tempo real (FIM_DIARIA)
+async function queueAndSend(record){
+  // 1. Notifica dashboard em tempo real se estiver na mesma aba
   if(record.tipo === 'FIM_DIARIA') notificarDashboard(record);
 
-  // Remove da fila e marca como enviado (entrega garantida via localStorage compartilhado)
-  state.queue = state.queue.filter(r => r._id !== record._id);
+  // 2. Tenta enviar à planilha Google Sheets via Apps Script
+  const enviado = await sendToSheets(record);
+
+  // 3. Se não conseguiu enviar agora, guarda na fila para retry
+  if(!enviado){
+    const jaExiste = state.queue.some(r => r._id === record._id);
+    if(!jaExiste) state.queue.push(record);
+  } else {
+    state.queue = state.queue.filter(r => r._id !== record._id);
+  }
   saveState();
   updateQueueBadge();
   markHistorySentStatus();
 }
 
+async function flushQueue(){
+  if(!navigator.onLine || state.queue.length === 0) return;
+  const remaining = [];
+  for(const rec of state.queue){
+    const ok = await sendToSheets(rec);
+    if(!ok) remaining.push(rec);
+  }
+  const sincronizou = remaining.length < state.queue.length;
+  state.queue = remaining;
+  saveState();
+  updateQueueBadge();
+  markHistorySentStatus();
+  if(sincronizou && remaining.length === 0){
+    showToast('Registros sincronizados com a planilha!', 'ok');
+  }
+}
+
 function markHistorySentStatus(){
-  // Sem fila pendente: todos os registros são considerados entregues
-  state.history.forEach(h=>{ h._pending = false; });
+  const pendingIds = new Set(state.queue.map(r=>r._id));
+  state.history.forEach(h=>{ h._pending = pendingIds.has(h._id); });
   saveState();
   renderHistory();
 }
-
-// Mantido para compatibilidade — não faz nada pois não há fila pendente
-async function flushQueue(){ }
 
 /* ---- CRONÔMETRO ---- */
 function startClock(){
@@ -874,7 +911,7 @@ async function finalizarDiaria(){
   saveState();
   renderIdle();
   renderHistory();
-  showToast('Diária finalizada e registrada com sucesso!', 'ok', 4500);
+  showToast('Diária finalizada e enviada à planilha!', 'ok', 4500);
 }
 
 /* ---- RESUMO ---- */
@@ -937,7 +974,7 @@ function renderHistory(){
         <div class="hi-meta">
           <span style="color:var(--muted);">📅 ${dt} ${tm}</span>
           <span class="hi-hours">⏱ ${h.horas.toFixed(2)}h</span>
-          <span class="status-tag sent">✅ Registrado</span>
+          <span class="status-tag ${h._pending?'pend':'sent'}">${h._pending?'⏳ Pendente':'✅ Enviado'}</span>
         </div>
       </div>`;
   }).join('');
@@ -1037,6 +1074,7 @@ async function init(){
     atualizarValoresMot();
   }
 
+  setInterval(flushQueue, 15000);
 }
 init();
 </script>

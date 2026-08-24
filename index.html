@@ -11736,12 +11736,32 @@ function diaInserirManual() {
   arr.unshift(novo);
   diaSalvarRegistros(arr);
 
+  // Envia para a planilha via Apps Script
+  fetch(DIA_WEBHOOK_URL, {
+    method: 'POST', mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({
+      tipo: 'FIM_DIARIA',
+      motorista: novo.motorista,
+      placa: novo.placa,
+      origem: novo.origem,
+      destino: novo.destino,
+      dataHoraInicio: novo.inicio,
+      dataHoraFim: novo.fim,
+      horasTrabalhadas: Number(horasDecimais.toFixed(2)),
+      horasNormais: Number(horasNormais.toFixed(2)),
+      horasExtra: Number(horasExtra.toFixed(2)),
+      valorTotal: Number(valor.toFixed(2)),
+      origemDado: 'manual'
+    })
+  }).catch(()=>{});
+
   // Limpa campos
   ['diaNovoMotorista','diaNovoPlaca','diaNovoOrigem','diaNovoDestino',
    'diaNovoInicio','diaNovoFim','diaNovoValor'].forEach(id => {
     const el = document.getElementById(id); if(el) el.value = '';
   });
-  if (msg) { msg.style.color='var(--success)'; msg.textContent = `✅ Diária de ${motorista} lançada com sucesso — ${diaFmtMoney(valor)}`; }
+  if (msg) { msg.style.color='var(--success)'; msg.textContent = `✅ Diária de ${motorista} lançada e enviada à planilha — ${diaFmtMoney(valor)}`; }
   setTimeout(() => { if(msg) msg.textContent = ''; }, 5000);
 
   diaAplicarFiltro();
@@ -11795,20 +11815,33 @@ function diaRenderSyncInfo() {
   const ts = localStorage.getItem(DIA_SYNC_KEY);
   const total = diaGetRegistros().length;
   el.innerHTML = [
-    ts ? `Última atualização: <strong>${new Date(ts).toLocaleString('pt-BR')}</strong>` : 'Aguardando registros do app.',
+    ts ? `Última sincronização: <strong>${new Date(ts).toLocaleString('pt-BR')}</strong>` : 'Aguardando dados da planilha...',
     `Total registrado: <strong>${total}</strong> diária(s).`
   ].join(' &nbsp;·&nbsp; ');
 }
 
 // ── Init ──
 function diaInit() {
-  // Sincroniza automaticamente a partir do localStorage do app (mesmo browser)
-  // Não requer nenhuma ação manual — funciona sempre que os dois arquivos
-  // estão abertos no mesmo navegador.
+  // 1. Sincroniza imediatamente do localStorage do app (mesmo browser)
   diaSyncFromAppLocalStorage();
   diaPopulateDatalist();
   diaRenderSyncInfo();
   diaLimparFiltro();
+
+  // 2. Sincroniza automaticamente da planilha Google Sheets (entre dispositivos)
+  diaSyncFromSheets();
+
+  // 3. Botão manual para forçar re-sync da planilha
+  const info = document.getElementById('diaSyncInfo');
+  if (info && !document.getElementById('diaBtnSyncSheets')) {
+    const btn = document.createElement('button');
+    btn.id = 'diaBtnSyncSheets';
+    btn.className = 'btn btn-accent btn-sm';
+    btn.style.cssText = 'margin-left:8px;font-size:.75rem;padding:.2rem .7rem;';
+    btn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar Planilha';
+    btn.onclick = () => diaSyncFromSheets();
+    info.appendChild(btn);
+  }
 }
 
 // ── Listener global para receber dados do App (postMessage — mesmo domínio) ──
@@ -11869,6 +11902,7 @@ function diaReceberRegistro(d) {
 // ── Sincronizar com Google Sheets (Diarias_Motoristas) ──
 // Lê a planilha de destino e importa registros FIM_DIARIA que ainda não estão no localStorage
 const DIA_SHEETS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlEJIu_e8jmEdTb7MhG7xZXKMUPPuYtYDw9msDen-FvItUEbJD2yBk1PARgLnSwScjk_C8f3UM86BO/pub?output=csv';
+const DIA_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyJeH_aIGRU3Opsj694hEuODgmlSr0IvfwchqR5Cv80mg6YWdP3ocxd9kTQD2N7QC7a/exec';
 
 async function diaSyncFromSheets() {
   const bar = document.getElementById('diaSyncBar');
