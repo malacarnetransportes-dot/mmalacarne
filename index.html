@@ -11929,7 +11929,17 @@ async function diaSyncFromSheets() {
 
   for (const line of lines) {
     // Colunas: Timestamp,Tipo,Motorista,Placa,Origem,Destino,DataHoraInicio,DataHoraFim,HorasTrabalhadas,HorasNormais,HorasExtra,ValorHora,ValorHoraExtra,ValorTotal,...
-    const cols = line.split(',').map(c => c.replace(/^"|"$/g,'').trim());
+    const cols = (function(s){
+      const r=[];let c='',q=false;
+      for(let i=0;i<s.length;i++){
+        const ch=s[i];
+        if(ch==='"'){q=!q;}
+        else if(ch===','&&!q){r.push(c.trim());c='';}
+        else{c+=ch;}
+      }
+      r.push(c.trim());
+      return r;
+    })(line);
     const tipo = cols[1];
     if (tipo !== 'FIM_DIARIA') continue;
     const id = 'SHEETS-' + cols[0] + '-' + (cols[2]||'').replace(/\s+/g,'');

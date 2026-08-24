@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>M. Malacarne | Controle de Diária</title>
+<meta name="theme-color" content="#0f2a4a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Diária MM">
+<style>
+:root{
+  --navy:#0f2a4a; --navy-dark:#081a30; --navy-mid:#1a3a5c;
+  --gold:#d4af37; --gold-dark:#b8942c; --gold-light:#f0d060;
+  --green:#1c8b53; --green-dark:#146b3e; --green-bg:#e8f5ee;
+  --red:#c0392b; --red-dark:#8f2c20; --red-bg:#fbeaea;
+  --orange:#e07b20; --orange-bg:#fdf1de;
+  --bg:#f0f3f8; --card:#ffffff;
+  --text:#16233a; --muted:#7c8aa0; --border:#e0e6f0;
+  --shadow:0 4px 20px rgba(15,42,74,0.10);
+  --shadow-lg:0 10px 40px rgba(15,42,74,0.15);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
+html,body{height:100%;background:var(--bg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  color:var(--text);overscroll-behavior:none;}
+#app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;
+  padding-bottom:env(safe-area-inset-bottom);}
+
+/* ---- HEADER ---- */
+header{
+  background:linear-gradient(160deg,#0d2442 0%,#0f2a4a 50%,#1a3a5c 100%);
+  color:#fff;padding:0 0 0 0;position:relative;overflow:hidden;
+  padding-top:env(safe-area-inset-top);
+}
+.header-bg-circle{position:absolute;border-radius:50%;background:var(--gold);opacity:0.07;}
+.header-bg-circle.c1{width:200px;height:200px;right:-60px;top:-60px;}
+.header-bg-circle.c2{width:120px;height:120px;left:-30px;bottom:-40px;}
+.header-bg-circle.c3{width:60px;height:60px;right:80px;bottom:10px;opacity:0.05;}
+
+.header-inner{position:relative;z-index:2;padding:18px 20px 20px;}
+.brand{display:flex;align-items:center;gap:14px;}
+
+/* LOGO SVG EMBUTIDA */
+.logo-wrap{
+  width:52px;height:52px;border-radius:12px;overflow:hidden;
+  border:1.5px solid rgba(212,175,55,0.45);
+  background:linear-gradient(135deg,#0d2442,#1a3a5c);
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 14px rgba(0,0,0,0.4);
+}
+
+.brand-text .company{font-weight:800;font-size:14.5px;letter-spacing:0.4px;
+  color:#fff;line-height:1.2;}
+.brand-text .company span{color:var(--gold);}
+.brand-text .sub{font-size:11px;color:#8fa8c2;margin-top:3px;font-weight:500;
+  text-transform:uppercase;letter-spacing:0.8px;}
+
+/* Status strip */
+.status-strip{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:14px;background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:9px 13px;
+}
+.net-status{display:flex;align-items:center;gap:7px;font-size:12px;color:#b0c4da;}
+.dot{width:8px;height:8px;border-radius:50%;background:#4caf50;box-shadow:0 0 0 2px rgba(76,175,80,0.3);}
+.dot.off{background:#e0a233;box-shadow:0 0 0 2px rgba(224,162,51,0.3);}
+.dot.sync{background:#64b5f6;box-shadow:0 0 0 2px rgba(100,181,246,0.3);}
+
+.queue-badge{font-size:11px;font-weight:700;background:rgba(212,175,55,0.2);
+  color:var(--gold-light);padding:3px 9px;border-radius:999px;}
+
+/* ---- DIÁRIA ATIVA — HERO VISUAL ---- */
+.diaria-hero{
+  background:linear-gradient(160deg,#0d2442,#0f2a4a);
+  margin:0;padding:22px 20px 26px;position:relative;overflow:hidden;
+}
+.diaria-hero::before{content:'🟢 DIÁRIA EM ANDAMENTO';position:absolute;top:14px;left:50%;
+  transform:translateX(-50%);font-size:10px;font-weight:800;letter-spacing:1.2px;
+  color:var(--gold);white-space:nowrap;}
+.hero-clock{
+  text-align:center;margin-top:20px;
+  font-size:52px;font-weight:900;font-variant-numeric:tabular-nums;
+  color:#fff;letter-spacing:2px;text-shadow:0 4px 20px rgba(0,0,0,0.4);
+  line-height:1;
+}
+.hero-clock .colon{animation:blink 1s step-end infinite;color:var(--gold);}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
+.hero-since{text-align:center;font-size:12.5px;color:#8fa8c2;margin-top:8px;}
+.hero-driver{text-align:center;font-size:14px;color:var(--gold-light);font-weight:700;margin-top:4px;}
+
+/* Barra de progresso da jornada */
+.jornada-bar-wrap{margin:18px 0 0;padding:0 4px;}
+.jornada-bar-label{display:flex;justify-content:space-between;font-size:11px;color:#8fa8c2;margin-bottom:6px;}
+.jornada-bar-label span:last-child{color:var(--gold);}
+.jornada-bar-track{height:8px;background:rgba(255,255,255,0.12);border-radius:999px;overflow:hidden;}
+.jornada-bar-fill{height:100%;border-radius:999px;transition:width 1s linear;
+  background:linear-gradient(90deg,var(--green),#4caf50);}
+.jornada-bar-fill.extra{background:linear-gradient(90deg,var(--orange),#f0a040);}
+
+/* Chips de info durante diária */
+.hero-chips{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+.hero-chip{
+  display:flex;align-items:center;gap:5px;
+  background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.13);
+  border-radius:8px;padding:6px 10px;font-size:12px;color:#c0d4e8;flex:1;min-width:0;
+}
+.hero-chip .chip-ico{font-size:14px;}
+.hero-chip .chip-val{font-weight:700;color:#fff;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* ---- MAIN ---- */
+main{flex:1;padding:16px 16px 28px;display:flex;flex-direction:column;gap:14px;}
+
+/* ---- CARD ---- */
+.card{background:var(--card);border-radius:16px;padding:18px;box-shadow:var(--shadow);
+  border:1px solid var(--border);}
+.card-title{font-size:11.5px;text-transform:uppercase;letter-spacing:0.7px;
+  color:var(--muted);font-weight:700;margin-bottom:13px;display:flex;align-items:center;gap:6px;}
+.card-title span{font-size:14px;}
+
+/* ---- FORM FIELDS ---- */
+.field-group{display:flex;flex-direction:column;gap:10px;}
+.field-label{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:3px;
+  text-transform:uppercase;letter-spacing:0.5px;}
+select, input[type=text]{
+  width:100%;padding:13px 14px;border-radius:11px;border:1.5px solid var(--border);
+  font-size:15px;background:#f8fafc;color:var(--text);
+  -webkit-appearance:none;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237c8aa0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;
+  padding-right:38px;
+}
+select:focus, input[type=text]:focus{outline:none;border-color:var(--gold);background:#fff;
+  box-shadow:0 0 0 3px rgba(212,175,55,0.15);}
+input[type=text]{background-image:none;padding-right:14px;}
+
+.driver-valor{
+  display:flex;gap:8px;margin-top:8px;
+}
+.valor-chip{
+  flex:1;background:var(--green-bg);border:1px solid #b8dfc8;border-radius:10px;
+  padding:9px 12px;text-align:center;
+}
+.valor-chip .vc-label{font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:700;}
+.valor-chip .vc-val{font-size:16px;font-weight:800;color:var(--green);margin-top:2px;}
+
+.rota-row{display:flex;align-items:center;gap:10px;}
+.rota-arrow{color:var(--muted);font-size:18px;flex-shrink:0;}
+
+/* ---- BOTÕES PRINCIPAIS ---- */
+.btn-main{
+  width:100%;border:none;border-radius:16px;padding:20px;font-size:17px;font-weight:900;
+  letter-spacing:0.5px;color:#fff;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:10px;transition:transform .12s,box-shadow .12s;
+  box-shadow:0 10px 28px rgba(0,0,0,0.18);position:relative;overflow:hidden;
+}
+.btn-main::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,0);
+  transition:background .1s;}
+.btn-main:active{transform:scale(0.97);}
+.btn-main:active::after{background:rgba(255,255,255,0.12);}
+.btn-main:disabled{opacity:0.55;transform:none;}
+.btn-start{background:linear-gradient(135deg,#1da55e,var(--green-dark));}
+.btn-start:not(:disabled){box-shadow:0 10px 28px rgba(28,139,83,0.35);}
+.btn-end{background:linear-gradient(135deg,#d94040,var(--red-dark));}
+.btn-end:not(:disabled){box-shadow:0 10px 28px rgba(192,57,43,0.35);}
+
+/* ---- STATUS CARD (diária ativa) ---- */
+.info-row{display:flex;justify-content:space-between;align-items:center;
+  padding:10px 0;border-bottom:1px solid var(--border);font-size:14px;}
+.info-row:last-child{border-bottom:none;}
+.info-row .k{color:var(--muted);font-size:13px;}
+.info-row .v{font-weight:700;}
+.badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;}
+.badge.gps-ok{background:var(--green-bg);color:var(--green);}
+.badge.gps-wait{background:var(--orange-bg);color:var(--orange);}
+.badge.gps-err{background:var(--red-bg);color:var(--red);}
+
+/* ---- VALOR ESTIMADO (durante diária) ---- */
+.estimativa-card{
+  background:linear-gradient(135deg,var(--green-bg),#f0faf5);
+  border:1.5px solid #b8dfc8;border-radius:14px;padding:16px 18px;
+}
+.estimativa-card .est-label{font-size:11px;text-transform:uppercase;letter-spacing:0.6px;
+  color:var(--green-dark);font-weight:700;}
+.estimativa-card .est-valor{font-size:34px;font-weight:900;color:var(--green);
+  margin:4px 0;line-height:1;}
+.estimativa-card .est-sub{font-size:12px;color:#5a9a70;}
+
+/* ---- RESUMO FINAL ---- */
+.summary-final{
+  background:linear-gradient(135deg,#f0faf5,#e8f5ee);
+  border:2px solid #b8dfc8;border-radius:14px;padding:18px;margin-top:14px;
+}
+.summary-final .sf-valor{font-size:36px;font-weight:900;color:var(--green);margin:6px 0;}
+.summary-final .sf-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.summary-final .sf-icon{font-size:24px;}
+.summary-final .sf-title{font-size:14px;font-weight:700;color:var(--green-dark);}
+.sf-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+.sf-item{background:#fff;border-radius:10px;padding:10px 12px;border:1px solid #d4ead9;}
+.sf-item .si-label{font-size:10.5px;text-transform:uppercase;letter-spacing:0.5px;
+  color:var(--muted);font-weight:700;}
+.sf-item .si-val{font-size:16px;font-weight:800;color:var(--text);margin-top:3px;}
+.sf-item .si-val.extra{color:var(--orange);}
+
+/* ---- HISTÓRICO ---- */
+.history-item{padding:13px 0;border-bottom:1px solid var(--border);}
+.history-item:last-child{border-bottom:none;}
+.hi-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.hi-driver{font-weight:700;font-size:14px;flex:1;}
+.hi-valor{font-weight:800;font-size:15px;color:var(--green);}
+.hi-rota{font-size:12.5px;color:var(--muted);margin-top:3px;}
+.hi-meta{font-size:12px;margin-top:5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.status-tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;}
+.status-tag.pend{background:var(--orange-bg);color:var(--orange);}
+.status-tag.sent{background:var(--green-bg);color:var(--green);}
+.hi-hours{color:var(--muted);}
+
+/* ---- TOAST ---- */
+.toast{
+  position:fixed;left:16px;right:16px;bottom:calc(20px + env(safe-area-inset-bottom));
+  max-width:448px;margin:0 auto;padding:13px 16px 13px 14px;
+  border-radius:13px;font-size:13.5px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.25);
+  transform:translateY(150%);transition:transform .32s cubic-bezier(.34,1.56,.64,1);
+  z-index:999;display:flex;align-items:center;gap:10px;
+}
+.toast.show{transform:translateY(0);}
+.toast.ok{background:#1a3d2a;border:1px solid #2d6b44;color:#a8e6be;}
+.toast.warn{background:#3d2e0d;border:1px solid #7a5a20;color:#f0c860;}
+.toast.err{background:#3d1010;border:1px solid #7a2020;color:#f0a0a0;}
+.toast.info{background:var(--navy-dark);border:1px solid #2a4a6a;color:#b0d0f0;}
+.toast-icon{font-size:18px;flex-shrink:0;}
+.toast-msg{flex:1;}
+
+/* ---- INSTALL BANNER ---- */
+.install-banner{
+  display:none;background:linear-gradient(135deg,#fff8e8,#fdf3d6);
+  border:1.5px solid var(--gold-dark);border-radius:13px;padding:12px 14px;
+  align-items:center;justify-content:space-between;gap:10px;
+}
+.install-banner p{font-size:13px;color:var(--navy);font-weight:600;flex:1;}
+.install-banner button{
+  background:var(--navy);color:#fff;border:none;padding:9px 14px;
+  border-radius:9px;font-size:12.5px;font-weight:700;white-space:nowrap;cursor:pointer;
+}
+
+/* ---- MODAL ---- */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(8,26,48,0.6);
+  z-index:1000;align-items:flex-end;justify-content:center;
+  padding:0;backdrop-filter:blur(3px);}
+.modal-overlay.show{display:flex;}
+.modal-box{
+  background:#fff;border-radius:22px 22px 0 0;padding:26px 22px 36px;
+  width:100%;max-width:480px;text-align:center;
+  box-shadow:0 -10px 40px rgba(0,0,0,0.2);
+}
+.modal-handle{width:40px;height:4px;background:#dee3ea;border-radius:2px;
+  margin:0 auto 18px;display:block;}
+.modal-box h3{font-size:15px;color:var(--navy);font-weight:800;margin-bottom:6px;}
+.modal-box p{font-size:13px;color:var(--muted);margin-bottom:16px;}
+.modal-box img{width:200px;height:200px;border-radius:10px;border:1px solid var(--border);margin:0 auto 12px;display:block;}
+.url-box{font-size:11.5px;color:var(--muted);word-break:break-all;
+  background:#f4f6f9;border-radius:8px;padding:9px 12px;margin-bottom:12px;text-align:left;}
+.btn-copy{width:100%;padding:14px;border:none;border-radius:12px;font-weight:800;
+  font-size:14px;cursor:pointer;background:var(--navy);color:#fff;margin-bottom:8px;}
+.btn-close{width:100%;padding:12px;border:none;border-radius:12px;font-weight:700;
+  font-size:14px;cursor:pointer;background:#eef1f5;color:var(--text);}
+
+/* ---- FOOTER ---- */
+footer{text-align:center;font-size:11px;color:var(--muted);padding:4px 0 12px;}
+footer a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--border);}
+
+/* ---- LOADING STATE ---- */
+.loading-drivers{
+  text-align:center;padding:14px;color:var(--muted);font-size:13px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.spinner{width:16px;height:16px;border:2px solid var(--border);
+  border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ---- EMPTY ---- */
+.empty{text-align:center;color:var(--muted);font-size:13.5px;padding:20px 0;}
+.empty-ico{font-size:28px;margin-bottom:6px;}
+
+/* --- ANIMAÇÕES --- */
+@keyframes fadeInUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.card{animation:fadeInUp .25s ease both;}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- HEADER PADRÃO (idle) -->
+<header id="mainHeader">
+  <div class="header-bg-circle c1"></div>
+  <div class="header-bg-circle c2"></div>
+  <div class="header-bg-circle c3"></div>
+  <div class="header-inner">
+    <div class="brand">
+      <div class="logo-wrap">
+        <!-- LOGO M-MALACARNE SVG EMBUTIDA -->
+        <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Truck silhouette -->
+          <rect x="2" y="14" width="24" height="14" rx="2" fill="#d4af37" opacity="0.95"/>
+          <rect x="26" y="18" width="10" height="10" rx="1.5" fill="#d4af37" opacity="0.85"/>
+          <!-- Cab window -->
+          <rect x="27" y="19.5" width="7" height="5" rx="1" fill="#0f2a4a" opacity="0.8"/>
+          <!-- Wheels -->
+          <circle cx="8" cy="28" r="3" fill="#0f2a4a" stroke="#d4af37" stroke-width="1.2"/>
+          <circle cx="22" cy="28" r="3" fill="#0f2a4a" stroke="#d4af37" stroke-width="1.2"/>
+          <circle cx="32" cy="28" r="2.2" fill="#0f2a4a" stroke="#d4af37" stroke-width="1.2"/>
+          <!-- MM text -->
+          <text x="4" y="24" font-family="Arial" font-weight="900" font-size="8.5" fill="#0f2a4a" letter-spacing="-0.5">MM</text>
+          <!-- Road line -->
+          <rect x="2" y="31" width="34" height="1.5" rx="0.75" fill="#d4af37" opacity="0.3"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <div class="company">M. <span>MALACARNE</span></div>
+        <div class="sub">Controle de Diária</div>
+      </div>
+    </div>
+    <div class="status-strip">
+      <div class="net-status">
+        <span class="dot off" id="netDot"></span>
+        <span id="netText">Verificando...</span>
+      </div>
+      <span class="queue-badge" id="queueBadge" style="display:none"></span>
+    </div>
+  </div>
+</header>
+
+<!-- HERO DIÁRIA ATIVA (só aparece quando ativa) -->
+<div id="diariaHero" style="display:none;" class="diaria-hero">
+  <div class="header-bg-circle c1" style="opacity:0.05;"></div>
+  <div class="header-bg-circle c2" style="opacity:0.04;"></div>
+  <div class="hero-clock" id="clockDisplay">
+    <span id="hh">00</span><span class="colon">:</span><span id="mm">00</span><span class="colon">:</span><span id="ss">00</span>
+  </div>
+  <div class="hero-driver" id="heroDriver">—</div>
+  <div class="hero-since" id="heroSince">—</div>
+  <div class="jornada-bar-wrap">
+    <div class="jornada-bar-label">
+      <span>Jornada: <span id="jornadaHorasEl">0h</span></span>
+      <span id="jornadaPctEl">0% de 8h</span>
+    </div>
+    <div class="jornada-bar-track">
+      <div class="jornada-bar-fill" id="jornadaBarFill" style="width:0%"></div>
+    </div>
+  </div>
+  <div class="hero-chips" style="margin-top:14px;">
+    <div class="hero-chip">
+      <span class="chip-ico">🚛</span>
+      <div><div class="chip-val" id="chipPlaca">—</div><div style="font-size:10px;color:#7a9ab5;">Placa</div></div>
+    </div>
+    <div class="hero-chip">
+      <span class="chip-ico">📍</span>
+      <div><div class="chip-val" id="chipOrigem">—</div><div style="font-size:10px;color:#7a9ab5;">Origem</div></div>
+    </div>
+    <div class="hero-chip">
+      <span class="chip-ico">🏁</span>
+      <div><div class="chip-val" id="chipDestino">—</div><div style="font-size:10px;color:#7a9ab5;">Destino</div></div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <!-- BANNER INSTALAR -->
+  <div class="install-banner" id="installBanner">
+    <p>📲 Instale este app na tela inicial do celular</p>
+    <button id="installBtn">Instalar</button>
+  </div>
+
+  <!-- CARD MOTORISTA / VEÍCULO / VIAGEM (idle) -->
+  <div class="card" id="driverCard">
+    <div class="card-title"><span>👤</span> Motorista</div>
+    <div class="field-group">
+      <div>
+        <div class="field-label">Selecione o motorista</div>
+        <div id="loadingDrivers" class="loading-drivers">
+          <div class="spinner"></div> Carregando motoristas...
+        </div>
+        <select id="driverSelect" style="display:none;"></select>
+        <input type="text" id="driverCustom" placeholder="Digite o nome do motorista" style="display:none;margin-top:10px;">
+      </div>
+      <div id="driverValores" style="display:none;">
+        <div class="driver-valor">
+          <div class="valor-chip">
+            <div class="vc-label">Hora Normal</div>
+            <div class="vc-val" id="vcHoraNormal">R$ —</div>
+          </div>
+          <div class="valor-chip" style="background:#fff3e6;border-color:#f0c89a;">
+            <div class="vc-label">Hora Extra</div>
+            <div class="vc-val si-val extra" id="vcHoraExtra">R$ —</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-title" style="margin-top:18px;"><span>🚛</span> Veículo</div>
+    <div class="field-group">
+      <div>
+        <div class="field-label">Placa</div>
+        <select id="placaSelect"></select>
+        <input type="text" id="placaCustom" placeholder="Ex: ABC1D23" style="display:none;margin-top:10px;">
+      </div>
+    </div>
+
+    <div class="card-title" style="margin-top:18px;"><span>🗺️</span> Rota da viagem</div>
+    <div class="field-group">
+      <div>
+        <div class="field-label">Origem</div>
+        <input type="text" id="origemInput" placeholder="Cidade / local de saída">
+      </div>
+      <div>
+        <div class="field-label">Destino</div>
+        <input type="text" id="destinoInput" placeholder="Cidade / local de chegada">
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTÃO PRINCIPAL -->
+  <button class="btn-main btn-start" id="mainBtn">▶ INICIAR DIÁRIA</button>
+
+  <!-- ESTIMATIVA DE VALOR (só durante diária ativa) -->
+  <div class="card" id="estimativaCard" style="display:none;">
+    <div class="card-title"><span>💰</span> Valor estimado</div>
+    <div class="estimativa-card">
+      <div class="est-label">Total calculado até agora</div>
+      <div class="est-valor" id="estValor">R$ 0,00</div>
+      <div class="est-sub" id="estSub">0h normais · 0h extras</div>
+    </div>
+    <div style="margin-top:12px;">
+      <div class="info-row">
+        <span class="k">GPS início</span>
+        <span class="v" id="gpsBadge"><span class="badge gps-wait">Aguardando...</span></span>
+      </div>
+      <div class="info-row">
+        <span class="k">Iniciada em</span>
+        <span class="v" id="startTimeTxt">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESUMO DA ÚLTIMA DIÁRIA -->
+  <div class="card" id="lastSummary" style="display:none;"></div>
+
+  <!-- HISTÓRICO -->
+  <div class="card">
+    <div class="card-title"><span>📋</span> Histórico recente</div>
+    <div id="historyList">
+      <div class="empty"><div class="empty-ico">🗒️</div>Nenhum registro ainda.</div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  M. Malacarne Transportes e Logística &nbsp;·&nbsp;
+  <a href="#" id="qrLink">📲 Link de instalação</a>
+</footer>
+</div>
+
+<!-- MODAL QR -->
+<div class="modal-overlay" id="qrModal">
+  <div class="modal-box">
+    <span class="modal-handle"></span>
+    <h3>Instalar no celular do motorista</h3>
+    <p>Escaneie o QR ou copie o link e envie por WhatsApp</p>
+    <img id="qrImg" src="" alt="QR code">
+    <div class="url-box" id="urlBox"></div>
+    <button class="btn-copy" id="copyLinkBtn">📋 Copiar link</button>
+    <button class="btn-close" id="closeQrBtn">Fechar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toastIcon"></span>
+  <span class="toast-msg" id="toastMsg"></span>
+</div>
+
+<script>
+/* ================================================================
+   CONFIGURAÇÃO — motoristas reais M-Malacarne
+================================================================= */
+const CONFIG = {
+  // URL do Google Apps Script — cole aqui após publicar
+  WEBHOOK_URL: "https://script.google.com/macros/s/AKfycbyJeH_aIGRU3Opsj694hEuODgmlSr0IvfwchqR5Cv80mg6YWdP3ocxd9kTQD2N7QC7a/exec",
+
+  HORAS_JORNADA_NORMAL: 8,
+
+  // ── Motoristas reais (espelho do DIA_DRIVER_CONFIG do dashboard) ──
+  DRIVERS_FALLBACK: [
+    { nome: "Selecione o motorista...", valorHora: 0, valorHoraExtra: 0 },
+    { nome: "ADRIANO VAZ DOS SANTOS",        valorHora: 12.42, valorHoraExtra: 22.84 },
+    { nome: "ANDERSON LUIS VEIGA DO SANTOS", valorHora: 12.42, valorHoraExtra: 23.49 },
+    { nome: "CRISTIANO DE ALMEIDA",          valorHora: 12.42, valorHoraExtra: 21.95 },
+    { nome: "ERI ORLANDO GUILLEN ROMERO",    valorHora: 12.42, valorHoraExtra: 22.10 },
+    { nome: "GILSON MARGOTTI",               valorHora: 12.42, valorHoraExtra: 20.61 },
+    { nome: "HILDO ANTONIO DE ALMEIDA",      valorHora: 12.42, valorHoraExtra: 22.76 },
+    { nome: "ITAMIR ANTONIO DELLALIBERA",    valorHora: 12.42, valorHoraExtra: 20.61 },
+    { nome: "JORGE ODAIR LOPES",             valorHora: 12.42, valorHoraExtra: 20.61 },
+    { nome: "JOSIAS FERREIRA DOS SANTOS",    valorHora: 12.42, valorHoraExtra: 18.63 },
+    { nome: "LEANDRO LUCIO KLEE",            valorHora: 12.42, valorHoraExtra: 20.29 },
+    { nome: "MARIANO MATEUS DE SOUZA",       valorHora: 12.42, valorHoraExtra: 23.67 },
+    { nome: "RAFAEL DE FRANCA RAMOS",        valorHora: 12.42, valorHoraExtra: 20.61 },
+    { nome: "RODRIGO DA ROSA",               valorHora: 12.42, valorHoraExtra: 22.13 },
+  ],
+
+  PLACAS: [
+    "Selecione a placa...",
+    "RLB3E26","MLZ0B00","QRS4A12","BCA2F33","DEF5G78",
+    "HJK9M01","NOP3P45","TUV6Q89","WXY7R23","ZAB8S56",
+    "CDE1T90","FGH4U34",
+  ]
+};
+/* ================================================================ */
+
+const $ = id => document.getElementById(id);
+const state = {
+  session: JSON.parse(localStorage.getItem('mm_session') || 'null'),
+  history: JSON.parse(localStorage.getItem('mm_history') || '[]'),
+  queue: JSON.parse(localStorage.getItem('mm_queue') || '[]'),
+  drivers: [],
+  clockTimer: null,
+  estimativaTimer: null,
+};
+
+function saveState(){
+  localStorage.setItem('mm_session', JSON.stringify(state.session));
+  localStorage.setItem('mm_history', JSON.stringify(state.history));
+  localStorage.setItem('mm_queue', JSON.stringify(state.queue));
+}
+
+/* ---- TOAST ---- */
+function showToast(msg, type='info', ms=3500){
+  const t = $('toast');
+  const icons = { ok:'✅', warn:'⚠️', err:'❌', info:'ℹ️' };
+  $('toastIcon').textContent = icons[type] || 'ℹ️';
+  $('toastMsg').textContent = msg;
+  t.className = `toast ${type}`;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), ms);
+}
+
+/* ---- CARREGAR MOTORISTAS (lista local sincronizada com dashboard) ---- */
+async function carregarMotoristas(){
+  // Usa lista local já sincronizada com o DIA_DRIVER_CONFIG do dashboard
+  state.drivers = CONFIG.DRIVERS_FALLBACK;
+  renderDriverSelect();
+}
+
+function renderDriverSelect(){
+  $('loadingDrivers').style.display = 'none';
+  const sel = $('driverSelect');
+  sel.style.display = 'block';
+  sel.innerHTML = '';
+  state.drivers.forEach((d,i)=>{
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = d.nome;
+    sel.appendChild(opt);
+  });
+  const custom = document.createElement('option');
+  custom.value = 'custom';
+  custom.textContent = '✏️ Outro (digitar nome)';
+  sel.appendChild(custom);
+
+  const saved = localStorage.getItem('mm_driver_idx');
+  if(saved !== null) sel.value = saved;
+  atualizarValoresMot();
+
+  sel.addEventListener('change', ()=>{
+    $('driverCustom').style.display = sel.value === 'custom' ? 'block' : 'none';
+    localStorage.setItem('mm_driver_idx', sel.value);
+    atualizarValoresMot();
+  });
+}
+
+function atualizarValoresMot(){
+  const sel = $('driverSelect');
+  if(sel.value === 'custom' || !state.drivers.length){ $('driverValores').style.display='none'; return; }
+  const d = state.drivers[parseInt(sel.value)];
+  if(!d || d.valorHora === 0){ $('driverValores').style.display='none'; return; }
+  $('vcHoraNormal').textContent = `R$ ${d.valorHora.toFixed(2).replace('.',',')}`;
+  $('vcHoraExtra').textContent = `R$ ${d.valorHoraExtra.toFixed(2).replace('.',',')}`;
+  $('driverValores').style.display = 'block';
+}
+
+function getCurrentDriver(){
+  const sel = $('driverSelect');
+  if(!sel) return null;
+  if(sel.value === 'custom'){
+    const name = $('driverCustom').value.trim();
+    if(!name) return null;
+    return { nome: name, valorHora: 0, valorHoraExtra: 0 };
+  }
+  const d = state.drivers[parseInt(sel.value)];
+  if(!d || d.nome.includes('Selecione')) return null;
+  return d;
+}
+
+/* ---- PLACAS ---- */
+function populatePlacas(){
+  const sel = $('placaSelect');
+  sel.innerHTML = '';
+  CONFIG.PLACAS.forEach((p,i)=>{
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = p;
+    sel.appendChild(opt);
+  });
+  const custom = document.createElement('option');
+  custom.value = 'custom';
+  custom.textContent = '✏️ Outra (digitar placa)';
+  sel.appendChild(custom);
+  const saved = localStorage.getItem('mm_placa_idx');
+  if(saved !== null) sel.value = saved;
+  sel.addEventListener('change', ()=>{
+    $('placaCustom').style.display = sel.value === 'custom' ? 'block' : 'none';
+    localStorage.setItem('mm_placa_idx', sel.value);
+  });
+}
+
+function getCurrentPlaca(){
+  const sel = $('placaSelect');
+  if(sel.value === 'custom'){
+    const p = $('placaCustom').value.trim().toUpperCase();
+    return p || null;
+  }
+  const p = CONFIG.PLACAS[parseInt(sel.value)];
+  if(!p || p.includes('Selecione')) return null;
+  return p;
+}
+
+/* ---- GPS ---- */
+function getGPS(){
+  return new Promise(resolve=>{
+    if(!navigator.geolocation){ resolve(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy }),
+      () => resolve(null),
+      { enableHighAccuracy:true, timeout:8000, maximumAge:30000 }
+    );
+  });
+}
+
+/* ---- REDE ---- */
+function updateNetStatus(){
+  const online = navigator.onLine;
+  $('netDot').className = 'dot' + (online ? '' : ' off');
+  $('netText').textContent = online ? 'Online' : 'Sem conexão — sincronizará depois';
+  updateQueueBadge();
+  if(online) flushQueue();
+}
+window.addEventListener('online', updateNetStatus);
+window.addEventListener('offline', updateNetStatus);
+
+function updateQueueBadge(){
+  const q = state.queue.length;
+  if(q > 0){
+    $('queueBadge').style.display = '';
+    $('queueBadge').textContent = `${q} pendente${q>1?'s':''}`;
+  } else {
+    $('queueBadge').style.display = 'none';
+  }
+}
+
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible'){
+    state.session = JSON.parse(localStorage.getItem('mm_session') || 'null');
+    state.history = JSON.parse(localStorage.getItem('mm_history') || '[]');
+    state.queue = JSON.parse(localStorage.getItem('mm_queue') || '[]');
+    if(state.session) renderRunning(); else renderIdle();
+    renderHistory();
+    updateNetStatus();
+  }
+});
+
+/* ---- CANAL LOCAL (BroadcastChannel + postMessage) ---- */
+const _bc = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('mm_diaria') : null;
+
+function notificarDashboard(record){
+  try{
+    if(_bc) _bc.postMessage(record);
+    if(window.opener) window.opener.postMessage(JSON.stringify(record), '*');
+  }catch(e){}
+}
+
+/* ---- ENVIO AO APPS SCRIPT (Google Sheets) ---- */
+async function sendToSheets(record){
+  const url = CONFIG.WEBHOOK_URL;
+  if(!url || url.includes('COLE_AQUI')) return false;
+  try{
+    // Usa text/plain para evitar preflight CORS — Apps Script aceita assim
+    const res = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify(record)
+    });
+    return res.ok || res.status === 0 || res.type === 'opaque';
+  }catch(e){
+    return false;
+  }
+}
+
+/* ---- REGISTRO E SINCRONIZAÇÃO ---- */
+async function queueAndSend(record){
+  // 1. Notifica dashboard em tempo real se estiver na mesma aba
+  if(record.tipo === 'FIM_DIARIA') notificarDashboard(record);
+
+  // 2. Tenta enviar à planilha Google Sheets via Apps Script
+  const enviado = await sendToSheets(record);
+
+  // 3. Se não conseguiu enviar agora, guarda na fila para retry
+  if(!enviado){
+    const jaExiste = state.queue.some(r => r._id === record._id);
+    if(!jaExiste) state.queue.push(record);
+  } else {
+    state.queue = state.queue.filter(r => r._id !== record._id);
+  }
+  saveState();
+  updateQueueBadge();
+  markHistorySentStatus();
+}
+
+async function flushQueue(){
+  if(!navigator.onLine || state.queue.length === 0) return;
+  const remaining = [];
+  for(const rec of state.queue){
+    const ok = await sendToSheets(rec);
+    if(!ok) remaining.push(rec);
+  }
+  const sincronizou = remaining.length < state.queue.length;
+  state.queue = remaining;
+  saveState();
+  updateQueueBadge();
+  markHistorySentStatus();
+  if(sincronizou && remaining.length === 0){
+    showToast('Registros sincronizados com a planilha!', 'ok');
+  }
+}
+
+function markHistorySentStatus(){
+  const pendingIds = new Set(state.queue.map(r=>r._id));
+  state.history.forEach(h=>{ h._pending = pendingIds.has(h._id); });
+  saveState();
+  renderHistory();
+}
+
+/* ---- CRONÔMETRO ---- */
+function startClock(){
+  stopClock();
+  function tick(){
+    const diff = Date.now() - new Date(state.session.startISO).getTime();
+    const totalSec = Math.max(0, Math.floor(diff/1000));
+    const h = Math.floor(totalSec/3600);
+    const m = Math.floor((totalSec%3600)/60);
+    const s = totalSec%60;
+    $('hh').textContent = String(h).padStart(2,'0');
+    $('mm').textContent = String(m).padStart(2,'0');
+    $('ss').textContent = String(s).padStart(2,'0');
+
+    // Barra de jornada
+    const horasDec = diff / 3600000;
+    const pct = Math.min(100, (horasDec / CONFIG.HORAS_JORNADA_NORMAL) * 100);
+    const bar = $('jornadaBarFill');
+    bar.style.width = pct + '%';
+    bar.className = 'jornada-bar-fill' + (horasDec > CONFIG.HORAS_JORNADA_NORMAL ? ' extra' : '');
+    $('jornadaHorasEl').textContent = horasDec.toFixed(1) + 'h';
+    $('jornadaPctEl').textContent = Math.round(pct) + '% de ' + CONFIG.HORAS_JORNADA_NORMAL + 'h';
+
+    // Estimativa de valor
+    const d = state.session;
+    const normal = Math.min(horasDec, CONFIG.HORAS_JORNADA_NORMAL);
+    const extra = Math.max(0, horasDec - CONFIG.HORAS_JORNADA_NORMAL);
+    const valor = (normal * d.valorHora) + (extra * d.valorHoraExtra);
+    $('estValor').textContent = 'R$ ' + valor.toFixed(2).replace('.',',');
+    $('estSub').textContent =
+      normal.toFixed(1) + 'h normais · ' + extra.toFixed(1) + 'h extras';
+
+    document.title = `🟢 ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} · M. Malacarne`;
+  }
+  tick();
+  state.clockTimer = setInterval(tick, 1000);
+}
+
+function stopClock(){
+  if(state.clockTimer){ clearInterval(state.clockTimer); state.clockTimer = null; }
+  document.title = 'M. Malacarne | Controle de Diária';
+}
+
+function fmtDuration(ms){
+  const t = Math.max(0, Math.floor(ms/1000));
+  const h = String(Math.floor(t/3600)).padStart(2,'0');
+  const m = String(Math.floor((t%3600)/60)).padStart(2,'0');
+  const s = String(t%60).padStart(2,'0');
+  return `${h}:${m}:${s}`;
+}
+
+/* ---- CÁLCULO ---- */
+function calcularValor(driver, horasDec){
+  const normal = Math.min(horasDec, CONFIG.HORAS_JORNADA_NORMAL);
+  const extra = Math.max(0, horasDec - CONFIG.HORAS_JORNADA_NORMAL);
+  const valor = (normal * driver.valorHora) + (extra * driver.valorHoraExtra);
+  return { normal, extra, valor };
+}
+
+/* ---- INICIAR DIÁRIA ---- */
+async function iniciarDiaria(){
+  const driver = getCurrentDriver();
+  if(!driver){ showToast('Selecione ou digite o nome do motorista.', 'warn'); return; }
+  const placa = getCurrentPlaca();
+  if(!placa){ showToast('Selecione ou digite a placa do veículo.', 'warn'); return; }
+  const origem = $('origemInput').value.trim();
+  const destino = $('destinoInput').value.trim();
+  if(!origem || !destino){ showToast('Informe origem e destino da viagem.', 'warn'); return; }
+
+  $('mainBtn').disabled = true;
+  $('mainBtn').textContent = '📡 Obtendo localização...';
+  const gps = await getGPS();
+  $('mainBtn').disabled = false;
+
+  const nowISO = new Date().toISOString();
+  state.session = {
+    id: 'S' + Date.now(),
+    driverName: driver.nome,
+    valorHora: driver.valorHora,
+    valorHoraExtra: driver.valorHoraExtra,
+    placa, origem, destino,
+    startISO: nowISO,
+    startGPS: gps
+  };
+  saveState();
+
+  queueAndSend({
+    _id: 'START-' + state.session.id,
+    tipo: 'INICIO_DIARIA',
+    motorista: driver.nome,
+    placa, origem, destino,
+    dataHoraInicio: nowISO,
+    latInicio: gps ? gps.lat : null,
+    lngInicio: gps ? gps.lng : null,
+    origemDado: 'app-motorista'
+  });
+
+  renderRunning();
+  showToast('Diária iniciada! Boa viagem 🚛', 'ok');
+}
+
+/* ---- FINALIZAR DIÁRIA ---- */
+async function finalizarDiaria(){
+  if(!state.session) return;
+  const confirm = window.confirm('Finalizar a diária agora?');
+  if(!confirm) return;
+
+  $('mainBtn').disabled = true;
+  $('mainBtn').textContent = '📡 Obtendo localização...';
+  const gps = await getGPS();
+  $('mainBtn').disabled = false;
+
+  const nowISO = new Date().toISOString();
+  const ms = new Date(nowISO) - new Date(state.session.startISO);
+  const horasDec = ms / 3600000;
+  const driver = { nome: state.session.driverName, valorHora: state.session.valorHora, valorHoraExtra: state.session.valorHoraExtra };
+  const calc = calcularValor(driver, horasDec);
+
+  const histItem = {
+    _id: state.session.id,
+    motorista: driver.nome,
+    placa: state.session.placa,
+    origem: state.session.origem,
+    destino: state.session.destino,
+    inicio: state.session.startISO,
+    fim: nowISO,
+    horas: horasDec,
+    horasNormais: calc.normal,
+    horasExtra: calc.extra,
+    valor: calc.valor,
+    startGPS: state.session.startGPS,
+    endGPS: gps,
+    _pending: false
+  };
+  state.history.unshift(histItem);
+  if(state.history.length > 30) state.history.pop();
+
+  queueAndSend({
+    _id: 'END-' + state.session.id,
+    tipo: 'FIM_DIARIA',
+    motorista: driver.nome,
+    placa: state.session.placa,
+    origem: state.session.origem,
+    destino: state.session.destino,
+    dataHoraInicio: state.session.startISO,
+    dataHoraFim: nowISO,
+    horasTrabalhadas: Number(horasDec.toFixed(2)),
+    horasNormais: Number(calc.normal.toFixed(2)),
+    horasExtra: Number(calc.extra.toFixed(2)),
+    valorHora: driver.valorHora,
+    valorHoraExtra: driver.valorHoraExtra,
+    valorTotal: Number(calc.valor.toFixed(2)),
+    latInicio: state.session.startGPS ? state.session.startGPS.lat : null,
+    lngInicio: state.session.startGPS ? state.session.startGPS.lng : null,
+    latFim: gps ? gps.lat : null,
+    lngFim: gps ? gps.lng : null,
+    origemDado: 'app-motorista'
+  });
+
+  showSummary(histItem);
+  state.session = null;
+  saveState();
+  renderIdle();
+  renderHistory();
+  showToast('Diária finalizada e enviada à planilha!', 'ok', 4500);
+}
+
+/* ---- RESUMO ---- */
+function showSummary(item){
+  const box = $('lastSummary');
+  box.style.display = 'block';
+  const dur = fmtDuration(new Date(item.fim) - new Date(item.inicio));
+  box.innerHTML = `
+    <div class="card-title"><span>🎉</span> Resumo da última diária</div>
+    <div class="summary-final">
+      <div class="sf-header">
+        <span class="sf-icon">💰</span>
+        <div>
+          <div class="sf-title">Valor calculado</div>
+          <div class="sf-valor">R$ ${item.valor.toFixed(2).replace('.',',')}</div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">
+        ${item.motorista} · ${item.placa||'—'} · ${item.origem||'—'} → ${item.destino||'—'}
+      </div>
+      <div class="sf-grid">
+        <div class="sf-item">
+          <div class="si-label">Tempo total</div>
+          <div class="si-val">${dur}</div>
+        </div>
+        <div class="sf-item">
+          <div class="si-label">Horas normais</div>
+          <div class="si-val">${item.horasNormais.toFixed(2)} h</div>
+        </div>
+        <div class="sf-item">
+          <div class="si-label">Horas extras</div>
+          <div class="si-val extra">${item.horasExtra.toFixed(2)} h</div>
+        </div>
+        <div class="sf-item">
+          <div class="si-label">Valor/hora</div>
+          <div class="si-val">R$ ${(item.horasNormais>0&&item.valor>0 ? (item.valor/item.horas).toFixed(2) : '—').replace('.',',')}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ---- HISTÓRICO ---- */
+function renderHistory(){
+  const el = $('historyList');
+  if(!state.history.length){
+    el.innerHTML = '<div class="empty"><div class="empty-ico">🗒️</div>Nenhum registro ainda.</div>';
+    return;
+  }
+  el.innerHTML = state.history.map(h=>{
+    const dt = new Date(h.inicio).toLocaleDateString('pt-BR');
+    const tm = new Date(h.inicio).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    return `
+      <div class="history-item">
+        <div class="hi-top">
+          <div class="hi-driver">${h.motorista}</div>
+          <div class="hi-valor">R$ ${h.valor.toFixed(2).replace('.',',')}</div>
+        </div>
+        <div class="hi-rota">${h.placa||'—'} · ${h.origem||'—'} → ${h.destino||'—'}</div>
+        <div class="hi-meta">
+          <span style="color:var(--muted);">📅 ${dt} ${tm}</span>
+          <span class="hi-hours">⏱ ${h.horas.toFixed(2)}h</span>
+          <span class="status-tag ${h._pending?'pend':'sent'}">${h._pending?'⏳ Pendente':'✅ Enviado'}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ---- RENDER STATES ---- */
+function renderIdle(){
+  $('diariaHero').style.display = 'none';
+  $('mainHeader').style.display = 'block';
+  $('mainBtn').textContent = '▶  INICIAR DIÁRIA';
+  $('mainBtn').className = 'btn-main btn-start';
+  $('mainBtn').onclick = iniciarDiaria;
+  $('mainBtn').disabled = false;
+  $('estimativaCard').style.display = 'none';
+  $('driverCard').style.display = 'block';
+  stopClock();
+}
+
+function renderRunning(){
+  $('mainHeader').style.display = 'none';
+  $('diariaHero').style.display = 'block';
+  $('mainBtn').textContent = '■  FINALIZAR DIÁRIA';
+  $('mainBtn').className = 'btn-main btn-end';
+  $('mainBtn').onclick = finalizarDiaria;
+  $('mainBtn').disabled = false;
+  $('estimativaCard').style.display = 'block';
+  $('driverCard').style.display = 'none';
+  $('lastSummary').style.display = 'none';
+
+  // Chips no hero
+  $('heroDriver').textContent = state.session.driverName;
+  $('chipPlaca').textContent = state.session.placa || '—';
+  $('chipOrigem').textContent = state.session.origem || '—';
+  $('chipDestino').textContent = state.session.destino || '—';
+  $('heroSince').textContent = 'Iniciada: ' + new Date(state.session.startISO).toLocaleTimeString('pt-BR');
+
+  // GPS badge
+  const g = state.session.startGPS;
+  $('gpsBadge').innerHTML = g
+    ? `<span class="badge gps-ok">📍 ${g.lat.toFixed(4)}, ${g.lng.toFixed(4)}</span>`
+    : `<span class="badge gps-err">Sem GPS</span>`;
+  $('startTimeTxt').textContent = new Date(state.session.startISO).toLocaleString('pt-BR');
+
+  startClock();
+}
+
+/* ---- PWA INSTALL ---- */
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault();
+  deferredPrompt = e;
+  $('installBanner').style.display = 'flex';
+});
+$('installBtn').addEventListener('click', async ()=>{
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  $('installBanner').style.display = 'none';
+});
+
+/* ---- QR MODAL ---- */
+function setupQrModal(){
+  const url = window.location.href.split('#')[0];
+  $('urlBox').textContent = url;
+  $('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(url)}`;
+  $('qrLink').addEventListener('click', e=>{ e.preventDefault(); $('qrModal').classList.add('show'); });
+  $('closeQrBtn').addEventListener('click', ()=> $('qrModal').classList.remove('show'));
+  $('qrModal').addEventListener('click', e=>{ if(e.target.id==='qrModal') $('qrModal').classList.remove('show'); });
+  $('copyLinkBtn').addEventListener('click', async ()=>{
+    try{
+      await navigator.clipboard.writeText(url);
+      showToast('Link copiado! Envie por WhatsApp 📲', 'ok');
+    }catch(e){
+      showToast('Copie manualmente: ' + url, 'info', 6000);
+    }
+  });
+}
+
+/* ---- INIT ---- */
+async function init(){
+  populatePlacas();
+  updateNetStatus();
+  setupQrModal();
+  renderHistory();
+  updateQueueBadge();
+
+  if(state.session) renderRunning(); else renderIdle();
+
+  // Carrega lista de motoristas
+  await carregarMotoristas();
+
+  // Restaura seleção do motorista após carregar
+  const savedIdx = localStorage.getItem('mm_driver_idx');
+  if(savedIdx !== null && $('driverSelect').style.display !== 'none'){
+    $('driverSelect').value = savedIdx;
+    atualizarValoresMot();
+  }
+
+  setInterval(flushQueue, 15000);
+}
+init();
+</script>
+</body>
+</html>
