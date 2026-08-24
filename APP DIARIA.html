@@ -485,7 +485,7 @@ footer a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--b
 ================================================================= */
 const CONFIG = {
   // URL do Google Apps Script — cole aqui após publicar
-  WEBHOOK_URL: "https://script.google.com/macros/s/AKfycbyJeH_aIGRU3Opsj694hEuODgmlSr0IvfwchqR5Cv80mg6YWdP3ocxd9kTQD2N7QC7a/exec",
+  WEBHOOK_URL: "https://script.google.com/macros/s/AKfycbzUlGrY1uVDxFCer4ep_VAARqNDDMGbohVFU7oj2wEDe9CezOHaL9Wh4NlhU7Flgas/exec",
 
   HORAS_JORNADA_NORMAL: 8,
 
@@ -692,17 +692,28 @@ function notificarDashboard(record){
 async function sendToSheets(record){
   const url = CONFIG.WEBHOOK_URL;
   if(!url || url.includes('COLE_AQUI')) return false;
+  const body = JSON.stringify(record);
+
+  // Estratégia 1: fetch direto com no-cors (funciona quando Apps Script
+  // está publicado como "Qualquer pessoa, inclusive anônimos")
   try{
-    // Usa text/plain para evitar preflight CORS — Apps Script aceita assim
-    const res = await fetch(url, {
-      method:'POST',
+    await fetch(url, {
+      method:'POST', mode:'no-cors',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify(record)
+      body
     });
-    return res.ok || res.status === 0 || res.type === 'opaque';
-  }catch(e){
-    return false;
-  }
+    // no-cors sempre retorna opaque — assumimos sucesso se não jogou exceção
+    return true;
+  }catch(e){}
+
+  // Estratégia 2: GET com dados na URL (fallback)
+  try{
+    const enc = encodeURIComponent(body);
+    await fetch(`${url}?data=${enc}`, { method:'GET', mode:'no-cors' });
+    return true;
+  }catch(e){}
+
+  return false;
 }
 
 /* ---- REGISTRO E SINCRONIZAÇÃO ---- */
