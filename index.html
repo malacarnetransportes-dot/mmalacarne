@@ -11738,7 +11738,7 @@ function diaInserirManual() {
 
   // Envia para a planilha via Apps Script
   fetch(DIA_WEBHOOK_URL, {
-    method: 'POST', mode: 'no-cors',
+    method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify({
       tipo: 'FIM_DIARIA',
@@ -11901,7 +11901,7 @@ function diaReceberRegistro(d) {
 
 // ── Sincronizar com Google Sheets (Diarias_Motoristas) ──
 // Lê a planilha de destino e importa registros FIM_DIARIA que ainda não estão no localStorage
-const DIA_SHEETS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlEJIu_e8jmEdTb7MhG7xZXKMUPPuYtYDw9msDen-FvItUEbJD2yBk1PARgLnSwScjk_C8f3UM86BO/pub?output=csv';
+const DIA_SHEETS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSMhjWg2lDJz47IC94_EhTnQt5CNcviCGsrm98lXgoAwVTxIzTGp9V8xZVKsJk_fg/pub?output=csv';
 const DIA_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyJeH_aIGRU3Opsj694hEuODgmlSr0IvfwchqR5Cv80mg6YWdP3ocxd9kTQD2N7QC7a/exec';
 
 async function diaSyncFromSheets() {
