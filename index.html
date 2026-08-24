@@ -482,6 +482,15 @@ footer a{color:var(--accent);text-decoration:none;}
 .rank-list li{counter-increment:rank;display:flex;justify-content:space-between;align-items:center;padding:.7rem 1rem;background:var(--gray-100);border-radius:var(--r8);margin-bottom:.5rem;font-size:.85rem;flex-wrap:wrap;gap:.5rem;}
 .rank-list li::before{content:counter(rank)"º";background:var(--accent);color:#111;padding:.15rem .6rem;border-radius:30px;font-size:.75rem;font-weight:800;margin-right:.7rem;}
 
+/* Cards de soma por Empresa (Financeiro) */
+.fin-empresa-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.7rem;}
+.fin-empresa-card{background:var(--gray-100);border:1.5px solid transparent;border-radius:var(--r8);padding:.7rem .9rem;cursor:pointer;transition:.15s;min-width:0;}
+.fin-empresa-card:hover{border-color:var(--primary-lt);transform:translateY(-2px);box-shadow:var(--shadow-sm);}
+.fin-empresa-card.active{border-color:var(--accent);background:rgba(212,175,55,.12);}
+.fin-empresa-card .nome{font-weight:700;font-size:.78rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fin-empresa-card .valor{font-weight:800;font-size:.95rem;color:var(--accent-dk);margin-top:.25rem;}
+.fin-empresa-cards-empty{grid-column:1/-1;text-align:center;color:var(--text-lt);font-size:.8rem;padding:1rem;}
+
 /* Charts */
 .charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.4rem;margin-bottom:1.4rem;}
 .fin-charts-row{display:flex;flex-wrap:wrap;gap:1.4rem;margin-bottom:1.4rem;align-items:stretch;min-width:0;}
@@ -952,17 +961,20 @@ footer a{color:var(--accent);text-decoration:none;}
               <div class="flt-grp"><label>Mês</label><select id="finMes"><option value="">Todos</option><option value="0">Janeiro</option><option value="1">Fevereiro</option><option value="2">Março</option><option value="3">Abril</option><option value="4">Maio</option><option value="5">Junho</option><option value="6">Julho</option><option value="7">Agosto</option><option value="8">Setembro</option><option value="9">Outubro</option><option value="10">Novembro</option><option value="11">Dezembro</option></select></div>
               <div class="flt-grp"><label>Ano</label><select id="finAno"><option value="">Todos</option></select></div>
               <div class="flt-grp"><label>Tipo</label><select id="finTipo"><option value="">Todos</option><option value="receita">Receita</option><option value="despesa">Despesa</option></select></div>
-              <div class="flt-grp"><label>Categoria</label><select id="finCategoria"><option value="">Todas</option></select></div>
-              <div class="flt-grp"><label>Buscar</label><input type="text" id="finBusca" placeholder="Descrição..."></div>
+              <div class="flt-grp"><label>Categoria</label><select id="finCategoria" onchange="applyFinFilters()"><option value="">Todas</option></select></div>
+              <div class="flt-grp"><label>Empresa</label><select id="finEmpresa" onchange="applyFinFilters()"><option value="">Todas</option></select></div>
               <button class="btn btn-accent" onclick="applyFinFilters()"><i class="fas fa-search"></i> Filtrar</button>
               <button class="btn btn-gray" onclick="resetFinFilters()"><i class="fas fa-times"></i> Limpar</button>
               <button class="btn btn-success btn-sm" onclick="exportCSV(currentFinanceiroFiltered,'financeiro')"><i class="fas fa-download"></i> CSV</button>
             </div>
           </div>
+          <div class="dash-card">
+            <div class="dash-card-title"><i class="fas fa-building"></i> Soma por Empresa <span id="finEmpresaCardsSub" style="font-weight:400;color:var(--text-lt);font-size:.75rem;margin-left:.4rem"></span></div>
+            <div class="fin-empresa-cards" id="finRankTipoLocal"><div class="fin-empresa-cards-empty">Sem dados</div></div>
+          </div>
           <div class="fin-charts-row">
             <div class="fin-rank-col">
               <div class="dash-card"><div class="dash-card-title"><i class="fas fa-layer-group"></i> Ranking por Tipo de Contas</div><ol class="rank-list" id="finRankTipoContas"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
-              <div class="dash-card"><div class="dash-card-title"><i class="fas fa-filter"></i> Ranking por Empresa (Categoria filtrada)</div><ol class="rank-list" id="finRankTipoLocal"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
             </div>
             <div class="fin-pie-col">
               <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-pie"></i> Por Tipo de Contas</div><div class="chart-box" style="height:260px"><canvas id="finPieChart" height="220"></canvas></div></div>
@@ -4495,9 +4507,11 @@ function applyFinFilters() {
   const ano   = anoEl ? anoEl.value : '';
   const tipo  = document.getElementById('finTipo').value.toLowerCase();
   const cat   = document.getElementById('finCategoria').value;
-  const busca = document.getElementById('finBusca').value.toLowerCase();
+  const empresaEl = document.getElementById('finEmpresa');
+  const empresa = empresaEl ? empresaEl.value : '';
 
-  function passaFiltros(row, ignorarCategoria) {
+  function passaFiltros(row, opts) {
+    opts = opts || {};
     // Filtro data
     if (colData && (dIni || dFim)) {
       const d = parseDate(row[colData]);
@@ -4526,20 +4540,24 @@ function applyFinFilters() {
     // Filtro categoria — não entra no cálculo dos rankings, só na tabela: os
     // rankings servem justamente pra ver a distribuição inteira do período,
     // não colapsar pra 1 item quando o usuário já escolheu uma categoria.
-    if (!ignorarCategoria && cat) {
+    if (!opts.ignorarCategoria && cat) {
       const checkCol = colCat || colTipo;
       if (checkCol && row[checkCol] !== cat) return false;
     }
-    // Busca texto
-    if (busca) {
-      const rowText = Object.values(row).join(' ').toLowerCase();
-      if (!rowText.includes(busca)) return false;
+    // Filtro empresa — mesma lógica: quando ignorado, serve pra listar as
+    // empresas disponíveis (dropdown) e montar os cards de soma por
+    // empresa dentro da categoria escolhida, sem colapsar pra 1 empresa só.
+    if (!opts.ignorarEmpresa && empresa) {
+      if (colLocal && String(row[colLocal] || '').trim() !== empresa) return false;
     }
     return true;
   }
 
-  let filtered = financeiroData.filter(row => passaFiltros(row, false));
-  let filteredPeriodo = cat ? financeiroData.filter(row => passaFiltros(row, true)) : filtered;
+  let filtered = financeiroData.filter(row => passaFiltros(row, {}));
+  let filteredPeriodo = (cat || empresa) ? financeiroData.filter(row => passaFiltros(row, { ignorarCategoria: true, ignorarEmpresa: true })) : filtered;
+  // Respeita a Categoria selecionada, mas ignora a Empresa — é a base pra
+  // popular o filtro de Empresa e montar os cards de soma por empresa.
+  let filteredParaEmpresa = empresa ? financeiroData.filter(row => passaFiltros(row, { ignorarEmpresa: true })) : filtered;
 
   currentFinanceiroFiltered = filtered;
 
@@ -4561,10 +4579,10 @@ function applyFinFilters() {
   document.getElementById('fin-registros').textContent = filtered.length;
   document.getElementById('finCount').textContent = filtered.length + ' registros';
 
-  // Tabela — respeita o filtro de Categoria normalmente
+  // Tabela — respeita o filtro de Categoria e Empresa normalmente
   renderFinTable(filtered, headers, colData, colDesc, colValor, colTipo, colCat);
-  // Gráficos/Rankings — sempre a distribuição inteira do período (data/tipo/busca), ignorando a Categoria selecionada
-  renderFinCharts(filteredPeriodo, colValor, colCat, colDesc, colTipoContas, colLocal, filtered);
+  // Gráficos/Rankings — sempre a distribuição inteira do período (data/tipo), ignorando Categoria/Empresa selecionadas
+  renderFinCharts(filteredPeriodo, colValor, colCat, colDesc, colTipoContas, colLocal, filteredParaEmpresa, cat, empresa);
 
   document.getElementById('finLoading').style.display = 'none';
   document.getElementById('finTableWrap').style.display = 'block';
@@ -4602,7 +4620,7 @@ function renderFinTable(data, headers, colData, colDesc, colValor, colTipo, colC
 // aqui usa classificação por palavra-chave: tudo vem direto das colunas
 // reais da planilha (TIPO DE CONTA / EMPRESA), conforme o valor digitado
 // nelas.
-function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLocal, dataFiltrada) {
+function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLocal, dataFiltrada, catAtual, empresaAtual) {
   const cats = {};
   const tiposContas = {};
   const locais = {};
@@ -4616,16 +4634,38 @@ function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLoca
     if (lc) locais[lc] = (locais[lc] || 0) + Math.abs(v);
   });
 
-  // Ranking por Empresa dentro da Categoria filtrada — respeita o filtro
-  // ativo (diferente do ranking "por Local" acima, que é sempre o
-  // período inteiro). É este ranking que muda quando o usuário escolhe
-  // uma Categoria no filtro.
+  // Soma por Empresa dentro da Categoria filtrada — respeita o filtro de
+  // Categoria/Data/Tipo ativo mas ignora a Empresa selecionada (pra não
+  // colapsar pra 1 card só). É essa lista que alimenta tanto o dropdown
+  // "Empresa" (que passa a listar só as empresas da categoria escolhida)
+  // quanto os cards de soma por empresa logo abaixo dos filtros.
   const locaisFiltro = {};
   (dataFiltrada || []).forEach(row => {
     const v = finValorLinha(row, colValor, colCat, colDesc);
     const lc = colLocal ? String(row[colLocal] || '').trim() : '';
     if (lc) locaisFiltro[lc] = (locaisFiltro[lc] || 0) + Math.abs(v);
   });
+  const rankingLocaisFiltro = Object.entries(locaisFiltro).sort((a, b) => b[1] - a[1]);
+
+  // Atualiza o <select> Empresa: só mostra as empresas presentes na
+  // Categoria (e demais filtros) selecionados, preservando a seleção atual
+  // se ela ainda for válida.
+  const empresaSel = document.getElementById('finEmpresa');
+  if (empresaSel) {
+    empresaSel.innerHTML = '<option value="">Todas</option>' +
+      rankingLocaisFiltro.map(([nome]) => `<option value="${escapeHTML(nome)}">${escapeHTML(nome)}</option>`).join('');
+    if (rankingLocaisFiltro.some(([nome]) => nome === empresaAtual)) empresaSel.value = empresaAtual;
+  }
+
+  // Cards de soma por Empresa
+  const cardsEl = document.getElementById('finRankTipoLocal');
+  const subEl = document.getElementById('finEmpresaCardsSub');
+  if (subEl) subEl.textContent = catAtual ? `— categoria: ${catAtual}` : '— todas as categorias';
+  if (cardsEl) {
+    cardsEl.innerHTML = rankingLocaisFiltro.length
+      ? rankingLocaisFiltro.map(([nome, valor]) => `<div class="fin-empresa-card${nome === empresaAtual ? ' active' : ''}" data-empresa="${escapeHTML(nome)}" title="${escapeHTML(nome)}"><div class="nome">${escapeHTML(nome)}</div><div class="valor">${fmtMoney(valor)}</div></div>`).join('')
+      : '<div class="fin-empresa-cards-empty">Sem dados</div>';
+  }
 
   // Ranking por Tipo de Contas — lista ordenada da maior para a menor,
   // agrupado pelo campo de agrupamento contábil ("Grupo Tipo de Contas")
@@ -4634,16 +4674,6 @@ function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLoca
   if (rankTcEl) {
     rankTcEl.innerHTML = rankingTc.length
       ? rankingTc.map(([nome, valor]) => `<li><span style="font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px" title="${nome}">${nome}</span><span style="font-weight:800;color:var(--accent)">${fmtMoney(valor)}</span></li>`).join('')
-      : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li>';
-  }
-
-  // Ranking por Empresa (Categoria filtrada) — atualiza conforme o filtro
-  // de Categoria escolhido em cima
-  const rankTipoLocalEl = document.getElementById('finRankTipoLocal');
-  const rankingLocaisFiltro = Object.entries(locaisFiltro).sort((a, b) => b[1] - a[1]);
-  if (rankTipoLocalEl) {
-    rankTipoLocalEl.innerHTML = rankingLocaisFiltro.length
-      ? rankingLocaisFiltro.map(([nome, valor]) => `<li><span style="font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px" title="${nome}">${nome}</span><span style="font-weight:800;color:var(--accent)">${fmtMoney(valor)}</span></li>`).join('')
       : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li>';
   }
 
@@ -4681,10 +4711,26 @@ function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLoca
 }
 
 function resetFinFilters() {
-  ['finDataInicio','finDataFim','finBusca'].forEach(id => document.getElementById(id).value = '');
-  ['finTipo','finCategoria','finMes','finAno'].forEach(id => document.getElementById(id).selectedIndex = 0);
+  ['finDataInicio','finDataFim'].forEach(id => document.getElementById(id).value = '');
+  ['finTipo','finCategoria','finMes','finAno','finEmpresa'].forEach(id => { const el = document.getElementById(id); if (el) el.selectedIndex = 0; });
   applyFinFilters();
 }
+
+// Clique num card de Empresa seleciona (ou desmarca, se já ativo) aquela
+// empresa no filtro e reaplica — forma rápida de filtrar sem abrir o select.
+(function initFinEmpresaCards(){
+  const wrap = document.getElementById('finRankTipoLocal');
+  if (!wrap) return;
+  wrap.addEventListener('click', function(e){
+    const card = e.target.closest('.fin-empresa-card');
+    if (!card) return;
+    const nome = card.dataset.empresa || '';
+    const sel = document.getElementById('finEmpresa');
+    if (!sel) return;
+    sel.value = (sel.value === nome) ? '' : nome;
+    applyFinFilters();
+  });
+})();
 
 // ═══════════════════════════════════════════════════════════
 // FINANCEIRO — GUIA "ORÇAMENTO & CUSTOS"
