@@ -1224,6 +1224,8 @@ footer a{color:var(--accent);text-decoration:none;}
 
         <!-- ── TAB BATERIAS ── -->
         <div id="tabBaterias" class="tab-pane">
+
+          <!-- KPIs -->
           <div class="kpi-grid">
             <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-battery-full"></i></div><div><div class="kpi-val" id="bat-total">—</div><div class="kpi-lbl">Total Baterias</div></div></div>
             <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-exclamation-circle"></i></div><div><div class="kpi-val" id="bat-vencidas">—</div><div class="kpi-lbl">Vencidas</div></div></div>
@@ -1232,31 +1234,13 @@ footer a{color:var(--accent);text-decoration:none;}
             <div class="kpi-card"><div class="kpi-icon" style="background:rgba(245,158,11,.12);color:#d97706"><i class="fas fa-clock"></i></div><div><div class="kpi-val" id="bat-proximas90">—</div><div class="kpi-lbl">Próx. 3 meses (61-90d)</div></div></div>
             <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-check-circle"></i></div><div><div class="kpi-val" id="bat-ok">—</div><div class="kpi-lbl">Em Dia (+90d)</div></div></div>
           </div>
-          <div class="dash-card" id="batRankingCard" style="display:none">
-            <div class="man-body" style="padding:0">
-              <div>
-                <div class="dash-card-title" style="margin-bottom:.5rem"><i class="fas fa-battery-half"></i> Ranking por Modelo de Bateria</div>
-                <ol class="rank-list" id="batRankMarca"></ol>
-              </div>
-              <div>
-                <div class="dash-card-title" style="margin-bottom:.5rem"><i class="fas fa-hourglass-half"></i> Tempo Médio por Modelo — 5 Melhores x 5 Piores</div>
-                <div id="batTempoNota" style="font-size:.72rem;color:var(--text-lt);margin-bottom:.5rem"></div>
-                <div class="man-best-worst" style="margin-top:0">
-                  <div class="man-bw-box best">
-                    <div class="man-bw-title best"><i class="fas fa-trophy"></i> Melhores (maior duração média)</div>
-                    <div id="batTempoMelhores"></div>
-                  </div>
-                  <div class="man-bw-box worst">
-                    <div class="man-bw-title worst"><i class="fas fa-triangle-exclamation"></i> Piores (menor duração média)</div>
-                    <div id="batTempoPiores"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="dash-card">
+
+          <!-- FILTROS — sempre no topo -->
+          <div class="dash-card" style="margin-bottom:1rem">
+            <div class="dash-card-title" style="margin-bottom:.8rem"><i class="fas fa-filter"></i> Filtros</div>
             <div class="filters-bar">
-              <div class="flt-grp"><label>Veículo</label><input type="text" id="batVeiculo" list="dlPlacas" placeholder="Placa ou veículo..."></div>
+              <div class="flt-grp"><label>Veículo / Placa</label><input type="text" id="batVeiculo" list="dlPlacas" placeholder="Placa ou veículo..."></div>
+              <div class="flt-grp"><label>Modelo de Bateria</label><input type="text" id="batModeloFiltro" placeholder="Ex: Heliar, Moura..."></div>
               <div class="flt-grp"><label>Status</label><select id="batStatus"><option value="">Todos</option><option value="vencido">Vencidas</option><option value="proximo30">Próx. 30 dias</option><option value="proximo60">Próx. 2 meses</option><option value="proximo90">Próx. 3 meses</option><option value="ok">Em Dia</option></select></div>
               <div class="flt-grp"><label>Data Início</label><input type="date" id="batDataInicio"></div>
               <div class="flt-grp"><label>Data Fim</label><input type="date" id="batDataFim"></div>
@@ -1264,7 +1248,73 @@ footer a{color:var(--accent);text-decoration:none;}
               <button class="btn btn-gray" onclick="resetBatFilters()"><i class="fas fa-times"></i> Limpar</button>
               <button class="btn btn-success btn-sm" onclick="exportCSV(currentBateriasFiltered,'baterias')"><i class="fas fa-download"></i> CSV</button>
             </div>
+            <!-- Card de resumo da placa filtrada -->
+            <div id="batPlacaResumoCard" style="display:none;margin-top:1rem;padding:1rem;background:linear-gradient(135deg,#f0f7ff,#e8f4fd);border:1px solid #bfdbfe;border-radius:var(--r12)">
+              <div style="font-size:.72rem;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:.6rem"><i class="fas fa-id-card"></i> Histórico da Placa</div>
+              <div id="batPlacaResumoBody" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.6rem;font-size:.82rem"></div>
+            </div>
           </div>
+
+          <!-- Alertas de duplicidade -->
+          <div id="batDupAlertaWrap" style="display:none;margin-bottom:1rem">
+            <div style="background:linear-gradient(135deg,#fff7ed,#fef3c7);border:1px solid #f59e0b;border-radius:var(--r12);padding:.9rem 1.1rem">
+              <div style="font-size:.72rem;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.8px;margin-bottom:.5rem"><i class="fas fa-copy"></i> Duplicidade Detectada — Placas com Múltiplos Registros</div>
+              <div id="batDupAlertaBody" style="font-size:.8rem;color:#78350f;display:flex;flex-wrap:wrap;gap:.4rem"></div>
+            </div>
+          </div>
+
+          <!-- Rankings e Gráficos -->
+          <div class="dash-card" id="batRankingCard" style="display:none">
+
+            <!-- Linha 1: Ranking por Modelo + Gráfico de Distribuição -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.2rem">
+              <div>
+                <div class="dash-card-title" style="margin-bottom:.6rem"><i class="fas fa-medal"></i> Ranking — Top 10 Modelos por Quantidade</div>
+                <div id="batTempoNota" style="font-size:.7rem;color:var(--text-lt);margin-bottom:.5rem"></div>
+                <ol class="rank-list" id="batRankMarca" style="max-height:320px;overflow-y:auto"></ol>
+              </div>
+              <div>
+                <div class="dash-card-title" style="margin-bottom:.6rem"><i class="fas fa-chart-pie"></i> Distribuição por Status</div>
+                <div style="position:relative;height:260px;display:flex;align-items:center;justify-content:center">
+                  <canvas id="batChartStatus" style="max-height:250px"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Linha 2: Vida Útil Melhores x Piores + Gráfico de barras por modelo -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.2rem">
+              <div>
+                <div class="dash-card-title" style="margin-bottom:.5rem"><i class="fas fa-hourglass-half"></i> Vida Útil Média por Modelo</div>
+                <div class="man-best-worst" style="margin-top:0">
+                  <div class="man-bw-box best">
+                    <div class="man-bw-title best"><i class="fas fa-trophy"></i> Top 5 — Maior Duração</div>
+                    <div id="batTempoMelhores"></div>
+                  </div>
+                  <div class="man-bw-box worst">
+                    <div class="man-bw-title worst"><i class="fas fa-triangle-exclamation"></i> Top 5 — Menor Duração</div>
+                    <div id="batTempoPiores"></div>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div class="dash-card-title" style="margin-bottom:.6rem"><i class="fas fa-chart-bar"></i> Vida Útil Média (dias) — Top 10 Modelos</div>
+                <div style="position:relative;height:220px">
+                  <canvas id="batChartVidaUtil" style="max-height:210px"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Linha 3: Trocas por mês (timeline) -->
+            <div style="margin-bottom:.4rem">
+              <div class="dash-card-title" style="margin-bottom:.6rem"><i class="fas fa-chart-line"></i> Histórico de Trocas por Período</div>
+              <div style="position:relative;height:180px">
+                <canvas id="batChartTrocas" style="max-height:170px"></canvas>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Tabela -->
           <div class="dash-card">
             <div class="dash-card-title"><i class="fas fa-table"></i> Controle de Baterias <span id="batCount" style="background:var(--gray-100);padding:.15rem .6rem;border-radius:30px;font-size:.75rem;margin-left:.5rem"></span></div>
             <div id="batLoading" class="loading-spinner"><div class="spinner"></div> Carregando dados...</div>
@@ -1327,10 +1377,16 @@ footer a{color:var(--accent);text-decoration:none;}
           </div>
 
           <div class="dash-card" style="margin-bottom:1.4rem">
+            <div class="dash-card-title" style="margin-bottom:.8rem"><i class="fas fa-filter"></i> Filtros</div>
             <div class="filters-bar">
-              <div class="flt-grp"><label>Buscar</label><input type="text" id="frotaBusca" list="dlFrota" placeholder="Nome, placa, carreta ou CPF..." oninput="filtrarFrota()"></div>
+              <div class="flt-grp"><label>Motorista</label><input type="text" id="frotaBusca" list="dlFrota" placeholder="Nome ou CPF..." oninput="filtrarFrota()"></div>
+              <div class="flt-grp"><label>Placa Cavalo</label><input type="text" id="frotaPlacaCavalo" placeholder="Ex: RYE7J26..." oninput="filtrarFrota()"></div>
+              <div class="flt-grp"><label>Placa Carreta</label><input type="text" id="frotaPlacaCarreta" placeholder="Ex: QJH0591..." oninput="filtrarFrota()"></div>
+              <div class="flt-grp"><label>Marca Cavalo</label><select id="frotaMarcaCavalo" onchange="filtrarFrota()"><option value="">Todas</option></select></div>
+              <div class="flt-grp"><label>Ano Cavalo</label><select id="frotaAnoCavalo" onchange="filtrarFrota()"><option value="">Todos</option></select></div>
               <div class="flt-grp"><label>Paletes</label><select id="frotaPaletes" onchange="filtrarFrota()"><option value="">Todos</option><option value="28">28 paletes</option><option value="30">30 paletes (Van)</option></select></div>
-              <button class="btn btn-gray" onclick="document.getElementById('frotaBusca').value='';document.getElementById('frotaPaletes').selectedIndex=0;filtrarFrota()"><i class="fas fa-times"></i> Limpar</button>
+              <button class="btn btn-accent" onclick="filtrarFrota()"><i class="fas fa-search"></i> Filtrar</button>
+              <button class="btn btn-gray" onclick="resetFrotaFilters()"><i class="fas fa-times"></i> Limpar</button>
             </div>
           </div>
 
@@ -6655,22 +6711,64 @@ async function loadBateriasData() {
   }
 }
 
+// Normaliza nome de modelo para comparação fuzzy (remove espaços, hifens, pontos, converte para maiúsculo)
+function normalizaModelo(s) {
+  return String(s||'').trim().toUpperCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[\s\-\.\/]+/g,'');
+}
+
+// Agrupa modelos com nomes levemente diferentes usando comparação fuzzy
+function agruparModelos(lista) {
+  // lista: [{modelo, total, vencidas, dias:[], registros:[]}]
+  const grupos = [];
+  lista.forEach(item => {
+    const norm = normalizaModelo(item.modelo);
+    const grupo = grupos.find(g => {
+      const gn = normalizaModelo(g.modelo);
+      // considera igual se: um contém o outro, ou a edição de Levenshtein ≤ 2 para nomes curtos
+      if (gn === norm) return true;
+      if (norm.length > 4 && (gn.includes(norm) || norm.includes(gn))) return true;
+      // simples: 80% dos caracteres em comum
+      const menor = Math.min(gn.length, norm.length);
+      const maior = Math.max(gn.length, norm.length);
+      if (menor === 0) return false;
+      let comuns = 0;
+      for (let i=0;i<menor;i++) if (norm[i]===gn[i]) comuns++;
+      return (comuns/maior) >= 0.80;
+    });
+    if (grupo) {
+      grupo.total += item.total;
+      grupo.vencidas += item.vencidas;
+      grupo.dias = grupo.dias.concat(item.dias);
+      grupo.registros = grupo.registros.concat(item.registros);
+      // mantém o nome mais longo/descritivo como label
+      if (item.modelo.length > grupo.modelo.length) grupo.modelo = item.modelo;
+    } else {
+      grupos.push({ ...item, dias: [...item.dias], registros: [...item.registros] });
+    }
+  });
+  return grupos;
+}
+
+// Instâncias de gráficos (para destruir antes de recriar)
+let _batChartStatus=null, _batChartVidaUtil=null, _batChartTrocas=null;
+
 function aplicarFiltrosBaterias() {
   if (!bateriasData.length) return;
   const headers = Object.keys(bateriasData[0]);
-  const colVeiculo = findCol(headers, ['veiculo','placa','caminhao','carro','cavalo','truck','frota']);
-  const colData    = findCol(headers, ['vencimento','data','validade','troca','substituicao','proxima']);
-  const colModelo  = findCol(headers, ['modelo bateria','modelo','tipo bateria','tipo']);
-  const colInstalacao = findCol(headers.filter(h => h !== colData), ['instalacao','instalação','compra','aquisicao','aquisição','fabricacao','fabricação','emissao','emissão','anterior','data inicial']);
+  const colVeiculo    = findCol(headers, ['veiculo','placa','caminhao','carro','cavalo','truck','frota']);
+  const colData       = findCol(headers, ['vencimento','data','validade','troca','substituicao','proxima']);
+  const colModelo     = findCol(headers, ['modelo bateria','modelo','tipo bateria','tipo']);
+  const colInstalacao = findCol(headers.filter(h => h !== colData), ['instalacao','instalação','compra','aquisicao','aquisição','fabricacao','fabricação','emissao','emissão','anterior','data inicial','data troca']);
 
   const now = new Date(); now.setHours(0,0,0,0);
   const em30 = new Date(now); em30.setDate(em30.getDate()+30);
   const em60 = new Date(now); em60.setDate(em60.getDate()+60);
   const em90 = new Date(now); em90.setDate(em90.getDate()+90);
 
-  // Classifica o status em uma das 5 faixas: vencido / proximo30 / proximo60 / proximo90 / ok
   function classificar(dVenc) {
-    if (!dVenc) return 'ok'; // sem data cadastrada — tratado como Em Dia até haver melhor sinalização
+    if (!dVenc) return 'ok';
     if (dVenc < now) return 'vencido';
     if (dVenc <= em30) return 'proximo30';
     if (dVenc <= em60) return 'proximo60';
@@ -6678,31 +6776,33 @@ function aplicarFiltrosBaterias() {
     return 'ok';
   }
 
+  // ── Detectar duplicidade (placas com mais de 1 registro) ──
+  const contPlaca = {};
+  bateriasData.forEach(row => {
+    const p = colVeiculo ? normalizaPlaca(row[colVeiculo]) : '';
+    if (p) contPlaca[p] = (contPlaca[p]||0)+1;
+  });
+  const placasDup = Object.entries(contPlaca).filter(([,n])=>n>1).map(([p])=>p);
+  const dupWrap = document.getElementById('batDupAlertaWrap');
+  const dupBody = document.getElementById('batDupAlertaBody');
+  if (placasDup.length) {
+    dupBody.innerHTML = placasDup.map(p=>`<span style="background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;padding:.15rem .5rem;font-weight:700">${p} <span style="color:#92400e">(${contPlaca[p]}x)</span></span>`).join('');
+    dupWrap.style.display = 'block';
+  } else {
+    dupWrap.style.display = 'none';
+  }
+
   const vVeiculo = document.getElementById('batVeiculo').value.toLowerCase();
+  const vModelo  = normalizaModelo(document.getElementById('batModeloFiltro').value);
   const vStatus  = document.getElementById('batStatus').value;
   const vDataIni = document.getElementById('batDataInicio').value ? new Date(document.getElementById('batDataInicio').value) : null;
   const vDataFim = document.getElementById('batDataFim').value ? new Date(document.getElementById('batDataFim').value + 'T23:59:59') : null;
 
   let vencidas=0, proximas30=0, proximas60=0, proximas90=0, ok=0;
 
-  // Considera apenas o registro mais recente de cada placa (evita duplicar
-  // veículo que tenha mais de uma linha/histórico na planilha). Isso também
-  // garante que uma bateria vencida em 2025 sem novo registro em 2026
-  // continue aparecendo — o status compara sempre com a data de HOJE, não
-  // com nenhum ano fixo, então ela não some nem vira "Em Dia" por engano.
+  // Para KPIs usa dedup (registro mais recente por placa)
   const dedupedData = dedupePorPlaca(bateriasData, colVeiculo, colData);
 
-  let filtered = dedupedData.filter(row => {
-    const dVenc = colData ? parseDate(row[colData]) : null;
-    const status = classificar(dVenc);
-    if (vVeiculo && colVeiculo && !String(row[colVeiculo]||'').toLowerCase().includes(vVeiculo)) return false;
-    if (vStatus && status !== vStatus) return false;
-    if (vDataIni && dVenc && dVenc < vDataIni) return false;
-    if (vDataFim && dVenc && dVenc > vDataFim) return false;
-    return true;
-  });
-
-  // Contar para KPIs (no total já deduplicado por placa, sem filtro de status)
   dedupedData.forEach(row => {
     const dVenc = colData ? parseDate(row[colData]) : null;
     const status = classificar(dVenc);
@@ -6713,16 +6813,82 @@ function aplicarFiltrosBaterias() {
     else ok++;
   });
 
-  currentBateriasFiltered = filtered;
   document.getElementById('bat-total').textContent = dedupedData.length;
   document.getElementById('bat-vencidas').textContent = vencidas;
   document.getElementById('bat-proximas').textContent = proximas30;
   document.getElementById('bat-proximas60').textContent = proximas60;
   document.getElementById('bat-proximas90').textContent = proximas90;
   document.getElementById('bat-ok').textContent = ok;
+
+  // Filtro aplicado sobre dedupedData
+  let filtered = dedupedData.filter(row => {
+    const dVenc = colData ? parseDate(row[colData]) : null;
+    const status = classificar(dVenc);
+    if (vVeiculo && colVeiculo && !String(row[colVeiculo]||'').toLowerCase().includes(vVeiculo)) return false;
+    if (vModelo && colModelo && !normalizaModelo(row[colModelo]).includes(vModelo)) return false;
+    if (vStatus && status !== vStatus) return false;
+    if (vDataIni && dVenc && dVenc < vDataIni) return false;
+    if (vDataFim && dVenc && dVenc > vDataFim) return false;
+    return true;
+  });
+
+  currentBateriasFiltered = filtered;
   document.getElementById('batCount').textContent = filtered.length + ' itens';
 
-  // Tabela com status visual — formata datas no padrão BR
+  // ── Card de resumo da placa filtrada ──
+  const resumoCard = document.getElementById('batPlacaResumoCard');
+  const resumoBody = document.getElementById('batPlacaResumoBody');
+  if (vVeiculo && colVeiculo) {
+    // Pega TODOS os registros da placa (sem dedup) para histórico completo
+    const todosPlaca = bateriasData.filter(r => String(r[colVeiculo]||'').toLowerCase().includes(vVeiculo));
+    if (todosPlaca.length) {
+      const historicoOrdenado = [...todosPlaca].sort((a,b) => {
+        const da = colData ? parseDate(a[colData]) : null;
+        const db = colData ? parseDate(b[colData]) : null;
+        if (!da && !db) return 0; if (!da) return 1; if (!db) return -1;
+        return da - db;
+      });
+      const ultimo = historicoOrdenado[historicoOrdenado.length-1];
+      const dUlt = colData ? parseDate(ultimo[colData]) : null;
+      const modUlt = colModelo ? (ultimo[colModelo]||'—') : '—';
+      const statusUlt = classificar(dUlt);
+      const statusLabel = {vencido:'⚠ Vencida',proximo30:'⏰ Próx. 30d',proximo60:'⏰ Próx. 2m',proximo90:'⏰ Próx. 3m',ok:'✓ Em Dia'};
+      const statusColor = {vencido:'#ef4444',proximo30:'#f59e0b',proximo60:'#f59e0b',proximo90:'#f59e0b',ok:'#10b981'};
+      resumoBody.innerHTML = `
+        <div style="background:#fff;padding:.6rem .8rem;border-radius:8px;border:1px solid #bfdbfe">
+          <div style="font-size:.68rem;color:#64748b;margin-bottom:.2rem">Registros encontrados</div>
+          <div style="font-size:1.1rem;font-weight:800;color:#1e40af">${todosPlaca.length}${todosPlaca.length>1?' <span style="font-size:.7rem;color:#f59e0b;font-weight:600">⚠ duplicado</span>':''}</div>
+        </div>
+        <div style="background:#fff;padding:.6rem .8rem;border-radius:8px;border:1px solid #bfdbfe">
+          <div style="font-size:.68rem;color:#64748b;margin-bottom:.2rem">Modelo atual</div>
+          <div style="font-size:.9rem;font-weight:700;color:#1e293b">${escapeHTML(modUlt)}</div>
+        </div>
+        <div style="background:#fff;padding:.6rem .8rem;border-radius:8px;border:1px solid #bfdbfe">
+          <div style="font-size:.68rem;color:#64748b;margin-bottom:.2rem">Vencimento</div>
+          <div style="font-size:.9rem;font-weight:700;color:#1e293b">${dUlt ? fmtDate(dUlt) : '—'}</div>
+        </div>
+        <div style="background:#fff;padding:.6rem .8rem;border-radius:8px;border:1px solid #bfdbfe">
+          <div style="font-size:.68rem;color:#64748b;margin-bottom:.2rem">Status</div>
+          <div style="font-size:.9rem;font-weight:700;color:${statusColor[statusUlt]}">${statusLabel[statusUlt]||'—'}</div>
+        </div>
+        ${historicoOrdenado.length>1?`<div style="background:#fff;padding:.6rem .8rem;border-radius:8px;border:1px solid #bfdbfe;grid-column:1/-1">
+          <div style="font-size:.68rem;color:#64748b;margin-bottom:.4rem">Histórico de trocas</div>
+          <div style="display:flex;flex-wrap:wrap;gap:.4rem">${historicoOrdenado.map((r,i)=>{
+            const d=colData?parseDate(r[colData]):null;
+            const m=colModelo?(r[colModelo]||'—'):'—';
+            return `<span style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:.2rem .5rem;font-size:.72rem"><b>#${i+1}</b> ${d?fmtDate(d):'s/data'} — ${escapeHTML(m)}</span>`;
+          }).join('')}</div>
+        </div>`:''}
+      `;
+      resumoCard.style.display = 'block';
+    } else {
+      resumoCard.style.display = 'none';
+    }
+  } else {
+    resumoCard.style.display = 'none';
+  }
+
+  // Tabela
   const thead = document.getElementById('batTableHead');
   const tbody = document.getElementById('batTableBody');
   thead.innerHTML = [...headers, 'Status'].map(h=>`<th>${escapeHTML(h)}</th>`).join('');
@@ -6731,82 +6897,51 @@ function aplicarFiltrosBaterias() {
     const status = classificar(dVenc);
     let statusLabel='✓ Em Dia', badgeClass='badge-success';
     if (status === 'vencido') {
-      // Indica há quanto tempo está vencida — deixa claro quando não é
-      // atraso recente, e sim uma bateria de anos anteriores nunca atualizada.
       const diasVencida = Math.round((now - dVenc) / 86400000);
-      let tempo;
-      if (diasVencida < 30) tempo = `${diasVencida}d`;
-      else if (diasVencida < 365) tempo = `${Math.round(diasVencida/30)}m`;
-      else tempo = `${(diasVencida/365).toFixed(1)}a`;
+      let tempo = diasVencida<30?`${diasVencida}d`:diasVencida<365?`${Math.round(diasVencida/30)}m`:`${(diasVencida/365).toFixed(1)}a`;
       statusLabel = `⚠ Vencida há ${tempo}`; badgeClass='badge-danger';
     }
     else if (status === 'proximo30') { statusLabel='⏰ Próx. 30d'; badgeClass='badge-warning'; }
     else if (status === 'proximo60') { statusLabel='⏰ Próx. 2 meses'; badgeClass='badge-warning'; }
     else if (status === 'proximo90') { statusLabel='⏰ Próx. 3 meses'; badgeClass='badge-warning'; }
+    // Marcação visual de duplicata
+    const placa = colVeiculo ? normalizaPlaca(row[colVeiculo]) : '';
+    const isDup = placa && placasDup.includes(placa);
     const cells = headers.map(h => {
       const val = row[h] || '';
-      // Formata campos que parecem data
       const h_lc = h.toLowerCase();
-      if (h_lc.includes('data') || h_lc.includes('venc') || h_lc.includes('valid') || h_lc.includes('troca') || h_lc.includes('instala') || h_lc.includes('fabric')) {
+      if (h_lc.includes('data')||h_lc.includes('venc')||h_lc.includes('valid')||h_lc.includes('troca')||h_lc.includes('instala')||h_lc.includes('fabric')) {
         const d = parseDate(val);
         return `<td>${d ? escapeHTML(fmtDate(d)) : escapeHTML(val)}</td>`;
       }
       return `<td>${escapeHTML(val)}</td>`;
     }).join('');
-    return `<tr>${cells}<td><span class="badge ${badgeClass}">${statusLabel}</span></td></tr>`;
+    const dupTag = isDup ? '<span style="font-size:.65rem;background:#fef3c7;border:1px solid #f59e0b;border-radius:4px;padding:0 .3rem;margin-left:.3rem;color:#92400e">dup</span>' : '';
+    return `<tr${isDup?' style="background:#fffbeb"':''}>${cells}<td><span class="badge ${badgeClass}">${statusLabel}</span>${dupTag}</td></tr>`;
   }).join('');
 
-  batRenderRankings(dedupedData, colVeiculo, colData, colModelo, colInstalacao, now);
+  batRenderRankings(dedupedData, bateriasData, colVeiculo, colData, colModelo, colInstalacao, now);
 
   document.getElementById('batLoading').style.display = 'none';
   document.getElementById('batTableWrap').style.display = 'block';
 }
 
-// Ranking por Marca (quantidade e vencidas por fabricante) e Ranking por
-// Tempo (da bateria mais antiga/vencida há mais tempo para a mais nova),
-// cruzando o CSV de Baterias com o próprio CSV (sem depender da Frota).
-function batRenderRankings(dedupedData, colVeiculo, colData, colModelo, colInstalacao, now){
+function batRenderRankings(dedupedData, allData, colVeiculo, colData, colModelo, colInstalacao, now){
   const card = document.getElementById('batRankingCard');
   if (!dedupedData.length) { card.style.display = 'none'; return; }
 
-  // Ranking por modelo (quantidade cadastrada de cada modelo de bateria + vencidas)
-  let modeloList = [];
-  if (colModelo) {
-    const porModelo = {};
-    dedupedData.forEach(row => {
-      const modelo = String(row[colModelo] || 'Não identificado').trim().toUpperCase() || 'Não identificado';
-      const dVenc = colData ? parseDate(row[colData]) : null;
-      if (!porModelo[modelo]) porModelo[modelo] = { total:0, vencidas:0 };
-      porModelo[modelo].total++;
-      if (dVenc && dVenc < now) porModelo[modelo].vencidas++;
-    });
-    modeloList = Object.entries(porModelo).sort((a,b) => b[1].total - a[1].total);
-  }
+  const em30 = new Date(now); em30.setDate(em30.getDate()+30);
+  const em60 = new Date(now); em60.setDate(em60.getDate()+60);
+  const em90 = new Date(now); em90.setDate(em90.getDate()+90);
 
-  // Duração média por modelo. Se a planilha tiver data de instalação/troca
-  // anterior, calcula a vida útil real (vencimento - instalação). Se não
-  // tiver, usa como aproximação o tempo até o vencimento a partir de hoje
-  // (quanto maior, melhor a bateria está "durando").
-  const usaVidaUtilReal = !!colInstalacao;
-  const porModeloDuracao = {};
-  dedupedData.forEach(row => {
-    if (!colModelo) return;
-    const modelo = String(row[colModelo] || 'Não identificado').trim().toUpperCase() || 'Não identificado';
-    const dVenc = colData ? parseDate(row[colData]) : null;
-    if (!dVenc) return;
-    let dias;
-    if (usaVidaUtilReal) {
-      const dInst = parseDate(row[colInstalacao]);
-      if (!dInst) return;
-      dias = Math.round((dVenc - dInst) / 86400000);
-      if (dias <= 0) return;
-    } else {
-      dias = Math.round((dVenc - now) / 86400000);
-    }
-    if (!porModeloDuracao[modelo]) porModeloDuracao[modelo] = { soma:0, qtd:0 };
-    porModeloDuracao[modelo].soma += dias;
-    porModeloDuracao[modelo].qtd++;
-  });
+  function classificar(dVenc) {
+    if (!dVenc) return 'ok';
+    if (dVenc < now) return 'vencido';
+    if (dVenc <= em30) return 'proximo30';
+    if (dVenc <= em60) return 'proximo60';
+    if (dVenc <= em90) return 'proximo90';
+    return 'ok';
+  }
 
   const fmtDias = (dias) => {
     const abs = Math.abs(dias);
@@ -6814,46 +6949,178 @@ function batRenderRankings(dedupedData, colVeiculo, colData, colModelo, colInsta
     return dias < 0 ? `-${txt}` : txt;
   };
 
-  const mediasPorModelo = Object.entries(porModeloDuracao)
-    .map(([modelo, v]) => ({ modelo, media: v.soma / v.qtd, qtd: v.qtd }))
-    .filter(m => m.qtd > 0);
+  // ── Agrupa modelos com comparação fuzzy ──
+  const usaVidaUtilReal = !!colInstalacao;
+  let rawModelos = [];
+  if (colModelo) {
+    const tempMap = {};
+    dedupedData.forEach(row => {
+      const modeloRaw = String(row[colModelo]||'Não identificado').trim() || 'Não identificado';
+      const norm = normalizaModelo(modeloRaw);
+      const key = norm || 'NAOIDENTIFICADO';
+      if (!tempMap[key]) tempMap[key] = { modelo: modeloRaw.toUpperCase(), total:0, vencidas:0, dias:[], registros:[] };
+      else if (modeloRaw.length > tempMap[key].modelo.length) tempMap[key].modelo = modeloRaw.toUpperCase();
+      const dVenc = colData ? parseDate(row[colData]) : null;
+      tempMap[key].total++;
+      if (dVenc && dVenc < now) tempMap[key].vencidas++;
+      // Vida útil
+      if (dVenc) {
+        let d;
+        if (usaVidaUtilReal && colInstalacao) {
+          const dInst = parseDate(row[colInstalacao]);
+          if (dInst) { d = Math.round((dVenc-dInst)/86400000); if (d<=0) d=null; }
+        } else {
+          d = Math.round((dVenc-now)/86400000);
+        }
+        if (d) tempMap[key].dias.push(d);
+      }
+      tempMap[key].registros.push(row);
+    });
+    rawModelos = Object.values(tempMap);
+  }
+  const modelosAgrupados = agruparModelos(rawModelos);
+  const modeloList = modelosAgrupados.sort((a,b)=>b.total-a.total).slice(0,10);
 
-  const ordenadoDesc = [...mediasPorModelo].sort((a,b) => b.media - a.media);
-  const melhores = ordenadoDesc.slice(0,5);
-  const piores = [...ordenadoDesc].reverse().slice(0,5);
-
+  // ── Ranking HTML ──
   const rankModeloEl = document.getElementById('batRankMarca');
   const notaEl = document.getElementById('batTempoNota');
-  const melhoresEl = document.getElementById('batTempoMelhores');
-  const pioresEl = document.getElementById('batTempoPiores');
-
-  rankModeloEl.innerHTML = modeloList.length ? modeloList.map(([modelo, info]) => `
-    <li>
-      <span style="font-weight:700;flex:1">${modelo}</span>
-      <span style="font-size:.72rem;color:var(--danger)">${info.vencidas} vencida(s)</span>
-      <span style="font-weight:800;color:var(--accent-dk);min-width:70px;text-align:right">${info.total} un.</span>
-    </li>`).join('') : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Cadastre a coluna "Modelo" na planilha de Baterias para ver este ranking</li>';
+  const maxTotal = modeloList[0]?.total || 1;
+  rankModeloEl.innerHTML = modeloList.length ? modeloList.map(({modelo,total,vencidas},i) => {
+    const pct = Math.round((total/maxTotal)*100);
+    const corBarra = vencidas>0 ? '#ef4444' : total===maxTotal ? '#d4af37' : '#3b82f6';
+    return `<li style="display:flex;flex-direction:column;gap:.25rem;padding:.5rem 0;border-bottom:1px solid var(--gray-100)">
+      <div style="display:flex;align-items:center;gap:.5rem">
+        <span style="font-size:.7rem;font-weight:800;color:var(--text-lt);min-width:18px">${i+1}</span>
+        <span style="font-weight:700;flex:1;font-size:.82rem">${escapeHTML(modelo)}</span>
+        ${vencidas?`<span style="font-size:.68rem;background:#fee2e2;color:#dc2626;border-radius:4px;padding:.1rem .35rem">${vencidas} venc.</span>`:''}
+        <span style="font-weight:800;color:var(--accent-dk);font-size:.85rem">${total} un.</span>
+      </div>
+      <div style="background:var(--gray-100);border-radius:4px;height:5px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:${corBarra};border-radius:4px;transition:.4s"></div>
+      </div>
+    </li>`;
+  }).join('') : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Coluna "Modelo" não encontrada na planilha</li>';
 
   notaEl.textContent = usaVidaUtilReal
-    ? 'Vida útil média = data de vencimento − data de instalação/troca anterior, por modelo.'
-    : 'Sem coluna de instalação na planilha: usando o tempo até o vencimento (a partir de hoje) como aproximação da duração, por modelo.';
+    ? '★ Vida útil calculada com data real de instalação/troca. Modelos com nomes similares foram agrupados automaticamente.'
+    : '⚠ Sem coluna de instalação: vida útil estimada pelo tempo restante até vencimento. Modelos com nomes similares foram agrupados.';
 
-  melhoresEl.innerHTML = melhores.length ? melhores.map(m => `
-    <div class="man-bw-item"><span>${m.modelo} <span style="color:var(--text-lt)">(${m.qtd})</span></span><span>${fmtDias(m.media)}</span></div>`).join('')
-    : '<div class="man-bw-item">Sem dados suficientes</div>';
+  // ── Melhores / Piores ──
+  const mediasPorModelo = modelosAgrupados
+    .map(m => ({ modelo: m.modelo, media: m.dias.length ? m.dias.reduce((a,b)=>a+b,0)/m.dias.length : null, qtd: m.dias.length }))
+    .filter(m => m.media !== null && m.qtd > 0)
+    .sort((a,b)=>b.media-a.media);
 
-  pioresEl.innerHTML = piores.length ? piores.map(m => `
-    <div class="man-bw-item"><span>${m.modelo} <span style="color:var(--text-lt)">(${m.qtd})</span></span><span>${fmtDias(m.media)}</span></div>`).join('')
-    : '<div class="man-bw-item">Sem dados suficientes</div>';
+  const melhores = mediasPorModelo.slice(0,5);
+  const piores = [...mediasPorModelo].reverse().slice(0,5);
+
+  document.getElementById('batTempoMelhores').innerHTML = melhores.length
+    ? melhores.map(m=>`<div class="man-bw-item"><span>${escapeHTML(m.modelo)} <span style="color:var(--text-lt)">(${m.qtd})</span></span><span>${fmtDias(m.media)}</span></div>`).join('')
+    : '<div class="man-bw-item">Sem dados</div>';
+  document.getElementById('batTempoPiores').innerHTML = piores.length
+    ? piores.map(m=>`<div class="man-bw-item"><span>${escapeHTML(m.modelo)} <span style="color:var(--text-lt)">(${m.qtd})</span></span><span>${fmtDias(m.media)}</span></div>`).join('')
+    : '<div class="man-bw-item">Sem dados</div>';
+
+  // ── Gráfico: Pizza status ──
+  const ctxStatus = document.getElementById('batChartStatus')?.getContext('2d');
+  if (ctxStatus) {
+    if (_batChartStatus) _batChartStatus.destroy();
+    const statusCounts = {vencido:0,proximo30:0,proximo60:0,proximo90:0,ok:0};
+    dedupedData.forEach(r=>{const s=classificar(colData?parseDate(r[colData]):null);statusCounts[s]++;});
+    _batChartStatus = new Chart(ctxStatus, {
+      type:'doughnut',
+      data:{
+        labels:['Vencidas','Próx. 30d','Próx. 2m','Próx. 3m','Em Dia'],
+        datasets:[{data:[statusCounts.vencido,statusCounts.proximo30,statusCounts.proximo60,statusCounts.proximo90,statusCounts.ok],
+          backgroundColor:['#ef4444','#f59e0b','#fb923c','#fbbf24','#10b981'],
+          borderWidth:2,borderColor:'#fff'}]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12,padding:8}}}}
+    });
+  }
+
+  // ── Gráfico: Barras vida útil ──
+  const ctxVida = document.getElementById('batChartVidaUtil')?.getContext('2d');
+  if (ctxVida && mediasPorModelo.length) {
+    if (_batChartVidaUtil) _batChartVidaUtil.destroy();
+    const top10 = mediasPorModelo.slice(0,10);
+    _batChartVidaUtil = new Chart(ctxVida, {
+      type:'bar',
+      data:{
+        labels: top10.map(m=>m.modelo.length>15?m.modelo.substring(0,14)+'…':m.modelo),
+        datasets:[{
+          label:'Vida útil média (dias)',
+          data: top10.map(m=>Math.round(m.media)),
+          backgroundColor: top10.map((_,i)=>i===0?'#d4af37':i===1?'#a88f6e':'#3b82f6'),
+          borderRadius:5
+        }]
+      },
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw} dias (${fmtDias(ctx.raw)})`}}},
+        scales:{y:{ticks:{font:{size:10}},grid:{color:'rgba(0,0,0,.04)'}},x:{ticks:{font:{size:10}}}}
+      }
+    });
+  }
+
+  // ── Gráfico: Trocas por mês (usa todos os registros, não dedup) ──
+  const ctxTrocas = document.getElementById('batChartTrocas')?.getContext('2d');
+  if (ctxTrocas && colInstalacao) {
+    if (_batChartTrocas) _batChartTrocas.destroy();
+    const porMes = {};
+    allData.forEach(r => {
+      const d = parseDate(r[colInstalacao]);
+      if (!d) return;
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      porMes[key] = (porMes[key]||0)+1;
+    });
+    const meses = Object.keys(porMes).sort();
+    const fmtMes = m => { const [y,mo]=m.split('-'); return `${mo}/${y.slice(2)}`; };
+    _batChartTrocas = new Chart(ctxTrocas, {
+      type:'bar',
+      data:{
+        labels: meses.map(fmtMes),
+        datasets:[{label:'Trocas no mês',data:meses.map(m=>porMes[m]),backgroundColor:'rgba(139,115,85,.7)',borderRadius:4}]
+      },
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{y:{ticks:{font:{size:10},stepSize:1},grid:{color:'rgba(0,0,0,.04)'}},x:{ticks:{font:{size:10}}}}
+      }
+    });
+  } else if (ctxTrocas && !colInstalacao) {
+    // sem coluna de instalação — mostra vencimentos por mês como proxy
+    if (_batChartTrocas) _batChartTrocas.destroy();
+    const porMes = {};
+    allData.forEach(r => {
+      const d = colData ? parseDate(r[colData]) : null;
+      if (!d) return;
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      porMes[key] = (porMes[key]||0)+1;
+    });
+    const meses = Object.keys(porMes).sort();
+    const fmtMes = m => { const [y,mo]=m.split('-'); return `${mo}/${y.slice(2)}`; };
+    _batChartTrocas = new Chart(ctxTrocas, {
+      type:'bar',
+      data:{
+        labels: meses.map(fmtMes),
+        datasets:[{label:'Vencimentos por mês',data:meses.map(m=>porMes[m]),backgroundColor:'rgba(59,130,246,.65)',borderRadius:4}]
+      },
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{title:ctx=>`Mês: ${ctx[0].label}`,label:ctx=>`${ctx.raw} vencimento(s)`}}},
+        scales:{y:{ticks:{font:{size:10},stepSize:1},grid:{color:'rgba(0,0,0,.04)'}},x:{ticks:{font:{size:10}}}}
+      }
+    });
+  }
 
   card.style.display = 'block';
 }
 
 function resetBatFilters() {
   document.getElementById('batVeiculo').value='';
+  document.getElementById('batModeloFiltro').value='';
   document.getElementById('batStatus').selectedIndex=0;
   document.getElementById('batDataInicio').value='';
   document.getElementById('batDataFim').value='';
+  document.getElementById('batPlacaResumoCard').style.display='none';
   aplicarFiltrosBaterias();
 }
 
@@ -8045,19 +8312,54 @@ function getAvatarColor(name) {
   return AVATAR_COLORS[hash % AVATAR_COLORS.length];
 }
 
+// Popula os selects dinâmicos de Marca e Ano a partir do FROTA_DATA
+function frotaPopularSelects() {
+  const marcaEl = document.getElementById('frotaMarcaCavalo');
+  const anoEl   = document.getElementById('frotaAnoCavalo');
+  if (!marcaEl || !anoEl) return;
+
+  const marcas = [...new Set(FROTA_DATA.map(f => f.cavaloMarca).filter(Boolean))].sort();
+  const anos   = [...new Set(FROTA_DATA.map(f => String(f.cavaloAno||'').split('/')[0]).filter(Boolean))].sort().reverse();
+
+  const marcaVal = marcaEl.value;
+  const anoVal   = anoEl.value;
+
+  marcaEl.innerHTML = '<option value="">Todas</option>' + marcas.map(m=>`<option value="${m}"${m===marcaVal?' selected':''}>${m}</option>`).join('');
+  anoEl.innerHTML   = '<option value="">Todos</option>'  + anos.map(a=>`<option value="${a}"${a===anoVal?' selected':''}>${a}</option>`).join('');
+}
+
+function resetFrotaFilters() {
+  document.getElementById('frotaBusca').value = '';
+  document.getElementById('frotaPlacaCavalo').value = '';
+  document.getElementById('frotaPlacaCarreta').value = '';
+  document.getElementById('frotaMarcaCavalo').value = '';
+  document.getElementById('frotaAnoCavalo').value = '';
+  document.getElementById('frotaPaletes').selectedIndex = 0;
+  filtrarFrota();
+}
+
 function filtrarFrota() {
-  const busca   = (document.getElementById('frotaBusca').value || '').toLowerCase();
-  const palFilt = document.getElementById('frotaPaletes').value;
+  frotaPopularSelects();
+
+  const busca        = (document.getElementById('frotaBusca').value || '').toLowerCase();
+  const placaCavalo  = (document.getElementById('frotaPlacaCavalo').value || '').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  const placaCarreta = (document.getElementById('frotaPlacaCarreta').value || '').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  const marcaFilt    = document.getElementById('frotaMarcaCavalo').value;
+  const anoFilt      = document.getElementById('frotaAnoCavalo').value;
+  const palFilt      = document.getElementById('frotaPaletes').value;
 
   const dados = FROTA_DATA.filter(r => {
-    const txt = (r.motorista + r.placa + r.carreta + r.cpf).toLowerCase();
+    const txt = (r.motorista + r.cpf).toLowerCase();
     if (busca && !txt.includes(busca)) return false;
-    if (palFilt && r.paletes !== palFilt) return false;
+    if (placaCavalo  && !normalizaPlaca(r.placa).includes(placaCavalo)) return false;
+    if (placaCarreta && !normalizaPlaca(r.carreta).includes(placaCarreta)) return false;
+    if (marcaFilt    && r.cavaloMarca !== marcaFilt) return false;
+    if (anoFilt      && !String(r.cavaloAno||'').split('/')[0].includes(anoFilt)) return false;
+    if (palFilt      && r.paletes !== palFilt) return false;
     return true;
   });
 
   const motoristas = dados.filter(r => r.motorista !== '—');
-  const semNome    = dados.filter(r => r.motorista === '—');
   document.getElementById('frotaCount').textContent = dados.length + ' registros';
 
   // ── CARDS premium ──
