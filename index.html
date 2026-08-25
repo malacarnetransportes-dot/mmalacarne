@@ -1255,13 +1255,7 @@ footer a{color:var(--accent);text-decoration:none;}
             </div>
           </div>
 
-          <!-- Alertas de duplicidade -->
-          <div id="batDupAlertaWrap" style="display:none;margin-bottom:1rem">
-            <div style="background:linear-gradient(135deg,#fff7ed,#fef3c7);border:1px solid #f59e0b;border-radius:var(--r12);padding:.9rem 1.1rem">
-              <div style="font-size:.72rem;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.8px;margin-bottom:.5rem"><i class="fas fa-copy"></i> Duplicidade Detectada — Placas com Múltiplos Registros</div>
-              <div id="batDupAlertaBody" style="font-size:.8rem;color:#78350f;display:flex;flex-wrap:wrap;gap:.4rem"></div>
-            </div>
-          </div>
+
 
           <!-- Rankings e Gráficos -->
           <div class="dash-card" id="batRankingCard" style="display:none">
@@ -6776,22 +6770,6 @@ function aplicarFiltrosBaterias() {
     return 'ok';
   }
 
-  // ── Detectar duplicidade (placas com mais de 1 registro) ──
-  const contPlaca = {};
-  bateriasData.forEach(row => {
-    const p = colVeiculo ? normalizaPlaca(row[colVeiculo]) : '';
-    if (p) contPlaca[p] = (contPlaca[p]||0)+1;
-  });
-  const placasDup = Object.entries(contPlaca).filter(([,n])=>n>1).map(([p])=>p);
-  const dupWrap = document.getElementById('batDupAlertaWrap');
-  const dupBody = document.getElementById('batDupAlertaBody');
-  if (placasDup.length) {
-    dupBody.innerHTML = placasDup.map(p=>`<span style="background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;padding:.15rem .5rem;font-weight:700">${p} <span style="color:#92400e">(${contPlaca[p]}x)</span></span>`).join('');
-    dupWrap.style.display = 'block';
-  } else {
-    dupWrap.style.display = 'none';
-  }
-
   const vVeiculo = document.getElementById('batVeiculo').value.toLowerCase();
   const vModelo  = normalizaModelo(document.getElementById('batModeloFiltro').value);
   const vStatus  = document.getElementById('batStatus').value;
@@ -6904,9 +6882,6 @@ function aplicarFiltrosBaterias() {
     else if (status === 'proximo30') { statusLabel='⏰ Próx. 30d'; badgeClass='badge-warning'; }
     else if (status === 'proximo60') { statusLabel='⏰ Próx. 2 meses'; badgeClass='badge-warning'; }
     else if (status === 'proximo90') { statusLabel='⏰ Próx. 3 meses'; badgeClass='badge-warning'; }
-    // Marcação visual de duplicata
-    const placa = colVeiculo ? normalizaPlaca(row[colVeiculo]) : '';
-    const isDup = placa && placasDup.includes(placa);
     const cells = headers.map(h => {
       const val = row[h] || '';
       const h_lc = h.toLowerCase();
@@ -6916,8 +6891,7 @@ function aplicarFiltrosBaterias() {
       }
       return `<td>${escapeHTML(val)}</td>`;
     }).join('');
-    const dupTag = isDup ? '<span style="font-size:.65rem;background:#fef3c7;border:1px solid #f59e0b;border-radius:4px;padding:0 .3rem;margin-left:.3rem;color:#92400e">dup</span>' : '';
-    return `<tr${isDup?' style="background:#fffbeb"':''}>${cells}<td><span class="badge ${badgeClass}">${statusLabel}</span>${dupTag}</td></tr>`;
+    return `<tr>${cells}<td><span class="badge ${badgeClass}">${statusLabel}</span></td></tr>`;
   }).join('');
 
   batRenderRankings(dedupedData, bateriasData, colVeiculo, colData, colModelo, colInstalacao, now);
