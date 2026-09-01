@@ -1157,7 +1157,28 @@ footer a{color:var(--accent);text-decoration:none;}
           <div id="fatSubConsumo" class="fat-subpane">
             <div class="dash-card" style="background:linear-gradient(135deg,rgba(212,175,55,.08),rgba(212,175,55,.02));border:1px solid rgba(212,175,55,.25)">
               <div class="dash-card-title"><i class="fas fa-gas-pump"></i> Controle de Consumo por Litro</div>
-              <div style="font-size:.78rem;color:var(--text-lt)">Métricas calculadas a partir dos lançamentos de Faturamento (campos <b>Média CV</b>, <b>Média CR</b>, <b>KM</b> e <b>Litros</b>), agrupadas por placa. Use os filtros da aba <b>Lançamentos</b> (Ano/Mês/Motorista) para refinar o período — os dados abaixo seguem o mesmo filtro.</div>
+              <div style="font-size:.78rem;color:var(--text-lt)">Métricas calculadas a partir dos lançamentos de Faturamento (campos <b>Média CV</b>, <b>Média CR</b>, <b>KM</b> e <b>Litros</b>), agrupadas por placa. Use os filtros abaixo (Motorista, Placa Cavalo, Placa Carreta, Período, Mês e Ano) para refinar os dados desta sub-aba.</div>
+            </div>
+
+            <!-- FILTROS — Controle de Consumo por Litro -->
+            <div class="dash-card" style="margin-bottom:1rem">
+              <div class="dash-card-title" style="margin-bottom:.8rem"><i class="fas fa-filter"></i> Filtros — Consumo por Litro</div>
+              <div class="filters-bar">
+                <div class="flt-grp"><label>Ano</label><select id="fatcAno"><option value="">Todos</option></select></div>
+                <div class="flt-grp"><label>Mês</label><select id="fatcMes"><option value="">Todos</option><option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option><option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option><option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option></select></div>
+                <div class="flt-grp"><label>Motorista</label><select id="fatcMotorista"><option value="">Todos</option></select></div>
+                <div class="flt-grp"><label>Placa Cavalo</label><select id="fatcCavalo"><option value="">Todas</option></select></div>
+                <div class="flt-grp"><label>Placa Carreta</label><select id="fatcCarreta"><option value="">Todas</option></select></div>
+                <div class="flt-grp"><label>Data Início</label><input type="date" id="fatcDataInicio"></div>
+                <div class="flt-grp"><label>Data Fim</label><input type="date" id="fatcDataFim"></div>
+                <button class="btn btn-accent" onclick="fatcApplyFilters()"><i class="fas fa-search"></i> Filtrar</button>
+                <button class="btn btn-gray" onclick="fatcResetFilters()"><i class="fas fa-times"></i> Limpar</button>
+              </div>
+              <!-- Card de resumo do filtro selecionado -->
+              <div id="fatcResumoCard" style="display:none;margin-top:1rem;padding:1rem;background:linear-gradient(135deg,#f0f7ff,#e8f4fd);border:1px solid #bfdbfe;border-radius:var(--r12)">
+                <div style="font-size:.72rem;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:.6rem"><i class="fas fa-id-card"></i> <span id="fatcResumoTitulo">Resumo do Filtro</span></div>
+                <div id="fatcResumoBody" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.6rem;font-size:.82rem"></div>
+              </div>
             </div>
 
             <div class="kpi-grid" id="fatConsumoKpis">
@@ -5697,7 +5718,7 @@ document.querySelectorAll('.fat-subtab-btn[data-fatsub]').forEach(btn => {
     document.querySelectorAll('.fat-subpane').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(btn.dataset.fatsub).classList.add('active');
-    if (btn.dataset.fatsub === 'fatSubConsumo') setTimeout(fatRenderConsumo, 50);
+    if (btn.dataset.fatsub === 'fatSubConsumo') setTimeout(() => { fatcPopularFiltros(); fatcApplyFilters(); }, 50);
   });
 });
 
@@ -6373,6 +6394,9 @@ function fatPopularFiltros() {
   const valAno = selAno.value;
   selAno.innerHTML = '<option value="">Todos</option>' + anos.map(a => `<option value="${a}">${a}</option>`).join('');
   if (anos.map(String).includes(valAno)) selAno.value = valAno;
+
+  // Popula também os filtros próprios da sub-aba "Controle de Consumo por Litro"
+  if (typeof fatcPopularFiltros === 'function') fatcPopularFiltros();
 }
 
 const FAT_MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
@@ -6510,8 +6534,9 @@ function fatApplyFilters() {
     options: {responsive:true, plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:v=>fmtMoney(v)}}}}
   });
 
-  // ── Controle de Consumo por Litro (sub-aba dedicada — cavalos e carretas) ──
-  fatRenderConsumo();
+  // ── Controle de Consumo por Litro (sub-aba dedicada — cavalos e carretas,
+  // com filtros próprios de Motorista/Placa Cavalo/Placa Carreta/Período/Mês/Ano) ──
+  fatcApplyFilters();
 
   // ── Gráfico: Diárias e Vales por Motorista ──
   const dvMap = {};
@@ -6564,16 +6589,21 @@ function fatApplyFilters() {
 // usados no cálculo. Alimenta os KPIs, gráficos e rankings de
 // melhores/piores da sub-aba "Controle de Consumo por Litro".
 // ═══════════════════════════════════════════════════════════
-function fatRenderConsumo() {
+function fatRenderConsumo(records) {
   const chartCvEl = document.getElementById('fatChartConsumoCavalo');
   if (!chartCvEl) return; // sub-aba ainda não está no DOM
+
+  // Se chamada sem argumento (compatibilidade), usa o conjunto filtrado
+  // pelos filtros próprios desta sub-aba (fatcApplyFilters) — se ainda não
+  // existir, cai para todos os registros de faturamento.
+  const dados = records || (typeof fatcFiltered !== 'undefined' && fatcFiltered) || fatAllRecords || [];
 
   const fmtKmL = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' km/L' : '—';
   const fmtNum = v => (v || 0).toLocaleString('pt-BR',{maximumFractionDigits:0});
 
   // ── Agrupa por placa de CAVALO ──
   const cavMap = {};
-  fatFiltered.forEach(r => {
+  dados.forEach(r => {
     const p = normalizaPlaca(r.placaCavalo);
     if (!p) return;
     if (!cavMap[p]) cavMap[p] = { placa: r.placaCavalo, medias: [], km: 0, litros: 0, registros: 0, motoristas: new Set() };
@@ -6591,7 +6621,7 @@ function fatRenderConsumo() {
 
   // ── Agrupa por placa de CARRETA / EQUIP. DE REFRIGERAÇÃO ──
   const carMap = {};
-  fatFiltered.forEach(r => {
+  dados.forEach(r => {
     const p = normalizaPlaca(r.placaCarreta);
     if (!p) return;
     if (!carMap[p]) carMap[p] = { placa: r.placaCarreta, medias: [], litros: 0, registros: 0, motoristas: new Set() };
@@ -6686,6 +6716,147 @@ function fatResetFilters() {
   document.getElementById('fatMes').selectedIndex = 0;
   document.getElementById('fatMotorista').selectedIndex = 0;
   fatApplyFilters();
+}
+
+// ═══════════════════════════════════════════════════════════
+// CONTROLE DE CONSUMO POR LITRO — filtros próprios da sub-aba
+// (Motorista, Placa Cavalo, Placa Carreta, Período, Mês e Ano),
+// independentes dos filtros da sub-aba Lançamentos.
+// ═══════════════════════════════════════════════════════════
+let fatcFiltered = []; // registros após os filtros desta sub-aba
+
+function fatcPopularFiltros() {
+  const motoristas = [...new Set((fatAllRecords||[]).map(r => r.motorista).filter(Boolean))].sort();
+  const anos       = [...new Set((fatAllRecords||[]).map(r => r.ano).filter(Boolean))].sort((a,b) => b-a);
+  const cavalos    = [...new Set((fatAllRecords||[]).map(r => r.placaCavalo).filter(Boolean))].sort();
+  const carretas   = [...new Set((fatAllRecords||[]).map(r => r.placaCarreta).filter(Boolean))].sort();
+
+  const selMot = document.getElementById('fatcMotorista');
+  if (selMot) {
+    const val = selMot.value;
+    selMot.innerHTML = '<option value="">Todos</option>' + motoristas.map(m => `<option value="${m}">${m}</option>`).join('');
+    if (motoristas.includes(val)) selMot.value = val;
+  }
+
+  const selAno = document.getElementById('fatcAno');
+  if (selAno) {
+    const val = selAno.value;
+    selAno.innerHTML = '<option value="">Todos</option>' + anos.map(a => `<option value="${a}">${a}</option>`).join('');
+    if (anos.map(String).includes(val)) selAno.value = val;
+  }
+
+  const selCav = document.getElementById('fatcCavalo');
+  if (selCav) {
+    const val = selCav.value;
+    selCav.innerHTML = '<option value="">Todas</option>' + cavalos.map(p => `<option value="${p}">${p}</option>`).join('');
+    if (cavalos.includes(val)) selCav.value = val;
+  }
+
+  const selCar = document.getElementById('fatcCarreta');
+  if (selCar) {
+    const val = selCar.value;
+    selCar.innerHTML = '<option value="">Todas</option>' + carretas.map(p => `<option value="${p}">${p}</option>`).join('');
+    if (carretas.includes(val)) selCar.value = val;
+  }
+}
+
+function fatcResetFilters() {
+  ['fatcAno','fatcMes','fatcMotorista','fatcCavalo','fatcCarreta'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.selectedIndex = 0;
+  });
+  const di = document.getElementById('fatcDataInicio'); if (di) di.value = '';
+  const df = document.getElementById('fatcDataFim');    if (df) df.value = '';
+  fatcApplyFilters();
+}
+
+function fatcApplyFilters() {
+  const chartCvEl = document.getElementById('fatChartConsumoCavalo');
+  if (!chartCvEl) return; // sub-aba ainda não está no DOM
+
+  const ano = document.getElementById('fatcAno')?.value || '';
+  const mes = document.getElementById('fatcMes')?.value || '';
+  const mot = document.getElementById('fatcMotorista')?.value || '';
+  const cav = document.getElementById('fatcCavalo')?.value || '';
+  const car = document.getElementById('fatcCarreta')?.value || '';
+  const di  = document.getElementById('fatcDataInicio')?.value || '';
+  const df  = document.getElementById('fatcDataFim')?.value || '';
+
+  const dtIni = di ? new Date(di + 'T00:00:00') : null;
+  const dtFim = df ? new Date(df + 'T23:59:59') : null;
+
+  fatcFiltered = (fatAllRecords || []).filter(r => {
+    if (ano && String(r.ano) !== ano) return false;
+    if (mes && String(r.mes) !== mes) return false;
+    if (mot && r.motorista !== mot) return false;
+    if (cav && normalizaPlaca(r.placaCavalo) !== normalizaPlaca(cav)) return false;
+    if (car && normalizaPlaca(r.placaCarreta) !== normalizaPlaca(car)) return false;
+    if (dtIni && r.data < dtIni) return false;
+    if (dtFim && r.data > dtFim) return false;
+    return true;
+  });
+
+  fatRenderConsumo(fatcFiltered);
+  fatcRenderResumoCard(fatcFiltered, { ano, mes, mot, cav, car, di, df });
+}
+
+function fatcRenderResumoCard(records, f) {
+  const card    = document.getElementById('fatcResumoCard');
+  const body    = document.getElementById('fatcResumoBody');
+  const titulo  = document.getElementById('fatcResumoTitulo');
+  if (!card || !body || !titulo) return;
+
+  const algumFiltro = !!(f.ano || f.mes || f.mot || f.cav || f.car || f.di || f.df);
+  if (!algumFiltro) { card.style.display = 'none'; return; }
+
+  card.style.display = 'block';
+
+  const fmtISOtoBR = s => { if (!s) return ''; const [y,m,d] = s.split('-'); return `${d}/${m}/${y}`; };
+  const partes = [];
+  if (f.cav) partes.push(`Cavalo ${f.cav}`);
+  if (f.car) partes.push(`Carreta ${f.car}`);
+  if (f.mot) partes.push(f.mot);
+  if (f.mes) partes.push(FAT_MESES_FULL[+f.mes - 1]);
+  if (f.ano) partes.push(f.ano);
+  if (f.di || f.df) partes.push(`${f.di ? fmtISOtoBR(f.di) : '…'} a ${f.df ? fmtISOtoBR(f.df) : '…'}`);
+  titulo.textContent = partes.length ? partes.join(' · ') : 'Resumo do Filtro';
+
+  const fmtKmL = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' km/L' : '—';
+  const fmtNum = v => (v || 0).toLocaleString('pt-BR',{maximumFractionDigits:0});
+
+  const mediasCav = records.map(r => r.mediaCavalo).filter(v => v > 0);
+  const mediasCar = records.map(r => r.mediaCarreta).filter(v => v > 0);
+  const mediaCav  = mediasCav.length ? mediasCav.reduce((a,b)=>a+b,0) / mediasCav.length : 0;
+  const mediaCar  = mediasCar.length ? mediasCar.reduce((a,b)=>a+b,0) / mediasCar.length : 0;
+  const totalKm         = records.reduce((s,r)=>s+(r.km||0),0);
+  const totalLitrosCav  = records.reduce((s,r)=>s+(r.litrosCavalo||0),0);
+  const totalLitrosCar  = records.reduce((s,r)=>s+(r.litrosCarreta||0),0);
+  const motoristasSet   = new Set(records.map(r=>r.motorista).filter(Boolean));
+  const placasCavSet    = new Set(records.map(r=>r.placaCavalo).filter(Boolean));
+  const placasCarSet    = new Set(records.map(r=>r.placaCarreta).filter(Boolean));
+  const datasOrdenadas  = records.map(r=>r.data).filter(Boolean).sort((a,b)=>a-b);
+  const periodoTxt = datasOrdenadas.length
+    ? `${datasOrdenadas[0].toLocaleDateString('pt-BR')} — ${datasOrdenadas[datasOrdenadas.length-1].toLocaleDateString('pt-BR')}`
+    : '—';
+
+  const itens = [
+    { lbl:'Registros no Filtro',       val: records.length },
+    { lbl:'Motoristas',                val: motoristasSet.size ? [...motoristasSet].join(', ') : '—' },
+    { lbl:'Placas Cavalo',             val: placasCavSet.size ? [...placasCavSet].join(', ') : '—' },
+    { lbl:'Placas Carreta',            val: placasCarSet.size ? [...placasCarSet].join(', ') : '—' },
+    { lbl:'Período dos Registros',     val: periodoTxt },
+    { lbl:'Média Cavalo (km/L)',       val: fmtKmL(mediaCav) },
+    { lbl:'Média Carreta (km/L)',      val: fmtKmL(mediaCar) },
+    { lbl:'Total KM',                  val: fmtNum(totalKm) + ' km' },
+    { lbl:'Total Litros Cavalo',       val: fmtNum(totalLitrosCav) + ' L' },
+    { lbl:'Total Litros Carreta',      val: fmtNum(totalLitrosCar) + ' L' }
+  ];
+
+  body.innerHTML = itens.map(it => `
+    <div>
+      <div style="font-weight:700;color:var(--primary)">${escapeHTML(String(it.val))}</div>
+      <div style="color:var(--text-lt);font-size:.72rem">${it.lbl}</div>
+    </div>`).join('');
 }
 
 // ═══════════════════════════════════════════════════════════
