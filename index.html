@@ -297,6 +297,8 @@ footer a{color:var(--accent);text-decoration:none;}
 .venc-float-bell:hover{transform:scale(1.06);}
 .venc-float-bell.urgente{background:#dc2626;animation:vencPulse 1.4s infinite;}
 @keyframes vencPulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.5);}50%{box-shadow:0 0 0 10px rgba(220,38,38,0);}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.tab-pane.active>.kpi-grid,.tab-pane.active>.dash-card,.tab-pane.active>.charts-grid{animation:fadeInUp .22s ease both;}
 .venc-float-badge{position:absolute;top:-4px;right:-4px;background:#f59e0b;color:#1e2a3a;font-size:.68rem;font-weight:800;min-width:20px;height:20px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 4px;}
 .venc-popup-panel{position:fixed;bottom:88px;left:24px;z-index:1200;width:320px;max-height:420px;background:#fff;border-radius:var(--r16);box-shadow:var(--shadow-lg);padding:1.1rem;display:flex;flex-direction:column;opacity:0;visibility:hidden;transform:translateY(8px);transition:.2s;}
 .venc-popup-panel.active{opacity:1;visibility:visible;transform:translateY(0);}
@@ -359,7 +361,8 @@ footer a{color:var(--accent);text-decoration:none;}
 
 /* KPI cards */
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:.9rem;margin-bottom:1.2rem;}
-.kpi-card{background:#fff;border-radius:var(--r12);padding:.9rem 1rem;box-shadow:var(--shadow-sm);border:1px solid rgba(0,0,0,.04);display:flex;align-items:center;gap:.75rem;min-width:0;overflow:hidden;}
+.kpi-card{background:#fff;border-radius:var(--r12);padding:.9rem 1rem;box-shadow:var(--shadow-sm);border:1px solid rgba(0,0,0,.04);display:flex;align-items:center;gap:.75rem;min-width:0;overflow:hidden;transition:transform .18s ease,box-shadow .18s ease;}
+.kpi-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
 .kpi-card>div:last-child{min-width:0;flex:1;}
 .kpi-icon{width:36px;height:36px;border-radius:var(--r8);display:flex;align-items:center;justify-content:center;font-size:1.05rem;flex-shrink:0;}
 .kpi-icon.green{background:rgba(16,185,129,.1);color:var(--success);}
@@ -588,9 +591,16 @@ footer a{color:var(--accent);text-decoration:none;}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e2a3a;color:#fff;padding:.7rem 1.4rem;border-radius:40px;font-size:.85rem;z-index:9999;opacity:0;pointer-events:none;transition:.3s;}
 .toast.show{opacity:1;}
 
+/* ── 1280px: sidebar com scroll e texto compacto ── */
+@media(max-width:1280px){
+  .pa-sidebar{width:195px;}
+  .pa-content{margin-left:195px;}
+  .pa-nav-item{font-size:.79rem;padding:.55rem 1.6rem .55rem .75rem;}
+  .slide-kpi-grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr));}
+}
 @media(max-width:900px){
-  .pa-sidebar{width:200px;}
-  .pa-content{margin-left:200px;}
+  .pa-sidebar{width:190px;}
+  .pa-content{margin-left:190px;}
   .calc-grid{grid-template-columns:1fr;}
 }
 @media(max-width:680px){
@@ -931,8 +941,8 @@ footer a{color:var(--accent);text-decoration:none;}
           <h1 id="pa-page-title"><i class="fas fa-chart-line" style="color:var(--accent)"></i> Financeiro</h1>
         </div>
         <div class="pa-topbar-right">
-          <button id="refreshDataBtn" class="btn btn-info btn-sm"><i class="fas fa-sync-alt"></i> Atualizar</button>
-          <span id="lastUpdate" style="font-size:.75rem;color:var(--text-lt)"></span>
+          <button id="refreshDataBtn" class="btn btn-info btn-sm" title="Recarregar todos os dados das planilhas"><i class="fas fa-sync-alt" id="refreshIcon"></i> Atualizar</button>
+          <span id="lastUpdate" style="font-size:.75rem;color:var(--text-lt);display:flex;align-items:center;gap:.3rem"></span>
         </div>
       </div>
 
@@ -953,6 +963,7 @@ footer a{color:var(--accent);text-decoration:none;}
             <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-arrow-down"></i></div><div><div class="kpi-val" id="fin-despesa">R$ —</div><div class="kpi-lbl">Despesa Total</div></div></div>
             <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-balance-scale"></i></div><div><div class="kpi-val" id="fin-saldo">R$ —</div><div class="kpi-lbl">Saldo</div></div></div>
             <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-list"></i></div><div><div class="kpi-val" id="fin-registros">—</div><div class="kpi-lbl">Registros</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon" style="background:rgba(139,115,85,.15);color:var(--primary-dk)"><i class="fas fa-percent"></i></div><div><div class="kpi-val" id="fin-margem">—</div><div class="kpi-lbl">Margem (Rec./Desp.)</div></div></div>
           </div>
           <div class="dash-card">
             <div class="filters-bar">
@@ -1373,10 +1384,15 @@ footer a{color:var(--accent);text-decoration:none;}
 
         <!-- ── TAB SENHAS ── -->
         <div id="tabSenhas" class="tab-pane">
+          <!-- Aviso de segurança -->
+          <div style="display:flex;align-items:flex-start;gap:.8rem;background:#fef3c7;border:1px solid #fde68a;border-radius:var(--r12);padding:.85rem 1.1rem;margin-bottom:1.2rem;font-size:.8rem;color:#92400e">
+            <i class="fas fa-shield-halved" style="color:#b45309;font-size:1.1rem;flex-shrink:0;margin-top:.1rem"></i>
+            <div><strong>Aviso de segurança:</strong> As senhas são armazenadas sem criptografia no <code>localStorage</code> deste navegador. Não utilize este cofre para senhas bancárias ou dados críticos. Acesse somente em dispositivo de confiança e nunca compartilhe a sessão.</div>
+          </div>
           <div class="dash-card" style="margin-bottom:1.4rem">
             <div class="dash-card-title"><i class="fas fa-search"></i> Buscar Senha</div>
             <div class="filters-bar">
-              <div class="flt-grp"><label>Sistema / Site</label><input type="text" id="senhaBusca" placeholder="Ex: BRF, Scania, ANTT..." oninput="filtrarSenhas()"></div>
+              <div class="flt-grp"><label>Sistema / Site</label><input type="text" id="senhaBusca" placeholder="Ex: BRF, Scania, ANTT..." oninput="filtrarSenhas()" autocomplete="off" spellcheck="false"></div>
               <button class="btn btn-gray" onclick="document.getElementById('senhaBusca').value='';filtrarSenhas()"><i class="fas fa-times"></i> Limpar</button>
             </div>
           </div>
@@ -1919,6 +1935,7 @@ footer a{color:var(--accent);text-decoration:none;}
             <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-arrow-trend-down"></i></div><div><div class="kpi-val" id="jor-desc">—</div><div class="kpi-lbl">Total de Descontos</div></div></div>
             <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-hand-holding-dollar"></i></div><div><div class="kpi-val" id="jor-liq">—</div><div class="kpi-lbl">Total Líquido (Folha)</div></div></div>
             <div class="kpi-card"><div class="kpi-icon brown"><i class="fas fa-chart-simple"></i></div><div><div class="kpi-val" id="jor-ticket">—</div><div class="kpi-lbl">Ticket Médio / Funcionário</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-user-clock"></i></div><div><div class="kpi-val" id="jor-afastados">—</div><div class="kpi-lbl">Afastados no Período</div></div></div>
           </div>
 
           <div class="dash-card">
@@ -2395,9 +2412,11 @@ if (!URL_FAT || FAT_URLS_OBSOLETAS.has(URL_FAT.trim()) || /\/export\?format=csv/
 }
 
 // Nuvem Fiscal / NF-e
-let NFE_CLIENT_ID     = localStorage.getItem('nfeClientId')     || '';
-let NFE_CLIENT_SECRET = localStorage.getItem('nfeClientSecret') || '';
-let NFE_CNPJ          = localStorage.getItem('nfeCnpj')         || '';
+// Credenciais NF-e armazenadas em sessionStorage (some ao fechar aba — mais seguro que localStorage)
+// Fallback para localStorage para não quebrar quem já tinha salvo antes.
+let NFE_CLIENT_ID     = sessionStorage.getItem('nfeClientId')     || localStorage.getItem('nfeClientId')     || '';
+let NFE_CLIENT_SECRET = sessionStorage.getItem('nfeClientSecret') || localStorage.getItem('nfeClientSecret') || '';
+let NFE_CNPJ          = sessionStorage.getItem('nfeCnpj')         || localStorage.getItem('nfeCnpj')         || '';
 let nfeAccessToken    = '';
 let nfeTokenExpiry    = 0;
 
@@ -2577,7 +2596,9 @@ function dedupePorPlaca(rows, colVeiculo, colData) {
 }
 
 function fmtMoney(v) {
-  return v.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+  const n = parseFloat(v);
+  if (isNaN(n)) return 'R$ —';
+  return n.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
 }
 
 function fmtDate(d) {
@@ -2730,6 +2751,14 @@ function toCsvUrl(url) {
   return url.replace(/output=xlsx/i, 'output=csv');
 }
 
+// Mascara CPF para exibição: 023.114.919-03 → ***.***.919-03 (últimos 5 dígitos visíveis)
+function maskCpf(cpf) {
+  if (!cpf || typeof cpf !== 'string') return '—';
+  const digits = cpf.replace(/\D/g, '');
+  if (digits.length !== 11) return cpf; // retorna como veio se formato inesperado
+  return `***.***.${ digits.slice(6, 9) }-${ digits.slice(9) }`;
+}
+
 function showToast(msg, duration = 3000) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -2738,7 +2767,11 @@ function showToast(msg, duration = 3000) {
 }
 
 function updateLastUpdate() {
-  document.getElementById('lastUpdate').textContent = 'Atualizado: ' + new Date().toLocaleTimeString('pt-BR');
+  const now = new Date();
+  const hora = now.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+  const data = now.toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit'});
+  const el = document.getElementById('lastUpdate');
+  if (el) el.innerHTML = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--success);flex-shrink:0"></span> ${data} ${hora}`;
 }
 
 function exportCSV(data, name) {
@@ -2889,6 +2922,22 @@ document.getElementById('btnFecharMapaPostos').addEventListener('click', fecharM
 //     .then(b => console.log([...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')))
 const LOGIN_HASH = 'd7aeff2cc7022085112272dfdf0ae263537e9a03efc1737ad4ded79d2ce10389';
 
+// ── Proteção brute-force: máximo 5 tentativas, bloqueio de 60 segundos ──
+const _loginAttemptKey = 'mm_login_attempts';
+const _loginBlockKey   = 'mm_login_block_until';
+const _LOGIN_MAX_TRIES  = 5;
+const _LOGIN_BLOCK_MS   = 60_000; // 60 s
+
+function _loginGetAttempts() { return parseInt(localStorage.getItem(_loginAttemptKey) || '0', 10); }
+function _loginResetAttempts() { localStorage.removeItem(_loginAttemptKey); localStorage.removeItem(_loginBlockKey); }
+function _loginIncrAttempts() { localStorage.setItem(_loginAttemptKey, _loginGetAttempts() + 1); }
+function _loginIsBlocked() {
+  const until = parseInt(localStorage.getItem(_loginBlockKey) || '0', 10);
+  if (Date.now() < until) return until;
+  if (Date.now() >= until && until > 0) _loginResetAttempts();
+  return 0;
+}
+
 async function hashCredenciais(usuario, senha) {
   const dados = new TextEncoder().encode(usuario.trim() + ':' + senha.trim());
   const buf = await crypto.subtle.digest('SHA-256', dados);
@@ -2896,31 +2945,68 @@ async function hashCredenciais(usuario, senha) {
 }
 
 document.getElementById('doLoginBtn').addEventListener('click', async () => {
+  const errEl = document.getElementById('loginError');
+  const btn   = document.getElementById('doLoginBtn');
+
+  // Verificar bloqueio
+  const blockedUntil = _loginIsBlocked();
+  if (blockedUntil) {
+    const restam = Math.ceil((blockedUntil - Date.now()) / 1000);
+    errEl.textContent = `⚠ Muitas tentativas. Aguarde ${restam}s.`;
+    return;
+  }
+
   const u = document.getElementById('loginUser').value.trim();
   const p = document.getElementById('loginPass').value.trim();
   if (!u || !p) {
-    document.getElementById('loginError').textContent = '⚠ Preencha usuário e senha';
+    errEl.textContent = '⚠ Preencha usuário e senha';
     return;
   }
+
+  btn.disabled = true;
+  btn.textContent = 'Verificando...';
+
   try {
-    const hash = await hashCredenciais(u, p);
+    // Delay mínimo artificial (anti-timing attack)
+    const [hash] = await Promise.all([
+      hashCredenciais(u, p),
+      new Promise(r => setTimeout(r, 300))
+    ]);
     if (hash === LOGIN_HASH) {
+      _loginResetAttempts();
       document.getElementById('publicSite').style.display = 'none';
       document.getElementById('privateArea').style.display = 'block';
       document.getElementById('loginModal').classList.remove('active');
-      document.getElementById('loginError').textContent = '';
+      errEl.textContent = '';
       refreshAllData();
       if (window.__initMAX) window.__initMAX();
     } else {
-      document.getElementById('loginError').textContent = '⚠ Credenciais inválidas';
+      _loginIncrAttempts();
+      const attempts = _loginGetAttempts();
+      if (attempts >= _LOGIN_MAX_TRIES) {
+        localStorage.setItem(_loginBlockKey, Date.now() + _LOGIN_BLOCK_MS);
+        errEl.textContent = '⚠ Acesso bloqueado por 60s por excesso de tentativas.';
+      } else {
+        errEl.textContent = `⚠ Credenciais inválidas (${_LOGIN_MAX_TRIES - attempts} tentativa(s) restante(s))`;
+      }
     }
   } catch(e) {
-    document.getElementById('loginError').textContent = '⚠ Erro ao verificar credenciais';
+    errEl.textContent = '⚠ Erro ao verificar credenciais';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Entrar';
   }
 });
 document.getElementById('logoutPrivateBtn').addEventListener('click', () => {
+  // Limpa variáveis sensíveis da memória ao sair
+  if (typeof financeiroData !== 'undefined') financeiroData = [];
+  if (typeof currentFinanceiroFiltered !== 'undefined') currentFinanceiroFiltered = [];
   document.getElementById('publicSite').style.display = 'block';
   document.getElementById('privateArea').style.display = 'none';
+  // Reexibe o modal de login (reset de campos)
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginError').textContent = '';
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -2945,6 +3031,9 @@ const pageTitles = {
   tabRH: '<i class="fas fa-people-arrows" style="color:var(--accent)"></i> RH — Contratações, Desligamentos & Turnover'
 };
 
+// Controle de quais tabs já tiveram dados carregados (lazy load)
+const _tabCarregada = new Set();
+
 document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.pa-nav-item').forEach(b => b.classList.remove('active'));
@@ -2954,21 +3043,34 @@ document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
     document.getElementById('pa-page-title').innerHTML = pageTitles[btn.dataset.tab] || btn.textContent;
     document.getElementById('paSidebar').classList.remove('open'); // fecha o menu no celular ao escolher uma aba
     window.scrollTo({top:0, behavior:'instant'});
-    if (btn.dataset.tab === 'tabSenhas')    setTimeout(filtrarSenhas, 50);
-    if (btn.dataset.tab === 'tabFrota')     setTimeout(filtrarFrota, 50);
-    if (btn.dataset.tab === 'tabAuditoria') setTimeout(audInit, 50);
-    if (btn.dataset.tab === 'tabNfe')       setTimeout(nfeInit, 50);
-    if (btn.dataset.tab === 'tabPneus')     setTimeout(pneuInit, 50);
-    if (btn.dataset.tab === 'tabVencimentos') setTimeout(vencInit, 50);
-    if (btn.dataset.tab === 'tabVagas') setTimeout(vagaInit, 50);
-    if (btn.dataset.tab === 'tabChecklist') setTimeout(checklistInit, 50);
-    if (btn.dataset.tab === 'tabVelocidade') setTimeout(velInit, 50);
-    if (btn.dataset.tab === 'tabJornada')    setTimeout(jorInit, 50);
-    if (btn.dataset.tab === 'tabDiaria')     setTimeout(diaInit, 50);
-    if (btn.dataset.tab === 'tabRH')         setTimeout(rhInit, 50);
-    if (btn.dataset.tab === 'tabFaturamento') setTimeout(fatApplyFilters, 50);
-    if (btn.dataset.tab === 'tabFinanceiro') setTimeout(orcInit, 50);
-    if (btn.dataset.tab === 'tabFinanceiro') setTimeout(manRender, 50);
+
+    const t = btn.dataset.tab;
+    const primeira = !_tabCarregada.has(t);
+    if (primeira) _tabCarregada.add(t);
+
+    // Tabs com dados da planilha: carrega só na 1ª abertura
+    if (t === 'tabFinanceiro' && primeira) setTimeout(loadFinanceiroData, 50);
+    else if (t === 'tabFinanceiro') { setTimeout(orcInit, 50); setTimeout(manRender, 50); }
+
+    if (t === 'tabFaturamento' && primeira) setTimeout(loadFaturamentoData, 50);
+    else if (t === 'tabFaturamento') setTimeout(fatApplyFilters, 50);
+
+    if (t === 'tabBaterias' && primeira) setTimeout(loadBateriasData, 50);
+
+    if (t === 'tabVencimentos') setTimeout(vencInit, 50); // sempre atualiza (documentos podem ter vencido)
+
+    // Tabs de estado local: reinicia normalmente
+    if (t === 'tabSenhas')    setTimeout(filtrarSenhas, 50);
+    if (t === 'tabFrota')     setTimeout(filtrarFrota, 50);
+    if (t === 'tabAuditoria') setTimeout(audInit, 50);
+    if (t === 'tabNfe')       setTimeout(nfeInit, 50);
+    if (t === 'tabPneus')     setTimeout(pneuInit, 50);
+    if (t === 'tabVagas')     setTimeout(vagaInit, 50);
+    if (t === 'tabChecklist') setTimeout(checklistInit, 50);
+    if (t === 'tabVelocidade') setTimeout(velInit, 50);
+    if (t === 'tabJornada')   setTimeout(jorInit, 50);
+    if (t === 'tabDiaria')    setTimeout(diaInit, 50);
+    if (t === 'tabRH')        setTimeout(rhInit, 50);
   });
 });
 
@@ -4461,13 +4563,15 @@ document.getElementById('saveUrlsBtn').onclick = () => {
   localStorage.setItem('urlFinanceiro', URL_FIN);
   localStorage.setItem('urlBaterias', URL_BAT);
   localStorage.setItem('urlFaturamento', URL_FAT);
-  // NF-e credentials
+  // NF-e credentials — salvas em sessionStorage (mais seguro; somem ao fechar a aba)
   NFE_CLIENT_ID     = document.getElementById('nfeClientId').value.trim();
   NFE_CLIENT_SECRET = document.getElementById('nfeClientSecret').value.trim();
   NFE_CNPJ          = document.getElementById('nfeCnpj').value.replace(/\D/g,'');
-  localStorage.setItem('nfeClientId',     NFE_CLIENT_ID);
-  localStorage.setItem('nfeClientSecret', NFE_CLIENT_SECRET);
-  localStorage.setItem('nfeCnpj',         NFE_CNPJ);
+  sessionStorage.setItem('nfeClientId',     NFE_CLIENT_ID);
+  sessionStorage.setItem('nfeClientSecret', NFE_CLIENT_SECRET);
+  sessionStorage.setItem('nfeCnpj',         NFE_CNPJ);
+  // Remove versões antigas do localStorage se existirem
+  localStorage.removeItem('nfeClientId'); localStorage.removeItem('nfeClientSecret'); localStorage.removeItem('nfeCnpj');
   nfeAccessToken = ''; nfeTokenExpiry = 0; // force re-auth
   MAX_GROQ_KEY = document.getElementById('maxGroqApiKey').value.trim();
   if (MAX_GROQ_KEY) localStorage.setItem('maxGroqApiKey', MAX_GROQ_KEY);
@@ -4485,11 +4589,29 @@ document.getElementById('saveUrlsBtn').onclick = () => {
   nfeCheckConfig();
 };
 
-document.getElementById('refreshDataBtn').onclick = () => {
-  refreshAllData();
+document.getElementById('refreshDataBtn').onclick = async () => {
+  const btn  = document.getElementById('refreshDataBtn');
+  const icon = document.getElementById('refreshIcon');
+  btn.disabled = true;
+  if (icon) icon.classList.add('fa-spin');
+  // Força recarga de todas as tabs que já foram abertas
+  _tabCarregada.delete('tabFinanceiro');
+  _tabCarregada.delete('tabFaturamento');
+  _tabCarregada.delete('tabBaterias');
+  await Promise.allSettled([
+    loadFinanceiroData(),
+    loadFaturamentoData(),
+    loadBateriasData(),
+    vencInit()
+  ]);
   // Se aba NF-e está ativa, também atualiza
   const nfePane = document.getElementById('tabNfe');
   if(nfePane && nfePane.classList.contains('active') && NFE_CLIENT_ID) nfeBuscarSEFAZ();
+  updateLastUpdate();
+  atualizarSelectMotoristasCalculadora();
+  btn.disabled = false;
+  if (icon) icon.classList.remove('fa-spin');
+  showToast('✓ Dados atualizados com sucesso');
 };
 
 // Sidebar toggle mobile
@@ -4503,9 +4625,14 @@ document.getElementById('sidebarToggle').onclick = () => {
 // REFRESH GERAL
 // ═══════════════════════════════════════════════════════════
 async function refreshAllData() {
+  // Ao fazer login, carrega apenas: Financeiro (tab padrão ativa), Vencimentos
+  // (sempre útil — badges de urgência) e Baterias (leve). Faturamento é carregado
+  // sob demanda (lazy) quando o usuário abrir a tab pela 1ª vez.
+  // Isso reduz o tempo de login e o número de requisições externas simultâneas.
+  _tabCarregada.add('tabFinanceiro');
+  _tabCarregada.add('tabBaterias');
   await Promise.allSettled([
     loadFinanceiroData(),
-    loadFaturamentoData(),
     loadBateriasData(),
     vencInit()
   ]);
@@ -4649,6 +4776,18 @@ function applyFinFilters() {
   saldoEl.style.color = saldo >= 0 ? 'var(--success)' : 'var(--danger)';
   document.getElementById('fin-registros').textContent = filtered.length;
   document.getElementById('finCount').textContent = filtered.length + ' registros';
+  // KPI Margem: Receita / Despesa × 100 (mostra "—" se não há receita cadastrada)
+  const margemEl = document.getElementById('fin-margem');
+  if (margemEl) {
+    if (receita > 0 && despesa > 0) {
+      const pct = ((receita / despesa) * 100).toFixed(1);
+      margemEl.textContent = pct + '%';
+      margemEl.style.color = parseFloat(pct) >= 100 ? 'var(--success)' : 'var(--danger)';
+    } else {
+      margemEl.textContent = '—';
+      margemEl.style.color = '';
+    }
+  }
 
   // Tabela — respeita o filtro de Categoria e Empresa normalmente
   renderFinTable(filtered, headers, colData, colDesc, colValor, colTipo, colCat);
@@ -4662,8 +4801,9 @@ function applyFinFilters() {
 function renderFinTable(data, headers, colData, colDesc, colValor, colTipo, colCat) {
   const thead = document.getElementById('finTableHead');
   const tbody = document.getElementById('finTableBody');
+  const MAX_ROWS = 500;
   thead.innerHTML = headers.map(h => `<th>${escapeHTML(h)}</th>`).join('');
-  tbody.innerHTML = data.slice(0, 500).map(row => {
+  tbody.innerHTML = data.slice(0, MAX_ROWS).map(row => {
     const v = finValorLinha(row, colValor, colCat, colDesc);
     const t = colTipo ? String(row[colTipo] || '').toLowerCase() : '';
     const isReceita = t.includes('receita') || t.includes('entrada') || t.includes('credito');
@@ -4676,6 +4816,12 @@ function renderFinTable(data, headers, colData, colDesc, colValor, colTipo, colC
       return `<td>${val}</td>`;
     }).join('')}</tr>`;
   }).join('');
+  // Aviso de truncagem quando há mais de 500 registros
+  if (data.length > MAX_ROWS) {
+    const aviso = document.createElement('tr');
+    aviso.innerHTML = `<td colspan="${headers.length}" style="text-align:center;padding:.7rem;background:#fef9e7;color:#92400e;font-size:.78rem;font-weight:600"><i class="fas fa-circle-info"></i> Exibindo ${MAX_ROWS} de ${data.length} registros — use os filtros para refinar a busca.</td>`;
+    tbody.appendChild(aviso);
+  }
 }
 
 // Agrega por Categoria/Plano de Contas, por Tipo de Contas e por Local
@@ -6530,8 +6676,12 @@ function fatApplyFilters() {
   const ctxAno = document.getElementById('fatChartAno').getContext('2d');
   fatChartAno = new Chart(ctxAno, {
     type:'bar',
-    data: { labels: anosChaves, datasets: [{ label:'Faturamento', data: anosChaves.map(a=>porAno[a]), backgroundColor:'rgba(139,115,85,.75)', borderColor:'rgba(139,115,85,1)', borderWidth:1 }] },
-    options: {responsive:true, plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:v=>fmtMoney(v)}}}}
+    data: { labels: anosChaves, datasets: [{ label:'Faturamento', data: anosChaves.map(a=>porAno[a]), backgroundColor:'rgba(139,115,85,.75)', borderColor:'rgba(139,115,85,1)', borderWidth:1, borderRadius:4 }] },
+    options: {
+      responsive:true,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx => ` ${fmtMoney(ctx.raw)}` } } },
+      scales:{ y:{ beginAtZero:true, ticks:{ callback: v => fmtMoney(v) } } }
+    }
   });
 
   // ── Controle de Consumo por Litro (sub-aba dedicada — cavalos e carretas,
@@ -6555,11 +6705,21 @@ function fatApplyFilters() {
     data: {
       labels: dvMotoristas,
       datasets: [
-        { label:'Diárias', data: dvMotoristas.map(m=>dvMap[m].diaria), backgroundColor:'rgba(212,175,55,.8)', stack:'s' },
-        { label:'Vales/Manobra', data: dvMotoristas.map(m=>dvMap[m].vale), backgroundColor:'rgba(239,68,68,.75)', stack:'s' }
+        { label:'Diárias', data: dvMotoristas.map(m=>dvMap[m]?.diaria||0), backgroundColor:'rgba(212,175,55,.8)', stack:'s', borderRadius:3 },
+        { label:'Vales/Manobra', data: dvMotoristas.map(m=>dvMap[m]?.vale||0), backgroundColor:'rgba(239,68,68,.75)', stack:'s', borderRadius:3 }
       ]
     },
-    options: {responsive:true, plugins:{legend:{position:'top'}}, scales:{x:{stacked:true}, y:{stacked:true, ticks:{callback:v=>fmtMoney(v)}}}}
+    options: {
+      responsive:true,
+      plugins:{
+        legend:{position:'top'},
+        tooltip:{ callbacks:{ label: ctx => ` ${ctx.dataset.label}: ${fmtMoney(ctx.raw)}` } }
+      },
+      scales:{
+        x:{stacked:true, ticks:{maxRotation:40, font:{size:10}}},
+        y:{stacked:true, beginAtZero:true, ticks:{callback:v=>fmtMoney(v)}}
+      }
+    }
   });
 
   // ── Tabela detalhada ──
@@ -8557,7 +8717,7 @@ function filtrarFrota() {
             </div>
             <div style="background:#f8f8f8;border-radius:10px;padding:.45rem .75rem">
               <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-lt);margin-bottom:.1rem">CPF</div>
-              <div style="font-size:.72rem;color:var(--text-lt);font-family:monospace">${r.cpf || '—'}</div>
+              <div style="font-size:.72rem;color:var(--text-lt);font-family:monospace">${maskCpf(r.cpf)}</div>
             </div>
           </div>
         </div>
@@ -8586,8 +8746,8 @@ function filtrarFrota() {
       <td style="font-size:.82rem">${r.carreta}</td>
       <td style="text-align:center">${isVan ? `<span class="badge badge-warning">${r.paletes} Van</span>` : `<span class="badge badge-info">${r.paletes}</span>`}</td>
       <td><a href="https://wa.me/55${tel}" target="_blank" rel="noopener noreferrer" style="color:var(--success);text-decoration:none;font-size:.82rem"><i class="fab fa-whatsapp"></i> ${r.celular}</a></td>
-      <td style="font-size:.75rem;color:var(--text-lt)">${r.cpf}</td>
-      <td><a href="tel:${tel}" class="btn btn-sm btn-success" style="padding:.25rem .6rem"><i class="fas fa-phone"></i></a> <button class="btn btn-sm btn-gray" style="padding:.25rem .5rem" title="Completar/editar dados" onclick="frotaEditarAbrir('${r.placa}')"><i class="fas fa-pen"></i></button>${r._custom ? ` <button class="btn btn-sm btn-gray" style="padding:.25rem .5rem" title="Remover cadastro" onclick="frotaExtraRemover('${r.placa}')"><i class="fas fa-trash"></i></button>` : ''}</td>
+      <td style="font-size:.75rem;color:var(--text-lt);font-family:monospace" title="CPF mascarado — dado protegido">${maskCpf(r.cpf)}</td>
+      <td><a href="tel:${tel}" class="btn btn-sm btn-success" style="padding:.25rem .6rem" aria-label="Ligar para ${r.motorista}"><i class="fas fa-phone"></i></a> <button class="btn btn-sm btn-gray" style="padding:.25rem .5rem" title="Completar/editar dados" aria-label="Editar cadastro de ${r.placa}" onclick="frotaEditarAbrir('${r.placa}')"><i class="fas fa-pen"></i></button>${r._custom ? ` <button class="btn btn-sm btn-gray" style="padding:.25rem .5rem" title="Remover cadastro" aria-label="Remover ${r.placa}" onclick="frotaExtraRemover('${r.placa}')"><i class="fas fa-trash"></i></button>` : ''}</td>
     </tr>`;
   }).join('');
 }
@@ -10759,7 +10919,21 @@ function velRender() {
         borderRadius: 4
       }]
     },
-    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    options: {
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const v = ctx.raw;
+              const pct = totalOcorrencias ? ((v / totalOcorrencias) * 100).toFixed(1) : 0;
+              return ` ${v} ocorrência(s) — ${pct}% do total`;
+            }
+          }
+        }
+      },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+    }
   });
 
   // ── Tabela ──
@@ -11044,6 +11218,14 @@ function jorRender() {
   document.getElementById('jor-desc').textContent = fmtMoney(totalDesc);
   document.getElementById('jor-liq').textContent = fmtMoney(totalLiq);
   document.getElementById('jor-ticket').textContent = funcionarios.length ? fmtMoney(totalLiq / funcionarios.length) : fmtMoney(0);
+
+  // ── KPI extra: afastados (valorLíquido = 0 ou horas afastadas) ──
+  const afastados = jorTodosFuncionarios().filter(f => {
+    const competFiltered = !jorFiltrados.length || jorFiltrados.some(l => l.competencia === f.competencia && l.matricula === f.matricula);
+    return competFiltered && (f.valorLiquido === 0 || (f.rubricas || []).some(r => r.categoria && r.categoria.includes('AFAST')));
+  });
+  const afastEl = document.getElementById('jor-afastados');
+  if (afastEl) afastEl.textContent = afastados.length;
 
   // ── Ranking por Descrição (categoria) ──
   const porCategoria = {};
