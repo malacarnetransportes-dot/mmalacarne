@@ -616,6 +616,31 @@ footer a{color:var(--accent);text-decoration:none;}
   .charts-grid{grid-template-columns:1fr;}
   .calc-grid{grid-template-columns:1fr;}
 }
+/* ══ AGENDA ══ */
+.ag-card{background:#fff;border-radius:14px;padding:1.1rem 1.2rem;box-shadow:var(--shadow-sm);border:1px solid rgba(0,0,0,.05);border-left:4px solid var(--gray-200);transition:transform .18s,box-shadow .18s;position:relative;}
+.ag-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
+.ag-card.ag-alta{border-left-color:var(--danger);}
+.ag-card.ag-normal{border-left-color:var(--accent);}
+.ag-card.ag-baixa{border-left-color:var(--info);}
+.ag-card.ag-concluido{border-left-color:var(--success);opacity:.72;}
+.ag-card.ag-vencido{border-left-color:#7c3aed;background:#fdf4ff;}
+.ag-card-titulo{font-weight:700;font-size:.92rem;color:#1e2a3a;margin-bottom:.35rem;padding-right:2.4rem;line-height:1.3;}
+.ag-card-meta{font-size:.75rem;color:var(--text-lt);display:flex;flex-wrap:wrap;gap:.4rem .9rem;margin-bottom:.55rem;align-items:center;}
+.ag-card-meta i{color:var(--accent-dk);}
+.ag-card-desc{font-size:.8rem;color:#4b5563;line-height:1.5;margin-bottom:.7rem;white-space:pre-wrap;}
+.ag-card-actions{display:flex;gap:.5rem;flex-wrap:wrap;}
+.ag-badge{display:inline-flex;align-items:center;gap:.25rem;padding:.18rem .6rem;border-radius:20px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+.ag-badge-treinamento{background:rgba(59,130,246,.12);color:#1d4ed8;}
+.ag-badge-documentos{background:rgba(16,185,129,.12);color:#065f46;}
+.ag-badge-manutencao{background:rgba(245,158,11,.12);color:#92400e;}
+.ag-badge-administrativo{background:rgba(107,114,128,.12);color:#374151;}
+.ag-badge-rh{background:rgba(139,115,85,.12);color:var(--primary-dk);}
+.ag-badge-financeiro{background:rgba(34,197,94,.12);color:#14532d;}
+.ag-badge-outro{background:rgba(99,102,241,.12);color:#3730a3;}
+.ag-check{position:absolute;top:.85rem;right:.85rem;width:22px;height:22px;border-radius:50%;border:2px solid var(--gray-200);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.7rem;transition:background .15s,border-color .15s;}
+.ag-check.checked{background:var(--success);border-color:var(--success);color:#fff;}
+.ag-modal-wrap{display:none!important;}
+.ag-modal-wrap.open{display:flex!important;}
 </style>
 </head>
 <body>
@@ -853,6 +878,9 @@ footer a{color:var(--accent);text-decoration:none;}
     <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem;margin-bottom:.5rem">Uma URL por linha (CSV). Cada motorista tem sua própria aba no mesmo documento — publique cada aba individualmente (Arquivo → Compartilhar → Publicar na Web → selecione a aba → CSV) e cole os links aqui. <b>Prefixe cada linha com o nome do motorista seguido de "|"</b> (ex.: <code>RODRIGO|https://docs.google.com/...</code>) — assim ele já aparece no filtro mesmo antes de ter lançamentos na planilha. Sem o prefixo, o nome só aparece depois que houver dados na aba.</p>
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">🔋 Baterias (CSV)</label>
     <input type="text" id="urlBaterias" placeholder="https://docs.google.com/spreadsheets/...">
+    <label style="font-size:.75rem;font-weight:700;color:var(--text-lt);margin-top:.5rem">📅 Agenda / Lembretes (CSV)</label>
+    <input type="text" id="urlAgenda" placeholder="https://docs.google.com/spreadsheets/...">
+    <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem">Planilha com colunas: <code>titulo | data | hora | categoria | prioridade | responsavel | descricao | recorrencia</code>. Publique a aba como CSV (Arquivo → Publicar na Web → selecione a aba → CSV).</p>
   </div>
 
   <div style="background:#fffbeb;border:1px solid rgba(212,175,55,.3);border-radius:8px;padding:.7rem .9rem;margin-bottom:.8rem">
@@ -925,6 +953,7 @@ footer a{color:var(--accent);text-decoration:none;}
         <button class="pa-nav-item" data-tab="tabJornada"><i class="fas fa-money-check-dollar"></i> Jornada e Compensação</button>
         <button class="pa-nav-item" data-tab="tabDiaria"><i class="fas fa-route"></i> Controle de Diária</button>
         <button class="pa-nav-item" data-tab="tabRH"><i class="fas fa-people-arrows"></i> RH — Turnover</button>
+        <button class="pa-nav-item" data-tab="tabAgenda"><i class="fas fa-calendar-check"></i> Agenda / Lembretes</button>
       </nav>
       <div class="pa-sidebar-footer">
         <button class="pa-nav-item" id="openSlideModeBtn" style="font-size:.8rem;color:var(--accent)"><i class="fas fa-tv"></i> Gestão à Vista (Slide)</button>
@@ -1180,6 +1209,7 @@ footer a{color:var(--accent);text-decoration:none;}
                 <div class="flt-grp"><label>Motorista</label><select id="fatcMotorista"><option value="">Todos</option></select></div>
                 <div class="flt-grp"><label>Placa Cavalo</label><select id="fatcCavalo"><option value="">Todas</option></select></div>
                 <div class="flt-grp"><label>Placa Carreta</label><select id="fatcCarreta"><option value="">Todas</option></select></div>
+                <div class="flt-grp"><label>Posto</label><select id="fatcPosto"><option value="">Todos</option></select></div>
                 <div class="flt-grp"><label>Data Início</label><input type="date" id="fatcDataInicio"></div>
                 <div class="flt-grp"><label>Data Fim</label><input type="date" id="fatcDataFim"></div>
                 <button class="btn btn-accent" onclick="fatcApplyFilters()"><i class="fas fa-search"></i> Filtrar</button>
@@ -2344,6 +2374,113 @@ footer a{color:var(--accent);text-decoration:none;}
 
         </div><!-- /tabRH -->
 
+        <!-- ══════════════════════════════════════════════════════════
+             TAB AGENDA / LEMBRETES
+        ══════════════════════════════════════════════════════════ -->
+        <div id="tabAgenda" class="tab-pane">
+
+          <!-- KPIs -->
+          <div class="kpi-grid">
+            <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-bell"></i></div><div><div class="kpi-val" id="ag-vencidos">—</div><div class="kpi-lbl">Vencidos / Atrasados</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-clock"></i></div><div><div class="kpi-val" id="ag-hoje">—</div><div class="kpi-lbl">Vencem Hoje</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-hourglass-half"></i></div><div><div class="kpi-val" id="ag-proximos">—</div><div class="kpi-lbl">Próximos 7 dias</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-circle-check"></i></div><div><div class="kpi-val" id="ag-concluidos">—</div><div class="kpi-lbl">Concluídos</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon brown"><i class="fas fa-list-check"></i></div><div><div class="kpi-val" id="ag-total">—</div><div class="kpi-lbl">Total de Lembretes</div></div></div>
+          </div>
+
+          <!-- Filtros + Novo Lembrete -->
+          <div class="dash-card" style="margin-bottom:1.2rem">
+            <div class="filters-bar" style="flex-wrap:wrap;gap:.6rem">
+              <div class="flt-grp"><label>Buscar</label><input type="text" id="agBusca" placeholder="Nome, descrição, tag..." oninput="agFiltrar()" autocomplete="off"></div>
+              <div class="flt-grp"><label>Categoria</label>
+                <select id="agFiltroCategoria" onchange="agFiltrar()">
+                  <option value="">Todas</option>
+                  <option value="treinamento">🎓 Treinamento</option>
+                  <option value="documentos">📄 Documentos</option>
+                  <option value="manutencao">🔧 Manutenção</option>
+                  <option value="administrativo">🏢 Administrativo</option>
+                  <option value="rh">👥 RH</option>
+                  <option value="financeiro">💰 Financeiro</option>
+                  <option value="outro">📌 Outro</option>
+                </select>
+              </div>
+              <div class="flt-grp"><label>Status</label>
+                <select id="agFiltroStatus" onchange="agFiltrar()">
+                  <option value="">Todos</option>
+                  <option value="pendente">Pendente</option>
+                  <option value="concluido">Concluído</option>
+                  <option value="vencido">Vencido</option>
+                </select>
+              </div>
+              <div class="flt-grp"><label>Responsável</label><input type="text" id="agFiltroResponsavel" placeholder="Ex: Diomar, Ronaldo..." oninput="agFiltrar()" autocomplete="off"></div>
+              <button class="btn btn-accent" onclick="agAbrirModal()"><i class="fas fa-plus"></i> Novo Lembrete</button>
+              <button class="btn btn-gray" onclick="agLimparFiltros()"><i class="fas fa-times"></i> Limpar</button>
+              <button class="btn btn-info btn-sm" onclick="agSincronizarSheets()" id="agSyncBtn" title="Recarregar lembretes da planilha Google Sheets"><i class="fas fa-sync-alt"></i> Sincronizar Planilha</button>
+              <button class="btn btn-success btn-sm" onclick="agExportarCSV()"><i class="fas fa-download"></i> CSV</button>
+            </div>
+            <div id="agSyncStatus" style="font-size:.78rem;padding:.4rem .2rem;min-height:1.4rem"></div>
+          </div>
+
+          <!-- Cards de lembretes -->
+          <div id="agGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1rem;margin-bottom:1.4rem"></div>
+          <div id="agVazio" style="display:none;text-align:center;padding:3rem;color:var(--text-lt)">
+            <i class="fas fa-calendar-xmark" style="font-size:2.5rem;opacity:.25;display:block;margin-bottom:.8rem"></i>
+            Nenhum lembrete encontrado. Clique em <strong>+ Novo Lembrete</strong> para começar.
+          </div>
+
+        </div><!-- /tabAgenda -->
+
+        <!-- ══ MODAL AGENDA ══ -->
+        <div id="agModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1rem" class="ag-modal-wrap">
+          <div style="background:#fff;border-radius:16px;padding:2rem;width:100%;max-width:540px;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto;position:relative">
+            <button onclick="agFecharModal()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.3rem;color:var(--text-lt);cursor:pointer" aria-label="Fechar modal"><i class="fas fa-times"></i></button>
+            <h3 style="margin:0 0 1.4rem;font-size:1.05rem;color:#1e2a3a" id="agModalTitulo"><i class="fas fa-calendar-plus" style="color:var(--accent)"></i> Novo Lembrete</h3>
+            <input type="hidden" id="agEditId">
+            <div style="display:grid;gap:.9rem">
+              <div class="flt-grp" style="margin:0"><label>Título *</label><input type="text" id="agNovTitulo" placeholder="Ex: Renovar CNH — Motorista Adriano" autocomplete="off"></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
+                <div class="flt-grp" style="margin:0"><label>Data / Prazo</label><input type="date" id="agNovData"></div>
+                <div class="flt-grp" style="margin:0"><label>Horário</label><input type="time" id="agNovHora" placeholder="HH:MM"></div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
+                <div class="flt-grp" style="margin:0"><label>Categoria</label>
+                  <select id="agNovCategoria">
+                    <option value="treinamento">🎓 Treinamento</option>
+                    <option value="documentos">📄 Documentos</option>
+                    <option value="manutencao">🔧 Manutenção</option>
+                    <option value="administrativo">🏢 Administrativo</option>
+                    <option value="rh">👥 RH</option>
+                    <option value="financeiro">💰 Financeiro</option>
+                    <option value="outro">📌 Outro</option>
+                  </select>
+                </div>
+                <div class="flt-grp" style="margin:0"><label>Prioridade</label>
+                  <select id="agNovPrioridade">
+                    <option value="normal">Normal</option>
+                    <option value="alta">🔴 Alta</option>
+                    <option value="baixa">🔵 Baixa</option>
+                  </select>
+                </div>
+              </div>
+              <div class="flt-grp" style="margin:0"><label>Responsável(is)</label><input type="text" id="agNovResponsavel" placeholder="Ex: Diomar, Ronaldo..." autocomplete="off"></div>
+              <div class="flt-grp" style="margin:0"><label>Descrição / Observações</label><textarea id="agNovDescricao" rows="3" placeholder="Detalhes adicionais, links, instruções..." style="width:100%;border:1px solid var(--gray-200);border-radius:8px;padding:.55rem .75rem;font-size:.85rem;resize:vertical;font-family:inherit"></textarea></div>
+              <div class="flt-grp" style="margin:0"><label>Recorrência</label>
+                <select id="agNovRecorrencia">
+                  <option value="nenhuma">Sem recorrência</option>
+                  <option value="diaria">Diária</option>
+                  <option value="semanal">Semanal</option>
+                  <option value="mensal">Mensal</option>
+                  <option value="anual">Anual</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:flex;gap:.7rem;margin-top:1.6rem;justify-content:flex-end">
+              <button class="btn btn-gray" onclick="agFecharModal()">Cancelar</button>
+              <button class="btn btn-accent" onclick="agSalvar()"><i class="fas fa-save"></i> Salvar</button>
+            </div>
+          </div>
+        </div>
+
       </div><!-- /pa-main -->
     </div><!-- /pa-content -->
   </div><!-- /pa-layout -->
@@ -2396,6 +2533,7 @@ const DEFAULT_PNEU_DOC = "https://docs.google.com/document/d/e/2PACX-1vR4rIhekIE
 
 let URL_FIN  = localStorage.getItem("urlFinanceiro")  || DEFAULT_FINANCEIRO;
 let URL_BAT  = localStorage.getItem("urlBaterias")    || DEFAULT_BATERIAS;
+let URL_AGENDA = localStorage.getItem("urlAgenda") || '';
 
 // Descarta valores antigos/quebrados que podem ter ficado presos no
 // localStorage de tentativas anteriores (URL de 1 motorista só, a lista de
@@ -3028,7 +3166,8 @@ const pageTitles = {
   tabVelocidade: '<i class="fas fa-gauge-high" style="color:var(--accent)"></i> Controle de Velocidade',
   tabJornada: '<i class="fas fa-money-check-dollar" style="color:var(--accent)"></i> Jornada e Compensação',
   tabDiaria: '<i class="fas fa-route" style="color:var(--accent)"></i> Controle de Diária',
-  tabRH: '<i class="fas fa-people-arrows" style="color:var(--accent)"></i> RH — Contratações, Desligamentos & Turnover'
+  tabRH: '<i class="fas fa-people-arrows" style="color:var(--accent)"></i> RH — Contratações, Desligamentos & Turnover',
+  tabAgenda: '<i class="fas fa-calendar-check" style="color:var(--accent)"></i> Agenda & Lembretes'
 };
 
 // Controle de quais tabs já tiveram dados carregados (lazy load)
@@ -3071,6 +3210,7 @@ document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
     if (t === 'tabJornada')   setTimeout(jorInit, 50);
     if (t === 'tabDiaria')    setTimeout(diaInit, 50);
     if (t === 'tabRH')        setTimeout(rhInit, 50);
+    if (t === 'tabAgenda')    setTimeout(agendaInit, 50);
   });
 });
 
@@ -4538,6 +4678,7 @@ function openUrlModal(){
   document.getElementById('urlFinanceiro').value = URL_FIN;
   document.getElementById('urlFaturamento').value = URL_FAT;
   document.getElementById('urlBaterias').value = URL_BAT;
+  document.getElementById('urlAgenda').value = URL_AGENDA;
   document.getElementById('nfeClientId').value = NFE_CLIENT_ID;
   document.getElementById('nfeClientSecret').value = NFE_CLIENT_SECRET;
   document.getElementById('nfeCnpj').value = NFE_CNPJ;
@@ -4560,9 +4701,11 @@ document.getElementById('saveUrlsBtn').onclick = () => {
   URL_FIN = document.getElementById('urlFinanceiro').value || DEFAULT_FINANCEIRO;
   URL_BAT = document.getElementById('urlBaterias').value || DEFAULT_BATERIAS;
   URL_FAT = document.getElementById('urlFaturamento').value || DEFAULT_FATURAMENTO;
+  URL_AGENDA = document.getElementById('urlAgenda').value.trim();
   localStorage.setItem('urlFinanceiro', URL_FIN);
   localStorage.setItem('urlBaterias', URL_BAT);
   localStorage.setItem('urlFaturamento', URL_FAT);
+  localStorage.setItem('urlAgenda', URL_AGENDA);
   // NF-e credentials — salvas em sessionStorage (mais seguro; somem ao fechar a aba)
   NFE_CLIENT_ID     = document.getElementById('nfeClientId').value.trim();
   NFE_CLIENT_SECRET = document.getElementById('nfeClientSecret').value.trim();
@@ -6315,7 +6458,8 @@ function parseFaturamentoCSV(rows) {
       frete: 0, comissao: 0, despesasMot: 0, diaria: 0, bonus: 0,
       valesManobra: 0, depFolha: 0, valorReceber: 0,
       manobraQtd: 0, manobraValor: 0, valeQtd: 0, valeValor: 0, empConsignado: 0, celular: 0,
-      mediaCavalo: 0, mediaCarreta: 0, km: 0, horas: 0, litrosCavalo: 0, litrosCarreta: 0
+      mediaCavalo: 0, mediaCarreta: 0, km: 0, horas: 0, litrosCavalo: 0, litrosCarreta: 0,
+      posto: ''
     };
 
     headerRow.forEach((h, idx) => {
@@ -6350,6 +6494,7 @@ function parseFaturamentoCSV(rows) {
         else if ((mm = cell.match(/MAN\w*\s*:?\s*(\d+)\s*R\$?\s*([\d.,]+)/i))) { rec.manobraQtd = +mm[1]; rec.manobraValor = parseMoney(mm[2]); }
         else if ((mm = cell.match(/VALE\s*:?\s*(\d+)\s*[Xx]\s*R?\$?\s*([\d.,]+)/i))) { rec.valeQtd = +mm[1]; rec.valeValor = parseMoney(mm[2]) * (+mm[1]); }
         else if ((mm = cell.match(/EMP\.?\s*CONSIGNADO\s*:?\s*R?\$?\s*([\d.,]+)/i))) rec.empConsignado = parseMoney(mm[1]);
+        else if ((mm = cell.match(/POSTO\s*:?\s*(.+)/i))) rec.posto = mm[1].trim().toUpperCase();
         else if ((mm = cell.match(/M[ÉE]DIA\s*CV\s*:?\s*([\d.,]+)/i))) rec.mediaCavalo = parseMoney(mm[1]);
         else if ((mm = cell.match(/M[ÉE]DIA\s*CR\s*:?\s*([\d.,]+)/i))) rec.mediaCarreta = parseMoney(mm[1]);
         else if ((mm = cell.match(/^([\d.,]+)\s*KM$/i))) rec.km = parseMoney(mm[1]);
@@ -6723,8 +6868,8 @@ function fatApplyFilters() {
   });
 
   // ── Tabela detalhada ──
-  const cols = ['dataStr','motorista','placaCavalo','placaCarreta','frete','comissao','diaria','bonus','valesManobra','empConsignado','depFolha','valorReceber','mediaCavalo','mediaCarreta','km','horas'];
-  const labels = ['Data','Motorista','Cavalo','Carreta','Frete','Comissão','Diária','Bônus','Vales/Manobra','Consignado','Dep. Folha','Valor a Receber','Média CV','Média CR','KM','Horas'];
+  const cols = ['dataStr','motorista','placaCavalo','placaCarreta','posto','frete','comissao','diaria','bonus','valesManobra','empConsignado','depFolha','valorReceber','mediaCavalo','mediaCarreta','km','horas'];
+  const labels = ['Data','Motorista','Cavalo','Carreta','Posto','Frete','Comissão','Diária','Bônus','Vales/Manobra','Consignado','Dep. Folha','Valor a Receber','Média CV','Média CR','KM','Horas'];
   document.getElementById('fatTableHead').innerHTML = labels.map(l=>`<th>${l}</th>`).join('');
   const moneyCols = new Set(['frete','comissao','diaria','bonus','valesManobra','empConsignado','depFolha','valorReceber']);
   document.getElementById('fatTableBody').innerHTML = [...fatFiltered].sort((a,b)=>b.data-a.data).map(row =>
@@ -6766,12 +6911,13 @@ function fatRenderConsumo(records) {
   dados.forEach(r => {
     const p = normalizaPlaca(r.placaCavalo);
     if (!p) return;
-    if (!cavMap[p]) cavMap[p] = { placa: r.placaCavalo, medias: [], km: 0, litros: 0, registros: 0, motoristas: new Set() };
+    if (!cavMap[p]) cavMap[p] = { placa: r.placaCavalo, medias: [], km: 0, litros: 0, registros: 0, motoristas: new Set(), postos: new Set() };
     if (r.mediaCavalo > 0) cavMap[p].medias.push(r.mediaCavalo);
     cavMap[p].km += r.km || 0;
     cavMap[p].litros += r.litrosCavalo || 0;
     if (r.mediaCavalo > 0 || r.litrosCavalo > 0 || r.km > 0) cavMap[p].registros++;
     if (r.motorista) cavMap[p].motoristas.add(r.motorista);
+    if (r.posto) cavMap[p].postos.add(r.posto);
   });
   const cavArr = Object.values(cavMap).map(v => ({
     ...v,
@@ -6890,6 +7036,7 @@ function fatcPopularFiltros() {
   const anos       = [...new Set((fatAllRecords||[]).map(r => r.ano).filter(Boolean))].sort((a,b) => b-a);
   const cavalos    = [...new Set((fatAllRecords||[]).map(r => r.placaCavalo).filter(Boolean))].sort();
   const carretas   = [...new Set((fatAllRecords||[]).map(r => r.placaCarreta).filter(Boolean))].sort();
+  const postos     = [...new Set((fatAllRecords||[]).map(r => r.posto).filter(Boolean))].sort();
 
   const selMot = document.getElementById('fatcMotorista');
   if (selMot) {
@@ -6918,10 +7065,17 @@ function fatcPopularFiltros() {
     selCar.innerHTML = '<option value="">Todas</option>' + carretas.map(p => `<option value="${p}">${p}</option>`).join('');
     if (carretas.includes(val)) selCar.value = val;
   }
+
+  const selPosto = document.getElementById('fatcPosto');
+  if (selPosto) {
+    const val = selPosto.value;
+    selPosto.innerHTML = '<option value="">Todos</option>' + postos.map(p => `<option value="${p}">${p}</option>`).join('');
+    if (postos.includes(val)) selPosto.value = val;
+  }
 }
 
 function fatcResetFilters() {
-  ['fatcAno','fatcMes','fatcMotorista','fatcCavalo','fatcCarreta'].forEach(id => {
+  ['fatcAno','fatcMes','fatcMotorista','fatcCavalo','fatcCarreta','fatcPosto'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.selectedIndex = 0;
   });
@@ -6934,13 +7088,14 @@ function fatcApplyFilters() {
   const chartCvEl = document.getElementById('fatChartConsumoCavalo');
   if (!chartCvEl) return; // sub-aba ainda não está no DOM
 
-  const ano = document.getElementById('fatcAno')?.value || '';
-  const mes = document.getElementById('fatcMes')?.value || '';
-  const mot = document.getElementById('fatcMotorista')?.value || '';
-  const cav = document.getElementById('fatcCavalo')?.value || '';
-  const car = document.getElementById('fatcCarreta')?.value || '';
-  const di  = document.getElementById('fatcDataInicio')?.value || '';
-  const df  = document.getElementById('fatcDataFim')?.value || '';
+  const ano   = document.getElementById('fatcAno')?.value || '';
+  const mes   = document.getElementById('fatcMes')?.value || '';
+  const mot   = document.getElementById('fatcMotorista')?.value || '';
+  const cav   = document.getElementById('fatcCavalo')?.value || '';
+  const car   = document.getElementById('fatcCarreta')?.value || '';
+  const posto = document.getElementById('fatcPosto')?.value || '';
+  const di    = document.getElementById('fatcDataInicio')?.value || '';
+  const df    = document.getElementById('fatcDataFim')?.value || '';
 
   const dtIni = di ? new Date(di + 'T00:00:00') : null;
   const dtFim = df ? new Date(df + 'T23:59:59') : null;
@@ -6951,13 +7106,14 @@ function fatcApplyFilters() {
     if (mot && r.motorista !== mot) return false;
     if (cav && normalizaPlaca(r.placaCavalo) !== normalizaPlaca(cav)) return false;
     if (car && normalizaPlaca(r.placaCarreta) !== normalizaPlaca(car)) return false;
+    if (posto && (r.posto || '').toUpperCase() !== posto.toUpperCase()) return false;
     if (dtIni && r.data < dtIni) return false;
     if (dtFim && r.data > dtFim) return false;
     return true;
   });
 
   fatRenderConsumo(fatcFiltered);
-  fatcRenderResumoCard(fatcFiltered, { ano, mes, mot, cav, car, di, df });
+  fatcRenderResumoCard(fatcFiltered, { ano, mes, mot, cav, car, posto, di, df });
 }
 
 function fatcRenderResumoCard(records, f) {
@@ -6966,7 +7122,7 @@ function fatcRenderResumoCard(records, f) {
   const titulo  = document.getElementById('fatcResumoTitulo');
   if (!card || !body || !titulo) return;
 
-  const algumFiltro = !!(f.ano || f.mes || f.mot || f.cav || f.car || f.di || f.df);
+  const algumFiltro = !!(f.ano || f.mes || f.mot || f.cav || f.car || f.posto || f.di || f.df);
   if (!algumFiltro) { card.style.display = 'none'; return; }
 
   card.style.display = 'block';
@@ -6976,6 +7132,7 @@ function fatcRenderResumoCard(records, f) {
   if (f.cav) partes.push(`Cavalo ${f.cav}`);
   if (f.car) partes.push(`Carreta ${f.car}`);
   if (f.mot) partes.push(f.mot);
+  if (f.posto) partes.push(`Posto: ${f.posto}`);
   if (f.mes) partes.push(FAT_MESES_FULL[+f.mes - 1]);
   if (f.ano) partes.push(f.ano);
   if (f.di || f.df) partes.push(`${f.di ? fmtISOtoBR(f.di) : '…'} a ${f.df ? fmtISOtoBR(f.df) : '…'}`);
@@ -10950,6 +11107,473 @@ function velRender() {
 }
 const JORNADA_SEED = [{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"32","nome":"ADRIANO VAZ DOS SANTOS","cbo":"782510","departamento":"5","filial":"1","cargo":"MOTORISTA DE CARRETA","admissao":"23/10/2023","totalVencimentos":9480.32,"totalDescontos":1650.24,"valorLiquido":7830.08,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"208:52","valor":2594.08,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"2","descricao":"HORAS NOTURNAS","referencia":"18:28","valor":229.4,"tipo":"vencimento","categoria":"HORAS NOTURNAS"},{"codigo":"250","descricao":"REFLEXO EXTRAS DSR","referencia":"0,00","valor":156.28,"tipo":"vencimento","categoria":"REFLEXO EXTRAS DSR"},{"codigo":"1769","descricao":"REFLEXO ADICIONAL NOTURNO DSR","referencia":"0,00","valor":8.82,"tipo":"vencimento","categoria":"REFLEXO ADICIONAL NOTURNO DSR"},{"codigo":"1997","descricao":"GRATIFICACAO PERFORMANCE ACT","referencia":"1.473,71","valor":1473.71,"tipo":"vencimento","categoria":"GRATIFICACAO PERFORMANCE ACT"},{"codigo":"1998","descricao":"GRATIFICACAO CONSUMO COMBUSTIVEL ACT","referencia":"1.500,00","valor":1500.0,"tipo":"vencimento","categoria":"GRATIFICACAO CONSUMO COMBUSTIVEL ACT"},{"codigo":"150","descricao":"HORAS EXTRAS 50% DIURNAS","referencia":"15:41","valor":301.86,"tipo":"vencimento","categoria":"HORAS EXTRAS 50% DIURNAS"},{"codigo":"200","descricao":"HORAS EXTRAS 100% DIURNA","referencia":"19:54","valor":510.79,"tipo":"vencimento","categoria":"HORAS EXTRAS 100% DIURNA"},{"codigo":"1730","descricao":"ADICIONAL NOTURNO","referencia":"20,00","valor":45.88,"tipo":"vencimento","categoria":"ADICIONAL NOTURNO"},{"codigo":"8883","descricao":"DIARIAS","referencia":"2.659,50","valor":2659.5,"tipo":"vencimento","categoria":"DIARIAS"},{"codigo":"8247","descricao":"DESCONTO ANTECIPACAO SALARIAL","referencia":"1.300,00","valor":1300.0,"tipo":"desconto","categoria":"DESCONTO ANTECIPACAO SALARIAL"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"9,10","valor":350.24,"tipo":"desconto","categoria":"I.N.S.S."}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"53","nome":"ANDERSON LUIS VEIGA DO SANTOS","cbo":"782510","departamento":"5","filial":"1","cargo":"MOTORISTA DE CARRETA","admissao":"21/05/2026","totalVencimentos":7888.89,"totalDescontos":1465.91,"valorLiquido":6422.98,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"211:46","valor":2630.1,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"2","descricao":"HORAS NOTURNAS","referencia":"15:34","valor":193.38,"tipo":"vencimento","categoria":"HORAS NOTURNAS"},{"codigo":"250","descricao":"REFLEXO EXTRAS DSR","referencia":"0,00","valor":178.48,"tipo":"vencimento","categoria":"REFLEXO EXTRAS DSR"},{"codigo":"1769","descricao":"REFLEXO ADICIONAL NOTURNO DSR","referencia":"0,00","valor":7.69,"tipo":"vencimento","categoria":"REFLEXO ADICIONAL NOTURNO DSR"},{"codigo":"1997","descricao":"GRATIFICACAO PERFORMANCE ACT","referencia":"1.448,68","valor":1448.68,"tipo":"vencimento","categoria":"GRATIFICACAO PERFORMANCE ACT"},{"codigo":"150","descricao":"HORAS EXTRAS 50% DIURNAS","referencia":"13:27","valor":258.93,"tipo":"vencimento","categoria":"HORAS EXTRAS 50% DIURNAS"},{"codigo":"200","descricao":"HORAS EXTRAS 100% DIURNA","referencia":"26:04","valor":669.16,"tipo":"vencimento","categoria":"HORAS EXTRAS 100% DIURNA"},{"codigo":"26","descricao":"ADICIONAL NOTURNO","referencia":"15:34","valor":39.97,"tipo":"vencimento","categoria":"ADICIONAL NOTURNO"},{"codigo":"8883","descricao":"DIARIAS","referencia":"2.462,50","valor":2462.5,"tipo":"vencimento","categoria":"DIARIAS"},{"codigo":"8247","descricao":"DESCONTO ANTECIPACAO SALARIAL","referencia":"1.100,00","valor":1100.0,"tipo":"desconto","categoria":"DESCONTO ANTECIPACAO SALARIAL"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"9,20","valor":365.91,"tipo":"desconto","categoria":"I.N.S.S."}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"9","nome":"ANDRESSA SUZIN MALACARNE DA VEIGA","cbo":"123110","departamento":"6","filial":"1","cargo":"SOCIO ADMINISTRADOR","admissao":"01/07/2021","totalVencimentos":3750.0,"totalDescontos":231.0,"valorLiquido":3519.0,"rubricas":[{"codigo":"100","descricao":"PRO LABORE","referencia":"227:20","valor":2100.0,"tipo":"vencimento","categoria":"PRO LABORE"},{"codigo":"220","descricao":"AJUDA DE CUSTO","referencia":"1.000,00","valor":1000.0,"tipo":"vencimento","categoria":"AJUDA DE CUSTO"},{"codigo":"938","descricao":"PRÊMIO","referencia":"650,00","valor":650.0,"tipo":"vencimento","categoria":"PRÊMIO"},{"codigo":"843","descricao":"INSS EMPREGADOR.","referencia":"11,00","valor":231.0,"tipo":"desconto","categoria":"INSS EMPREGADOR."}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"54","nome":"CRISTIANO DE ALMEIDA","cbo":"782510","departamento":"2","filial":"1","cargo":"MOTORISTA DE CARRETA","admissao":"23/06/2026","totalVencimentos":6662.06,"totalDescontos":4833.43,"valorLiquido":1828.63,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"215:56","valor":2681.89,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"2","descricao":"HORAS NOTURNAS","referencia":"11:24","valor":141.59,"tipo":"vencimento","categoria":"HORAS NOTURNAS"},{"codigo":"250","descricao":"REFLEXO EXTRAS DSR","referencia":"0,00","valor":136.88,"tipo":"vencimento","categoria":"REFLEXO EXTRAS DSR"},{"codigo":"1769","descricao":"REFLEXO ADICIONAL NOTURNO DSR","referencia":"0,00","valor":5.63,"tipo":"vencimento","categoria":"REFLEXO ADICIONAL NOTURNO DSR"},{"codigo":"1997","descricao":"GRATIFICACAO PERFORMANCE ACT","referencia":"492,54","valor":492.54,"tipo":"vencimento","categoria":"GRATIFICACAO PERFORMANCE ACT"},{"codigo":"150","descricao":"HORAS EXTRAS 50% DIURNAS","referencia":"18:48","valor":361.92,"tipo":"vencimento","categoria":"HORAS EXTRAS 50% DIURNAS"},{"codigo":"200","descricao":"HORAS EXTRAS 100% DIURNA","referencia":"13:38","valor":349.85,"tipo":"vencimento","categoria":"HORAS EXTRAS 100% DIURNA"},{"codigo":"26","descricao":"ADICIONAL NOTURNO","referencia":"11:24","valor":29.26,"tipo":"vencimento","categoria":"ADICIONAL NOTURNO"},{"codigo":"8883","descricao":"DIARIAS","referencia":"2.462,50","valor":2462.5,"tipo":"vencimento","categoria":"DIARIAS"},{"codigo":"8247","descricao":"DESCONTO ANTECIPACAO SALARIAL","referencia":"4.500,00","valor":4500.0,"tipo":"desconto","categoria":"DESCONTO ANTECIPACAO SALARIAL"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"8,99","valor":333.43,"tipo":"desconto","categoria":"I.N.S.S."}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"4","nome":"DIOMAR DA VEIGA","cbo":"411010","departamento":"3","filial":"1","cargo":"COORDENADOR ADMINSITRATIVO","admissao":"01/11/2011","totalVencimentos":6134.86,"totalDescontos":469.28,"valorLiquido":5665.58,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"227:20","valor":3407.04,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"220","descricao":"AJUDA DE CUSTO","referencia":"1.365,00","valor":1365.0,"tipo":"vencimento","categoria":"AJUDA DE CUSTO"},{"codigo":"202","descricao":"GRATIFICAÇÃO DE FUNÇÃO 40%","referencia":"40,00","valor":1362.82,"tipo":"vencimento","categoria":"GRATIFICAÇÃO DE FUNÇÃO 40%"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"9,84","valor":469.28,"tipo":"desconto","categoria":"I.N.S.S."}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"49","nome":"GILSON MARGOTTI","cbo":"782510","departamento":"5","filial":"1","cargo":"MOTORISTA DE CARRETA","admissao":"23/09/2025","totalVencimentos":2823.48,"totalDescontos":2823.48,"valorLiquido":0.0,"rubricas":[{"codigo":"8","descricao":"HORAS AFAST S/ VENCTO","referencia":"227:20","valor":2823.48,"tipo":"vencimento","categoria":"HORAS AFAST S/ VENCTO"},{"codigo":"988","descricao":"DESCONTO HORAS AFASTADAS","referencia":"227:20","valor":2823.48,"tipo":"desconto","categoria":"DESCONTO HORAS AFASTADAS"}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"21","nome":"HILDO ANTONIO DE ALMEIDA","cbo":"782510","departamento":"5","filial":"1","cargo":"MOTORISTA DE CARRETA","admissao":"26/02/2023","totalVencimentos":7830.96,"totalDescontos":378.61,"valorLiquido":7452.35,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"221:27","valor":2750.45,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"2","descricao":"HORAS NOTURNAS","referencia":"5:53","valor":73.03,"tipo":"vencimento","categoria":"HORAS NOTURNAS"},{"codigo":"250","descricao":"REFLEXO EXTRAS DSR","referencia":"0,00","valor":200.43,"tipo":"vencimento","categoria":"REFLEXO EXTRAS DSR"},{"codigo":"1769","descricao":"REFLEXO ADICIONAL NOTURNO DSR","referencia":"0,00","valor":2.81,"tipo":"vencimento","categoria":"REFLEXO ADICIONAL NOTURNO DSR"},{"codigo":"1997","descricao":"GRATIFICACAO PERFORMANCE ACT","referencia":"1.186,38","valor":1186.38,"tipo":"vencimento","categoria":"GRATIFICACAO PERFORMANCE ACT"},{"codigo":"150","descricao":"HORAS EXTRAS 50% DIURNAS","referencia":"20:47","valor":400.04,"tipo":"vencimento","categoria":"HORAS EXTRAS 50% DIURNAS"},{"codigo":"200","descricao":"HORAS EXTRAS 100% DIURNA","referencia":"25:01","valor":642.21,"tipo":"vencimento","categoria":"HORAS EXTRAS 100% DIURNA"},{"codigo":"1730","descricao":"ADICIONAL NOTURNO","referencia":"20,00","valor":14.61,"tipo":"vencimento","categoria":"ADICIONAL NOTURNO"},{"codigo":"8883","descricao":"DIARIAS","referencia":"2.561,00","valor":2561.0,"tipo":"vencimento","categoria":"DIARIAS"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"9,27","valor":378.61,"tipo":"desconto","categoria":"I.N.S.S."}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"55","nome":"ITAMIR ANTONIO DELLALIBERA","cbo":"782510","departamento":"5","filial":"1","cargo":"MOTORISTA DE CARRETA","admissao":"13/07/2026","totalVencimentos":1730.52,"totalDescontos":131.42,"valorLiquido":1599.1,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"139:20","valor":1730.52,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"7,59","valor":131.42,"tipo":"desconto","categoria":"I.N.S.S."}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"22","nome":"JORGE ODAIR LOPES","cbo":"782510","departamento":"5","filial":"1","cargo":"MOTORISTA DE CARRETA","admissao":"08/07/2023","totalVencimentos":2823.48,"totalDescontos":2823.48,"valorLiquido":0.0,"rubricas":[{"codigo":"8","descricao":"HORAS AFAST S/ VENCTO","referencia":"227:20","valor":2823.48,"tipo":"vencimento","categoria":"HORAS AFAST S/ VENCTO"},{"codigo":"988","descricao":"DESCONTO HORAS AFASTADAS","referencia":"227:20","valor":2823.48,"tipo":"desconto","categoria":"DESCONTO HORAS AFASTADAS"}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"13","nome":"JOSIAS FERREIRA DOS SANTOS","cbo":"782510","departamento":"5","filial":"1","cargo":"MOTORISTA DE CARRETA","admissao":"22/08/2023","totalVencimentos":1447.98,"totalDescontos":309.14,"valorLiquido":1138.84,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"88:00","valor":1092.96,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"1997","descricao":"GRATIFICACAO PERFORMANCE ACT","referencia":"175,62","valor":175.62,"tipo":"vencimento","categoria":"GRATIFICACAO PERFORMANCE ACT"},{"codigo":"9754","descricao":"ESTORNO DESC PROV EMPRESTIMO TRAB FERIAS","referencia":"179,40","valor":179.4,"tipo":"vencimento","categoria":"ESTORNO DESC PROV EMPRESTIMO TRAB FERIAS"},{"codigo":"821","descricao":"INSS DIFERENCA FERIAS","referencia":"0,00","valor":38.33,"tipo":"desconto","categoria":"INSS DIFERENCA FERIAS"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"7,50","valor":81.97,"tipo":"desconto","categoria":"I.N.S.S."},{"codigo":"9750","descricao":"DESC. EMP. CRED. TRAB Nº 27892819","referencia":"9,44","valor":9.44,"tipo":"desconto","categoria":"DESC. EMP. CRED. TRAB"},{"codigo":"9751","descricao":"DESC EMP CRED TRAB FE Nº 27892819","referencia":"179,40","valor":179.4,"tipo":"desconto","categoria":"DESC EMP CRED TRAB FE"}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"52","nome":"MARIANO MATEUS DE SOUZA","cbo":"782510","departamento":"5","filial":"1","cargo":"MOTORISTA DE CARRETA","admissao":"19/11/2025","totalVencimentos":7229.4,"totalDescontos":3204.28,"valorLiquido":4025.12,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"219:53","valor":2730.95,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"2","descricao":"HORAS NOTURNAS","referencia":"7:27","valor":92.53,"tipo":"vencimento","categoria":"HORAS NOTURNAS"},{"codigo":"250","descricao":"REFLEXO EXTRAS DSR","referencia":"0,00","valor":161.7,"tipo":"vencimento","categoria":"REFLEXO EXTRAS DSR"},{"codigo":"1769","descricao":"REFLEXO ADICIONAL NOTURNO DSR","referencia":"0,00","valor":3.68,"tipo":"vencimento","categoria":"REFLEXO ADICIONAL NOTURNO DSR"},{"codigo":"1997","descricao":"GRATIFICACAO PERFORMANCE ACT","referencia":"918,10","valor":918.1,"tipo":"vencimento","categoria":"GRATIFICACAO PERFORMANCE ACT"},{"codigo":"150","descricao":"HORAS EXTRAS 50% DIURNAS","referencia":"11:03","valor":212.72,"tipo":"vencimento","categoria":"HORAS EXTRAS 50% DIURNAS"},{"codigo":"200","descricao":"HORAS EXTRAS 100% DIURNA","referencia":"24:28","valor":628.1,"tipo":"vencimento","categoria":"HORAS EXTRAS 100% DIURNA"},{"codigo":"26","descricao":"ADICIONAL NOTURNO","referencia":"7:27","valor":19.12,"tipo":"vencimento","categoria":"ADICIONAL NOTURNO"},{"codigo":"8883","descricao":"DIARIAS","referencia":"2.462,50","valor":2462.5,"tipo":"vencimento","categoria":"DIARIAS"},{"codigo":"8247","descricao":"DESCONTO ANTECIPACAO SALARIAL","referencia":"2.100,00","valor":2100.0,"tipo":"desconto","categoria":"DESCONTO ANTECIPACAO SALARIAL"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"9,11","valor":350.44,"tipo":"desconto","categoria":"I.N.S.S."},{"codigo":"2180","descricao":"DESC.2 EMPREST. CREDIT TRABALHADOR 4","referencia":"78,51","valor":78.51,"tipo":"desconto","categoria":"DESC.2 EMPREST. CREDIT TRABALHADOR 4"},{"codigo":"9750","descricao":"DESC. EMP. CRED. TRAB Nº 6057744977","referencia":"675,33","valor":675.33,"tipo":"desconto","categoria":"DESC. EMP. CRED. TRAB"}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"44","nome":"RAFAEL DE FRANCA RAMOS","cbo":"782510","departamento":"5","filial":"1","cargo":"MOTORISTA DE CARRETA","admissao":"12/11/2024","totalVencimentos":2823.48,"totalDescontos":2823.48,"valorLiquido":0.0,"rubricas":[{"codigo":"8","descricao":"HORAS AFAST S/ VENCTO","referencia":"227:20","valor":2823.48,"tipo":"vencimento","categoria":"HORAS AFAST S/ VENCTO"},{"codigo":"988","descricao":"DESCONTO HORAS AFASTADAS","referencia":"227:20","valor":2823.48,"tipo":"desconto","categoria":"DESCONTO HORAS AFASTADAS"}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"3","nome":"RODRIGO DA ROSA","cbo":"782510","departamento":"5","filial":"1","cargo":"MOTORISTA DE CARRETA","admissao":"02/01/2010","totalVencimentos":10813.27,"totalDescontos":1000.27,"valorLiquido":9813.0,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"217:47","valor":2704.87,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"2","descricao":"HORAS NOTURNAS","referencia":"9:33","valor":118.61,"tipo":"vencimento","categoria":"HORAS NOTURNAS"},{"codigo":"250","descricao":"REFLEXO EXTRAS DSR","referencia":"0,00","valor":227.79,"tipo":"vencimento","categoria":"REFLEXO EXTRAS DSR"},{"codigo":"1769","descricao":"REFLEXO ADICIONAL NOTURNO DSR","referencia":"0,00","valor":4.56,"tipo":"vencimento","categoria":"REFLEXO ADICIONAL NOTURNO DSR"},{"codigo":"1997","descricao":"GRATIFICACAO PERFORMANCE ACT","referencia":"2.291,21","valor":2291.21,"tipo":"vencimento","categoria":"GRATIFICACAO PERFORMANCE ACT"},{"codigo":"1998","descricao":"GRATIFICACAO CONSUMO COMBUSTIVEL ACT","referencia":"1.500,00","valor":1500.0,"tipo":"vencimento","categoria":"GRATIFICACAO CONSUMO COMBUSTIVEL ACT"},{"codigo":"150","descricao":"HORAS EXTRAS 50% DIURNAS","referencia":"29:34","valor":569.25,"tipo":"vencimento","categoria":"HORAS EXTRAS 50% DIURNAS"},{"codigo":"200","descricao":"HORAS EXTRAS 100% DIURNA","referencia":"23:58","valor":615.26,"tipo":"vencimento","categoria":"HORAS EXTRAS 100% DIURNA"},{"codigo":"1730","descricao":"ADICIONAL NOTURNO","referencia":"20,00","valor":23.72,"tipo":"vencimento","categoria":"ADICIONAL NOTURNO"},{"codigo":"8883","descricao":"DIARIAS","referencia":"2.758,00","valor":2758.0,"tipo":"vencimento","categoria":"DIARIAS"},{"codigo":"8247","descricao":"DESCONTO ANTECIPACAO SALARIAL","referencia":"600,00","valor":600.0,"tipo":"desconto","categoria":"DESCONTO ANTECIPACAO SALARIAL"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"9,39","valor":400.27,"tipo":"desconto","categoria":"I.N.S.S."}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"14","nome":"RONALDO ROANI","cbo":"411010","departamento":"3","filial":"1","cargo":"COORDENADOR ADMINSITRATIVO","admissao":"03/12/2007","totalVencimentos":5179.87,"totalDescontos":413.63,"valorLiquido":4766.24,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"227:20","valor":3123.12,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"220","descricao":"AJUDA DE CUSTO","referencia":"807,50","valor":807.5,"tipo":"vencimento","categoria":"AJUDA DE CUSTO"},{"codigo":"202","descricao":"GRATIFICAÇÃO DE FUNÇÃO 40%","referencia":"40,00","valor":1249.25,"tipo":"vencimento","categoria":"GRATIFICAÇÃO DE FUNÇÃO 40%"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"9,46","valor":413.63,"tipo":"desconto","categoria":"I.N.S.S."}]},{"empresa":"M. MALACARNE TRANSPORTE E LOGISTICA LTDA","cnpj":"76.344.936/0001-00","competencia":"2026-07","matricula":"6","nome":"VINICIUS CAMPOS PIRES","cbo":"411005","departamento":"3","filial":"1","cargo":"AUXILIAR ADMINISTRATIVO","admissao":"08/03/2018","totalVencimentos":4271.36,"totalDescontos":883.17,"valorLiquido":3388.19,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"227:20","valor":2271.36,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"938","descricao":"PRÊMIO","referencia":"2.000,00","valor":2000.0,"tipo":"vencimento","categoria":"PRÊMIO"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"7,93","valor":180.1,"tipo":"desconto","categoria":"I.N.S.S."},{"codigo":"2180","descricao":"DESC.2 EMPREST. CREDIT TRABALHADOR 9","referencia":"162,54","valor":162.54,"tipo":"desconto","categoria":"DESC.2 EMPREST. CREDIT TRABALHADOR 9"},{"codigo":"2182","descricao":"DESC 3 EMPREST CREDITO TRABALHADOR 5","referencia":"103,84","valor":103.84,"tipo":"desconto","categoria":"DESC 3 EMPREST CREDITO TRABALHADOR 5"},{"codigo":"9750","descricao":"DESC. EMP. CRED. TRAB Nº 0180706410VCP","referencia":"436,69","valor":436.69,"tipo":"desconto","categoria":"DESC. EMP. CRED. TRAB"}]},{"empresa":"D2A TRANSPORTE E INCORPORADORA LTDA","cnpj":"40.893.087/0001-98","competencia":"2026-07","matricula":"5","nome":"ERI ORLANDO GUILLEN ROMERO","cbo":"782510","departamento":"5","filial":"1","cargo":"MOTORISTA DE CARRETA","admissao":"20/11/2025","totalVencimentos":9830.21,"totalDescontos":453.07,"valorLiquido":9377.14,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"216:08","valor":2684.38,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"2","descricao":"HORAS NOTURNAS","referencia":"11:12","valor":139.1,"tipo":"vencimento","categoria":"HORAS NOTURNAS"},{"codigo":"250","descricao":"REFLEXO EXTRAS DSR","referencia":"0,00","valor":289.73,"tipo":"vencimento","categoria":"REFLEXO EXTRAS DSR"},{"codigo":"1769","descricao":"REFLEXO ADICIONAL NOTURNO DSR","referencia":"0,00","valor":5.53,"tipo":"vencimento","categoria":"REFLEXO ADICIONAL NOTURNO DSR"},{"codigo":"1997","descricao":"GRATIFICACAO PERFORMANCE ACT","referencia":"1.319,64","valor":1319.64,"tipo":"vencimento","categoria":"GRATIFICACAO PERFORMANCE ACT"},{"codigo":"1998","descricao":"GRATIFICACAO CONSUMO COMBUSTIVEL ACT","referencia":"1.000,00","valor":1000.0,"tipo":"vencimento","categoria":"GRATIFICACAO CONSUMO COMBUSTIVEL ACT"},{"codigo":"150","descricao":"HORAS EXTRAS 50% DIURNAS","referencia":"37:54","valor":729.61,"tipo":"vencimento","categoria":"HORAS EXTRAS 50% DIURNAS"},{"codigo":"200","descricao":"HORAS EXTRAS 100% DIURNA","referencia":"30:16","valor":776.97,"tipo":"vencimento","categoria":"HORAS EXTRAS 100% DIURNA"},{"codigo":"26","descricao":"ADICIONAL NOTURNO","referencia":"11:12","valor":28.75,"tipo":"vencimento","categoria":"ADICIONAL NOTURNO"},{"codigo":"8883","descricao":"DIARIAS","referencia":"2.856,50","valor":2856.5,"tipo":"vencimento","categoria":"DIARIAS"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"9,73","valor":453.07,"tipo":"desconto","categoria":"I.N.S.S."}]},{"empresa":"D2A TRANSPORTE E INCORPORADORA LTDA","cnpj":"40.893.087/0001-98","competencia":"2026-07","matricula":"2","nome":"LEANDRO LUCIO KLEE","cbo":"782510","departamento":"5","filial":"1","cargo":"MOTORISTA","admissao":"26/10/2023","totalVencimentos":11073.69,"totalDescontos":669.01,"valorLiquido":10404.68,"rubricas":[{"codigo":"1","descricao":"HORAS NORMAIS","referencia":"194:20","valor":2413.62,"tipo":"vencimento","categoria":"HORAS NORMAIS"},{"codigo":"2","descricao":"HORAS NOTURNAS","referencia":"33:00","valor":409.86,"tipo":"vencimento","categoria":"HORAS NOTURNAS"},{"codigo":"250","descricao":"REFLEXO EXTRAS DSR","referencia":"0,00","valor":258.35,"tipo":"vencimento","categoria":"REFLEXO EXTRAS DSR"},{"codigo":"1769","descricao":"REFLEXO ADICIONAL NOTURNO DSR","referencia":"0,00","valor":15.76,"tipo":"vencimento","categoria":"REFLEXO ADICIONAL NOTURNO DSR"},{"codigo":"1997","descricao":"GRATIFICACAO PERFORMANCE ACT","referencia":"2.500,00","valor":2500.0,"tipo":"vencimento","categoria":"GRATIFICACAO PERFORMANCE ACT"},{"codigo":"1998","descricao":"GRATIFICACAO CONSUMO COMBUSTIVEL ACT","referencia":"1.292,73","valor":1292.73,"tipo":"vencimento","categoria":"GRATIFICACAO CONSUMO COMBUSTIVEL ACT"},{"codigo":"150","descricao":"HORAS EXTRAS 50% DIURNAS","referencia":"55:27","valor":1067.47,"tipo":"vencimento","categoria":"HORAS EXTRAS 50% DIURNAS"},{"codigo":"200","descricao":"HORAS EXTRAS 100% DIURNA","referencia":"10:45","valor":275.93,"tipo":"vencimento","categoria":"HORAS EXTRAS 100% DIURNA"},{"codigo":"1730","descricao":"ADICIONAL NOTURNO","referencia":"20,00","valor":81.97,"tipo":"vencimento","categoria":"ADICIONAL NOTURNO"},{"codigo":"8883","descricao":"DIARIAS","referencia":"2.758,00","valor":2758.0,"tipo":"vencimento","categoria":"DIARIAS"},{"codigo":"8247","descricao":"DESCONTO ANTECIPACAO SALARIAL","referencia":"234,30","valor":234.3,"tipo":"desconto","categoria":"DESCONTO ANTECIPACAO SALARIAL"},{"codigo":"998","descricao":"I.N.S.S.","referencia":"9,61","valor":434.71,"tipo":"desconto","categoria":"I.N.S.S."}]}];
 
+
+// ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// AGENDA / LEMBRETES
+// ─ Dados persistidos no localStorage (chave: mm_agenda_v1)
+// ─ Pré-carregado com registros importados do Google Drive
+// ═══════════════════════════════════════════════════════════
+const AG_KEY = 'mm_agenda_v1';
+const AG_CAT_ICON = {
+  treinamento:'🎓', documentos:'📄', manutencao:'🔧',
+  administrativo:'🏢', rh:'👥', financeiro:'💰', outro:'📌'
+};
+const AG_CAT_LABEL = {
+  treinamento:'Treinamento', documentos:'Documentos', manutencao:'Manutenção',
+  administrativo:'Administrativo', rh:'RH', financeiro:'Financeiro', outro:'Outro'
+};
+
+// ── Seed inicial (dados importados do Drive) ──────────────
+const AG_SEED = [
+  {
+    id:'ag_seed_001', titulo:'Direção Defensiva — Ernani Paulo Hepp',
+    data:'2026-09-01', hora:'18:30', dataFim:'21:50',
+    categoria:'treinamento', prioridade:'alta',
+    responsavel:'Ernani Paulo Hepp',
+    descricao:'01/set 18:30 às 21:50 — DIREÇÃO DEFENSIVA\nVerificar presença e certificado ao término.',
+    concluido:false, criadoEm: Date.now()
+  },
+  {
+    id:'ag_seed_002', titulo:'Percepção de Risco — Ernani Paulo Hepp',
+    data:'2026-09-02', hora:'18:00', dataFim:'21:20',
+    categoria:'treinamento', prioridade:'alta',
+    responsavel:'Ernani Paulo Hepp',
+    descricao:'02/set 18:00 às 21:20 — PERCEPÇÃO DE RISCO.',
+    concluido:false, criadoEm: Date.now()
+  },
+  {
+    id:'ag_seed_003', titulo:'Prevenção de Tombamentos — Ernani Paulo Hepp',
+    data:'2026-09-04', hora:'18:00', dataFim:'21:20',
+    categoria:'treinamento', prioridade:'alta',
+    responsavel:'Ernani Paulo Hepp',
+    descricao:'04/set 18:00 às 21:20 — PREVENÇÃO DE TOMBAMENTOS.',
+    concluido:false, criadoEm: Date.now()
+  },
+  {
+    id:'ag_seed_004', titulo:'Simulador — Anderson Gabriel Pandolfo',
+    data:'2026-08-28', hora:'08:00', dataFim:'17:00',
+    categoria:'treinamento', prioridade:'normal',
+    responsavel:'Anderson Gabriel Pandolfo',
+    descricao:'Cadastro DeMarco e Portal.\nConfirmar presença no simulador — 28/08 08:00 às 17:00.\n⚠ Verificar pendência de cadastro antes do evento.',
+    concluido:false, criadoEm: Date.now()
+  },
+  {
+    id:'ag_seed_005', titulo:'Simulador Presencial — Dirceu Lopes Vieira',
+    data:'2026-08-28', hora:'08:00', dataFim:'17:00',
+    categoria:'treinamento', prioridade:'normal',
+    responsavel:'Dirceu Lopes Vieira',
+    descricao:'PRESENCIAL — Simulador 28/08 08:00 às 17:00.\n⚠ Verificar com Diomar sobre participação.',
+    concluido:false, criadoEm: Date.now()
+  },
+  {
+    id:'ag_seed_006', titulo:'Assinar Demissão — Itamir Antonio Dellalibera',
+    data:'', hora:'', dataFim:'',
+    categoria:'rh', prioridade:'alta',
+    responsavel:'RH / Diomar',
+    descricao:'FALTA ASSINAR DEMISSÃO — Chamar novamente para assinatura dos documentos rescisórios.',
+    concluido:false, criadoEm: Date.now()
+  }
+];
+
+function agLoad() {
+  try {
+    const salvo = JSON.parse(localStorage.getItem(AG_KEY) || 'null');
+    if (salvo && Array.isArray(salvo)) return salvo;
+  } catch(e) {}
+  agSave(AG_SEED);
+  return AG_SEED.map(r => ({...r}));
+}
+function agSave(arr) {
+  try { localStorage.setItem(AG_KEY, JSON.stringify(arr)); } catch(e) { showToast('⚠ Erro ao salvar no localStorage'); }
+}
+
+// ── Importar linha CSV do Sheets → objeto lembrete ────────
+function agParseCsvRow(row, findCol) {
+  // Colunas aceitas (case-insensitive, com variações em pt/en):
+  const get = (...keys) => { for (const k of keys) { const v = findCol(row, k); if (v !== undefined && String(v).trim()) return String(v).trim(); } return ''; };
+  const titulo     = get('titulo','title','assunto','subject','lembrete');
+  if (!titulo) return null; // linha em branco ou só cabeçalho
+  const data       = get('data','date','prazo','vencimento','deadline');
+  const hora       = get('hora','horario','time','hora_inicio');
+  const categoria  = get('categoria','category','tipo','type');
+  const prioridade = get('prioridade','priority');
+  const responsavel= get('responsavel','responsável','resp','owner','pessoa');
+  const descricao  = get('descricao','descrição','description','obs','observacao','observação','detalhe','notas','notes');
+  const recorrencia= get('recorrencia','recorrência','recurrence','repetir');
+  const concluidoRaw = get('concluido','concluído','done','status','finalizado');
+  const concluido  = /^(sim|yes|true|1|x|✓|done|conclu)$/i.test(concluidoRaw);
+
+  // Normaliza data DD/MM/AAAA → AAAA-MM-DD
+  let dataNorm = data;
+  const dmatch = data.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (dmatch) dataNorm = `${dmatch[3]}-${dmatch[2].padStart(2,'0')}-${dmatch[1].padStart(2,'0')}`;
+
+  // Normaliza categoria para chave interna
+  const catMap = { treinamento:['treinamento','training','curso','capacitacao','capacitação'],
+    documentos:['documento','doc','cert','certif','licença','licenca'],
+    manutencao:['manutencao','manutenção','maintenance','revisao','revisão'],
+    administrativo:['admin','administrat'],
+    rh:['rh','recursos humanos','hr','pessoal'],
+    financeiro:['financeiro','finance','pagamento','payment','conta'],
+    outro:['outro','other','geral'] };
+  let catNorm = 'outro';
+  const catLow = categoria.toLowerCase();
+  for (const [key, aliases] of Object.entries(catMap)) {
+    if (aliases.some(a => catLow.includes(a))) { catNorm = key; break; }
+  }
+
+  // Normaliza prioridade
+  let priNorm = 'normal';
+  const priLow = prioridade.toLowerCase();
+  if (/alta|high|urgent|1/.test(priLow)) priNorm = 'alta';
+  else if (/baixa|low|3/.test(priLow)) priNorm = 'baixa';
+
+  return {
+    id: 'ag_sheets_' + titulo.slice(0,12).replace(/\s/g,'_') + '_' + Math.random().toString(36).slice(2,6),
+    titulo, data: dataNorm, hora, dataFim:'',
+    categoria: catNorm, prioridade: priNorm,
+    responsavel, descricao, recorrencia: recorrencia||'nenhuma',
+    concluido, criadoEm: Date.now(), _fromSheets: true
+  };
+}
+
+// ── Sincronizar com o Sheets ──────────────────────────────
+// Estratégia: mantém lembretes criados/editados manualmente no localStorage
+// e SUBSTITUI apenas os que vieram do Sheets (marcados com _fromSheets).
+// Assim edições manuais não são apagadas a cada sync.
+async function agSincronizarSheets(silencioso = false) {
+  if (!URL_AGENDA) return;
+  const statusEl = document.getElementById('agSyncStatus');
+  if (statusEl) statusEl.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Sincronizando com planilha...';
+
+  try {
+    const rows = await fetchCSV(URL_AGENDA);
+    if (!rows || !rows.length) throw new Error('Planilha vazia ou sem acesso');
+
+    // findCol helper igual ao padrão do sistema
+    const findCol = (row, key) => {
+      const keyLow = key.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      for (const [k, v] of Object.entries(row)) {
+        const kLow = String(k).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+        if (kLow.includes(keyLow) || keyLow.includes(kLow)) return v;
+      }
+      return undefined;
+    };
+
+    const importados = rows.map(r => agParseCsvRow(r, findCol)).filter(Boolean);
+
+    // Remove os que vieram do Sheets antes (serão substituídos) mas mantém manuais
+    const manuais = agLembretes.filter(r => !r._fromSheets);
+    agLembretes = [...importados, ...manuais];
+    agSave(agLembretes);
+    agAtualizarKPIs();
+    agFiltrar();
+
+    const msg = `✓ ${importados.length} lembrete(s) sincronizado(s) da planilha`;
+    if (statusEl) statusEl.innerHTML = `<span style="color:var(--success)">${msg}</span>`;
+    if (!silencioso) showToast(msg);
+    setTimeout(() => { if (statusEl) statusEl.innerHTML = ''; }, 5000);
+  } catch(e) {
+    const msg = `⚠ Erro ao ler planilha: ${e.message}`;
+    if (statusEl) statusEl.innerHTML = `<span style="color:var(--danger)">${msg}</span>`;
+    if (!silencioso) showToast(msg);
+  }
+}
+
+let agLembretes = agLoad();
+let agFiltrados = [];
+let agModalAberto = false;
+
+// ── Utilitários ──────────────────────────────────────────
+function agId() { return 'ag_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
+
+function agStatus(r) {
+  if (r.concluido) return 'concluido';
+  if (!r.data) return 'pendente';
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const d = new Date(r.data + 'T00:00:00');
+  if (d < hoje) return 'vencido';
+  if (d.getTime() === hoje.getTime()) return 'hoje';
+  return 'pendente';
+}
+
+function agDiasRestantes(r) {
+  if (!r.data) return null;
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const d = new Date(r.data + 'T00:00:00');
+  return Math.ceil((d - hoje) / 86400000);
+}
+
+function agFmtData(r) {
+  if (!r.data) return '—';
+  const [y, m, d] = r.data.split('-');
+  let s = `${d}/${m}/${y}`;
+  if (r.hora) s += ` ${r.hora}`;
+  if (r.dataFim) s += ` às ${r.dataFim}`;
+  return s;
+}
+
+// ── KPIs ──────────────────────────────────────────────────
+function agAtualizarKPIs() {
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const em7 = new Date(hoje); em7.setDate(hoje.getDate() + 7);
+  let vencidos=0, hojeCount=0, proximos=0, concluidos=0;
+  agLembretes.forEach(r => {
+    const st = agStatus(r);
+    if (st === 'concluido') { concluidos++; return; }
+    if (st === 'vencido')   { vencidos++; return; }
+    if (st === 'hoje')      { hojeCount++; return; }
+    if (r.data) {
+      const d = new Date(r.data + 'T00:00:00');
+      if (d > hoje && d <= em7) proximos++;
+    }
+  });
+  document.getElementById('ag-vencidos').textContent  = vencidos;
+  document.getElementById('ag-hoje').textContent      = hojeCount;
+  document.getElementById('ag-proximos').textContent  = proximos;
+  document.getElementById('ag-concluidos').textContent = concluidos;
+  document.getElementById('ag-total').textContent     = agLembretes.length;
+
+  // Badge de urgência no botão da sidebar
+  const sideBtn = document.querySelector('[data-tab="tabAgenda"]');
+  const urgentes = vencidos + hojeCount;
+  if (sideBtn) {
+    const badge = sideBtn.querySelector('.ag-sidebar-badge') || (() => {
+      const b = document.createElement('span');
+      b.className = 'ag-sidebar-badge';
+      b.style.cssText = 'background:var(--danger);color:#fff;border-radius:20px;font-size:.65rem;font-weight:700;padding:.1rem .45rem;margin-left:.4rem;';
+      sideBtn.appendChild(b);
+      return b;
+    })();
+    badge.textContent = urgentes > 0 ? urgentes : '';
+    badge.style.display = urgentes > 0 ? 'inline' : 'none';
+  }
+}
+
+// ── Filtrar ───────────────────────────────────────────────
+function agFiltrar() {
+  const busca   = (document.getElementById('agBusca')?.value||'').toLowerCase();
+  const cat     = document.getElementById('agFiltroCategoria')?.value||'';
+  const st      = document.getElementById('agFiltroStatus')?.value||'';
+  const resp    = (document.getElementById('agFiltroResponsavel')?.value||'').toLowerCase();
+
+  agFiltrados = agLembretes.filter(r => {
+    if (busca && !`${r.titulo}${r.descricao}${r.responsavel}${r.categoria}`.toLowerCase().includes(busca)) return false;
+    if (cat && r.categoria !== cat) return false;
+    if (resp && !(r.responsavel||'').toLowerCase().includes(resp)) return false;
+    if (st) {
+      const s = agStatus(r);
+      if (st === 'pendente'  && !['pendente','hoje'].includes(s)) return false;
+      if (st === 'concluido' && s !== 'concluido') return false;
+      if (st === 'vencido'   && s !== 'vencido')   return false;
+    }
+    return true;
+  });
+
+  // Ordenação: prioridade alta > hoje > vencidos > pendentes > concluídos
+  const ord = { alta:0, normal:1, baixa:2 };
+  const stOrd = { vencido:0, hoje:1, pendente:2, concluido:3 };
+  agFiltrados.sort((a,b) => {
+    const sa = agStatus(a), sb = agStatus(b);
+    if (stOrd[sa] !== stOrd[sb]) return stOrd[sa] - stOrd[sb];
+    if ((ord[a.prioridade]||1) !== (ord[b.prioridade]||1)) return (ord[a.prioridade]||1) - (ord[b.prioridade]||1);
+    if (a.data && b.data) return a.data.localeCompare(b.data);
+    return 0;
+  });
+
+  agRenderCards();
+}
+
+function agLimparFiltros() {
+  ['agBusca','agFiltroResponsavel'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  ['agFiltroCategoria','agFiltroStatus'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  agFiltrar();
+}
+
+// ── Render Cards ──────────────────────────────────────────
+function agRenderCards() {
+  const grid = document.getElementById('agGrid');
+  const vazio = document.getElementById('agVazio');
+  if (!grid) return;
+
+  if (!agFiltrados.length) {
+    grid.innerHTML = '';
+    if (vazio) vazio.style.display = 'block';
+    return;
+  }
+  if (vazio) vazio.style.display = 'none';
+
+  grid.innerHTML = agFiltrados.map(r => {
+    const st   = agStatus(r);
+    const dias = agDiasRestantes(r);
+    const catIcon  = AG_CAT_ICON[r.categoria] || '📌';
+    const catLabel = AG_CAT_LABEL[r.categoria] || r.categoria;
+    const catCls   = `ag-badge-${r.categoria||'outro'}`;
+
+    // Badge de status
+    let stBadge = '';
+    if (st === 'vencido')   stBadge = `<span class="ag-badge" style="background:rgba(124,58,237,.12);color:#5b21b6">⚠ Vencido${dias !== null ? ' ('+Math.abs(dias)+'d)' : ''}</span>`;
+    else if (st === 'hoje') stBadge = `<span class="ag-badge" style="background:rgba(239,68,68,.12);color:var(--danger)">🔔 Hoje</span>`;
+    else if (st === 'concluido') stBadge = `<span class="ag-badge" style="background:rgba(16,185,129,.12);color:var(--success)">✓ Concluído</span>`;
+    else if (dias !== null && dias <= 7) stBadge = `<span class="ag-badge" style="background:rgba(245,158,11,.12);color:#92400e">⏳ ${dias}d restante${dias!==1?'s':''}</span>`;
+
+    const priCls = { alta:'ag-alta', normal:'ag-normal', baixa:'ag-baixa' }[r.prioridade] || 'ag-normal';
+    const concCls = st === 'concluido' ? 'ag-concluido' : '';
+    const vencCls = st === 'vencido' ? 'ag-vencido' : '';
+
+    return `<div class="ag-card ${priCls} ${concCls} ${vencCls}" id="agcard_${r.id}">
+      <button class="ag-check ${r.concluido?'checked':''}" onclick="agToggleConcluido('${r.id}')" title="${r.concluido?'Marcar como pendente':'Marcar como concluído'}" aria-label="Marcar concluído">
+        ${r.concluido ? '<i class="fas fa-check"></i>' : ''}
+      </button>
+      <div class="ag-card-titulo">${escapeHTML(r.titulo)}</div>
+      <div class="ag-card-meta">
+        <span><i class="fas fa-calendar"></i> ${agFmtData(r)}</span>
+        ${r.responsavel ? `<span><i class="fas fa-user"></i> ${escapeHTML(r.responsavel)}</span>` : ''}
+        <span class="ag-badge ${catCls}">${catIcon} ${catLabel}</span>
+        ${r.prioridade === 'alta' ? '<span class="ag-badge" style="background:rgba(239,68,68,.1);color:var(--danger)">🔴 Alta</span>' : ''}
+        ${r.prioridade === 'baixa' ? '<span class="ag-badge" style="background:rgba(59,130,246,.1);color:#1d4ed8">🔵 Baixa</span>' : ''}
+        ${stBadge}
+        ${r.recorrencia && r.recorrencia !== 'nenhuma' ? `<span class="ag-badge" style="background:rgba(99,102,241,.1);color:#3730a3">🔁 ${r.recorrencia}</span>` : ''}
+      </div>
+      ${r.descricao ? `<div class="ag-card-desc">${escapeHTML(r.descricao)}</div>` : ''}
+      <div class="ag-card-actions">
+        <button class="btn btn-sm btn-gray" style="padding:.2rem .55rem;font-size:.75rem" onclick="agEditar('${r.id}')" aria-label="Editar lembrete"><i class="fas fa-pen"></i> Editar</button>
+        <button class="btn btn-sm btn-gray" style="padding:.2rem .55rem;font-size:.75rem;color:var(--danger)" onclick="agExcluir('${r.id}')" aria-label="Excluir lembrete"><i class="fas fa-trash"></i></button>
+        <button class="btn btn-sm btn-gray" style="padding:.2rem .55rem;font-size:.75rem" onclick="agDuplicar('${r.id}')" aria-label="Duplicar lembrete" title="Duplicar"><i class="fas fa-copy"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── CRUD ─────────────────────────────────────────────────
+function agAbrirModal(id) {
+  agModalAberto = true;
+  const modal = document.getElementById('agModal');
+  document.getElementById('agEditId').value = id || '';
+  document.getElementById('agModalTitulo').innerHTML = id
+    ? '<i class="fas fa-pen" style="color:var(--accent)"></i> Editar Lembrete'
+    : '<i class="fas fa-calendar-plus" style="color:var(--accent)"></i> Novo Lembrete';
+
+  if (id) {
+    const r = agLembretes.find(x => x.id === id);
+    if (r) {
+      document.getElementById('agNovTitulo').value       = r.titulo || '';
+      document.getElementById('agNovData').value         = r.data || '';
+      document.getElementById('agNovHora').value         = r.hora || '';
+      document.getElementById('agNovCategoria').value    = r.categoria || 'outro';
+      document.getElementById('agNovPrioridade').value   = r.prioridade || 'normal';
+      document.getElementById('agNovResponsavel').value  = r.responsavel || '';
+      document.getElementById('agNovDescricao').value    = r.descricao || '';
+      document.getElementById('agNovRecorrencia').value  = r.recorrencia || 'nenhuma';
+    }
+  } else {
+    ['agNovTitulo','agNovData','agNovHora','agNovResponsavel','agNovDescricao'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    document.getElementById('agNovCategoria').value  = 'outro';
+    document.getElementById('agNovPrioridade').value = 'normal';
+    document.getElementById('agNovRecorrencia').value = 'nenhuma';
+  }
+  modal.classList.add('open');
+  setTimeout(() => document.getElementById('agNovTitulo').focus(), 100);
+}
+
+function agFecharModal() {
+  document.getElementById('agModal').classList.remove('open');
+  agModalAberto = false;
+}
+
+function agSalvar() {
+  const titulo = document.getElementById('agNovTitulo').value.trim();
+  if (!titulo) { showToast('⚠ Informe um título para o lembrete'); return; }
+
+  const editId = document.getElementById('agEditId').value;
+  const obj = {
+    id: editId || agId(),
+    titulo,
+    data:        document.getElementById('agNovData').value,
+    hora:        document.getElementById('agNovHora').value,
+    dataFim:     '',
+    categoria:   document.getElementById('agNovCategoria').value,
+    prioridade:  document.getElementById('agNovPrioridade').value,
+    responsavel: document.getElementById('agNovResponsavel').value.trim(),
+    descricao:   document.getElementById('agNovDescricao').value.trim(),
+    recorrencia: document.getElementById('agNovRecorrencia').value,
+    concluido:   editId ? (agLembretes.find(x=>x.id===editId)?.concluido || false) : false,
+    criadoEm:    editId ? (agLembretes.find(x=>x.id===editId)?.criadoEm || Date.now()) : Date.now(),
+    atualizadoEm: Date.now()
+  };
+
+  if (editId) {
+    const idx = agLembretes.findIndex(x => x.id === editId);
+    if (idx >= 0) agLembretes[idx] = obj; else agLembretes.push(obj);
+  } else {
+    agLembretes.unshift(obj);
+  }
+
+  agSave(agLembretes);
+  agFecharModal();
+  agAtualizarKPIs();
+  agFiltrar();
+  showToast(editId ? '✓ Lembrete atualizado' : '✓ Lembrete criado');
+}
+
+function agToggleConcluido(id) {
+  const r = agLembretes.find(x => x.id === id);
+  if (!r) return;
+  r.concluido = !r.concluido;
+  r.atualizadoEm = Date.now();
+  agSave(agLembretes);
+  agAtualizarKPIs();
+  agFiltrar();
+  showToast(r.concluido ? '✓ Marcado como concluído' : 'Reaberto');
+}
+
+function agEditar(id) { agAbrirModal(id); }
+
+function agExcluir(id) {
+  const r = agLembretes.find(x => x.id === id);
+  if (!r) return;
+  if (!confirm(`Excluir "${r.titulo}"? Esta ação não pode ser desfeita.`)) return;
+  agLembretes = agLembretes.filter(x => x.id !== id);
+  agSave(agLembretes);
+  agAtualizarKPIs();
+  agFiltrar();
+  showToast('🗑 Lembrete excluído');
+}
+
+function agDuplicar(id) {
+  const r = agLembretes.find(x => x.id === id);
+  if (!r) return;
+  const novo = {...r, id: agId(), titulo: r.titulo + ' (cópia)', concluido: false, criadoEm: Date.now(), atualizadoEm: Date.now()};
+  agLembretes.unshift(novo);
+  agSave(agLembretes);
+  agFiltrar();
+  showToast('📋 Lembrete duplicado');
+}
+
+function agExportarCSV() {
+  const cols = ['titulo','data','hora','categoria','prioridade','responsavel','descricao','recorrencia','concluido'];
+  const labels = ['Título','Data','Hora','Categoria','Prioridade','Responsável','Descrição','Recorrência','Concluído'];
+  exportCSV(agFiltrados.map(r => {
+    const o = {};
+    cols.forEach((c,i) => { o[labels[i]] = c === 'concluido' ? (r[c]?'Sim':'Não') : (r[c]||''); });
+    return o;
+  }), 'agenda_lembretes');
+}
+
+// ── Init ──────────────────────────────────────────────────
+function agendaInit() {
+  agLembretes = agLoad();
+  agAtualizarKPIs();
+  agFiltrar();
+  // Auto-sincroniza silenciosamente se URL configurada
+  if (URL_AGENDA) agSincronizarSheets(true);
+}
+
+// Fecha modal com Esc
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && agModalAberto) agFecharModal();
+});
 
 // ═══════════════════════════════════════════════════════════
 // JORNADA E COMPENSAÇÃO — folha de pagamento / holerites
