@@ -1671,11 +1671,15 @@ async function enviarAoSite(){
 
   try {
     const rows = buildRows();
+    // Apps Script bloqueia preflight CORS quando Content-Type é application/json.
+    // Solução: enviar como text/plain — o GAS recebe via e.postData.contents e
+    // responde com CORS headers corretos sem preflight.
     const resp = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({ aba: "Plan1", rows })
     });
+    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const result = await resp.json();
     if(result.status === "ok"){
       toast(`✅ ${rows.length} linha(s) enviada(s) ao site com sucesso!`, 4000);
