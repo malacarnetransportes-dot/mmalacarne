@@ -678,6 +678,39 @@ function parseDanfeFuelPage(pageText){
   if(vProd!=null && vNota!=null) valor = Math.min(vProd, vNota);
   else valor = vProd!=null ? vProd : vNota;
 
+  // Nome do posto emitente: aparece no bloco do emitente do DANFE (Linx AutoSystem).
+  // Padrões tentados em ordem:
+  // 1) "RECEBEMOS DE <NOME> OS PRODUTOS..." — linha de rodapé/canhoto
+  // 2) Linha antes do CNPJ do emitente: "48.xxx.xxx/0001-xx" → pega a linha imediatamente anterior
+  // 3) Linha que contém palavras-chave típicas de posto (POSTO, AUTO POSTO, DISTRIBUIDORA, COMBUSTIVEL)
+  let posto = "";
+  const receberMatch = pageText.match(/RECEBEMOS\s+DE\s+(.+?)\s+OS\s+PRODUTOS/i);
+  if(receberMatch){
+    posto = receberMatch[1].trim().toUpperCase();
+  } else {
+    // Tenta pegar a linha imediatamente antes do CNPJ do emitente
+    const lines = pageText.split(/\n/);
+    for(let i=1; i<lines.length; i++){
+      if(/\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/.test(lines[i]) && lines[i-1].trim().length > 4){
+        const candidate = lines[i-1].trim().toUpperCase();
+        // Filtra linhas que são claramente endereço ou dado do destinatário
+        if(!/^(RUA|ROD|AV|ESTRADA|CEP|FONE|DATA|HORA|CNPJ|CPF|M\s+MALACARNE)/i.test(candidate)){
+          posto = candidate;
+          break;
+        }
+      }
+    }
+    // Fallback: qualquer linha com palavras-chave de posto
+    if(!posto){
+      for(const l of lines){
+        if(/\b(POSTO|AUTO\s*POSTO|DISTRIBUIDORA|COMBUSTIVEIS?|COMBUSTÍVEL)\b/i.test(l) && l.trim().length > 6){
+          posto = l.trim().toUpperCase();
+          break;
+        }
+      }
+    }
+  }
+
   if(!placa && !dataMatch) return 0;
 
   const driver = placa ? findDriverByPlate(placa) : null;
@@ -692,7 +725,8 @@ function parseDanfeFuelPage(pageText){
     quantidade: quantidade,
     valor: valor,
     nf: nf,
-    temKm: true
+    temKm: true,
+    posto: posto
   })];
   stop._driverId = driver ? driver.id : null;
   stops.push(stop);
@@ -1671,15 +1705,11 @@ async function enviarAoSite(){
 
   try {
     const rows = buildRows();
-    // Apps Script bloqueia preflight CORS quando Content-Type é application/json.
-    // Solução: enviar como text/plain — o GAS recebe via e.postData.contents e
-    // responde com CORS headers corretos sem preflight.
     const resp = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ aba: "Plan1", rows })
     });
-    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const result = await resp.json();
     if(result.status === "ok"){
       toast(`✅ ${rows.length} linha(s) enviada(s) ao site com sucesso!`, 4000);
