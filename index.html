@@ -1196,7 +1196,9 @@ footer a{color:var(--accent);text-decoration:none;}
 
           <div id="fatSubConsumo" class="fat-subpane">
             <div class="dash-card" style="background:linear-gradient(135deg,rgba(212,175,55,.08),rgba(212,175,55,.02));border:1px solid rgba(212,175,55,.25)">
-              <div class="dash-card-title"><i class="fas fa-gas-pump"></i> Controle de Consumo por Litro</div>
+              <div class="dash-card-title"><i class="fas fa-gas-pump"></i> Controle de Consumo por Litro
+                <button id="btnAtualizarConsumo" class="btn btn-accent btn-sm" style="margin-left:1rem" onclick="loadAbastecimentos()"><i class="fas fa-sync-alt"></i> Atualizar</button>
+              </div>
               <div style="font-size:.78rem;color:var(--text-lt)">Métricas calculadas a partir dos lançamentos de Faturamento (campos <b>Média CV</b>, <b>Média CR</b>, <b>KM</b> e <b>Litros</b>), agrupadas por placa. Use os filtros abaixo (Motorista, Placa Cavalo, Placa Carreta, Período, Mês e Ano) para refinar os dados desta sub-aba.</div>
             </div>
 
@@ -6007,7 +6009,7 @@ document.querySelectorAll('.fat-subtab-btn[data-fatsub]').forEach(btn => {
     document.querySelectorAll('.fat-subpane').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(btn.dataset.fatsub).classList.add('active');
-    if (btn.dataset.fatsub === 'fatSubConsumo') setTimeout(() => { fatcPopularFiltros(); fatcApplyFilters(); }, 50);
+    if (btn.dataset.fatsub === 'fatSubConsumo') setTimeout(() => { loadAbastecimentos(); }, 50);
   });
 });
 
@@ -7031,12 +7033,125 @@ function fatResetFilters() {
 // ═══════════════════════════════════════════════════════════
 let fatcFiltered = []; // registros após os filtros desta sub-aba
 
+// ═══════════════════════════════════════════════════════════
+// ABASTECIMENTOS — carga direta da planilha do GIRA
+// ═══════════════════════════════════════════════════════════
+const ABASTECIMENTOS_SHEET_ID = "1Wg7qazWTfiLGJ44iGXV6NAXKjqhG9coa";
+const ABASTECIMENTOS_ABA      = "Plan1";
+let   abastAllRecords         = [];  // registros vindos da planilha ABASTECIMENTOS
+
+async function loadAbastecimentos() {
+  const btn = document.getElementById('btnAtualizarConsumo');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...'; }
+
+  const proxies = [
+    `https://docs.google.com/spreadsheets/d/${ABASTECIMENTOS_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(ABASTECIMENTOS_ABA)}`,
+    `https://corsproxy.io/?${encodeURIComponent(`https://docs.google.com/spreadsheets/d/${ABASTECIMENTOS_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(ABASTECIMENTOS_ABA)}`)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://docs.google.com/spreadsheets/d/${ABASTECIMENTOS_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(ABASTECIMENTOS_ABA)}`)}`
+  ];
+
+  let text = null;
+  for (const url of proxies) {
+    try {
+      const r = await fetch(url, { cache: 'no-store' });
+      if (r.ok) { text = await r.text(); break; }
+    } catch(e) { /* tenta próximo proxy */ }
+  }
+
+  if (!text) {
+    showToast('Erro ao carregar planilha ABASTECIMENTOS', 5000);
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar'; }
+    return;
+  }
+
+  // Parse CSV (semicolon ou comma)
+  const linhas = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if (linhas.length < 2) {
+    abastAllRecords = [];
+    fatcPopularFiltros(); fatcApplyFilters();
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar'; }
+    return;
+  }
+
+  const sep    = linhas[0].includes(';') ? ';' : ',';
+  const header = linhas[0].split(sep).map(h => h.replace(/^"|"$/g,'').trim().toUpperCase());
+
+  const idx = k => header.indexOf(k);
+  const iData = idx('DATA'), iHora = idx('HORA'), iPlaca = idx('PLACA');
+  const iKm = idx('KM'), iQtd = idx('QUANTIDADE'), iOrig = idx('ORIGINAL');
+  const iComb = idx('COMBUSTIVEL'), iCupom = idx('CUPOM'), iNf = idx('NF');
+  const iPosto = idx('POSTO'), iNome = idx('NOME_MOTORISTA'), iCpf = idx('CPF_MOTORISTA');
+
+  abastAllRecords = [];
+  for (let i = 1; i < linhas.length; i++) {
+    const cols = linhas[i].split(sep).map(c => c.replace(/^"|"$/g,'').trim());
+    if (!cols[iPlaca]) continue;
+
+    const dataStr = cols[iData] || '';
+    let dataObj = null;
+    if (dataStr) {
+      const [d,m,y] = dataStr.split('/');
+      if (d && m && y) dataObj = new Date(`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`);
+    }
+
+    const parseN = v => {
+      if (!v) return 0;
+      const s = String(v).replace(/\./g,'').replace(',','.');
+      return parseFloat(s) || 0;
+    };
+
+    abastAllRecords.push({
+      // campos de compatibilidade com fatAllRecords
+      data:         dataObj,
+      dataStr:      dataStr,
+      ano:          dataObj ? dataObj.getFullYear() : null,
+      mes:          dataObj ? dataObj.getMonth() + 1 : null,
+      motorista:    cols[iNome] || '',
+      placaCavalo:  cols[iPlaca] || '',
+      placaCarreta: '',
+      km:           parseN(cols[iKm]),
+      litrosCavalo: parseN(cols[iQtd]),
+      litrosCarreta:0,
+      mediaCavalo:  0,   // calculado abaixo por placa
+      mediaCarreta: 0,
+      frete: 0, comissao: 0, diaria: 0, bonus: 0,
+      valesManobra: 0, empConsignado: 0, depFolha: 0, valorReceber: 0,
+      // campos específicos de abastecimento
+      posto:        cols[iPosto] || '',
+      combustivel:  cols[iComb]  || '',
+      cupom:        cols[iCupom] || '',
+      nf:           cols[iNf]    || '',
+      valorOriginal:parseN(cols[iOrig]),
+      cpf:          cols[iCpf]   || '',
+      _fonte:       'abastecimento'
+    });
+  }
+
+  // Calcula mediaCavalo (km/L) por abastecimento quando km e litros disponíveis
+  abastAllRecords.forEach(r => {
+    if (r.km > 0 && r.litrosCavalo > 0) r.mediaCavalo = r.km / r.litrosCavalo;
+  });
+
+  fatcPopularFiltros();
+  fatcApplyFilters();
+  const n = abastAllRecords.length;
+  showToast(`✅ ${n} abastecimento(s) carregado(s)`, 3000);
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar'; }
+}
+
+function fatcGetRecords() {
+  // Usa exclusivamente a planilha ABASTECIMENTOS quando disponível,
+  // complementa com fatAllRecords para manter compatibilidade
+  return abastAllRecords.length ? abastAllRecords : (fatAllRecords || []);
+}
+
 function fatcPopularFiltros() {
-  const motoristas = [...new Set((fatAllRecords||[]).map(r => r.motorista).filter(Boolean))].sort();
-  const anos       = [...new Set((fatAllRecords||[]).map(r => r.ano).filter(Boolean))].sort((a,b) => b-a);
-  const cavalos    = [...new Set((fatAllRecords||[]).map(r => r.placaCavalo).filter(Boolean))].sort();
-  const carretas   = [...new Set((fatAllRecords||[]).map(r => r.placaCarreta).filter(Boolean))].sort();
-  const postos     = [...new Set((fatAllRecords||[]).map(r => r.posto).filter(Boolean))].sort();
+  const recs     = fatcGetRecords();
+  const motoristas = [...new Set(recs.map(r => r.motorista).filter(Boolean))].sort();
+  const anos       = [...new Set(recs.map(r => r.ano).filter(Boolean))].sort((a,b) => b-a);
+  const cavalos    = [...new Set(recs.map(r => r.placaCavalo).filter(Boolean))].sort();
+  const carretas   = [...new Set(recs.map(r => r.placaCarreta).filter(Boolean))].sort();
+  const postos     = [...new Set(recs.map(r => r.posto).filter(Boolean))].sort();
 
   const selMot = document.getElementById('fatcMotorista');
   if (selMot) {
@@ -7100,7 +7215,7 @@ function fatcApplyFilters() {
   const dtIni = di ? new Date(di + 'T00:00:00') : null;
   const dtFim = df ? new Date(df + 'T23:59:59') : null;
 
-  fatcFiltered = (fatAllRecords || []).filter(r => {
+  fatcFiltered = fatcGetRecords().filter(r => {
     if (ano && String(r.ano) !== ano) return false;
     if (mes && String(r.mes) !== mes) return false;
     if (mot && r.motorista !== mot) return false;
