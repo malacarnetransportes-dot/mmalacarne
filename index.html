@@ -3017,7 +3017,9 @@ function exportCSV(data, name) {
 function csvParseSmart(text){
   const linhas = text.split(/\r\n|\n|\r/).filter(l => l.trim() !== '');
   let melhorDados = null, melhorPontuacao = -1;
-  const maxSkip = Math.min(6, Math.max(0, linhas.length - 1));
+  // Aumentado para 10 — planilhas com título longo + sub-título + linha em branco
+  // (ex.: "CONTROLE DE CONTAS A RECEBER INICIO 01.09.2026") precisam de mais saltos.
+  const maxSkip = Math.min(10, Math.max(0, linhas.length - 1));
   for (let skip = 0; skip <= maxSkip; skip++) {
     const texto = linhas.slice(skip).join('\n');
     if (!texto.trim()) continue;
@@ -3028,7 +3030,12 @@ function csvParseSmart(text){
     // válidos, quando na verdade só a primeira célula tinha texto de verdade.
     const cru = Papa.parse(texto, { header: false, skipEmptyLines: true });
     const primeiraLinha = (cru.data && cru.data[0]) || [];
-    const validos = primeiraLinha.filter(f => f && String(f).trim() && String(f).trim().length <= 40).length;
+    // "válido" = célula não-vazia com ≤40 chars E que não seja um número puro
+    // (evita interpretar uma linha de dados numéricos como cabeçalho).
+    const validos = primeiraLinha.filter(f => {
+      const s = String(f || '').trim();
+      return s && s.length <= 40 && isNaN(Number(s.replace(/[.,R$%]/g, '')));
+    }).length;
     const r = Papa.parse(texto, { header: true, skipEmptyLines: true });
     if (!r.data || !r.data.length) continue;
     if (validos > melhorPontuacao) { melhorPontuacao = validos; melhorDados = r.data; }
@@ -5048,20 +5055,20 @@ window.crReceitaTotal = 0;
 
 function crCols(headers) {
   return {
-    descr:        findCol(headers, ['descr']),
-    mot:          findCol(headers, ['mot']),
-    placaCv:      findCol(headers, ['placa cv', 'placa cavalo']),
-    placaCr:      findCol(headers, ['placa cr', 'placa carreta']),
-    cte:          findCol(headers, ['cte']),
-    dataEmissao:  findCol(headers, ['emissao']),
-    dataPgto:     findCol(headers, ['pgto', 'pagamento']),
-    cliente:      findCol(headers, ['cliente']),
-    origem:       findCol(headers, ['origem']),
-    destino:      findCol(headers, ['destino']),
-    freteValor:   findCol(headers, ['frete valor']),
-    freteReceber: findCol(headers, ['frete a receber', 'a receber']),
-    icms:         findCol(headers, ['icms']),
-    obs:          findCol(headers, ['obs'])
+    descr:        findCol(headers, ['descr', 'tipo', 'natureza', 'servico', 'referencia', 'ref']),
+    mot:          findCol(headers, ['mot', 'motorista', 'condutor', 'nome']),
+    placaCv:      findCol(headers, ['placa cv', 'placa cavalo', 'cavalo', 'placa']),
+    placaCr:      findCol(headers, ['placa cr', 'placa carreta', 'carreta', 'semirreboque']),
+    cte:          findCol(headers, ['cte', 'ct-e', 'nf', 'nfe', 'nota fiscal', 'numero doc', 'doc']),
+    dataEmissao:  findCol(headers, ['emissao', 'data emissao', 'data nf', 'data cte', 'data', 'emitido']),
+    dataPgto:     findCol(headers, ['pgto', 'pagamento', 'data pagamento', 'data recebimento', 'recebimento', 'vencimento', 'venc']),
+    cliente:      findCol(headers, ['cliente', 'tomador', 'contratante', 'embarcador', 'empresa']),
+    origem:       findCol(headers, ['origem', 'coleta', 'saida']),
+    destino:      findCol(headers, ['destino', 'entrega', 'chegada']),
+    freteValor:   findCol(headers, ['frete valor', 'valor frete', 'vlr frete', 'valor bruto', 'bruto', 'frete bruto', 'frete']),
+    freteReceber: findCol(headers, ['frete a receber', 'a receber', 'vlr receber', 'valor receber', 'valor a receber', 'liquido', 'valor liquido', 'vlr liquido', 'receber']),
+    icms:         findCol(headers, ['icms', 'imposto', 'tributo']),
+    obs:          findCol(headers, ['obs', 'observacao', 'complemento', 'detalhes', 'anotacao'])
   };
 }
 
@@ -5077,7 +5084,10 @@ async function loadContasReceberData(silencioso) {
     applyCRFilters();
     if (!silencioso) showToast('Contas a Receber atualizado!');
   } catch (e) {
-    if (loadingEl) loadingEl.innerHTML = `<span style="color:var(--danger)"><i class="fas fa-exclamation-circle"></i> Erro ao carregar Contas a Receber: ${e.message}</span>`;
+    if (loadingEl) loadingEl.innerHTML = `<span style="color:var(--danger)"><i class="fas fa-exclamation-circle"></i>
+      <strong>Erro ao carregar Contas a Receber:</strong> ${e.message}<br>
+      <small style="opacity:.75">URL: ${URL_CR.slice(0,80)}…<br>
+      Verifique se a planilha está publicada em <em>Arquivo → Compartilhar → Publicar na Web → CSV</em>.</small></span>`;
     if (!silencioso) showToast('Erro ao carregar Contas a Receber');
   }
 }
@@ -5112,6 +5122,24 @@ function applyCRFilters() {
   }
   const headers = Object.keys(contasReceberData[0]);
   const C = crCols(headers);
+
+  // Diagnóstico: se as colunas principais não forem mapeadas, mostra aviso
+  // com os cabeçalhos reais para facilitar a correção.
+  const colunasFaltando = [];
+  if (!C.freteValor)   colunasFaltando.push('Frete Valor');
+  if (!C.freteReceber) colunasFaltando.push('Frete a Receber');
+  if (!C.mot)          colunasFaltando.push('Motorista');
+  if (colunasFaltando.length >= 2) {
+    const hdrs = headers.filter(h => h && String(h).trim()).join(' | ');
+    if (loadingEl) {
+      loadingEl.style.display = 'flex';
+      loadingEl.innerHTML = `<span style="color:var(--warning)"><i class="fas fa-exclamation-triangle"></i>
+        <strong>Colunas não reconhecidas:</strong> ${colunasFaltando.join(', ')}.<br>
+        Cabeçalhos recebidos da planilha: <code style="font-size:.78rem">${hdrs}</code><br>
+        Verifique se a planilha está publicada corretamente e se os nomes das colunas batem com o esperado.</span>`;
+    }
+    return;
+  }
 
   const fMot     = (document.getElementById('crMotorista') || {}).value || '';
   const fPlaca   = ((document.getElementById('crPlaca') || {}).value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
