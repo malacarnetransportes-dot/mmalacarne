@@ -2631,7 +2631,7 @@ if (typeof Chart !== 'undefined') {
 }
 const DEFAULT_FINANCEIRO  = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZOvOYa2B9fg5pQuPa54usv9Tl0bRP7EDRBtYrmYnJuXZkK5_A7j4roQZdmiXaaQ/pub?output=csv";
 const DEFAULT_BATERIAS    = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRl21JTtpTiuYLD9QJVV82Hu5GDFwty4vYc-k467PnWyShcOgpXjXb5PnKdHMRCGA/pub?output=csv";
-const DEFAULT_CONTAS_RECEBER = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQxQXzJDqicNIiN_EAopTHxyaVJbbUoxYP4dMP1gd9f5rxtKDKBqjPwDL4YA2GbRBbHeo_bU6Lafuhr/pub?output=csv";
+const DEFAULT_CONTAS_RECEBER = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS8XHQ5cSbvBf7iRHpHy4Xx26DyBiN4biGMzfhsjYRjFPyVTl_6Dbw7aJmcMnu35Q/pub?output=csv";
 // Faturamento: cada motorista tem sua PRÓPRIA ABA dentro do mesmo documento
 // Google Sheets. Um link "Publicar na Web" em CSV só exporta uma aba por
 // vez, então usamos um link por aba (mesmo documento, gid diferente) e
@@ -2650,7 +2650,7 @@ const DEFAULT_FATURAMENTO = DEFAULT_FATURAMENTO_DOCS.join("\n");
 const DEFAULT_PNEU_DOC = "https://docs.google.com/document/d/e/2PACX-1vR4rIhekIETB7y1_F-G53do706ALJ0ByTBMhFxYxRSqADTsOMhgKJbu-Y5NgrA8Lq2Zl4tEaEQWiX8k/pub";
 
 let URL_FIN  = localStorage.getItem("urlFinanceiro")  || DEFAULT_FINANCEIRO;
-let URL_CR   = localStorage.getItem("urlContasReceber") || DEFAULT_CONTAS_RECEBER;
+let URL_CR   = (() => { const s = localStorage.getItem("urlContasReceber"); return (s && s !== "https://docs.google.com/spreadsheets/d/e/2PACX-1vQxQXzJDqicNIiN_EAopTHxyaVJbbUoxYP4dMP1gd9f5rxtKDKBqjPwDL4YA2GbRBbHeo_bU6Lafuhr/pub?output=csv") ? s : DEFAULT_CONTAS_RECEBER; })();
 let URL_BAT  = localStorage.getItem("urlBaterias")    || DEFAULT_BATERIAS;
 let URL_AGENDA = localStorage.getItem("urlAgenda") || '';
 
