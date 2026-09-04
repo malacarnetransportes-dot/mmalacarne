@@ -482,6 +482,13 @@ footer a{color:var(--accent);text-decoration:none;}
 
 /* Ranking */
 .rank-list{list-style:none;padding:0;counter-reset:rank;}
+.dash-grid-2col{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+@media(max-width:768px){.dash-grid-2col{grid-template-columns:1fr;}}
+.cr-detalhe-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem .9rem;}
+@media(max-width:600px){.cr-detalhe-grid{grid-template-columns:1fr;}}
+.cr-detalhe-item{display:flex;flex-direction:column;gap:.15rem;font-size:.82rem;}
+.cr-detalhe-item span{color:var(--text-lt);font-size:.72rem;text-transform:uppercase;letter-spacing:.3px;}
+.cr-detalhe-item b{color:#1e2a3a;}
 .rank-list li{counter-increment:rank;display:flex;justify-content:space-between;align-items:center;padding:.7rem 1rem;background:var(--gray-100);border-radius:var(--r8);margin-bottom:.5rem;font-size:.85rem;flex-wrap:wrap;gap:.5rem;}
 .rank-list li::before{content:counter(rank)"º";background:var(--accent);color:#111;padding:.15rem .6rem;border-radius:30px;font-size:.75rem;font-weight:800;margin-right:.7rem;}
 
@@ -864,6 +871,16 @@ footer a{color:var(--accent);text-decoration:none;}
 </div>
 
 <!-- ══════════════ URL CONFIG MODAL ══════════════ -->
+
+<div id="crDetalheModalBackdrop" class="url-modal-backdrop" onclick="crCloseDetalhe()"></div>
+<div id="crDetalheModal" class="url-modal" style="max-width:640px">
+  <h3 style="margin-bottom:.8rem"><i class="fas fa-file-invoice-dollar" style="color:var(--accent)"></i> Detalhes do Lançamento</h3>
+  <div id="crDetalheBody"></div>
+  <div style="display:flex;gap:.6rem;margin-top:1rem">
+    <button class="btn btn-gray" onclick="crCloseDetalhe()">Fechar</button>
+  </div>
+</div>
+
 <div id="urlModalBackdrop" class="url-modal-backdrop" onclick="document.getElementById('urlConfigModal').classList.remove('active');document.getElementById('urlModalBackdrop').classList.remove('active')"></div>
 <div id="urlConfigModal" class="url-modal">
   <h3 style="margin-bottom:.5rem"><i class="fas fa-link" style="color:var(--accent)"></i> Configuração de URLs e Integrações</h3>
@@ -871,6 +888,8 @@ footer a{color:var(--accent);text-decoration:none;}
 
   <div style="background:var(--gray-100);border-radius:8px;padding:.7rem .9rem;margin-bottom:.8rem">
     <div style="font-size:.72rem;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem">📊 Google Sheets / Drive</div>
+    <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">🧾 Contas a Receber (CSV)</label>
+    <input type="text" id="urlContasReceber" placeholder="https://docs.google.com/spreadsheets/...">
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">💰 Financeiro (CSV)</label>
     <input type="text" id="urlFinanceiro" placeholder="https://docs.google.com/spreadsheets/...">
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">🚛 Faturamento — Uma aba por Motorista (CSV)</label>
@@ -937,6 +956,7 @@ footer a{color:var(--accent);text-decoration:none;}
         <div class="brand-sub">Central de Gestão</div>
       </div>
       <nav class="pa-nav">
+        <button class="pa-nav-item" data-tab="tabContasReceber"><i class="fas fa-hand-holding-dollar"></i> Contas a Receber</button>
         <button class="pa-nav-item active" data-tab="tabFinanceiro"><i class="fas fa-chart-line"></i> Financeiro</button>
         <button class="pa-nav-item" data-tab="tabFaturamento"><i class="fas fa-truck"></i> Faturamento</button>
         <button class="pa-nav-item" data-tab="tabBaterias"><i class="fas fa-battery-three-quarters"></i> Baterias</button>
@@ -976,6 +996,64 @@ footer a{color:var(--accent);text-decoration:none;}
       </div>
 
       <div class="pa-main">
+
+
+        <!-- ── TAB CONTAS A RECEBER ── -->
+        <div id="tabContasReceber" class="tab-pane">
+          <div class="kpi-grid" id="crKpis">
+            <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-sack-dollar"></i></div><div><div class="kpi-val" id="cr-frete-valor">R$ —</div><div class="kpi-lbl">Frete Valor (Receita)</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-hand-holding-dollar"></i></div><div><div class="kpi-val" id="cr-frete-receber">R$ —</div><div class="kpi-lbl">Frete a Receber</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-percent"></i></div><div><div class="kpi-val" id="cr-icms">R$ —</div><div class="kpi-lbl">ICMS</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon" style="background:rgba(139,115,85,.15);color:var(--primary-dk)"><i class="fas fa-list"></i></div><div><div class="kpi-val" id="cr-registros">—</div><div class="kpi-lbl">Registros</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon" style="background:rgba(212,175,55,.15);color:var(--accent-dk)"><i class="fas fa-calculator"></i></div><div><div class="kpi-val" id="cr-ticket">R$ —</div><div class="kpi-lbl">Ticket Médio</div></div></div>
+          </div>
+
+          <div class="dash-card">
+            <div class="filters-bar">
+              <div class="flt-grp"><label>Motorista</label><select id="crMotorista" onchange="applyCRFilters()"><option value="">Todos</option></select></div>
+              <div class="flt-grp"><label>Placa</label><input type="text" id="crPlaca" placeholder="Ex: RYE7J26" oninput="applyCRFilters()"></div>
+              <div class="flt-grp"><label>Cliente</label><select id="crCliente" onchange="applyCRFilters()"><option value="">Todos</option></select></div>
+              <div class="flt-grp"><label>CTE</label><input type="text" id="crCte" placeholder="Nº do CTE" oninput="applyCRFilters()"></div>
+              <div class="flt-grp"><label>Tipo / Diária</label><select id="crTipo" onchange="applyCRFilters()"><option value="">Todos</option></select></div>
+              <div class="flt-grp"><label>Data Emissão Início</label><input type="date" id="crDataEmissaoIni" onchange="applyCRFilters()"></div>
+              <div class="flt-grp"><label>Data Emissão Fim</label><input type="date" id="crDataEmissaoFim" onchange="applyCRFilters()"></div>
+              <div class="flt-grp"><label>Data Pagamento Início</label><input type="date" id="crDataPgtoIni" onchange="applyCRFilters()"></div>
+              <div class="flt-grp"><label>Data Pagamento Fim</label><input type="date" id="crDataPgtoFim" onchange="applyCRFilters()"></div>
+              <div class="flt-grp" style="align-self:flex-end;display:flex;gap:.5rem">
+                <button class="btn btn-accent btn-sm" onclick="applyCRFilters()"><i class="fas fa-filter"></i> Filtrar</button>
+                <button class="btn btn-gray btn-sm" onclick="resetCRFilters()"><i class="fas fa-eraser"></i> Limpar</button>
+                <button class="btn btn-info btn-sm" onclick="loadContasReceberData(false)" title="Reintegra rápido com a planilha"><i class="fas fa-sync-alt"></i> Atualizar</button>
+                <button class="btn btn-gray btn-sm" onclick="exportCSV(currentCRFiltered, 'contas_a_receber')"><i class="fas fa-download"></i> Exportar</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="dash-grid-2col">
+            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-crown"></i> Ranking por Cliente</div><ol class="rank-list" id="crRankCliente"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
+            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-id-card"></i> Ranking por Motorista</div><ol class="rank-list" id="crRankMotorista"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
+          </div>
+
+          <div class="dash-card">
+            <div class="dash-card-title"><i class="fas fa-chart-bar"></i> Faturamento por Cliente (Top 8)</div>
+            <div class="chart-box" style="height:280px"><canvas id="crChartCliente" height="220"></canvas></div>
+          </div>
+
+          <div class="dash-grid-2col">
+            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-route"></i> Melhores Rotas (Origem → Destino)</div><ol class="rank-list" id="crRankRotas"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
+            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-warehouse"></i> Descarga por Origem</div><ol class="rank-list" id="crRankDescarga"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
+          </div>
+
+          <div class="dash-card">
+            <div class="dash-card-title"><i class="fas fa-table"></i> Lançamentos <span id="crCount" style="font-weight:400;color:var(--text-lt);font-size:.75rem"></span></div>
+            <div id="crLoading" style="display:flex;align-items:center;gap:.5rem;color:var(--text-lt);padding:1rem"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>
+            <div id="crTableWrap" style="display:none;overflow-x:auto">
+              <table class="data-table">
+                <thead><tr id="crTableHead"></tr></thead>
+                <tbody id="crTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
 
         <!-- ── TAB FINANCEIRO ── -->
         <div id="tabFinanceiro" class="tab-pane active">
@@ -2516,6 +2594,7 @@ if (typeof Chart !== 'undefined') {
 }
 const DEFAULT_FINANCEIRO  = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZOvOYa2B9fg5pQuPa54usv9Tl0bRP7EDRBtYrmYnJuXZkK5_A7j4roQZdmiXaaQ/pub?output=csv";
 const DEFAULT_BATERIAS    = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRl21JTtpTiuYLD9QJVV82Hu5GDFwty4vYc-k467PnWyShcOgpXjXb5PnKdHMRCGA/pub?output=csv";
+const DEFAULT_CONTAS_RECEBER = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQxQXzJDqicNIiN_EAopTHxyaVJbbUoxYP4dMP1gd9f5rxtKDKBqjPwDL4YA2GbRBbHeo_bU6Lafuhr/pub?output=csv";
 // Faturamento: cada motorista tem sua PRÓPRIA ABA dentro do mesmo documento
 // Google Sheets. Um link "Publicar na Web" em CSV só exporta uma aba por
 // vez, então usamos um link por aba (mesmo documento, gid diferente) e
@@ -2534,6 +2613,7 @@ const DEFAULT_FATURAMENTO = DEFAULT_FATURAMENTO_DOCS.join("\n");
 const DEFAULT_PNEU_DOC = "https://docs.google.com/document/d/e/2PACX-1vR4rIhekIETB7y1_F-G53do706ALJ0ByTBMhFxYxRSqADTsOMhgKJbu-Y5NgrA8Lq2Zl4tEaEQWiX8k/pub";
 
 let URL_FIN  = localStorage.getItem("urlFinanceiro")  || DEFAULT_FINANCEIRO;
+let URL_CR   = localStorage.getItem("urlContasReceber") || DEFAULT_CONTAS_RECEBER;
 let URL_BAT  = localStorage.getItem("urlBaterias")    || DEFAULT_BATERIAS;
 let URL_AGENDA = localStorage.getItem("urlAgenda") || '';
 
@@ -3153,6 +3233,7 @@ document.getElementById('logoutPrivateBtn').addEventListener('click', () => {
 // TABS PRIVADA
 // ═══════════════════════════════════════════════════════════
 const pageTitles = {
+  tabContasReceber: '<i class="fas fa-hand-holding-dollar" style="color:var(--accent)"></i> Contas a Receber',
   tabFinanceiro: '<i class="fas fa-chart-line" style="color:var(--accent)"></i> Financeiro',
   tabFaturamento: '<i class="fas fa-truck" style="color:var(--accent)"></i> Faturamento',
   tabBaterias: '<i class="fas fa-battery-three-quarters" style="color:var(--accent)"></i> Baterias',
@@ -3190,8 +3271,14 @@ document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
     if (primeira) _tabCarregada.add(t);
 
     // Tabs com dados da planilha: carrega só na 1ª abertura
-    if (t === 'tabFinanceiro' && primeira) setTimeout(loadFinanceiroData, 50);
+    if (t === 'tabFinanceiro' && primeira) {
+      setTimeout(loadFinanceiroData, 50);
+      if (!_tabCarregada.has('tabContasReceber')) { _tabCarregada.add('tabContasReceber'); setTimeout(() => loadContasReceberData(true), 60); }
+    }
     else if (t === 'tabFinanceiro') { setTimeout(orcInit, 50); setTimeout(manRender, 50); }
+
+    if (t === 'tabContasReceber' && primeira) setTimeout(() => loadContasReceberData(false), 50);
+    else if (t === 'tabContasReceber') setTimeout(applyCRFilters, 50);
 
     if (t === 'tabFaturamento' && primeira) setTimeout(loadFaturamentoData, 50);
     else if (t === 'tabFaturamento') setTimeout(fatApplyFilters, 50);
@@ -4678,6 +4765,7 @@ function pneuInit(){
 // ═══════════════════════════════════════════════════════════
 function openUrlModal(){
   document.getElementById('urlFinanceiro').value = URL_FIN;
+  document.getElementById('urlContasReceber').value = URL_CR;
   document.getElementById('urlFaturamento').value = URL_FAT;
   document.getElementById('urlBaterias').value = URL_BAT;
   document.getElementById('urlAgenda').value = URL_AGENDA;
@@ -4701,6 +4789,8 @@ document.getElementById('maxVoiceTestBtn').onclick = function() {
 };
 document.getElementById('saveUrlsBtn').onclick = () => {
   URL_FIN = document.getElementById('urlFinanceiro').value || DEFAULT_FINANCEIRO;
+  URL_CR = document.getElementById('urlContasReceber').value || DEFAULT_CONTAS_RECEBER;
+  localStorage.setItem('urlContasReceber', URL_CR);
   URL_BAT = document.getElementById('urlBaterias').value || DEFAULT_BATERIAS;
   URL_FAT = document.getElementById('urlFaturamento').value || DEFAULT_FATURAMENTO;
   URL_AGENDA = document.getElementById('urlAgenda').value.trim();
@@ -4729,6 +4819,7 @@ document.getElementById('saveUrlsBtn').onclick = () => {
   closeUrlModal();
   showToast('Configurações salvas!');
   loadFinanceiroData();
+  loadContasReceberData(true);
   loadBateriasData();
   loadFaturamentoData();
   nfeCheckConfig();
@@ -4912,6 +5003,9 @@ function applyFinFilters() {
     if (t.includes('receita') || t.includes('entrada') || t.includes('credito')) receita += Math.abs(v);
     else despesa += Math.abs(v); // sem indicação explícita de receita, conta como despesa (esta planilha só tem custos)
   });
+  // Receita real da empresa vem do módulo Contas a Receber (soma de Frete Valor);
+  // esta planilha do Financeiro só registra despesas por padrão.
+  receita += (window.crReceitaTotal || 0);
 
   document.getElementById('fin-receita').textContent = fmtMoney(receita);
   document.getElementById('fin-despesa').textContent = fmtMoney(despesa);
@@ -4942,6 +5036,285 @@ function applyFinFilters() {
   document.getElementById('finLoading').style.display = 'none';
   document.getElementById('finTableWrap').style.display = 'block';
 }
+
+
+// ═══════════════════════════════════════════════════════════
+// CONTAS A RECEBER
+// ═══════════════════════════════════════════════════════════
+let contasReceberData = [];
+let currentCRFiltered = [];
+let crChartClienteObj = null;
+window.crReceitaTotal = 0;
+
+function crCols(headers) {
+  return {
+    descr:        findCol(headers, ['descr']),
+    mot:          findCol(headers, ['mot']),
+    placaCv:      findCol(headers, ['placa cv', 'placa cavalo']),
+    placaCr:      findCol(headers, ['placa cr', 'placa carreta']),
+    cte:          findCol(headers, ['cte']),
+    dataEmissao:  findCol(headers, ['emissao']),
+    dataPgto:     findCol(headers, ['pgto', 'pagamento']),
+    cliente:      findCol(headers, ['cliente']),
+    origem:       findCol(headers, ['origem']),
+    destino:      findCol(headers, ['destino']),
+    freteValor:   findCol(headers, ['frete valor']),
+    freteReceber: findCol(headers, ['frete a receber', 'a receber']),
+    icms:         findCol(headers, ['icms']),
+    obs:          findCol(headers, ['obs'])
+  };
+}
+
+async function loadContasReceberData(silencioso) {
+  const loadingEl = document.getElementById('crLoading');
+  const wrapEl = document.getElementById('crTableWrap');
+  if (loadingEl) { loadingEl.style.display = 'flex'; loadingEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...'; }
+  if (wrapEl) wrapEl.style.display = 'none';
+  try {
+    const rows = await fetchCSV(URL_CR);
+    contasReceberData = rows || [];
+    crPopularFiltros(contasReceberData);
+    applyCRFilters();
+    if (!silencioso) showToast('Contas a Receber atualizado!');
+  } catch (e) {
+    if (loadingEl) loadingEl.innerHTML = `<span style="color:var(--danger)"><i class="fas fa-exclamation-circle"></i> Erro ao carregar Contas a Receber: ${e.message}</span>`;
+    if (!silencioso) showToast('Erro ao carregar Contas a Receber');
+  }
+}
+
+function crPopularFiltros(rows) {
+  if (!rows.length) return;
+  const headers = Object.keys(rows[0]);
+  const C = crCols(headers);
+  const motoristas = new Set(), clientes = new Set(), tipos = new Set();
+  rows.forEach(r => {
+    if (C.mot && r[C.mot]) motoristas.add(String(r[C.mot]).trim());
+    if (C.cliente && r[C.cliente]) clientes.add(String(r[C.cliente]).trim());
+    if (C.descr && r[C.descr]) tipos.add(String(r[C.descr]).trim());
+  });
+  const fill = (id, set) => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const atual = sel.value;
+    sel.innerHTML = '<option value="">Todos</option>' + [...set].sort().map(v => `<option value="${v.replace(/"/g, '&quot;')}">${v}</option>`).join('');
+    if ([...set].includes(atual)) sel.value = atual;
+  };
+  fill('crMotorista', motoristas);
+  fill('crCliente', clientes);
+  fill('crTipo', tipos);
+}
+
+function applyCRFilters() {
+  const loadingEl = document.getElementById('crLoading');
+  if (!contasReceberData.length) {
+    if (loadingEl) { loadingEl.style.display = 'flex'; loadingEl.innerHTML = '<span style="color:var(--text-lt)">Sem dados carregados. Clique em Atualizar.</span>'; }
+    return;
+  }
+  const headers = Object.keys(contasReceberData[0]);
+  const C = crCols(headers);
+
+  const fMot     = (document.getElementById('crMotorista') || {}).value || '';
+  const fPlaca   = ((document.getElementById('crPlaca') || {}).value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const fCliente = (document.getElementById('crCliente') || {}).value || '';
+  const fCte     = ((document.getElementById('crCte') || {}).value || '').trim().toLowerCase();
+  const fTipo    = (document.getElementById('crTipo') || {}).value || '';
+  const deIni    = (document.getElementById('crDataEmissaoIni') || {}).value;
+  const deFim    = (document.getElementById('crDataEmissaoFim') || {}).value;
+  const dpIni    = (document.getElementById('crDataPgtoIni') || {}).value;
+  const dpFim    = (document.getElementById('crDataPgtoFim') || {}).value;
+
+  const filtered = contasReceberData.filter(row => {
+    if (fMot && C.mot && String(row[C.mot] || '').trim() !== fMot) return false;
+    if (fCliente && C.cliente && String(row[C.cliente] || '').trim() !== fCliente) return false;
+    if (fTipo && C.descr && String(row[C.descr] || '').trim() !== fTipo) return false;
+    if (fCte && C.cte && !String(row[C.cte] || '').toLowerCase().includes(fCte)) return false;
+    if (fPlaca) {
+      const cv = C.placaCv ? String(row[C.placaCv] || '').toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
+      const cr = C.placaCr ? String(row[C.placaCr] || '').toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
+      if (!cv.includes(fPlaca) && !cr.includes(fPlaca)) return false;
+    }
+    if (C.dataEmissao && (deIni || deFim)) {
+      const d = parseDate(row[C.dataEmissao]);
+      if (!d) return false;
+      if (deIni && d < new Date(deIni + 'T00:00:00')) return false;
+      if (deFim && d > new Date(deFim + 'T23:59:59')) return false;
+    }
+    if (C.dataPgto && (dpIni || dpFim)) {
+      const d = parseDate(row[C.dataPgto]);
+      if (!d) return false;
+      if (dpIni && d < new Date(dpIni + 'T00:00:00')) return false;
+      if (dpFim && d > new Date(dpFim + 'T23:59:59')) return false;
+    }
+    return true;
+  });
+
+  currentCRFiltered = filtered;
+
+  // KPIs
+  let totalFreteValor = 0, totalFreteReceber = 0, totalIcms = 0;
+  filtered.forEach(row => {
+    totalFreteValor += C.freteValor ? parseMoney(row[C.freteValor]) : 0;
+    totalFreteReceber += C.freteReceber ? parseMoney(row[C.freteReceber]) : 0;
+    totalIcms += C.icms ? parseMoney(row[C.icms]) : 0;
+  });
+  document.getElementById('cr-frete-valor').textContent = fmtMoney(totalFreteValor);
+  document.getElementById('cr-frete-receber').textContent = fmtMoney(totalFreteReceber);
+  document.getElementById('cr-icms').textContent = fmtMoney(totalIcms);
+  document.getElementById('cr-registros').textContent = filtered.length;
+  document.getElementById('cr-ticket').textContent = filtered.length ? fmtMoney(totalFreteValor / filtered.length) : 'R$ —';
+  const countEl = document.getElementById('crCount');
+  if (countEl) countEl.textContent = filtered.length + ' registros';
+
+  // Alimenta a Receita Total do Financeiro com a soma GERAL (não filtrada)
+  // de Frete Valor — a Contas a Receber é a fonte de receita real da
+  // empresa; a planilha do Financeiro só registra despesas.
+  let totalGeralFreteValor = 0;
+  contasReceberData.forEach(row => { totalGeralFreteValor += C.freteValor ? parseMoney(row[C.freteValor]) : 0; });
+  window.crReceitaTotal = totalGeralFreteValor;
+  if (typeof financeiroData !== 'undefined' && financeiroData.length && typeof applyFinFilters === 'function') applyFinFilters();
+
+  // Ranking Cliente
+  const rankCliente = {};
+  filtered.forEach(row => {
+    const k = C.cliente ? String(row[C.cliente] || '').trim() : '';
+    if (k) rankCliente[k] = (rankCliente[k] || 0) + (C.freteValor ? parseMoney(row[C.freteValor]) : 0);
+  });
+  const rankClienteArr = Object.entries(rankCliente).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  document.getElementById('crRankCliente').innerHTML = rankClienteArr.length
+    ? rankClienteArr.map(([k, v]) => `<li><span>${k}</span><span style="font-weight:700;color:var(--accent-dk)">${fmtMoney(v)}</span></li>`).join('')
+    : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li>';
+
+  // Ranking Motorista
+  const rankMot = {};
+  filtered.forEach(row => {
+    const k = C.mot ? String(row[C.mot] || '').trim() : '';
+    if (k) rankMot[k] = (rankMot[k] || 0) + (C.freteValor ? parseMoney(row[C.freteValor]) : 0);
+  });
+  const rankMotArr = Object.entries(rankMot).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  document.getElementById('crRankMotorista').innerHTML = rankMotArr.length
+    ? rankMotArr.map(([k, v]) => `<li><span>${k}</span><span style="font-weight:700;color:var(--success)">${fmtMoney(v)}</span></li>`).join('')
+    : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li>';
+
+  // Melhores Rotas (Origem → Destino)
+  const rankRotas = {};
+  filtered.forEach(row => {
+    const o = C.origem ? String(row[C.origem] || '').trim() : '';
+    const d = C.destino ? String(row[C.destino] || '').trim() : '';
+    if (!o || !d) return;
+    const k = `${o} → ${d}`;
+    if (!rankRotas[k]) rankRotas[k] = { valor: 0, qtd: 0 };
+    rankRotas[k].valor += C.freteValor ? parseMoney(row[C.freteValor]) : 0;
+    rankRotas[k].qtd += 1;
+  });
+  const rankRotasArr = Object.entries(rankRotas).sort((a, b) => b[1].valor - a[1].valor).slice(0, 10);
+  document.getElementById('crRankRotas').innerHTML = rankRotasArr.length
+    ? rankRotasArr.map(([k, v]) => `<li><span>${k} <span style="color:var(--text-lt);font-weight:400">(${v.qtd}x)</span></span><span style="font-weight:700;color:var(--accent-dk)">${fmtMoney(v.valor)}</span></li>`).join('')
+    : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li>';
+
+  // Descarga por Origem
+  const rankDescarga = {};
+  filtered.forEach(row => {
+    const tipo = C.descr ? String(row[C.descr] || '').trim().toUpperCase() : '';
+    if (!tipo.includes('DESCARGA')) return;
+    const o = C.origem ? String(row[C.origem] || '').trim() : '';
+    if (!o) return;
+    if (!rankDescarga[o]) rankDescarga[o] = { valor: 0, qtd: 0 };
+    rankDescarga[o].valor += C.freteValor ? parseMoney(row[C.freteValor]) : 0;
+    rankDescarga[o].qtd += 1;
+  });
+  const rankDescargaArr = Object.entries(rankDescarga).sort((a, b) => b[1].valor - a[1].valor).slice(0, 10);
+  document.getElementById('crRankDescarga').innerHTML = rankDescargaArr.length
+    ? rankDescargaArr.map(([k, v]) => `<li><span>${k} <span style="color:var(--text-lt);font-weight:400">(${v.qtd}x)</span></span><span style="font-weight:700;color:var(--info)">${fmtMoney(v.valor)}</span></li>`).join('')
+    : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li>';
+
+  // Gráfico — Faturamento por Cliente (Top 8)
+  const top8 = rankClienteArr.slice(0, 8);
+  if (crChartClienteObj) crChartClienteObj.destroy();
+  const ctxC = document.getElementById('crChartCliente');
+  if (ctxC) {
+    crChartClienteObj = new Chart(ctxC.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: top8.map(([k]) => k),
+        datasets: [{ label: 'Frete Valor', data: top8.map(([, v]) => v), backgroundColor: 'rgba(212,175,55,.75)', borderColor: 'rgba(212,175,55,1)', borderWidth: 1, borderRadius: 4 }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + fmtMoney(ctx.raw) } } },
+        scales: { x: { ticks: { maxRotation: 40, font: { size: 10 } } }, y: { beginAtZero: true, ticks: { callback: v => fmtMoney(v) } } }
+      }
+    });
+  }
+
+  crRenderTabela(filtered, C);
+}
+
+function crRenderTabela(filtered, C) {
+  const loadingEl = document.getElementById('crLoading');
+  const wrapEl = document.getElementById('crTableWrap');
+  if (loadingEl) loadingEl.style.display = 'none';
+  if (wrapEl) wrapEl.style.display = 'block';
+  const cols = [
+    ['Tipo', C.descr], ['Motorista', C.mot], ['Placa CV', C.placaCv], ['Placa CR', C.placaCr],
+    ['CTE', C.cte], ['Emissão', C.dataEmissao], ['Pagamento', C.dataPgto], ['Cliente', C.cliente],
+    ['Origem', C.origem], ['Destino', C.destino], ['Frete Valor', C.freteValor], ['Frete a Receber', C.freteReceber]
+  ].filter(([, c]) => c);
+  document.getElementById('crTableHead').innerHTML = cols.map(([label]) => `<th>${label}</th>`).join('');
+  document.getElementById('crTableBody').innerHTML = filtered.map((row, i) => {
+    const tds = cols.map(([label, c]) => {
+      let v = row[c] ?? '';
+      if ((label === 'Frete Valor' || label === 'Frete a Receber') && v) v = fmtMoney(parseMoney(v));
+      return `<td>${v || '—'}</td>`;
+    }).join('');
+    return `<tr onclick="crShowDetalhe(${i})" style="cursor:pointer">${tds}</tr>`;
+  }).join('') || `<tr><td colspan="${cols.length || 1}" style="text-align:center;color:var(--text-lt)">Nenhum registro encontrado</td></tr>`;
+  window._crFilteredForDetalhe = filtered;
+}
+
+function crShowDetalhe(i) {
+  const row = (window._crFilteredForDetalhe || [])[i];
+  if (!row) return;
+  const headers = Object.keys(row);
+  const C = crCols(headers);
+  const campo = (label, c, money) => {
+    if (!c) return '';
+    let v = row[c];
+    if (money && v) v = fmtMoney(parseMoney(v));
+    return `<div class="cr-detalhe-item"><span>${label}</span><b>${v || '—'}</b></div>`;
+  };
+  document.getElementById('crDetalheBody').innerHTML = `
+    <div class="cr-detalhe-grid">
+      ${campo('Tipo', C.descr)}
+      ${campo('Motorista', C.mot)}
+      ${campo('Placa Cavalo', C.placaCv)}
+      ${campo('Placa Carreta', C.placaCr)}
+      ${campo('CTE', C.cte)}
+      ${campo('Data Emissão', C.dataEmissao)}
+      ${campo('Data Pagamento', C.dataPgto)}
+      ${campo('Cliente', C.cliente)}
+      ${campo('Origem', C.origem)}
+      ${campo('Destino', C.destino)}
+      ${campo('Frete Valor', C.freteValor, true)}
+      ${campo('Frete a Receber', C.freteReceber, true)}
+      ${campo('ICMS', C.icms, true)}
+      ${campo('Observações', C.obs)}
+    </div>`;
+  document.getElementById('crDetalheModalBackdrop').classList.add('active');
+  document.getElementById('crDetalheModal').classList.add('active');
+}
+function crCloseDetalhe() {
+  document.getElementById('crDetalheModalBackdrop').classList.remove('active');
+  document.getElementById('crDetalheModal').classList.remove('active');
+}
+
+function resetCRFilters() {
+  ['crMotorista', 'crPlaca', 'crCliente', 'crCte', 'crTipo', 'crDataEmissaoIni', 'crDataEmissaoFim', 'crDataPgtoIni', 'crDataPgtoFim'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  applyCRFilters();
+}
+
 
 function renderFinTable(data, headers, colData, colDesc, colValor, colTipo, colCat) {
   const thead = document.getElementById('finTableHead');
