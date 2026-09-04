@@ -1009,21 +1009,53 @@ footer a{color:var(--accent);text-decoration:none;}
           </div>
 
           <div class="dash-card">
+            <div class="dash-card-title" style="margin-bottom:.75rem"><i class="fas fa-sliders-h"></i> Filtros</div>
             <div class="filters-bar">
               <div class="flt-grp"><label>Motorista</label><select id="crMotorista" onchange="applyCRFilters()"><option value="">Todos</option></select></div>
               <div class="flt-grp"><label>Placa</label><input type="text" id="crPlaca" placeholder="Ex: RYE7J26" oninput="applyCRFilters()"></div>
               <div class="flt-grp"><label>Cliente</label><select id="crCliente" onchange="applyCRFilters()"><option value="">Todos</option></select></div>
               <div class="flt-grp"><label>CTE</label><input type="text" id="crCte" placeholder="Nº do CTE" oninput="applyCRFilters()"></div>
               <div class="flt-grp"><label>Tipo / Diária</label><select id="crTipo" onchange="applyCRFilters()"><option value="">Todos</option></select></div>
-              <div class="flt-grp"><label>Data Emissão Início</label><input type="date" id="crDataEmissaoIni" onchange="applyCRFilters()"></div>
-              <div class="flt-grp"><label>Data Emissão Fim</label><input type="date" id="crDataEmissaoFim" onchange="applyCRFilters()"></div>
-              <div class="flt-grp"><label>Data Pagamento Início</label><input type="date" id="crDataPgtoIni" onchange="applyCRFilters()"></div>
-              <div class="flt-grp"><label>Data Pagamento Fim</label><input type="date" id="crDataPgtoFim" onchange="applyCRFilters()"></div>
-              <div class="flt-grp" style="align-self:flex-end;display:flex;gap:.5rem">
-                <button class="btn btn-accent btn-sm" onclick="applyCRFilters()"><i class="fas fa-filter"></i> Filtrar</button>
-                <button class="btn btn-gray btn-sm" onclick="resetCRFilters()"><i class="fas fa-eraser"></i> Limpar</button>
-                <button class="btn btn-info btn-sm" onclick="loadContasReceberData(false)" title="Reintegra rápido com a planilha"><i class="fas fa-sync-alt"></i> Atualizar</button>
-                <button class="btn btn-gray btn-sm" onclick="exportCSV(currentCRFiltered, 'contas_a_receber')"><i class="fas fa-download"></i> Exportar</button>
+              <div class="flt-grp"><label>Emissão Início</label><input type="date" id="crDataEmissaoIni" onchange="applyCRFilters()"></div>
+              <div class="flt-grp"><label>Emissão Fim</label><input type="date" id="crDataEmissaoFim" onchange="applyCRFilters()"></div>
+              <div class="flt-grp"><label>Pgto Início</label><input type="date" id="crDataPgtoIni" onchange="applyCRFilters()"></div>
+              <div class="flt-grp"><label>Pgto Fim</label><input type="date" id="crDataPgtoFim" onchange="applyCRFilters()"></div>
+            </div>
+            <div style="display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap;align-items:center;border-top:1px solid var(--border);padding-top:.75rem">
+              <button class="btn btn-accent btn-sm" onclick="applyCRFilters()"><i class="fas fa-filter"></i> Filtrar</button>
+              <button class="btn btn-gray btn-sm" onclick="resetCRFilters()"><i class="fas fa-eraser"></i> Limpar</button>
+              <button class="btn btn-info btn-sm" onclick="loadContasReceberData(false)" title="Reintegra rápido com a planilha"><i class="fas fa-sync-alt"></i> Atualizar</button>
+              <button class="btn btn-gray btn-sm" onclick="exportCSV(currentCRFiltered, 'contas_a_receber')"><i class="fas fa-download"></i> Exportar CSV</button>
+            </div>
+          </div>
+
+          <!-- Card Resumo -->
+          <div class="dash-card" id="crResumoCard" style="display:none">
+            <div class="dash-card-title" style="margin-bottom:.75rem"><i class="fas fa-clipboard-list"></i> Resumo do Período Filtrado</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem" id="crResumoGrid">
+              <div style="background:var(--surface-dk);border-radius:8px;padding:.85rem 1rem">
+                <div style="font-size:.7rem;color:var(--text-lt);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.3rem">Frete Valor (Receita)</div>
+                <div style="font-size:1.15rem;font-weight:700;color:var(--success)" id="crResFreteValor">R$ —</div>
+              </div>
+              <div style="background:var(--surface-dk);border-radius:8px;padding:.85rem 1rem">
+                <div style="font-size:.7rem;color:var(--text-lt);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.3rem">Frete a Receber</div>
+                <div style="font-size:1.15rem;font-weight:700;color:var(--accent)" id="crResFreteReceber">R$ —</div>
+              </div>
+              <div style="background:var(--surface-dk);border-radius:8px;padding:.85rem 1rem">
+                <div style="font-size:.7rem;color:var(--text-lt);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.3rem">ICMS</div>
+                <div style="font-size:1.15rem;font-weight:700;color:var(--info)" id="crResIcms">R$ —</div>
+              </div>
+              <div style="background:var(--surface-dk);border-radius:8px;padding:.85rem 1rem">
+                <div style="font-size:.7rem;color:var(--text-lt);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.3rem">Registros</div>
+                <div style="font-size:1.15rem;font-weight:700;color:var(--text)" id="crResRegistros">—</div>
+              </div>
+              <div style="background:var(--surface-dk);border-radius:8px;padding:.85rem 1rem">
+                <div style="font-size:.7rem;color:var(--text-lt);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.3rem">Ticket Médio</div>
+                <div style="font-size:1.15rem;font-weight:700;color:var(--text)" id="crResTicket">R$ —</div>
+              </div>
+              <div style="background:var(--surface-dk);border-radius:8px;padding:.85rem 1rem">
+                <div style="font-size:.7rem;color:var(--text-lt);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.3rem">Clientes Distintos</div>
+                <div style="font-size:1.15rem;font-weight:700;color:var(--text)" id="crResClientes">—</div>
               </div>
             </div>
           </div>
@@ -1034,8 +1066,13 @@ footer a{color:var(--accent);text-decoration:none;}
           </div>
 
           <div class="dash-card">
-            <div class="dash-card-title"><i class="fas fa-chart-bar"></i> Faturamento por Cliente (Top 8)</div>
-            <div class="chart-box" style="height:280px"><canvas id="crChartCliente" height="220"></canvas></div>
+            <div class="dash-card-title"><i class="fas fa-chart-pie"></i> Faturamento por Cliente</div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:2rem;flex-wrap:wrap">
+              <div style="position:relative;width:260px;height:260px;flex-shrink:0">
+                <canvas id="crChartCliente"></canvas>
+              </div>
+              <div id="crPizzaLegenda" style="display:flex;flex-direction:column;gap:.4rem;min-width:180px;max-width:340px"></div>
+            </div>
           </div>
 
           <div class="dash-grid-2col">
@@ -5255,23 +5292,51 @@ function applyCRFilters() {
     ? rankDescargaArr.map(([k, v]) => `<li><span>${k} <span style="color:var(--text-lt);font-weight:400">(${v.qtd}x)</span></span><span style="font-weight:700;color:var(--info)">${fmtMoney(v.valor)}</span></li>`).join('')
     : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li>';
 
-  // Gráfico — Faturamento por Cliente (Top 8)
-  const top8 = rankClienteArr.slice(0, 8);
+  // Gráfico Pizza — Faturamento por Cliente
+  const pizzaColors = ['#D4AF37','#4ea8f7','#4caf90','#e07b54','#9b59b6','#e74c3c','#1abc9c','#f39c12','#2980b9','#c0392b'];
+  const topN = rankClienteArr.slice(0, 10);
+  const totalPizza = topN.reduce((s,[,v]) => s+v, 0);
   if (crChartClienteObj) crChartClienteObj.destroy();
   const ctxC = document.getElementById('crChartCliente');
-  if (ctxC) {
+  if (ctxC && topN.length) {
     crChartClienteObj = new Chart(ctxC.getContext('2d'), {
-      type: 'bar',
+      type: 'pie',
       data: {
-        labels: top8.map(([k]) => k),
-        datasets: [{ label: 'Frete Valor', data: top8.map(([, v]) => v), backgroundColor: 'rgba(212,175,55,.75)', borderColor: 'rgba(212,175,55,1)', borderWidth: 1, borderRadius: 4 }]
+        labels: topN.map(([k]) => k),
+        datasets: [{ data: topN.map(([,v]) => v), backgroundColor: pizzaColors, borderColor: 'var(--surface)', borderWidth: 2 }]
       },
       options: {
         responsive: true,
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + fmtMoney(ctx.raw) } } },
-        scales: { x: { ticks: { maxRotation: 40, font: { size: 10 } } }, y: { beginAtZero: true, ticks: { callback: v => fmtMoney(v) } } }
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ' ' + fmtMoney(ctx.raw) + ' (' + (totalPizza ? (ctx.raw/totalPizza*100).toFixed(1) : 0) + '%)' } }
+        }
       }
     });
+  }
+  // Legenda customizada
+  const legEl = document.getElementById('crPizzaLegenda');
+  if (legEl) {
+    legEl.innerHTML = topN.map(([k,v],i) => {
+      const pct = totalPizza ? (v/totalPizza*100).toFixed(1) : 0;
+      return `<div style="display:flex;align-items:center;gap:.5rem"><span style="width:12px;height:12px;border-radius:50%;background:${pizzaColors[i]};flex-shrink:0"></span><span style="font-size:.78rem;flex:1;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${k}">${k}</span><span style="font-size:.78rem;font-weight:700;color:var(--accent);white-space:nowrap">${pct}%</span><span style="font-size:.72rem;color:var(--text-lt);white-space:nowrap">${fmtMoney(v)}</span></div>`;
+    }).join('');
+  }
+
+  // Card Resumo
+  const resumoCard = document.getElementById('crResumoCard');
+  if (resumoCard) {
+    resumoCard.style.display = filtered.length ? '' : 'none';
+    const totalFV = filtered.reduce((s,r) => s + parseMoney(r[C.freteValor]||''), 0);
+    const totalFR = filtered.reduce((s,r) => s + parseMoney(r[C.freteReceber]||''), 0);
+    const totalIC = C.icms ? filtered.reduce((s,r) => s + parseMoney(r[C.icms]||''), 0) : 0;
+    const clientesSet = new Set(filtered.map(r => r[C.cliente]).filter(Boolean));
+    document.getElementById('crResFreteValor').textContent = fmtMoney(totalFV);
+    document.getElementById('crResFreteReceber').textContent = fmtMoney(totalFR);
+    document.getElementById('crResIcms').textContent = fmtMoney(totalIC);
+    document.getElementById('crResRegistros').textContent = filtered.length.toLocaleString('pt-BR');
+    document.getElementById('crResTicket').textContent = filtered.length ? fmtMoney(totalFV/filtered.length) : 'R$ —';
+    document.getElementById('crResClientes').textContent = clientesSet.size;
   }
 
   crRenderTabela(filtered, C);
