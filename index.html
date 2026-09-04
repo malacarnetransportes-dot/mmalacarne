@@ -898,8 +898,8 @@ footer a{color:var(--accent);text-decoration:none;}
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">🔋 Baterias (CSV)</label>
     <input type="text" id="urlBaterias" placeholder="https://docs.google.com/spreadsheets/...">
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt);margin-top:.5rem">📅 Agenda / Lembretes (CSV)</label>
-    <input type="text" id="urlAgenda" placeholder="https://docs.google.com/spreadsheets/...">
-    <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem">Planilha com colunas: <code>titulo | data | hora | categoria | prioridade | responsavel | descricao | recorrencia</code>. Publique a aba como CSV (Arquivo → Publicar na Web → selecione a aba → CSV).</p>
+    <input type="text" id="urlAgenda" placeholder="URL padrão M. Malacarne já configurada">
+    <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem">Planilha com colunas: <code>titulo | data | hora | categoria | prioridade | responsavel | descricao | recorrencia</code>. Publique a aba como CSV (Arquivo → Publicar na Web → selecione a aba → CSV). <b>A URL padrão já está configurada e sincroniza automaticamente ao abrir a aba.</b></p>
   </div>
 
   <div style="background:#fffbeb;border:1px solid rgba(212,175,55,.3);border-radius:8px;padding:.7rem .9rem;margin-bottom:.8rem">
@@ -2648,11 +2648,12 @@ const DEFAULT_FATURAMENTO = DEFAULT_FATURAMENTO_DOCS.join("\n");
 // via proxy CORS (mesma lista de proxies dos outros módulos) e o texto
 // extraído passa pelo MESMO parser de IA usado na colagem manual.
 const DEFAULT_PNEU_DOC = "https://docs.google.com/document/d/e/2PACX-1vR4rIhekIETB7y1_F-G53do706ALJ0ByTBMhFxYxRSqADTsOMhgKJbu-Y5NgrA8Lq2Zl4tEaEQWiX8k/pub";
+const DEFAULT_AGENDA   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCjwo2zV2NWdhstfp3J4kCRcnxKKg0OHNM9f1Xp7xx3_k-d4ev_wjYBBo51uKvncE3kPwTOX_rZHKp/pub?output=csv";
 
 let URL_FIN  = localStorage.getItem("urlFinanceiro")  || DEFAULT_FINANCEIRO;
 let URL_CR   = (() => { const s = localStorage.getItem("urlContasReceber"); return (s && s !== "https://docs.google.com/spreadsheets/d/e/2PACX-1vQxQXzJDqicNIiN_EAopTHxyaVJbbUoxYP4dMP1gd9f5rxtKDKBqjPwDL4YA2GbRBbHeo_bU6Lafuhr/pub?output=csv") ? s : DEFAULT_CONTAS_RECEBER; })();
 let URL_BAT  = localStorage.getItem("urlBaterias")    || DEFAULT_BATERIAS;
-let URL_AGENDA = localStorage.getItem("urlAgenda") || '';
+let URL_AGENDA = localStorage.getItem("urlAgenda") || DEFAULT_AGENDA;
 
 // Descarta valores antigos/quebrados que podem ter ficado presos no
 // localStorage de tentativas anteriores (URL de 1 motorista só, a lista de
@@ -4837,7 +4838,7 @@ document.getElementById('saveUrlsBtn').onclick = () => {
   localStorage.setItem('urlContasReceber', URL_CR);
   URL_BAT = document.getElementById('urlBaterias').value || DEFAULT_BATERIAS;
   URL_FAT = document.getElementById('urlFaturamento').value || DEFAULT_FATURAMENTO;
-  URL_AGENDA = document.getElementById('urlAgenda').value.trim();
+  URL_AGENDA = document.getElementById('urlAgenda').value.trim() || DEFAULT_AGENDA;
   localStorage.setItem('urlFinanceiro', URL_FIN);
   localStorage.setItem('urlBaterias', URL_BAT);
   localStorage.setItem('urlFaturamento', URL_FAT);
@@ -4867,6 +4868,7 @@ document.getElementById('saveUrlsBtn').onclick = () => {
   loadBateriasData();
   loadFaturamentoData();
   nfeCheckConfig();
+  if (URL_AGENDA) agSincronizarSheets(true);
 };
 
 document.getElementById('refreshDataBtn').onclick = async () => {
@@ -4882,7 +4884,8 @@ document.getElementById('refreshDataBtn').onclick = async () => {
     loadFinanceiroData(),
     loadFaturamentoData(),
     loadBateriasData(),
-    vencInit()
+    vencInit(),
+    URL_AGENDA ? agSincronizarSheets(true) : Promise.resolve()
   ]);
   // Se aba NF-e está ativa, também atualiza
   const nfePane = document.getElementById('tabNfe');
