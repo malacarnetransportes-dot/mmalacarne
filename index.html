@@ -6475,7 +6475,12 @@ document.querySelectorAll('.fat-subtab-btn[data-fatsub]').forEach(btn => {
     document.querySelectorAll('.fat-subpane').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(btn.dataset.fatsub).classList.add('active');
-    if (btn.dataset.fatsub === 'fatSubConsumo') setTimeout(() => { loadAbastecimentos(); }, 50);
+    if (btn.dataset.fatsub === 'fatSubConsumo') {
+      setTimeout(() => { loadAbastecimentos(); }, 50);
+      abastIniciarAutoRefresh();
+    } else {
+      abastPararAutoRefresh();
+    }
   });
 });
 
@@ -7502,18 +7507,41 @@ let fatcFiltered = []; // registros após os filtros desta sub-aba
 // ═══════════════════════════════════════════════════════════
 // ABASTECIMENTOS — carga direta da planilha do GIRA
 // ═══════════════════════════════════════════════════════════
-const ABASTECIMENTOS_SHEET_ID = "1Wg7qazWTfiLGJ44iGXV6NAXKjqhG9coa";
-const ABASTECIMENTOS_ABA      = "Plan1";
+// Planilha "Controle de Consumo por Litro" — alimentada automaticamente a
+// partir das notas fiscais (PDF) de abastecimento lançadas na pasta do Drive.
+// Publicada em Arquivo → Compartilhar → Publicar na Web → CSV.
+const ABASTECIMENTOS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCjwo2zV2NWdhstfp3J4kCRcnxKKg0OHNM9f1Xp7xx3_k-d4ev_wjYBBo51uKvncE3kPwTOX_rZHKp/pub?output=csv";
 let   abastAllRecords         = [];  // registros vindos da planilha ABASTECIMENTOS
+let   abastAutoRefreshTimer   = null;
+const ABAST_AUTO_REFRESH_MS   = 3 * 60 * 1000; // 3 minutos — a planilha recebe novos abastecimentos com frequência
 
-async function loadAbastecimentos() {
+// Liga a atualização automática enquanto a sub-aba "Controle de Consumo por
+// Litro" estiver aberta, já que a planilha é alimentada continuamente pelos
+// abastecimentos dos motoristas.
+function abastIniciarAutoRefresh() {
+  abastPararAutoRefresh();
+  abastAutoRefreshTimer = setInterval(() => {
+    const tabEl = document.getElementById('fatSubConsumo');
+    if (tabEl && tabEl.classList.contains('active')) loadAbastecimentos({ silencioso: true });
+  }, ABAST_AUTO_REFRESH_MS);
+}
+function abastPararAutoRefresh() {
+  if (abastAutoRefreshTimer) { clearInterval(abastAutoRefreshTimer); abastAutoRefreshTimer = null; }
+}
+
+async function loadAbastecimentos(opts) {
+  const silencioso = !!(opts && opts.silencioso);
   const btn = document.getElementById('btnAtualizarConsumo');
-  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...'; }
+  if (btn && !silencioso) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...'; }
 
+  // Tenta a URL publicada diretamente primeiro (o Google já libera CORS para
+  // links "Publicar na Web"); usa proxies só como contingência.
+  const cacheBuster = `${ABASTECIMENTOS_CSV_URL}${ABASTECIMENTOS_CSV_URL.includes('?') ? '&' : '?'}_=${Date.now()}`;
   const proxies = [
-    `https://docs.google.com/spreadsheets/d/${ABASTECIMENTOS_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(ABASTECIMENTOS_ABA)}`,
-    `https://corsproxy.io/?${encodeURIComponent(`https://docs.google.com/spreadsheets/d/${ABASTECIMENTOS_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(ABASTECIMENTOS_ABA)}`)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://docs.google.com/spreadsheets/d/${ABASTECIMENTOS_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(ABASTECIMENTOS_ABA)}`)}`
+    cacheBuster,
+    `https://corsproxy.io/?${encodeURIComponent(ABASTECIMENTOS_CSV_URL)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(ABASTECIMENTOS_CSV_URL)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(ABASTECIMENTOS_CSV_URL)}`
   ];
 
   let text = null;
@@ -7525,8 +7553,8 @@ async function loadAbastecimentos() {
   }
 
   if (!text) {
-    showToast('Erro ao carregar planilha ABASTECIMENTOS', 5000);
-    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar'; }
+    if (!silencioso) showToast('Erro ao carregar planilha Controle de Consumo por Litro', 5000);
+    if (btn && !silencioso) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar'; }
     return;
   }
 
@@ -7535,7 +7563,7 @@ async function loadAbastecimentos() {
   if (linhas.length < 2) {
     abastAllRecords = [];
     fatcPopularFiltros(); fatcApplyFilters();
-    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar'; }
+    if (btn && !silencioso) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar'; }
     return;
   }
 
@@ -7601,8 +7629,8 @@ async function loadAbastecimentos() {
   fatcPopularFiltros();
   fatcApplyFilters();
   const n = abastAllRecords.length;
-  showToast(`✅ ${n} abastecimento(s) carregado(s)`, 3000);
-  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar'; }
+  if (!silencioso) showToast(`✅ ${n} abastecimento(s) carregado(s)`, 3000);
+  if (btn && !silencioso) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar'; }
 }
 
 function fatcGetRecords() {
