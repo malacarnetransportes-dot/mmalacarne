@@ -1313,8 +1313,10 @@ footer a{color:var(--accent);text-decoration:none;}
             <div class="dash-card" style="background:linear-gradient(135deg,rgba(212,175,55,.08),rgba(212,175,55,.02));border:1px solid rgba(212,175,55,.25)">
               <div class="dash-card-title"><i class="fas fa-gas-pump"></i> Controle de Consumo por Litro
                 <button id="btnAtualizarConsumo" class="btn btn-accent btn-sm" style="margin-left:1rem" onclick="loadAbastecimentos()"><i class="fas fa-sync-alt"></i> Atualizar</button>
+                <button id="btnProcessarPDFs" class="btn btn-success btn-sm" style="margin-left:.5rem" onclick="acionarWebApp()"><i class="fas fa-file-pdf"></i> Processar PDFs</button>
               </div>
-              <div style="font-size:.78rem;color:var(--text-lt)">Métricas calculadas a partir dos lançamentos de Faturamento (campos <b>Média CV</b>, <b>Média CR</b>, <b>KM</b> e <b>Litros</b>), agrupadas por placa. Use os filtros abaixo (Motorista, Placa Cavalo, Placa Carreta, Período, Mês e Ano) para refinar os dados desta sub-aba.</div>
+              <div id="webAppStatus" style="display:none;margin-top:.5rem;font-size:.8rem;padding:.5rem .8rem;border-radius:8px;background:var(--gray-100)"></div>
+              <div style="font-size:.78rem;color:var(--text-lt);margin-top:.4rem">Abastecimentos extraídos automaticamente das DANFes da pasta do Drive. Clique em <b>Processar PDFs</b> para importar novos arquivos. Use os filtros abaixo para refinar.</div>
             </div>
 
             <!-- FILTROS — Controle de Consumo por Litro -->
@@ -7488,6 +7490,7 @@ let fatcFiltered = []; // registros após os filtros desta sub-aba
 // partir das notas fiscais (PDF) de abastecimento lançadas na pasta do Drive.
 // Publicada em Arquivo → Compartilhar → Publicar na Web → CSV.
 const ABASTECIMENTOS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCjwo2zV2NWdhstfp3J4kCRcnxKKg0OHNM9f1Xp7xx3_k-d4ev_wjYBBo51uKvncE3kPwTOX_rZHKp/pub?output=csv";
+const WEBAPP_ABAST_URL = "https://script.google.com/macros/s/AKfycby6X4YAzEWSJEWnxcslF-Ss34jYFlY9iYsCdrqhqLoWBF6gtkZafHV6j2mGC7Vf1kaTLg/exec";
 let   abastAllRecords         = [];  // registros vindos da planilha ABASTECIMENTOS
 let   abastAutoRefreshTimer   = null;
 const ABAST_AUTO_REFRESH_MS   = 3 * 60 * 1000; // 3 minutos — a planilha recebe novos abastecimentos com frequência
@@ -7608,6 +7611,66 @@ async function loadAbastecimentos(opts) {
   const n = abastAllRecords.length;
   if (!silencioso) showToast(`✅ ${n} abastecimento(s) carregado(s)`, 3000);
   if (btn && !silencioso) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar'; }
+}
+
+// ── ACIONAR WEB APP (processar PDFs da pasta do Drive) ───────────────────────
+async function acionarWebApp() {
+  const btn    = document.getElementById('btnProcessarPDFs');
+  const status = document.getElementById('webAppStatus');
+  if (!btn || !status) return;
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando PDFs...';
+  status.style.display = 'block';
+  status.style.background = 'var(--gray-100)';
+  status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando PDFs para extração — isso pode levar alguns minutos...';
+
+  try {
+    // Primeiro verifica quantos PDFs estão pendentes
+    const chkResp = await fetch(WEBAPP_ABAST_URL + '?action=status');
+    const chk = await chkResp.json();
+    if (chk.pendentes === 0) {
+      status.style.background = '#fef9c3';
+      status.innerHTML = '<i class="fas fa-info-circle" style="color:#ca8a04"></i> Nenhum PDF novo na pasta — tudo já foi processado.';
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-file-pdf"></i> Processar PDFs';
+      return;
+    }
+
+    status.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Encontrado(s) <b>${chk.pendentes} PDF(s)</b> — extraindo dados com IA...`;
+
+    // Dispara o processamento
+    const resp = await fetch(WEBAPP_ABAST_URL + '?action=processar');
+    const data = await resp.json();
+
+    if (data.status !== 'ok') throw new Error(data.msg || 'Erro desconhecido');
+
+    const cor = data.erros > 0 ? '#fef2f2' : '#f0fdf4';
+    const ico = data.erros > 0 ? 'fa-exclamation-triangle" style="color:#dc2626' : 'fa-check-circle" style="color:#16a34a';
+    status.style.background = cor;
+    status.innerHTML =
+      `<i class="fas ${ico}"></i> ` +
+      `<b>${data.processados}</b> PDF(s) processado(s) · ` +
+      `<b>${data.totalLinhas}</b> linha(s) gravada(s) · ` +
+      `<b>${data.duplicatas}</b> duplicata(s) · ` +
+      `<b>${data.erros}</b> erro(s)`;
+
+    // Recarrega a planilha para mostrar os novos dados
+    if (data.totalLinhas > 0) {
+      await loadAbastecimentos({ silencioso: true });
+      showToast('✅ Planilha atualizada com ' + data.totalLinhas + ' novo(s) registro(s)!', 4000);
+    }
+
+    // Mostra log detalhado no console
+    if (data.log) console.table(data.log);
+
+  } catch (e) {
+    status.style.background = '#fef2f2';
+    status.innerHTML = '<i class="fas fa-times-circle" style="color:#dc2626"></i> Erro: ' + e.message;
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-file-pdf"></i> Processar PDFs';
 }
 
 function fatcGetRecords() {
