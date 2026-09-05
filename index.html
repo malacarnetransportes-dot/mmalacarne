@@ -2649,6 +2649,7 @@ const DEFAULT_FATURAMENTO = DEFAULT_FATURAMENTO_DOCS.join("\n");
 // extraído passa pelo MESMO parser de IA usado na colagem manual.
 const DEFAULT_PNEU_DOC = "https://docs.google.com/document/d/e/2PACX-1vR4rIhekIETB7y1_F-G53do706ALJ0ByTBMhFxYxRSqADTsOMhgKJbu-Y5NgrA8Lq2Zl4tEaEQWiX8k/pub";
 const DEFAULT_AGENDA   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCjwo2zV2NWdhstfp3J4kCRcnxKKg0OHNM9f1Xp7xx3_k-d4ev_wjYBBo51uKvncE3kPwTOX_rZHKp/pub?output=csv";
+const DEFAULT_FAT_DRIVE = "https://drive.google.com/drive/folders/1x656mBtR-zOO_ZxXEBmBAMTzp4JCRezC";
 
 let URL_FIN  = localStorage.getItem("urlFinanceiro")  || DEFAULT_FINANCEIRO;
 let URL_CR   = (() => { const s = localStorage.getItem("urlContasReceber"); return (s && s !== "https://docs.google.com/spreadsheets/d/e/2PACX-1vQxQXzJDqicNIiN_EAopTHxyaVJbbUoxYP4dMP1gd9f5rxtKDKBqjPwDL4YA2GbRBbHeo_bU6Lafuhr/pub?output=csv") ? s : DEFAULT_CONTAS_RECEBER; })();
@@ -6505,130 +6506,103 @@ function extrairFolderIdDrive(url) {
   return null;
 }
 
-// Lista arquivos PDF públicos de uma pasta do Google Drive
+// Lista arquivos PDF de uma pasta do Google Drive via Claude API + MCP Drive
 async function listarPDFsDrive(folderId) {
-  // Drive API v3 — funciona para pastas públicas sem chave de API (usando o endpoint de RSS/feed)
-  // Usamos o endpoint gdata que funciona sem autenticação para pastas públicas
-  const proxies = [
-    `https://corsproxy.io/?https://drive.google.com/drive/folders/${folderId}`,
-  ];
-
-  // Abordagem: usar a API de exportação do Drive via fetch no HTML da pasta
-  // Como o Drive bloqueia CORS, usamos o endpoint de feed público
-  const feedUrl = `https://corsproxy.io/?https://drive.google.com/embeddedfolderview?id=${folderId}#list`;
-
-  const resp = await fetch(feedUrl);
-  if (!resp.ok) throw new Error('Não foi possível acessar a pasta. Verifique se está pública.');
-  const html = await resp.text();
-
-  // Extrai IDs e nomes dos arquivos do HTML retornado
-  const arquivos = [];
-  // Padrão no HTML do Drive: data-id="ID" ... ou links com /file/d/ID/
-  const regexId = /\/file\/d\/([a-zA-Z0-9_-]+)/g;
-  const regexNome = /class="[^"]*flip-entry-title[^"]*"[^>]*>([^<]+)</g;
-
-  const ids = new Set();
-  let m;
-  while ((m = regexId.exec(html)) !== null) ids.add(m[1]);
-
-  // Para cada ID, monta o objeto de arquivo
-  // Vamos tentar extrair nome do HTML também
-  const nomeMap = {};
-  // Tenta pegar nomes dos titles
-  const regexEntry = /data-id="([^"]+)"[^>]*>[^<]*<[^>]*>([^<]+\.pdf)/gi;
-  while ((m = regexEntry.exec(html)) !== null) {
-    nomeMap[m[1]] = m[2];
-  }
-
-  ids.forEach(id => {
-    arquivos.push({
-      id,
-      nome: nomeMap[id] || `relatorio_${id.slice(0,8)}.pdf`,
-      urlDownload: `https://drive.google.com/uc?export=download&id=${id}`,
-      urlView: `https://drive.google.com/file/d/${id}/view`
-    });
+  // Usa Claude API com MCP do Google Drive (autenticado) — muito mais confiável que scraping via proxy CORS.
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1000,
+      mcp_servers: [{ type: 'url', url: 'https://drivemcp.googleapis.com/mcp/v1', name: 'google-drive' }],
+      messages: [{
+        role: 'user',
+        content: `Liste TODOS os arquivos PDF na pasta do Google Drive com ID "${folderId}". Use a ferramenta de busca do Drive com a query: parentId = '${folderId}' and mimeType = 'application/pdf'. Retorne SOMENTE um JSON valido (sem markdown) no formato: {"arquivos":[{"id":"FILE_ID","nome":"NOME.pdf"}]}`
+      }]
+    })
   });
 
-  return arquivos;
+  if (!response.ok) throw new Error('Erro na API ao listar PDFs');
+  const data = await response.json();
+
+  const allText = (data.content || [])
+    .map(item => item.type === 'text' ? item.text : (item.type === 'mcp_tool_result' ? (item.content?.[0]?.text || '') : ''))
+    .join('\n');
+
+  const jsonMatch = allText.match(/\{[\s\S]*"arquivos"[\s\S]*?\}/);
+  if (!jsonMatch) throw new Error('Resposta inesperada da API');
+  const parsed = JSON.parse(jsonMatch[0]);
+
+  return (parsed.arquivos || []).map(a => ({
+    id: a.id,
+    nome: a.nome || `arquivo_${a.id.slice(0,8)}.pdf`,
+    urlDownload: `https://drive.google.com/uc?export=download&id=${a.id}`,
+    urlView: `https://drive.google.com/file/d/${a.id}/view`
+  }));
 }
 
-// Lê o PDF via URL e extrai texto usando fetch + pdf.js simplificado
-// Como não temos pdf.js, vamos enviar o PDF base64 para a API Claude
+// Lê o PDF do Drive via MCP (autenticado) e extrai dados estruturados com IA num único call
 async function lerPDFEExtrairDados(arquivo) {
   const statusEl = document.getElementById('fatDriveStatus');
-  statusEl.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Lendo <b>${arquivo.nome}</b>...`;
+  statusEl.innerHTML = `<i class="fas fa-robot" style="color:var(--accent)"></i> IA lendo e extraindo dados de <b>${arquivo.nome}</b>...`;
 
-  // Download do PDF via proxy CORS
-  const proxyUrl = `https://corsproxy.io/?${arquivo.urlDownload}`;
-  const resp = await fetch(proxyUrl);
-  if (!resp.ok) throw new Error(`Erro ao baixar ${arquivo.nome}`);
-
-  const blob = await resp.blob();
-  const base64 = await new Promise((res, rej) => {
-    const reader = new FileReader();
-    reader.onload = () => res(reader.result.split(',')[1]);
-    reader.onerror = rej;
-    reader.readAsDataURL(blob);
-  });
-
-  statusEl.innerHTML = `<i class="fas fa-robot" style="color:var(--accent)"></i> IA extraindo dados de <b>${arquivo.nome}</b>...`;
-
-  // Chama a API Claude para extrair os dados estruturados do PDF
+  // Usa Claude API + MCP Drive: baixa e lê o PDF em um único call autenticado.
+  // Isso evita erros de CORS ao tentar baixar diretamente do Drive sem autenticação.
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
       max_tokens: 8000,
+      mcp_servers: [{ type: 'url', url: 'https://drivemcp.googleapis.com/mcp/v1', name: 'google-drive' }],
       messages: [{
         role: 'user',
-        content: [
-          {
-            type: 'document',
-            source: { type: 'base64', media_type: 'application/pdf', data: base64 }
-          },
-          {
-            type: 'text',
-            text: `Este é um Relatório de Contas a Receber da M-Malacarne Transporte e Logística.
-Extraia TODOS os lançamentos e retorne APENAS um JSON válido (sem markdown, sem texto extra) no formato:
+        content: `Use a ferramenta do Google Drive para baixar e ler o conteúdo do arquivo com ID "${arquivo.id}" (nome: ${arquivo.nome}). É uma DANFe (Nota Fiscal Eletrônica) de transporte/frete da M. Malacarne Transporte e Logística.
+
+Após ler o arquivo, extraia os dados e retorne SOMENTE um JSON válido (sem markdown, sem texto extra) no formato:
 {
   "lancamentos": [
     {
-      "lancamento": "número do lançamento",
-      "nota": "número da nota/CTE/DOT",
+      "lancamento": "número do lançamento ou sequencial",
+      "nota": "número da NF-e ou chave de acesso resumida",
       "data_nota": "DD/MM/YYYY",
       "data_venc": "DD/MM/YYYY",
-      "referente": "tipo (FRETES A RECEBER, REEMBOLSO etc)",
-      "cliente": "nome do cliente",
-      "motorista": "nome do motorista",
-      "placa": "placa do veículo",
-      "modelo": "modelo do veículo",
+      "referente": "FRETE ou tipo do serviço",
+      "cliente": "nome do destinatário/tomador",
+      "motorista": "nome do motorista se disponível",
+      "placa": "placa do veículo se disponível",
+      "modelo": "modelo do veículo se disponível",
       "vlr_total": 0.00,
       "recebido": 0.00,
       "a_receber": 0.00,
-      "obs": "observação se houver"
+      "obs": "CFOP, natureza da operação ou observação relevante"
     }
   ]
 }
-Valores monetários devem ser números (sem R$). Retorne SOMENTE o JSON.`
-          }
-        ]
+Valores monetários devem ser números sem R$. Retorne SOMENTE o JSON.`
       }]
     })
   });
 
+  if (!response.ok) throw new Error(`Erro na API ao processar ${arquivo.nome}`);
   const data = await response.json();
-  const texto = data.content?.map(c => c.text || '').join('') || '';
 
-  // Parse do JSON retornado
-  const clean = texto.replace(/```json|```/g, '').trim();
-  const parsed = JSON.parse(clean);
+  const allText = (data.content || [])
+    .map(item => item.type === 'text' ? item.text : (item.type === 'mcp_tool_result' ? (item.content?.[0]?.text || '') : ''))
+    .join('\n');
+
+  const clean = allText.replace(/```json|```/g, '').trim();
+  // Extrai o JSON da resposta (pode ter texto antes/depois)
+  const jsonMatch = clean.match(/\{[\s\S]*"lancamentos"[\s\S]*\}/);
+  if (!jsonMatch) throw new Error(`Não foi possível extrair dados de ${arquivo.nome}`);
+  const parsed = JSON.parse(jsonMatch[0]);
   return parsed.lancamentos || [];
 }
 
 // Função principal — carrega PDFs da pasta do Drive
 async function carregarPDFsDrive() {
-  const urlDrive = localStorage.getItem('urlFaturamentoDrive') || '';
+  const urlDrive = localStorage.getItem('urlFaturamentoDrive') || DEFAULT_FAT_DRIVE;
   const folderId = extrairFolderIdDrive(urlDrive);
 
   const statusEl = document.getElementById('fatDriveStatus');
