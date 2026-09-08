@@ -412,13 +412,13 @@ footer a{color:var(--accent);text-decoration:none;}
 .data-table .badge{padding:.15rem .55rem;border-radius:30px;font-size:.7rem;font-weight:700;}
 
 /* ── FINANCEIRO — GUIAS (SUB-ABAS) ── */
-.fin-subtabs,.fat-subtabs{display:flex;gap:.5rem;margin-bottom:1.2rem;flex-wrap:wrap;border-bottom:2px solid var(--gray-200);padding-bottom:0;}
-.fin-subtab-btn,.fat-subtab-btn{display:flex;align-items:center;gap:.5rem;padding:.65rem 1.1rem;border:none;background:none;cursor:pointer;font-size:.83rem;font-weight:700;color:var(--text-lt);border-bottom:3px solid transparent;margin-bottom:-2px;transition:.2s;}
-.fin-subtab-btn:hover,.fat-subtab-btn:hover{color:var(--primary);}
-.fin-subtab-btn.active,.fat-subtab-btn.active{color:var(--accent-dk);border-bottom-color:var(--accent);}
+.fin-subtabs,.fat-subtabs,.cr-subtabs{display:flex;gap:.5rem;margin-bottom:1.2rem;flex-wrap:wrap;border-bottom:2px solid var(--gray-200);padding-bottom:0;}
+.fin-subtab-btn,.fat-subtab-btn,.cr-subtab-btn{display:flex;align-items:center;gap:.5rem;padding:.65rem 1.1rem;border:none;background:none;cursor:pointer;font-size:.83rem;font-weight:700;color:var(--text-lt);border-bottom:3px solid transparent;margin-bottom:-2px;transition:.2s;}
+.fin-subtab-btn:hover,.fat-subtab-btn:hover,.cr-subtab-btn:hover{color:var(--primary);}
+.fin-subtab-btn.active,.fat-subtab-btn.active,.cr-subtab-btn.active{color:var(--accent-dk);border-bottom-color:var(--accent);}
 .consumo-metric-badge{display:inline-flex;align-items:center;gap:.3rem;background:var(--gray-100);padding:.3rem .7rem;border-radius:20px;font-size:.72rem;font-weight:700;color:var(--text-lt)}
-.fin-subpane,.fat-subpane{display:none;}
-.fin-subpane.active,.fat-subpane.active{display:block;}
+.fin-subpane,.fat-subpane,.cr-subpane{display:none;}
+.fin-subpane.active,.fat-subpane.active,.cr-subpane.active{display:block;}
 
 /* ── ORÇAMENTO & CUSTOS ── */
 .orc-topbar{display:flex;flex-wrap:wrap;align-items:flex-end;gap:1rem;margin-bottom:1rem;}
@@ -1000,6 +1000,13 @@ footer a{color:var(--accent);text-decoration:none;}
 
         <!-- ── TAB CONTAS A RECEBER ── -->
         <div id="tabContasReceber" class="tab-pane">
+
+          <div class="cr-subtabs">
+            <button class="cr-subtab-btn active" data-crsub="crSubLancamentos"><i class="fas fa-list"></i> Lançamentos</button>
+            <button class="cr-subtab-btn" data-crsub="crSubFluxoCaixa"><i class="fas fa-chart-line"></i> Fluxo de Caixa</button>
+          </div>
+
+          <div id="crSubLancamentos" class="cr-subpane active">
           <div class="kpi-grid" id="crKpis">
             <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-sack-dollar"></i></div><div><div class="kpi-val" id="cr-frete-valor">R$ —</div><div class="kpi-lbl">Frete Valor (Receita)</div></div></div>
             <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-hand-holding-dollar"></i></div><div><div class="kpi-val" id="cr-frete-receber">R$ —</div><div class="kpi-lbl">Frete a Receber</div></div></div>
@@ -1090,6 +1097,67 @@ footer a{color:var(--accent);text-decoration:none;}
               </table>
             </div>
           </div>
+          </div><!-- /crSubLancamentos -->
+
+          <div id="crSubFluxoCaixa" class="cr-subpane">
+            <div class="dash-card" style="background:linear-gradient(135deg,rgba(212,175,55,.08),rgba(212,175,55,.02));border:1px solid rgba(212,175,55,.25)">
+              <div class="dash-card-title"><i class="fas fa-chart-line"></i> Fluxo de Caixa — Projeção de Recebimentos
+                <button class="btn btn-accent btn-sm" style="margin-left:1rem" onclick="loadContasReceberData(false)"><i class="fas fa-sync-alt"></i> Atualizar</button>
+              </div>
+              <div style="font-size:.78rem;color:var(--text-lt);margin-top:.4rem">Projeção de entradas de caixa com base na <b>data de pagamento/vencimento</b> dos lançamentos de Contas a Receber. Vencido = data de pagamento já passou; A Vencer = ainda dentro do prazo.</div>
+            </div>
+
+            <div class="dash-card" style="margin-bottom:1rem">
+              <div class="dash-card-title" style="margin-bottom:.8rem"><i class="fas fa-filter"></i> Filtros — Fluxo de Caixa</div>
+              <div class="filters-bar">
+                <div class="flt-grp"><label>Cliente</label><select id="fcxCliente" onchange="fcxRender()"><option value="">Todos</option></select></div>
+                <div class="flt-grp"><label>Motorista</label><select id="fcxMotorista" onchange="fcxRender()"><option value="">Todos</option></select></div>
+                <div class="flt-grp"><label>Vencimento Início</label><input type="date" id="fcxDataIni" onchange="fcxRender()"></div>
+                <div class="flt-grp"><label>Vencimento Fim</label><input type="date" id="fcxDataFim" onchange="fcxRender()"></div>
+                <button class="btn btn-accent btn-sm" onclick="fcxRender()"><i class="fas fa-filter"></i> Filtrar</button>
+                <button class="btn btn-gray btn-sm" onclick="fcxResetFiltros()"><i class="fas fa-eraser"></i> Limpar</button>
+              </div>
+            </div>
+
+            <div class="kpi-grid" id="fcxKpis">
+              <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-triangle-exclamation"></i></div><div><div class="kpi-val" id="fcx-vencido">R$ —</div><div class="kpi-lbl">Vencido</div></div></div>
+              <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-hourglass-half"></i></div><div><div class="kpi-val" id="fcx-7dias">R$ —</div><div class="kpi-lbl">A Vencer (7 dias)</div></div></div>
+              <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-calendar-days"></i></div><div><div class="kpi-val" id="fcx-30dias">R$ —</div><div class="kpi-lbl">A Vencer (30 dias)</div></div></div>
+              <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-sack-dollar"></i></div><div><div class="kpi-val" id="fcx-total">R$ —</div><div class="kpi-lbl">Total a Receber (filtrado)</div></div></div>
+              <div class="kpi-card"><div class="kpi-icon" style="background:rgba(139,115,85,.15);color:var(--primary-dk)"><i class="fas fa-list"></i></div><div><div class="kpi-val" id="fcx-registros">—</div><div class="kpi-lbl">Registros</div></div></div>
+            </div>
+
+            <div class="dash-card">
+              <div class="dash-card-title"><i class="fas fa-layer-group"></i> Aging — Faixas de Vencimento</div>
+              <div class="chart-box" style="height:240px"><canvas id="fcxChartAging"></canvas></div>
+            </div>
+
+            <div class="dash-card">
+              <div class="dash-card-title"><i class="fas fa-chart-bar"></i> Previsão de Entradas por Mês</div>
+              <div class="chart-box" style="height:280px"><canvas id="fcxChartMensal"></canvas></div>
+            </div>
+
+            <div class="dash-card">
+              <div class="dash-card-title"><i class="fas fa-table"></i> Detalhamento Mensal — Saldo Acumulado</div>
+              <div class="tbl-wrap">
+                <table class="data-table">
+                  <thead><tr><th>Mês</th><th>Qtd. Lançamentos</th><th>Vencido</th><th>A Vencer</th><th>Total do Mês</th><th>Saldo Acumulado</th></tr></thead>
+                  <tbody id="fcxTableMensalBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="dash-card">
+              <div class="dash-card-title"><i class="fas fa-crown"></i> Maiores Valores a Vencer</div>
+              <div class="tbl-wrap">
+                <table class="data-table">
+                  <thead><tr><th>Cliente</th><th>Motorista</th><th>CTE</th><th>Vencimento</th><th>Situação</th><th>Valor</th></tr></thead>
+                  <tbody id="fcxTableDetalheBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div><!-- /crSubFluxoCaixa -->
+
         </div>
 
         <!-- ── TAB FINANCEIRO ── -->
@@ -5346,6 +5414,10 @@ function applyCRFilters() {
   }
 
   crRenderTabela(filtered, C);
+
+  // Se a sub-aba Fluxo de Caixa estiver visível, mantém sua projeção sincronizada
+  const fcxPane = document.getElementById('crSubFluxoCaixa');
+  if (fcxPane && fcxPane.classList.contains('active') && typeof fcxRender === 'function') fcxRender();
 }
 
 function crRenderTabela(filtered, C) {
@@ -5412,6 +5484,196 @@ function resetCRFilters() {
     if (el) el.value = '';
   });
   applyCRFilters();
+}
+
+// ═══════════════════════════════════════════════════════════
+// CONTAS A RECEBER — FLUXO DE CAIXA (projeção de recebimentos)
+// ═══════════════════════════════════════════════════════════
+let fcxChartAgingObj = null;
+let fcxChartMensalObj = null;
+
+function fcxPopularFiltros() {
+  if (!contasReceberData.length) return;
+  const headers = Object.keys(contasReceberData[0]);
+  const C = crCols(headers);
+  const clientes = new Set(), motoristas = new Set();
+  contasReceberData.forEach(r => {
+    if (C.cliente && r[C.cliente]) clientes.add(String(r[C.cliente]).trim());
+    if (C.mot && r[C.mot]) motoristas.add(String(r[C.mot]).trim());
+  });
+  const fill = (id, set) => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const atual = sel.value;
+    sel.innerHTML = '<option value="">Todos</option>' + [...set].sort().map(v => `<option value="${v.replace(/"/g, '&quot;')}">${v}</option>`).join('');
+    if ([...set].includes(atual)) sel.value = atual;
+  };
+  fill('fcxCliente', clientes);
+  fill('fcxMotorista', motoristas);
+}
+
+function fcxResetFiltros() {
+  ['fcxCliente', 'fcxMotorista', 'fcxDataIni', 'fcxDataFim'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  fcxRender();
+}
+
+function fcxRender() {
+  const tbody = document.getElementById('fcxTableMensalBody');
+  if (!contasReceberData.length) {
+    if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-lt)">Sem dados carregados. Atualize a aba Contas a Receber.</td></tr>';
+    return;
+  }
+  fcxPopularFiltros();
+
+  const headers = Object.keys(contasReceberData[0]);
+  const C = crCols(headers);
+  if (!C.dataPgto || (!C.freteValor && !C.freteReceber)) {
+    if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--warning)">Não foi possível identificar as colunas de vencimento/valor na planilha.</td></tr>';
+    return;
+  }
+
+  const fCliente = (document.getElementById('fcxCliente') || {}).value || '';
+  const fMot = (document.getElementById('fcxMotorista') || {}).value || '';
+  const dIni = (document.getElementById('fcxDataIni') || {}).value;
+  const dFim = (document.getElementById('fcxDataFim') || {}).value;
+
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+
+  let rows = contasReceberData.filter(r => {
+    if (fCliente && C.cliente && String(r[C.cliente] || '').trim() !== fCliente) return false;
+    if (fMot && C.mot && String(r[C.mot] || '').trim() !== fMot) return false;
+    const d = parseDate(r[C.dataPgto]);
+    if (!d) return false;
+    if (dIni && d < new Date(dIni + 'T00:00:00')) return false;
+    if (dFim && d > new Date(dFim + 'T23:59:59')) return false;
+    return true;
+  }).map(r => {
+    const d = parseDate(r[C.dataPgto]);
+    const valor = C.freteReceber ? parseMoney(r[C.freteReceber]) : parseMoney(r[C.freteValor]);
+    return { r, d, valor };
+  });
+
+  // KPIs
+  const em7 = new Date(hoje); em7.setDate(em7.getDate() + 7);
+  const em30 = new Date(hoje); em30.setDate(em30.getDate() + 30);
+  let totalVencido = 0, total7 = 0, total30 = 0, totalGeral = 0;
+  rows.forEach(({ d, valor }) => {
+    totalGeral += valor;
+    if (d < hoje) totalVencido += valor;
+    else if (d <= em7) total7 += valor;
+    if (d >= hoje && d <= em30) total30 += valor;
+  });
+  document.getElementById('fcx-vencido').textContent = fmtMoney(totalVencido);
+  document.getElementById('fcx-7dias').textContent = fmtMoney(total7);
+  document.getElementById('fcx-30dias').textContent = fmtMoney(total30);
+  document.getElementById('fcx-total').textContent = fmtMoney(totalGeral);
+  document.getElementById('fcx-registros').textContent = rows.length;
+
+  // Aging — faixas de vencimento
+  const faixas = [
+    { label: 'Vencido', min: -Infinity, max: -1 },
+    { label: '0-7 dias', min: 0, max: 7 },
+    { label: '8-15 dias', min: 8, max: 15 },
+    { label: '16-30 dias', min: 16, max: 30 },
+    { label: '31-60 dias', min: 31, max: 60 },
+    { label: '60+ dias', min: 61, max: Infinity }
+  ];
+  const agingValores = faixas.map(f => 0);
+  rows.forEach(({ d, valor }) => {
+    const diffDias = Math.round((d - hoje) / 86400000);
+    const idx = faixas.findIndex(f => diffDias >= f.min && diffDias <= f.max);
+    if (idx >= 0) agingValores[idx] += valor;
+  });
+  const agingCores = ['#e74c3c', '#f39c12', '#f1c40f', '#4ea8f7', '#2980b9', '#8b7355'];
+  if (fcxChartAgingObj) fcxChartAgingObj.destroy();
+  const ctxA = document.getElementById('fcxChartAging');
+  if (ctxA) {
+    fcxChartAgingObj = new Chart(ctxA.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: faixas.map(f => f.label),
+        datasets: [{ label: 'Valor', data: agingValores, backgroundColor: agingCores, borderRadius: 6 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + fmtMoney(ctx.raw) } } },
+        scales: { y: { ticks: { callback: v => fmtMoney(v) } } }
+      }
+    });
+  }
+
+  // Previsão mensal + saldo acumulado
+  const porMes = {};
+  rows.forEach(({ d, valor }) => {
+    const chave = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    if (!porMes[chave]) porMes[chave] = { vencido: 0, aVencer: 0, qtd: 0, total: 0 };
+    porMes[chave].qtd += 1;
+    porMes[chave].total += valor;
+    if (d < hoje) porMes[chave].vencido += valor; else porMes[chave].aVencer += valor;
+  });
+  const mesesOrdenados = Object.keys(porMes).sort();
+  const nomesMes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  const fmtChaveMes = chave => {
+    const [ano, mes] = chave.split('-');
+    return `${nomesMes[parseInt(mes, 10) - 1]}/${ano}`;
+  };
+
+  if (fcxChartMensalObj) fcxChartMensalObj.destroy();
+  const ctxM = document.getElementById('fcxChartMensal');
+  if (ctxM && mesesOrdenados.length) {
+    fcxChartMensalObj = new Chart(ctxM.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: mesesOrdenados.map(fmtChaveMes),
+        datasets: [
+          { label: 'Vencido', data: mesesOrdenados.map(k => porMes[k].vencido), backgroundColor: '#e74c3c', borderRadius: 4 },
+          { label: 'A Vencer', data: mesesOrdenados.map(k => porMes[k].aVencer), backgroundColor: '#4caf90', borderRadius: 4 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${fmtMoney(ctx.raw)}` } } },
+        scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: v => fmtMoney(v) } } }
+      }
+    });
+  }
+
+  // Tabela mensal com saldo acumulado
+  let acumulado = 0;
+  document.getElementById('fcxTableMensalBody').innerHTML = mesesOrdenados.length
+    ? mesesOrdenados.map(k => {
+        const m = porMes[k];
+        acumulado += m.total;
+        return `<tr>
+          <td>${fmtChaveMes(k)}</td>
+          <td>${m.qtd}</td>
+          <td style="color:var(--danger)">${fmtMoney(m.vencido)}</td>
+          <td style="color:var(--success)">${fmtMoney(m.aVencer)}</td>
+          <td style="font-weight:700">${fmtMoney(m.total)}</td>
+          <td style="font-weight:700;color:var(--accent-dk)">${fmtMoney(acumulado)}</td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="6" style="text-align:center;color:var(--text-lt)">Nenhum registro encontrado para o filtro selecionado</td></tr>';
+
+  // Maiores valores a vencer (top 15, apenas ainda não vencidos)
+  const aVencerOrdenado = rows.filter(x => x.d >= hoje).sort((a, b) => b.valor - a.valor).slice(0, 15);
+  document.getElementById('fcxTableDetalheBody').innerHTML = aVencerOrdenado.length
+    ? aVencerOrdenado.map(({ r, d, valor }) => {
+        const diffDias = Math.round((d - hoje) / 86400000);
+        const situacao = diffDias <= 7 ? `<span style="color:var(--warning);font-weight:700">Vence em ${diffDias}d</span>` : `<span style="color:var(--text-lt)">Em ${diffDias}d</span>`;
+        return `<tr>
+          <td>${C.cliente ? (r[C.cliente] || '—') : '—'}</td>
+          <td>${C.mot ? (r[C.mot] || '—') : '—'}</td>
+          <td>${C.cte ? (r[C.cte] || '—') : '—'}</td>
+          <td>${fmtDate(d)}</td>
+          <td>${situacao}</td>
+          <td style="font-weight:700">${fmtMoney(valor)}</td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="6" style="text-align:center;color:var(--text-lt)">Nenhum valor a vencer encontrado</td></tr>';
 }
 
 
@@ -6487,6 +6749,17 @@ document.querySelectorAll('.fat-subtab-btn[data-fatsub]').forEach(btn => {
     } else {
       abastPararAutoRefresh();
     }
+  });
+});
+
+// Alterna entre as guias (sub-abas) dentro da aba Contas a Receber
+document.querySelectorAll('.cr-subtab-btn[data-crsub]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.cr-subtab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.cr-subpane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.crsub).classList.add('active');
+    if (btn.dataset.crsub === 'crSubFluxoCaixa') setTimeout(fcxRender, 50);
   });
 });
 
