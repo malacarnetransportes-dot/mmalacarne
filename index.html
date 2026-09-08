@@ -902,17 +902,8 @@ footer a{color:var(--accent);text-decoration:none;}
     <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem">Planilha com colunas: <code>titulo | data | hora | categoria | prioridade | responsavel | descricao | recorrencia</code>. Publique a aba como CSV (Arquivo → Publicar na Web → selecione a aba → CSV). <b>A URL padrão já está configurada e sincroniza automaticamente ao abrir a aba.</b></p>
   </div>
 
-  <div style="background:#fffbeb;border:1px solid rgba(212,175,55,.3);border-radius:8px;padding:.7rem .9rem;margin-bottom:.8rem">
-    <div style="font-size:.72rem;font-weight:800;color:var(--accent-dk);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem">🔗 Nuvem Fiscal — Consulta NF-e SEFAZ</div>
-    <p style="font-size:.72rem;color:var(--text-lt);margin-bottom:.5rem">Crie conta gratuita em <a href="https://nuvemfiscal.com.br" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">nuvemfiscal.com.br</a> → Painel → API → Credenciais.</p>
-    <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">Client ID</label>
-    <input type="text" id="nfeClientId" placeholder="client_id da Nuvem Fiscal">
-    <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">Client Secret</label>
-    <input type="password" id="nfeClientSecret" placeholder="client_secret da Nuvem Fiscal">
-    <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">CNPJ da Empresa (só números)</label>
-    <input type="text" id="nfeCnpj" placeholder="Ex: 00000000000100" maxlength="14">
-    <p style="font-size:.7rem;color:var(--text-lt);margin-top:.3rem">💡 O sistema busca automaticamente todas as NF-e recebidas pelo CNPJ — incluindo notas de combustível.</p>
-  </div>
+
+    </div>
 
   <div style="background:#eff6ff;border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:.7rem .9rem;margin-bottom:.8rem">
     <div style="font-size:.72rem;font-weight:800;color:#1e40af;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem">🤖 MAX — Assistente</div>
@@ -968,7 +959,6 @@ footer a{color:var(--accent);text-decoration:none;}
         <button class="pa-nav-item" data-tab="tabVagas"><i class="fas fa-user-tie"></i> Vagas / Entrevistas</button>
         <button class="pa-nav-item" data-tab="tabChecklist"><i class="fas fa-clipboard-check"></i> Checklist Veículos</button>
         <button class="pa-nav-item" data-tab="tabAuditoria"><i class="fas fa-clipboard-check"></i> Auditoria</button>
-        <button class="pa-nav-item" data-tab="tabNfe"><i class="fas fa-file-invoice"></i> NF-e / Abast.</button>
         <button class="pa-nav-item" data-tab="tabVelocidade"><i class="fas fa-gauge-high"></i> Controle de Velocidade</button>
         <button class="pa-nav-item" data-tab="tabJornada"><i class="fas fa-money-check-dollar"></i> Jornada e Compensação</button>
         <button class="pa-nav-item" data-tab="tabDiaria"><i class="fas fa-route"></i> Controle de Diária</button>
@@ -977,7 +967,6 @@ footer a{color:var(--accent);text-decoration:none;}
       </nav>
       <div class="pa-sidebar-footer">
         <button class="pa-nav-item" id="openSlideModeBtn" style="font-size:.8rem;color:var(--accent)"><i class="fas fa-tv"></i> Gestão à Vista (Slide)</button>
-        <button class="pa-nav-item" id="openUrlConfig" style="font-size:.8rem"><i class="fas fa-cog"></i> Config URLs</button>
         <button class="pa-nav-item" id="logoutPrivateBtn" style="font-size:.8rem;color:#ef4444"><i class="fas fa-sign-out-alt"></i> Sair</button>
       </div>
     </aside>
@@ -1656,93 +1645,6 @@ footer a{color:var(--accent);text-decoration:none;}
 
         </div><!-- /tabAuditoria -->
 
-        <!-- ── TAB NF-e / ABASTECIMENTOS ── -->
-        <div id="tabNfe" class="tab-pane">
-
-          <!-- KPIs NF-e -->
-          <div class="kpi-grid">
-            <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-file-invoice"></i></div><div><div class="kpi-val" id="nfe-total">—</div><div class="kpi-lbl">NF-e Recebidas</div></div></div>
-            <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-gas-pump"></i></div><div><div class="kpi-val" id="nfe-abast">—</div><div class="kpi-lbl">Abastecimentos</div></div></div>
-            <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-dollar-sign"></i></div><div><div class="kpi-val" id="nfe-valor">R$ —</div><div class="kpi-lbl">Total Combustível</div></div></div>
-            <div class="kpi-card"><div class="kpi-icon brown"><i class="fas fa-tint"></i></div><div><div class="kpi-val" id="nfe-litros">— L</div><div class="kpi-lbl">Litros Total</div></div></div>
-            <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-chart-line"></i></div><div><div class="kpi-val" id="nfe-precomedio">R$ —</div><div class="kpi-lbl">Preço Médio/L</div></div></div>
-          </div>
-
-          <!-- Aviso configuração -->
-          <div id="nfeConfigAlert" class="dash-card" style="border-left:4px solid var(--warning);background:#fffbeb">
-            <div style="display:flex;align-items:center;gap:.8rem;flex-wrap:wrap">
-              <i class="fas fa-exclamation-triangle" style="color:var(--warning);font-size:1.3rem"></i>
-              <div style="flex:1;min-width:200px">
-                <div style="font-weight:700;font-size:.88rem;color:#92400e">Nuvem Fiscal não configurada</div>
-                <div style="font-size:.78rem;color:#92400e;margin-top:.2rem">Configure Client ID, Client Secret e CNPJ em <strong>Config URLs</strong> para consultar NF-e diretamente da SEFAZ.</div>
-              </div>
-              <button class="btn btn-accent btn-sm" onclick="document.getElementById('openUrlConfig').click()"><i class="fas fa-cog"></i> Configurar</button>
-            </div>
-          </div>
-
-          <!-- Filtros -->
-          <div class="dash-card">
-            <div class="filters-bar">
-              <div class="flt-grp"><label>Data Início</label><input type="date" id="nfeDataInicio"></div>
-              <div class="flt-grp"><label>Data Fim</label><input type="date" id="nfeDataFim"></div>
-              <div class="flt-grp"><label>Tipo</label>
-                <select id="nfeTipo">
-                  <option value="">Todas</option>
-                  <option value="combustivel" selected>🔥 Combustível</option>
-                  <option value="manutencao">🔧 Manutenção</option>
-                  <option value="outras">Outras</option>
-                </select>
-              </div>
-              <div class="flt-grp"><label>Fornecedor / Produto</label><input type="text" id="nfeBusca" placeholder="Ex: Diesel, Ipiranga..."></div>
-              <button class="btn btn-accent" onclick="nfeApplyFilters()"><i class="fas fa-search"></i> Filtrar</button>
-              <button class="btn btn-gray" onclick="nfeResetFilters()"><i class="fas fa-times"></i> Limpar</button>
-              <button class="btn btn-info btn-sm" onclick="nfeBuscarSEFAZ()" id="nfeBtnBuscar"><i class="fas fa-cloud-download-alt"></i> Buscar SEFAZ</button>
-              <button class="btn btn-success btn-sm" onclick="exportCSV(nfeFiltered,'nfe_abastecimentos')"><i class="fas fa-download"></i> CSV</button>
-            </div>
-          </div>
-
-          <!-- Gráficos -->
-          <div class="charts-grid">
-            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-bar"></i> Combustível por Mês (R$)</div><div class="chart-box" style="height:240px"><canvas id="nfeBarChart" height="190"></canvas></div></div>
-            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-pie"></i> Por Tipo de Combustível</div><div class="chart-box" style="height:240px"><canvas id="nfePieChart" height="190"></canvas></div></div>
-          </div>
-
-          <!-- Rankings -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
-            <div class="dash-card">
-              <div class="dash-card-title"><i class="fas fa-trophy"></i> Fornecedores — Maior Gasto</div>
-              <ol class="rank-list" id="nfeRankFornecedor"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol>
-            </div>
-            <div class="dash-card">
-              <div class="dash-card-title"><i class="fas fa-gas-pump"></i> Por Tipo de Combustível</div>
-              <ol class="rank-list" id="nfeRankTipo"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol>
-            </div>
-          </div>
-
-          <!-- Tabela -->
-          <div class="dash-card">
-            <div class="dash-card-title">
-              <i class="fas fa-table"></i> Notas Fiscais Recebidas
-              <span id="nfeCount" style="background:var(--gray-100);padding:.15rem .6rem;border-radius:30px;font-size:.75rem;margin-left:.5rem"></span>
-              <span id="nfeStatus" style="font-size:.73rem;color:var(--text-lt);margin-left:.5rem;font-weight:400"></span>
-            </div>
-            <div id="nfeLoading" class="loading-spinner" style="display:none"><div class="spinner"></div> Consultando SEFAZ via Nuvem Fiscal...</div>
-            <div id="nfeEmpty" style="text-align:center;padding:2rem;color:var(--text-lt);font-size:.88rem">
-              <i class="fas fa-cloud-download-alt" style="font-size:2.5rem;opacity:.2;display:block;margin-bottom:.8rem"></i>
-              Configure as credenciais e clique em <strong>Buscar SEFAZ</strong>.
-            </div>
-            <div class="tbl-wrap" id="nfeTableWrap" style="display:none">
-              <table class="data-table">
-                <thead><tr>
-                  <th>Emissão</th><th>Fornecedor</th><th>Produto / Serviço</th>
-                  <th>Qtd</th><th>Un</th><th>Vlr Unit.</th><th>Total</th><th>Tipo</th><th>Chave</th>
-                </tr></thead>
-                <tbody id="nfeTableBody"></tbody>
-              </table>
-            </div>
-          </div>
-
-        </div><!-- /tabNfe -->
 
         <!-- ── TAB PNEUS ── -->
         <div id="tabPneus" class="tab-pane">
@@ -2672,22 +2574,9 @@ if (!URL_FAT || FAT_URLS_OBSOLETAS.has(URL_FAT.trim()) || /\/export\?format=csv/
   localStorage.removeItem("urlFaturamento");
 }
 
-// Nuvem Fiscal / NF-e
-// Credenciais NF-e armazenadas em sessionStorage (some ao fechar aba — mais seguro que localStorage)
-// Fallback para localStorage para não quebrar quem já tinha salvo antes.
-let NFE_CLIENT_ID     = sessionStorage.getItem('nfeClientId')     || localStorage.getItem('nfeClientId')     || '';
-let NFE_CLIENT_SECRET = sessionStorage.getItem('nfeClientSecret') || localStorage.getItem('nfeClientSecret') || '';
-let NFE_CNPJ          = sessionStorage.getItem('nfeCnpj')         || localStorage.getItem('nfeCnpj')         || '';
-let nfeAccessToken    = '';
-let nfeTokenExpiry    = 0;
-
 // MAX — chave da API Groq (gratuita), opcional. Sem ela, MAX responde só
 // com o sistema local de regras (respostaLocalMAX).
 let MAX_GROQ_KEY = localStorage.getItem('maxGroqApiKey') || '';
-let nfeAllData        = [];   // todas as NF-e brutas
-let nfeFiltered       = [];   // após filtros
-let nfeBarChartObj    = null;
-let nfePieChartObj2   = null;
 
 // dados globais
 let financeiroData = [], faturamentoData = [], bateriasData = [];
@@ -3289,7 +3178,6 @@ const pageTitles = {
   tabSenhas: '<i class="fas fa-key" style="color:var(--accent)"></i> Senhas',
   tabFrota: '<i class="fas fa-id-card" style="color:var(--accent)"></i> Frota / Motoristas',
   tabAuditoria: '<i class="fas fa-clipboard-check" style="color:var(--accent)"></i> Auditoria Operacional',
-  tabNfe: '<i class="fas fa-file-invoice" style="color:var(--accent)"></i> NF-e / Abastecimentos',
   tabPneus: '<i class="fas fa-circle-dot" style="color:var(--accent)"></i> Controle de Pneus',
   tabVencimentos: '<i class="fas fa-triangle-exclamation" style="color:var(--accent)"></i> Controle de Vencimentos',
   tabVagas: '<i class="fas fa-user-tie" style="color:var(--accent)"></i> Vagas / Entrevistas',
@@ -3339,7 +3227,6 @@ document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
     if (t === 'tabSenhas')    setTimeout(filtrarSenhas, 50);
     if (t === 'tabFrota')     setTimeout(filtrarFrota, 50);
     if (t === 'tabAuditoria') setTimeout(audInit, 50);
-    if (t === 'tabNfe')       setTimeout(nfeInit, 50);
     if (t === 'tabPneus')     setTimeout(pneuInit, 50);
     if (t === 'tabVagas')     setTimeout(vagaInit, 50);
     if (t === 'tabChecklist') setTimeout(checklistInit, 50);
@@ -4817,9 +4704,7 @@ function openUrlModal(){
   document.getElementById('urlFaturamento').value = URL_FAT;
   document.getElementById('urlBaterias').value = URL_BAT;
   document.getElementById('urlAgenda').value = URL_AGENDA;
-  document.getElementById('nfeClientId').value = NFE_CLIENT_ID;
-  document.getElementById('nfeClientSecret').value = NFE_CLIENT_SECRET;
-  document.getElementById('nfeCnpj').value = NFE_CNPJ;
+
   document.getElementById('maxGroqApiKey').value = MAX_GROQ_KEY;
   if (window.__maxPopulateVoices) window.__maxPopulateVoices();
   document.getElementById('urlConfigModal').classList.add('active');
@@ -4829,7 +4714,6 @@ function closeUrlModal(){
   document.getElementById('urlConfigModal').classList.remove('active');
   document.getElementById('urlModalBackdrop').classList.remove('active');
 }
-document.getElementById('openUrlConfig').onclick = openUrlModal;
 document.getElementById('closeUrlModalBtn').onclick = closeUrlModal;
 document.getElementById('maxVoiceTestBtn').onclick = function() {
   var sel = document.getElementById('maxVoiceSelect');
@@ -4847,15 +4731,9 @@ document.getElementById('saveUrlsBtn').onclick = () => {
   localStorage.setItem('urlFaturamento', URL_FAT);
   localStorage.setItem('urlAgenda', URL_AGENDA);
   // NF-e credentials — salvas em sessionStorage (mais seguro; somem ao fechar a aba)
-  NFE_CLIENT_ID     = document.getElementById('nfeClientId').value.trim();
-  NFE_CLIENT_SECRET = document.getElementById('nfeClientSecret').value.trim();
-  NFE_CNPJ          = document.getElementById('nfeCnpj').value.replace(/\D/g,'');
-  sessionStorage.setItem('nfeClientId',     NFE_CLIENT_ID);
-  sessionStorage.setItem('nfeClientSecret', NFE_CLIENT_SECRET);
-  sessionStorage.setItem('nfeCnpj',         NFE_CNPJ);
+
   // Remove versões antigas do localStorage se existirem
-  localStorage.removeItem('nfeClientId'); localStorage.removeItem('nfeClientSecret'); localStorage.removeItem('nfeCnpj');
-  nfeAccessToken = ''; nfeTokenExpiry = 0; // force re-auth
+
   MAX_GROQ_KEY = document.getElementById('maxGroqApiKey').value.trim();
   if (MAX_GROQ_KEY) localStorage.setItem('maxGroqApiKey', MAX_GROQ_KEY);
   else localStorage.removeItem('maxGroqApiKey');
@@ -4870,7 +4748,7 @@ document.getElementById('saveUrlsBtn').onclick = () => {
   loadContasReceberData(true);
   loadBateriasData();
   loadFaturamentoData();
-  nfeCheckConfig();
+
   if (URL_AGENDA) agSincronizarSheets(true);
 };
 
@@ -4890,9 +4768,6 @@ document.getElementById('refreshDataBtn').onclick = async () => {
     vencInit(),
     URL_AGENDA ? agSincronizarSheets(true) : Promise.resolve()
   ]);
-  // Se aba NF-e está ativa, também atualiza
-  const nfePane = document.getElementById('tabNfe');
-  if(nfePane && nfePane.classList.contains('active') && NFE_CLIENT_ID) nfeBuscarSEFAZ();
   updateLastUpdate();
   atualizarSelectMotoristasCalculadora();
   btn.disabled = false;
@@ -10225,371 +10100,8 @@ function audExportPDF(){
   const w=window.open('','_blank'); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),600);
 }
 
-// ═══════════════════════════════════════════════════════════
-// NF-e / ABASTECIMENTOS — NUVEM FISCAL
-// ═══════════════════════════════════════════════════════════
 
-// Palavras-chave para classificar itens da NF-e
-const NFE_COMBUSTIVEL_KW = ['diesel','s-10','s10','s 10','gasolina','etanol','biodiesel','gnv','arla','combustivel','combustível','lubrif','oleo diesel','óleo diesel'];
-const NFE_MANUTENCAO_KW  = ['pneu','filtro','oleo','óleo','lubrificante','freio','embreagem','manutenção','manutencao','peça','peca','correia','bateria','alternador'];
-
-function nfeClassify(descricao){
-  const d = (descricao||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  if(NFE_COMBUSTIVEL_KW.some(k=>d.includes(k))) return 'combustivel';
-  if(NFE_MANUTENCAO_KW.some(k=>d.includes(k))) return 'manutencao';
-  return 'outras';
-}
-
-function nfeCheckConfig(){
-  const el = document.getElementById('nfeConfigAlert');
-  if(!el) return;
-  const configured = NFE_CLIENT_ID && NFE_CLIENT_SECRET && NFE_CNPJ;
-  el.style.display = configured ? 'none' : 'block';
-  const btn = document.getElementById('nfeBtnBuscar');
-  if(btn) btn.disabled = !configured;
-}
-
-function nfeInit(){
-  nfeCheckConfig();
-  // Default date range: last 90 days
-  const hoje = new Date();
-  const ini  = new Date(); ini.setDate(ini.getDate()-90);
-  const el1  = document.getElementById('nfeDataInicio');
-  const el2  = document.getElementById('nfeDataFim');
-  if(el1 && !el1.value) el1.value = ini.toISOString().slice(0,10);
-  if(el2 && !el2.value) el2.value = hoje.toISOString().slice(0,10);
-  // Se já tem dados em cache, renderiza direto
-  if(nfeAllData.length){
-    nfeFiltered = nfeAllData;
-    nfeRender(nfeAllData);
-  }
-}
-
-// ── OAuth token ──
-async function nfeGetToken(){
-  if(nfeAccessToken && Date.now() < nfeTokenExpiry-30000) return nfeAccessToken;
-  const resp = await fetch('https://auth.nuvemfiscal.com.br/oauth/token',{
-    method:'POST',
-    headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body: new URLSearchParams({
-      grant_type:'client_credentials',
-      client_id: NFE_CLIENT_ID,
-      client_secret: NFE_CLIENT_SECRET,
-      scope:'cte nfe'
-    })
-  });
-  if(!resp.ok) throw new Error(`Erro auth Nuvem Fiscal: ${resp.status}`);
-  const d = await resp.json();
-  nfeAccessToken = d.access_token;
-  nfeTokenExpiry = Date.now() + (d.expires_in||3600)*1000;
-  return nfeAccessToken;
-}
-
-// ── Busca distribuição NF-e (notas recebidas pelo CNPJ) ──
-async function nfeBuscarSEFAZ(){
-  if(!NFE_CLIENT_ID || !NFE_CLIENT_SECRET || !NFE_CNPJ){
-    showToast('⚠ Configure as credenciais da Nuvem Fiscal primeiro.');
-    document.getElementById('openUrlConfig').click();
-    return;
-  }
-
-  const loading = document.getElementById('nfeLoading');
-  const empty   = document.getElementById('nfeEmpty');
-  const wrap    = document.getElementById('nfeTableWrap');
-  const btn     = document.getElementById('nfeBtnBuscar');
-  const status  = document.getElementById('nfeStatus');
-
-  loading.style.display='flex'; empty.style.display='none'; wrap.style.display='none';
-  btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Buscando...';
-  status.textContent='';
-
-  try {
-    const token = await nfeGetToken();
-    const di = document.getElementById('nfeDataInicio').value || '';
-    const df = document.getElementById('nfeDataFim').value    || '';
-
-    // Monta query — Nuvem Fiscal: GET /nfe?cnpj=&top=100&skip=0
-    let todas = [];
-    let skip  = 0;
-    const top = 100;
-    let hasMore = true;
-
-    while(hasMore){
-      let url = `https://api.nuvemfiscal.com.br/nfe?cpf_cnpj=${NFE_CNPJ}&top=${top}&skip=${skip}&ambiente=producao`;
-      if(di) url += `&dataInicial=${di}T00:00:00`;
-      if(df) url += `&dataFinal=${df}T23:59:59`;
-
-      const r = await fetch(url,{headers:{Authorization:`Bearer ${token}`}});
-      if(!r.ok){
-        const err = await r.json().catch(()=>({}));
-        throw new Error(err.message || `HTTP ${r.status}`);
-      }
-      const page = await r.json();
-      const items = page.data || page.results || page.items || [];
-      todas = todas.concat(items);
-
-      status.textContent = `Carregando... ${todas.length} NF-e`;
-      if(items.length < top) hasMore=false;
-      else skip += top;
-    }
-
-    // Buscar detalhes de cada NF-e para extrair itens
-    status.textContent = `Processando ${todas.length} NF-e...`;
-    const rows = [];
-
-    for(const nfe of todas){
-      try{
-        const chave = nfe.chave_acesso || nfe.chaveAcesso || nfe.id || '';
-        const id    = nfe.id || chave;
-        if(!id) continue;
-
-        // Busca XML/dados detalhados
-        const dr = await fetch(`https://api.nuvemfiscal.com.br/nfe/${id}`,{headers:{Authorization:`Bearer ${token}`}});
-        if(!dr.ok) continue;
-        const det = await dr.json();
-
-        const emitente  = det.emitente?.razao_social || det.emitente?.nome || det.fornecedor || '—';
-        const cnpjEmit  = (det.emitente?.cnpj||det.emitente?.cpf||'').replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,'$1.$2.$3/$4-$5');
-        const emissao   = det.data_emissao || det.dataEmissao || nfe.data_emissao || '';
-        const emissaoFmt= emissao ? new Date(emissao).toLocaleDateString('pt-BR') : '—';
-        const chaveAcc  = det.chave_acesso || chave || '—';
-
-        // Itens da nota
-        const itens = det.nfe?.infNFe?.det || det.itens || det.items || [];
-        const itensArr = Array.isArray(itens) ? itens : [itens];
-
-        if(itensArr.length===0){
-          // Nota sem itens detalhados — registra nota geral
-          rows.push({
-            emissao: emissaoFmt, emissaoDate: emissao,
-            fornecedor: emitente, cnpjEmit,
-            produto: '(sem detalhe de itens)',
-            qtd:'—', un:'—', vlrUnit: 0, vlrTotal: det.valor_total||det.valorTotal||0,
-            tipo: 'outras', chave: chaveAcc
-          });
-        } else {
-          for(const item of itensArr){
-            const prod = item.prod||item.produto||item||{};
-            const descricao = prod.xProd || prod.descricao || prod.nome || String(item);
-            const qtd       = parseFloat(prod.qCom||prod.quantidade||0);
-            const un        = prod.uCom||prod.unidade||'UN';
-            const vlrUnit   = parseFloat(prod.vUnCom||prod.valorUnitario||0);
-            const vlrTotal  = parseFloat(prod.vProd||prod.valorTotal||prod.valor||0);
-            const tipo      = nfeClassify(descricao);
-
-            rows.push({
-              emissao: emissaoFmt, emissaoDate: emissao,
-              fornecedor: emitente, cnpjEmit,
-              produto: descricao,
-              qtd: qtd||'—', un, vlrUnit, vlrTotal,
-              tipo, chave: chaveAcc
-            });
-          }
-        }
-      }catch(e){ /* ignora erros de notas individuais */ }
-    }
-
-    nfeAllData = rows;
-    localStorage.setItem('nfeCache', JSON.stringify({ts: Date.now(), data: rows}));
-    nfeRender(rows);
-    showToast(`✅ ${rows.length} itens de ${todas.length} NF-e carregados!`);
-
-  } catch(e) {
-    loading.style.display='none';
-    empty.style.display='block';
-    empty.innerHTML = `<i class="fas fa-exclamation-circle" style="font-size:2rem;color:var(--danger);opacity:.6;display:block;margin-bottom:.7rem"></i>
-      <strong style="color:var(--danger)">Erro ao consultar SEFAZ</strong><br>
-      <span style="font-size:.8rem">${e.message}</span><br>
-      <span style="font-size:.75rem;color:var(--text-lt);margin-top:.4rem;display:block">Verifique Client ID, Secret e se o CNPJ está habilitado na Nuvem Fiscal.</span>`;
-    showToast('Erro: '+e.message, 5000);
-  } finally {
-    btn.disabled=false;
-    btn.innerHTML='<i class="fas fa-cloud-download-alt"></i> Buscar SEFAZ';
-  }
-}
-
-function nfeApplyFilters(){
-  let d = [...nfeAllData];
-  const tipo   = document.getElementById('nfeTipo')?.value||'';
-  const busca  = (document.getElementById('nfeBusca')?.value||'').toLowerCase();
-  const di     = document.getElementById('nfeDataInicio')?.value||'';
-  const df     = document.getElementById('nfeDataFim')?.value||'';
-
-  if(tipo) d = d.filter(r=>r.tipo===tipo);
-  if(busca) d = d.filter(r=>
-    r.fornecedor.toLowerCase().includes(busca)||
-    r.produto.toLowerCase().includes(busca)
-  );
-  if(di) d = d.filter(r=>r.emissaoDate && r.emissaoDate>=di);
-  if(df) d = d.filter(r=>r.emissaoDate && r.emissaoDate<=df+'T23:59:59');
-
-  nfeFiltered = d;
-  nfeRender(d);
-}
-
-function nfeResetFilters(){
-  document.getElementById('nfeTipo').value='';
-  document.getElementById('nfeBusca').value='';
-  nfeFiltered = nfeAllData;
-  nfeRender(nfeAllData);
-}
-
-function nfeRender(rows){
-  const loading = document.getElementById('nfeLoading');
-  const empty   = document.getElementById('nfeEmpty');
-  const wrap    = document.getElementById('nfeTableWrap');
-  const status  = document.getElementById('nfeStatus');
-
-  loading.style.display='none';
-  if(!rows.length){
-    empty.style.display='block'; wrap.style.display='none';
-    empty.innerHTML='<i class="fas fa-search" style="font-size:2rem;opacity:.2;display:block;margin-bottom:.7rem"></i>Nenhuma NF-e encontrada com esses filtros.';
-    nfeUpdateKpis([]); return;
-  }
-  empty.style.display='none'; wrap.style.display='block';
-
-  const tbody = document.getElementById('nfeTableBody');
-  tbody.innerHTML = rows.map(r=>{
-    const tipoLabel = r.tipo==='combustivel'?'<span class="badge badge-warning">⛽ Combustível</span>':
-                      r.tipo==='manutencao'?'<span class="badge badge-info">🔧 Manutenção</span>':
-                      '<span class="badge badge-gray">Outros</span>';
-    const vlrFmt = r.vlrTotal?fmtMoney(r.vlrTotal):'—';
-    const vlrUFmt= r.vlrUnit?fmtMoney(r.vlrUnit):'—';
-    const chaveShort = r.chave && r.chave!=='—'?r.chave.slice(0,12)+'...':r.chave;
-    return `<tr>
-      <td style="white-space:nowrap;font-size:.78rem">${r.emissao}</td>
-      <td style="font-size:.78rem;font-weight:600;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.fornecedor}">${r.fornecedor}</td>
-      <td style="font-size:.77rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.produto}">${r.produto}</td>
-      <td style="text-align:right;font-size:.78rem">${typeof r.qtd==='number'?r.qtd.toLocaleString('pt-BR',{maximumFractionDigits:3}):r.qtd}</td>
-      <td style="font-size:.75rem;color:var(--text-lt)">${r.un}</td>
-      <td style="text-align:right;font-size:.78rem">${vlrUFmt}</td>
-      <td style="text-align:right;font-weight:700;font-size:.82rem">${vlrFmt}</td>
-      <td>${tipoLabel}</td>
-      <td style="font-size:.68rem;color:var(--text-lt);font-family:monospace" title="${r.chave}">${chaveShort}</td>
-    </tr>`;
-  }).join('');
-
-  document.getElementById('nfeCount').textContent = rows.length+' itens';
-  status.textContent = `${rows.filter(r=>r.tipo==='combustivel').length} de combustível`;
-
-  nfeUpdateKpis(rows);
-  nfeUpdateCharts(rows);
-  nfeUpdateRankings(rows);
-}
-
-function nfeUpdateKpis(rows){
-  const comb = rows.filter(r=>r.tipo==='combustivel');
-  const totalCombR = comb.reduce((s,r)=>s+(r.vlrTotal||0),0);
-  // litros: se unidade é L/LITRO e produto é combustível
-  const litros = comb.filter(r=>['L','LITRO','LITROS','LT'].includes((r.un||'').toUpperCase()))
-                      .reduce((s,r)=>s+(typeof r.qtd==='number'?r.qtd:0),0);
-  const nfesUnicas = new Set(rows.map(r=>r.chave)).size;
-
-  const setV=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-  setV('nfe-total', nfesUnicas||rows.length);
-  setV('nfe-abast', comb.length);
-  setV('nfe-valor', fmtMoney(totalCombR));
-  setV('nfe-litros', litros>0?litros.toLocaleString('pt-BR',{maximumFractionDigits:0})+' L':'— L');
-  setV('nfe-precomedio', litros>0?fmtMoney(totalCombR/litros)+'/L':'R$ —');
-}
-
-function nfeUpdateCharts(rows){
-  const comb = rows.filter(r=>r.tipo==='combustivel');
-
-  // Bar chart: gasto por mês
-  const byMes = {};
-  comb.forEach(r=>{
-    if(!r.emissaoDate) return;
-    const mes = r.emissaoDate.slice(0,7);
-    byMes[mes] = (byMes[mes]||0)+(r.vlrTotal||0);
-  });
-  const meses = Object.keys(byMes).sort();
-  const valMes = meses.map(m=>byMes[m]);
-
-  const barCtx = document.getElementById('nfeBarChart');
-  if(barCtx){
-    if(nfeBarChartObj) nfeBarChartObj.destroy();
-    nfeBarChartObj = new Chart(barCtx,{
-      type:'bar',
-      data:{
-        labels: meses.map(m=>{ const [y,mo]=m.split('-'); return `${mo}/${y.slice(2)}`; }),
-        datasets:[{label:'Combustível (R$)',data:valMes,backgroundColor:'rgba(212,175,55,.7)',borderColor:'rgba(212,175,55,1)',borderWidth:1}]
-      },
-      options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>fmtMoney(v)}}}}
-    });
-  }
-
-  // Pie chart: por tipo de produto combustível
-  const byProd = {};
-  comb.forEach(r=>{
-    const d = (r.produto||'').toLowerCase();
-    let cat='Outros';
-    if(d.includes('s10')||d.includes('s-10')) cat='Diesel S-10';
-    else if(d.includes('diesel')) cat='Diesel Comum';
-    else if(d.includes('gasolina')) cat='Gasolina';
-    else if(d.includes('etanol')||d.includes('alcool')||d.includes('álcool')) cat='Etanol';
-    else if(d.includes('arla')) cat='Arla 32';
-    else if(d.includes('gnv')) cat='GNV';
-    byProd[cat]=(byProd[cat]||0)+(r.vlrTotal||0);
-  });
-  const pieCtx = document.getElementById('nfePieChart');
-  if(pieCtx){
-    if(nfePieChartObj2) nfePieChartObj2.destroy();
-    const labels=Object.keys(byProd), vals=labels.map(k=>byProd[k]);
-    nfePieChartObj2 = new Chart(pieCtx,{
-      type:'doughnut',
-      data:{labels,datasets:[{data:vals,backgroundColor:['#d4af37','#8B7355','#3b82f6','#10b981','#f59e0b','#6366f1']}]},
-      options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}}
-    });
-  }
-}
-
-function nfeUpdateRankings(rows){
-  const comb = rows.filter(r=>r.tipo==='combustivel');
-
-  // Ranking fornecedores
-  const byForn={};
-  comb.forEach(r=>{byForn[r.fornecedor]=(byForn[r.fornecedor]||0)+(r.vlrTotal||0);});
-  const fornRank=Object.entries(byForn).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  const fornEl=document.getElementById('nfeRankFornecedor');
-  if(fornEl) fornEl.innerHTML = fornRank.length
-    ? fornRank.map(([n,v])=>`<li><span style="font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px" title="${n}">${n}</span><span style="font-weight:800;color:var(--accent)">${fmtMoney(v)}</span></li>`).join('')
-    : '<li style="justify-content:center;color:var(--text-lt)">Sem dados</li>';
-
-  // Ranking tipo combustível
-  const byTipo={};
-  comb.forEach(r=>{
-    const d=(r.produto||'').toLowerCase();
-    let cat='Outros';
-    if(d.includes('s10')||d.includes('s-10')) cat='Diesel S-10';
-    else if(d.includes('diesel')) cat='Diesel Comum';
-    else if(d.includes('gasolina')) cat='Gasolina';
-    else if(d.includes('etanol')) cat='Etanol';
-    else if(d.includes('arla')) cat='Arla 32';
-    byTipo[cat]=(byTipo[cat]||0)+(r.vlrTotal||0);
-  });
-  const tipoRank=Object.entries(byTipo).sort((a,b)=>b[1]-a[1]);
-  const tipoEl=document.getElementById('nfeRankTipo');
-  if(tipoEl) tipoEl.innerHTML = tipoRank.length
-    ? tipoRank.map(([n,v])=>`<li><span style="font-weight:600">${n}</span><span style="font-weight:800;color:var(--primary)">${fmtMoney(v)}</span></li>`).join('')
-    : '<li style="justify-content:center;color:var(--text-lt)">Sem dados</li>';
-}
-
-// Tenta carregar cache offline ao iniciar
-(function nfeLoadCache(){
-  try{
-    const raw = localStorage.getItem('nfeCache');
-    if(!raw) return;
-    const {ts, data} = JSON.parse(raw);
-    // usa cache se tiver menos de 24h
-    if(Date.now()-ts < 86400000 && data?.length){
-      nfeAllData = data;
-      nfeFiltered = data;
-    }
-  }catch(e){}
-})();
-
-function audInit(){
+function audInit(){nit(){
   audLoadState();
   audMigrarParaAlinhamento();
   audBuildSections();
