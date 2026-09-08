@@ -5329,7 +5329,7 @@ function applyCRFilters() {
     const k = C.mot ? String(row[C.mot] || '').trim() : '';
     if (k) rankMot[k] = (rankMot[k] || 0) + (C.freteValor ? parseMoney(row[C.freteValor]) : 0);
   });
-  const rankMotArr = Object.entries(rankMot).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  const rankMotArr = Object.entries(rankMot).sort((a, b) => b[1] - a[1]);
   document.getElementById('crRankMotorista').innerHTML = rankMotArr.length
     ? rankMotArr.map(([k, v]) => `<li><span>${k}</span><span style="font-weight:700;color:var(--success)">${fmtMoney(v)}</span></li>`).join('')
     : '<li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li>';
@@ -7522,7 +7522,7 @@ function fatApplyFilters() {
   // ── Ranking por Faturamento (frete) ──
   const rankFat = {};
   fatFiltered.forEach(r => { if (r.motorista) rankFat[r.motorista] = (rankFat[r.motorista]||0) + (r.frete||0); });
-  const rankFatArr = Object.entries(rankFat).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const rankFatArr = Object.entries(rankFat).sort((a,b)=>b[1]-a[1]);
   document.getElementById('fatRankingFaturamento').innerHTML = rankFatArr.length
     ? rankFatArr.map(([m,v]) => `<li><span>${m}</span><span style="font-weight:700;color:var(--accent-dk)">${fmtMoney(v)}</span></li>`).join('')
     : '<li style="justify-content:center;color:var(--text-lt)">Sem dados.</li>';
@@ -7530,7 +7530,7 @@ function fatApplyFilters() {
   // ── Ranking por Valor a Receber ──
   const rankRec = {};
   fatFiltered.forEach(r => { if (r.motorista) rankRec[r.motorista] = (rankRec[r.motorista]||0) + (r.valorReceber||0); });
-  const rankRecArr = Object.entries(rankRec).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const rankRecArr = Object.entries(rankRec).sort((a,b)=>b[1]-a[1]);
   document.getElementById('fatRankingReceber').innerHTML = rankRecArr.length
     ? rankRecArr.map(([m,v]) => `<li><span>${m}</span><span style="font-weight:700;color:var(--success)">${fmtMoney(v)}</span></li>`).join('')
     : '<li style="justify-content:center;color:var(--text-lt)">Sem dados.</li>';
