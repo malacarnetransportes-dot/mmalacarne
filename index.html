@@ -371,6 +371,10 @@ footer a{color:var(--accent);text-decoration:none;}
 .kpi-icon.red{background:rgba(239,68,68,.1);color:var(--danger);}
 .kpi-icon.brown{background:rgba(139,115,85,.1);color:var(--primary);}
 .kpi-val{font-size:clamp(1rem,1.4vw,1.22rem);font-weight:750;color:#1e2a3a;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em;font-variant-numeric:tabular-nums;}
+.fat-resumo-grid{grid-template-columns:repeat(auto-fit,minmax(215px,1fr));}
+.fat-resumo-grid .kpi-card{align-items:flex-start;padding:.85rem .9rem;}
+.fat-resumo-grid .kpi-val{white-space:normal;overflow:visible;text-overflow:clip;font-size:clamp(.92rem,1.3vw,1.12rem);word-break:break-word;}
+.fat-resumo-grid .kpi-lbl{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.25;}
 .kpi-lbl{font-size:.68rem;color:var(--text-lt);margin-top:.15rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 /* Dash card */
@@ -1101,10 +1105,60 @@ footer a{color:var(--accent);text-decoration:none;}
 
           <div id="crSubFluxoCaixa" class="cr-subpane">
             <div class="dash-card" style="background:linear-gradient(135deg,rgba(212,175,55,.08),rgba(212,175,55,.02));border:1px solid rgba(212,175,55,.25)">
-              <div class="dash-card-title"><i class="fas fa-chart-line"></i> Fluxo de Caixa — Projeção de Recebimentos
+              <div class="dash-card-title"><i class="fas fa-chart-line"></i> Central de Fluxo de Caixa — Painel Executivo
                 <button class="btn btn-accent btn-sm" style="margin-left:1rem" onclick="loadContasReceberData(false)"><i class="fas fa-sync-alt"></i> Atualizar</button>
+                <span id="fcxUltimaAtualizacao" style="font-size:.7rem;font-weight:400;color:var(--text-lt);margin-left:.6rem"></span>
               </div>
-              <div style="font-size:.78rem;color:var(--text-lt);margin-top:.4rem">Projeção de entradas de caixa com base na <b>data de pagamento/vencimento</b> dos lançamentos de Contas a Receber. Vencido = data de pagamento já passou; A Vencer = ainda dentro do prazo.</div>
+              <div style="font-size:.78rem;color:var(--text-lt);margin-top:.4rem">Visão em tempo real de caixa, lucro, despesas, recebimentos, saldos, margens e custos por placa/motorista. As datas de recebimento são <b>calculadas automaticamente</b> a partir da data do frete e da regra de prazo de cada cliente (configurável abaixo) — cruzadas com as despesas do Financeiro (Contas a Pagar).</div>
+            </div>
+
+            <!-- ── PAINEL EM TEMPO REAL ── -->
+            <div class="dash-card" style="margin-bottom:1rem">
+              <div class="dash-card-title" style="margin-bottom:.6rem"><i class="fas fa-satellite-dish"></i> Painel em Tempo Real</div>
+              <div class="kpi-grid" id="fcxKpisReal">
+                <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-vault"></i></div><div><div class="kpi-val" id="fcx-caixa">R$ —</div><div class="kpi-lbl">Saldo em Caixa (Realizado)</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-arrow-trend-up"></i></div><div><div class="kpi-val" id="fcx-lucro">R$ —</div><div class="kpi-lbl">Lucro do Período (Rec. − Desp.)</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon" style="background:rgba(212,175,55,.15);color:var(--accent-dk)"><i class="fas fa-percent"></i></div><div><div class="kpi-val" id="fcx-margem">—</div><div class="kpi-lbl">Margem Líquida</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-hand-holding-dollar"></i></div><div><div class="kpi-val" id="fcx-recebido">R$ —</div><div class="kpi-lbl">Recebido (já no caixa)</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-file-invoice-dollar"></i></div><div><div class="kpi-val" id="fcx-despesas-periodo">R$ —</div><div class="kpi-lbl">Despesas do Período</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon" style="background:rgba(239,68,68,.1);color:var(--danger)"><i class="fas fa-clock"></i></div><div><div class="kpi-val" id="fcx-apagar">R$ —</div><div class="kpi-lbl">A Pagar em Aberto</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-calendar-day"></i></div><div><div class="kpi-val" id="fcx-fechamento26">R$ —</div><div class="kpi-lbl">Previsto até Fechamento (dia 26)</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon" style="background:rgba(139,115,85,.15);color:var(--primary-dk)"><i class="fas fa-list"></i></div><div><div class="kpi-val" id="fcx-registros">—</div><div class="kpi-lbl">Registros (filtro atual)</div></div></div>
+              </div>
+            </div>
+
+            <!-- ── REGRAS DE RECEBIMENTO POR CLIENTE ── -->
+            <div class="dash-card" style="margin-bottom:1rem">
+              <div class="dash-card-title" style="margin-bottom:.6rem"><i class="fas fa-gavel"></i> Regras de Prazo de Recebimento por Cliente
+                <button type="button" class="fin-col-cfg-btn" onclick="fcxToggleRegrasCard()" title="Mostrar/ocultar configuração" style="margin-left:.5rem"><i class="fas fa-cog"></i></button>
+              </div>
+              <div style="font-size:.76rem;color:var(--text-lt);margin-bottom:.6rem">
+                <label style="display:inline-flex;align-items:center;gap:.4rem;cursor:pointer;font-size:.8rem;color:var(--text)">
+                  <input type="checkbox" id="fcxUsarRegra" onchange="fcxSalvarUsarRegra()" checked> Calcular data prevista pela regra do cliente (recomendado) — em vez da data digitada na planilha
+                </label>
+              </div>
+              <div id="fcxRegrasBody" style="display:none">
+                <div style="font-size:.76rem;color:var(--text-lt);margin-bottom:.6rem"><i class="fas fa-circle-info"></i> A regra é aplicada pelo nome do cliente (basta o nome <b>conter</b> a palavra-chave abaixo). Clientes sem regra cadastrada usam o padrão de <b>30 dias corridos após o frete</b>.</div>
+                <div class="tbl-wrap">
+                  <table class="data-table">
+                    <thead><tr><th>Palavra-chave do Cliente</th><th>Regra</th><th>Dias após frete</th><th>Dia fixo do mês</th><th></th></tr></thead>
+                    <tbody id="fcxRegrasTableBody"></tbody>
+                  </table>
+                </div>
+                <div style="margin-top:.8rem;padding-top:.8rem;border-top:1px dashed var(--gray-200);display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end">
+                  <div class="flt-grp"><label>Palavra-chave</label><input type="text" id="fcxNovaChave" placeholder="ex: AURORA"></div>
+                  <div class="flt-grp"><label>Regra</label>
+                    <select id="fcxNovoTipo" onchange="fcxNovoTipoMudou()">
+                      <option value="dias_apos_frete">Dias corridos após o frete</option>
+                      <option value="dia_fixo_apos">Dia fixo do mês, após completar N dias</option>
+                    </select>
+                  </div>
+                  <div class="flt-grp"><label id="fcxNovoDiasLbl">Dias após o frete</label><input type="number" id="fcxNovoDias" placeholder="ex: 21"></div>
+                  <div class="flt-grp" id="fcxNovoDiaFixoGrp" style="display:none"><label>Dia fixo do mês</label><input type="number" id="fcxNovoDiaFixo" min="1" max="28" placeholder="ex: 3"></div>
+                  <button class="btn btn-accent btn-sm" onclick="fcxRegraAdd()"><i class="fas fa-plus"></i> Adicionar Regra</button>
+                  <button class="btn btn-gray btn-sm" onclick="fcxRegrasRestaurarPadrao()"><i class="fas fa-rotate-left"></i> Restaurar Padrão</button>
+                </div>
+              </div>
             </div>
 
             <div class="dash-card" style="margin-bottom:1rem">
@@ -1124,24 +1178,29 @@ footer a{color:var(--accent);text-decoration:none;}
               <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-hourglass-half"></i></div><div><div class="kpi-val" id="fcx-7dias">R$ —</div><div class="kpi-lbl">A Vencer (7 dias)</div></div></div>
               <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-calendar-days"></i></div><div><div class="kpi-val" id="fcx-30dias">R$ —</div><div class="kpi-lbl">A Vencer (30 dias)</div></div></div>
               <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-sack-dollar"></i></div><div><div class="kpi-val" id="fcx-total">R$ —</div><div class="kpi-lbl">Total a Receber (filtrado)</div></div></div>
-              <div class="kpi-card"><div class="kpi-icon" style="background:rgba(139,115,85,.15);color:var(--primary-dk)"><i class="fas fa-list"></i></div><div><div class="kpi-val" id="fcx-registros">—</div><div class="kpi-lbl">Registros</div></div></div>
             </div>
 
             <div class="dash-card">
-              <div class="dash-card-title"><i class="fas fa-layer-group"></i> Aging — Faixas de Vencimento</div>
-              <div class="chart-box" style="height:240px"><canvas id="fcxChartAging"></canvas></div>
+              <div class="dash-card-title"><i class="fas fa-scale-balanced"></i> Entradas x Saídas — Fluxo de Caixa Completo <span style="font-size:.7rem;font-weight:400;color:var(--text-lt);margin-left:.4rem">(barras = mês; linha = saldo de caixa acumulado)</span></div>
+              <div class="chart-box" style="height:300px"><canvas id="fcxChartFluxoCompleto"></canvas></div>
+            </div>
+
+            <div class="dash-grid-2col">
+              <div class="dash-card">
+                <div class="dash-card-title"><i class="fas fa-layer-group"></i> Aging — Faixas de Vencimento</div>
+                <div class="chart-box" style="height:240px"><canvas id="fcxChartAging"></canvas></div>
+              </div>
+              <div class="dash-card">
+                <div class="dash-card-title"><i class="fas fa-chart-bar"></i> Previsão de Entradas por Mês</div>
+                <div class="chart-box" style="height:240px"><canvas id="fcxChartMensal"></canvas></div>
+              </div>
             </div>
 
             <div class="dash-card">
-              <div class="dash-card-title"><i class="fas fa-chart-bar"></i> Previsão de Entradas por Mês</div>
-              <div class="chart-box" style="height:280px"><canvas id="fcxChartMensal"></canvas></div>
-            </div>
-
-            <div class="dash-card">
-              <div class="dash-card-title"><i class="fas fa-table"></i> Detalhamento Mensal — Saldo Acumulado</div>
+              <div class="dash-card-title"><i class="fas fa-table"></i> Detalhamento Mensal — Entradas, Saídas e Saldo de Caixa</div>
               <div class="tbl-wrap">
                 <table class="data-table">
-                  <thead><tr><th>Mês</th><th>Qtd. Lançamentos</th><th>Vencido</th><th>A Vencer</th><th>Total do Mês</th><th>Saldo Acumulado</th></tr></thead>
+                  <thead><tr><th>Mês</th><th>Qtd. Lanç.</th><th>Vencido</th><th>A Vencer</th><th>Entradas do Mês</th><th>Saídas do Mês</th><th>Resultado do Mês</th><th>Saldo de Caixa Acumulado</th></tr></thead>
                   <tbody id="fcxTableMensalBody"></tbody>
                 </table>
               </div>
@@ -1151,8 +1210,42 @@ footer a{color:var(--accent);text-decoration:none;}
               <div class="dash-card-title"><i class="fas fa-crown"></i> Maiores Valores a Vencer</div>
               <div class="tbl-wrap">
                 <table class="data-table">
-                  <thead><tr><th>Cliente</th><th>Motorista</th><th>CTE</th><th>Vencimento</th><th>Situação</th><th>Valor</th></tr></thead>
+                  <thead><tr><th>Cliente</th><th>Motorista</th><th>CTE</th><th>Vencimento Previsto</th><th>Regra Aplicada</th><th>Situação</th><th>Valor</th></tr></thead>
                   <tbody id="fcxTableDetalheBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- ── MARGEM E CUSTOS POR PLACA ── -->
+            <div class="dash-card" style="background:linear-gradient(135deg,rgba(59,130,246,.06),transparent);border:1px solid rgba(59,130,246,.2)">
+              <div class="dash-card-title"><i class="fas fa-truck-fast"></i> Margem e Custos por Placa</div>
+              <div style="font-size:.76rem;color:var(--text-lt);margin-top:.3rem">Receita = Frete Valor (Contas a Receber) agrupado pela Placa Cavalo. Custo = lançamentos de Manutenção do Financeiro identificados para aquela placa. Ano de referência do custo de manutenção: <select id="fcxPlacaAno" onchange="fcxRender()" style="display:inline-block;width:auto;padding:.2rem .5rem;font-size:.78rem"></select></div>
+            </div>
+            <div class="dash-card">
+              <div class="chart-box" style="height:280px"><canvas id="fcxChartMargemPlaca"></canvas></div>
+            </div>
+            <div class="dash-card">
+              <div class="tbl-wrap">
+                <table class="data-table">
+                  <thead><tr><th>Placa (Cavalo)</th><th>Motorista</th><th>Receita (Frete)</th><th>Custo Manutenção</th><th>Margem R$</th><th>Margem %</th></tr></thead>
+                  <tbody id="fcxTableMargemPlacaBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- ── MARGEM E CUSTOS POR MOTORISTA ── -->
+            <div class="dash-card" style="background:linear-gradient(135deg,rgba(16,185,129,.06),transparent);border:1px solid rgba(16,185,129,.2)">
+              <div class="dash-card-title"><i class="fas fa-id-card"></i> Margem e Custos por Motorista</div>
+              <div style="font-size:.76rem;color:var(--text-lt);margin-top:.3rem">Receita = Frete Valor (Contas a Receber) por motorista. Custos diretos = Diárias + Vales/Manobra + Descontos lançados no Faturamento daquele motorista (não inclui custos indiretos/overhead da empresa).</div>
+            </div>
+            <div class="dash-card">
+              <div class="chart-box" style="height:280px"><canvas id="fcxChartMargemMotorista"></canvas></div>
+            </div>
+            <div class="dash-card">
+              <div class="tbl-wrap">
+                <table class="data-table">
+                  <thead><tr><th>Motorista</th><th>Placa</th><th>Receita (Frete)</th><th>Custos Diretos</th><th>Margem R$</th><th>Margem %</th></tr></thead>
+                  <tbody id="fcxTableMargemMotoristaBody"></tbody>
                 </table>
               </div>
             </div>
@@ -1344,7 +1437,7 @@ footer a{color:var(--accent);text-decoration:none;}
               <div class="dash-card" style="grid-column:1/-1">
                 <div class="dash-card-title"><i class="fas fa-calendar-check"></i> Resumo do Mês Filtrado</div>
                 <div id="fatResumoPeriodo" style="font-size:.82rem;color:var(--text-lt);margin:-.4rem 0 1rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px"></div>
-                <div class="kpi-grid" id="fatResumoGrid" style="margin-bottom:0"></div>
+                <div class="kpi-grid fat-resumo-grid" id="fatResumoGrid" style="margin-bottom:0"></div>
               </div>
               <div class="dash-card">
                 <div class="dash-card-title"><i class="fas fa-calendar"></i> Faturamento por Ano</div>
@@ -5491,6 +5584,142 @@ function resetCRFilters() {
 // ═══════════════════════════════════════════════════════════
 let fcxChartAgingObj = null;
 let fcxChartMensalObj = null;
+let fcxChartFluxoCompletoObj = null;
+let fcxChartMargemPlacaObj = null;
+let fcxChartMargemMotoristaObj = null;
+
+// ═══════════════════════════════════════════════════════════
+// FLUXO DE CAIXA — REGRAS DE PRAZO DE RECEBIMENTO POR CLIENTE
+// ═══════════════════════════════════════════════════════════
+// Cada regra: { chave, tipo: 'dias_apos_frete'|'dia_fixo_apos', dias, diaFixo, label }
+// 'dias_apos_frete'  → vencimento = data do frete + dias corridos
+// 'dia_fixo_apos'    → completa `dias` corridos após o frete; se essa data cair
+//                       até o `diaFixo` do mês, paga no `diaFixo` desse mesmo mês;
+//                       se cair depois, paga no `diaFixo` do mês seguinte (regra BRF)
+const FCX_REGRAS_PADRAO = [
+  { chave: 'AURORA',    tipo: 'dias_apos_frete', dias: 21, diaFixo: null, label: 'Aurora — 21 dias corridos após o frete' },
+  { chave: 'BRF',       tipo: 'dia_fixo_apos',   dias: 60, diaFixo: 3,    label: 'BRF — dia 3 do mês após completar 60 dias do frete' },
+  { chave: 'CARAVAGIO', tipo: 'dias_apos_frete', dias: 30, diaFixo: null, label: 'Caravaggio — 30 dias corridos após o frete' },
+  { chave: 'CDLOG',     tipo: 'dias_apos_frete', dias: 30, diaFixo: null, label: 'CD Log — 30 dias corridos após o frete' }
+];
+const FCX_REGRA_DEFAULT = { chave: '', tipo: 'dias_apos_frete', dias: 30, diaFixo: null, label: 'Padrão — 30 dias corridos (sem regra cadastrada)' };
+
+function fcxRegrasGetAll() {
+  try {
+    const raw = localStorage.getItem('fcxRegrasCliente');
+    if (!raw) return JSON.parse(JSON.stringify(FCX_REGRAS_PADRAO));
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) && arr.length ? arr : JSON.parse(JSON.stringify(FCX_REGRAS_PADRAO));
+  } catch(e) { return JSON.parse(JSON.stringify(FCX_REGRAS_PADRAO)); }
+}
+function fcxRegrasSaveAll(arr) {
+  try { localStorage.setItem('fcxRegrasCliente', JSON.stringify(arr)); } catch(e){}
+}
+function fcxNormalizaNome(v) {
+  return String(v || '').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+}
+// Acha a regra do cliente por correspondência "contém" (permite variações
+// como "BRF S.A.", "BRF GLOBAL FOODS", etc. baterem com a chave "BRF").
+function fcxRegraDoCliente(nomeCliente) {
+  const nome = fcxNormalizaNome(nomeCliente);
+  if (!nome) return null;
+  const regras = fcxRegrasGetAll();
+  return regras.find(r => r.chave && nome.includes(fcxNormalizaNome(r.chave))) || null;
+}
+// Calcula a data prevista de recebimento a partir da data do frete e da regra do cliente.
+function fcxCalcDataPrevista(dataFrete, regra) {
+  if (!dataFrete || isNaN(dataFrete.getTime())) return null;
+  const r = regra || FCX_REGRA_DEFAULT;
+  if (r.tipo === 'dia_fixo_apos') {
+    const d60 = new Date(dataFrete);
+    d60.setDate(d60.getDate() + (r.dias || 60));
+    const diaFixo = r.diaFixo || 3;
+    let mesPgto = d60.getMonth(), anoPgto = d60.getFullYear();
+    if (d60.getDate() > diaFixo) { mesPgto += 1; if (mesPgto > 11) { mesPgto = 0; anoPgto += 1; } }
+    return new Date(anoPgto, mesPgto, diaFixo);
+  }
+  const d = new Date(dataFrete);
+  d.setDate(d.getDate() + (r.dias != null ? r.dias : 30));
+  return d;
+}
+// Data efetiva usada no Fluxo de Caixa: calculada pela regra (se habilitado
+// e houver data de emissão/frete) ou a data crua da planilha, como fallback.
+function fcxDataEfetiva(row, C, usarRegra) {
+  const dataFrete = C.dataEmissao ? parseDate(row[C.dataEmissao]) : null;
+  if (usarRegra && dataFrete) {
+    const nomeCliente = C.cliente ? row[C.cliente] : '';
+    const regra = fcxRegraDoCliente(nomeCliente);
+    return { data: fcxCalcDataPrevista(dataFrete, regra), regraLabel: regra ? regra.label : FCX_REGRA_DEFAULT.label };
+  }
+  const d = C.dataPgto ? parseDate(row[C.dataPgto]) : null;
+  return { data: d, regraLabel: '— (data da planilha)' };
+}
+function fcxUsarRegraAtiva() {
+  const el = document.getElementById('fcxUsarRegra');
+  if (el) return el.checked;
+  const saved = localStorage.getItem('fcxUsarRegra');
+  return saved === null ? true : saved === '1';
+}
+function fcxSalvarUsarRegra() {
+  const el = document.getElementById('fcxUsarRegra');
+  if (el) localStorage.setItem('fcxUsarRegra', el.checked ? '1' : '0');
+  fcxRender();
+}
+function fcxToggleRegrasCard() {
+  const el = document.getElementById('fcxRegrasBody');
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+function fcxNovoTipoMudou() {
+  const tipo = document.getElementById('fcxNovoTipo').value;
+  document.getElementById('fcxNovoDiaFixoGrp').style.display = tipo === 'dia_fixo_apos' ? '' : 'none';
+  document.getElementById('fcxNovoDiasLbl').textContent = tipo === 'dia_fixo_apos' ? 'Dias até completar (ex: 60)' : 'Dias após o frete';
+}
+function fcxRegrasRenderTabela() {
+  const regras = fcxRegrasGetAll();
+  const tbody = document.getElementById('fcxRegrasTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = regras.length ? regras.map((r, i) => `
+    <tr>
+      <td><b>${escapeHTML(r.chave)}</b></td>
+      <td>${r.tipo === 'dia_fixo_apos' ? 'Dia fixo do mês, após N dias' : 'Dias corridos após o frete'}</td>
+      <td>${r.dias != null ? r.dias : '—'}</td>
+      <td>${r.tipo === 'dia_fixo_apos' ? (r.diaFixo || '—') : '—'}</td>
+      <td><button class="btn btn-gray btn-sm" onclick="fcxRegraRemove(${i})" title="Remover"><i class="fas fa-trash"></i></button></td>
+    </tr>`).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--text-lt)">Nenhuma regra cadastrada — todos os clientes usam o padrão de 30 dias.</td></tr>';
+}
+function fcxRegraAdd() {
+  const chave = (document.getElementById('fcxNovaChave').value || '').trim();
+  const tipo = document.getElementById('fcxNovoTipo').value;
+  const dias = parseInt(document.getElementById('fcxNovoDias').value, 10);
+  const diaFixo = parseInt(document.getElementById('fcxNovoDiaFixo').value, 10) || null;
+  if (!chave || isNaN(dias)) { showToast('Preencha a palavra-chave do cliente e os dias'); return; }
+  if (tipo === 'dia_fixo_apos' && !diaFixo) { showToast('Informe o dia fixo do mês'); return; }
+  const regras = fcxRegrasGetAll();
+  const label = tipo === 'dia_fixo_apos'
+    ? `${chave} — dia ${diaFixo} do mês após completar ${dias} dias do frete`
+    : `${chave} — ${dias} dias corridos após o frete`;
+  regras.push({ chave: chave.toUpperCase(), tipo, dias, diaFixo: tipo === 'dia_fixo_apos' ? diaFixo : null, label });
+  fcxRegrasSaveAll(regras);
+  document.getElementById('fcxNovaChave').value = '';
+  document.getElementById('fcxNovoDias').value = '';
+  document.getElementById('fcxNovoDiaFixo').value = '';
+  fcxRegrasRenderTabela();
+  fcxRender();
+  showToast('Regra adicionada!');
+}
+function fcxRegraRemove(idx) {
+  const regras = fcxRegrasGetAll();
+  regras.splice(idx, 1);
+  fcxRegrasSaveAll(regras);
+  fcxRegrasRenderTabela();
+  fcxRender();
+}
+function fcxRegrasRestaurarPadrao() {
+  fcxRegrasSaveAll(JSON.parse(JSON.stringify(FCX_REGRAS_PADRAO)));
+  fcxRegrasRenderTabela();
+  fcxRender();
+  showToast('Regras restauradas para o padrão');
+}
 
 function fcxPopularFiltros() {
   if (!contasReceberData.length) return;
@@ -5520,57 +5749,210 @@ function fcxResetFiltros() {
   fcxRender();
 }
 
+// ── Despesas do Financeiro (Contas a Pagar) num intervalo de datas opcional.
+// Retorna total por mês, total geral, total já "pago" (data <= hoje) e total
+// ainda em aberto (data > hoje) — usado para cruzar com as entradas da
+// Contas a Receber em todo o Painel de Fluxo de Caixa.
+function fcxDespesasFinanceiro(dIniObj, dFimObj) {
+  const resultado = { porMes: {}, totalGeral: 0, totalPago: 0, totalAberto: 0 };
+  if (typeof financeiroData === 'undefined' || !financeiroData.length) return resultado;
+  const headers = Object.keys(financeiroData[0]);
+  const colData  = findCol(headers, ['data', 'date', 'vencimento', 'competencia', 'lan']);
+  const colValor = findCol(headers, ['valor', 'value', 'montante', 'total', 'vl ', 'vlr', 'preco', 'price']);
+  const colTipo  = findCol(headers, ['tipo', 'type', 'natureza', 'classificacao']);
+  const colCat   = finColCategoria(headers);
+  const colDesc  = findCol(headers, ['descricao', 'historico', 'memo', 'obs', 'description', 'lancamento', 'servico', 'produto']);
+  if (!colData) return resultado;
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  financeiroData.forEach(row => {
+    const d = parseDate(row[colData]);
+    if (!d) return;
+    if (dIniObj && d < dIniObj) return;
+    if (dFimObj && d > dFimObj) return;
+    const v = finValorLinha(row, colValor, colCat, colDesc);
+    const t = colTipo ? String(row[colTipo] || '').toLowerCase() : '';
+    const isDespesa = !(t.includes('receita') || t.includes('entrada') || t.includes('credito'));
+    if (!isDespesa) return;
+    const valor = Math.abs(v);
+    const chave = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    if (!resultado.porMes[chave]) resultado.porMes[chave] = { total: 0 };
+    resultado.porMes[chave].total += valor;
+    resultado.totalGeral += valor;
+    if (d <= hoje) resultado.totalPago += valor; else resultado.totalAberto += valor;
+  });
+  return resultado;
+}
+
+function fcxProximoFechamento26(hoje) {
+  let ano = hoje.getFullYear(), mes = hoje.getMonth();
+  if (hoje.getDate() > 26) { mes += 1; if (mes > 11) { mes = 0; ano += 1; } }
+  return new Date(ano, mes, 26);
+}
+
+function fcxPopularAnoPlaca() {
+  const sel = document.getElementById('fcxPlacaAno');
+  if (!sel || sel.options.length) return; // só popula uma vez, preserva escolha do usuário
+  const anoAtual = new Date().getFullYear();
+  const anos = new Set([anoAtual]);
+  if (typeof financeiroData !== 'undefined' && financeiroData.length) {
+    const headers = Object.keys(financeiroData[0]);
+    const colData = findCol(headers, ['data', 'date', 'vencimento', 'competencia', 'lan']);
+    if (colData) financeiroData.forEach(r => { const d = parseDate(r[colData]); if (d) anos.add(d.getFullYear()); });
+  }
+  const anosOrdenados = [...anos].sort((a, b) => b - a);
+  sel.innerHTML = anosOrdenados.map(a => `<option value="${a}">${a}</option>`).join('');
+  sel.value = anoAtual;
+}
+
+// Receita por Placa (Cavalo), da Contas a Receber já filtrada, cruzada com o
+// custo de Manutenção daquela placa no ano selecionado (Financeiro).
+function fcxComputeMargemPlaca(rows, C, ano) {
+  const receitaPorPlaca = {};
+  rows.forEach(({ r, valor }) => {
+    const placaRaw = C.placaCv ? String(r[C.placaCv] || '').trim() : '';
+    if (!placaRaw) return;
+    const key = normalizaPlaca(placaRaw);
+    if (!key) return;
+    if (!receitaPorPlaca[key]) receitaPorPlaca[key] = { placa: placaRaw.toUpperCase(), receita: 0, motoristas: {} };
+    receitaPorPlaca[key].receita += valor;
+    const mot = C.mot ? String(r[C.mot] || '').trim() : '';
+    if (mot) receitaPorPlaca[key].motoristas[mot] = (receitaPorPlaca[key].motoristas[mot] || 0) + valor;
+  });
+  const custoPorPlaca = {};
+  if (typeof manComputeDados === 'function') {
+    const { dados } = manComputeDados(ano, {});
+    Object.entries(dados.cavalos || {}).forEach(([id, info]) => { custoPorPlaca[normalizaPlaca(id)] = info.total; });
+  }
+  const chaves = new Set([...Object.keys(receitaPorPlaca), ...Object.keys(custoPorPlaca)]);
+  return [...chaves].map(key => {
+    const rec = receitaPorPlaca[key];
+    const receita = rec ? rec.receita : 0;
+    const custo = custoPorPlaca[key] || 0;
+    const motoristaTop = rec ? Object.entries(rec.motoristas).sort((a, b) => b[1] - a[1])[0] : null;
+    return {
+      placa: rec ? rec.placa : key,
+      motorista: motoristaTop ? motoristaTop[0] : '—',
+      receita, custo, margem: receita - custo,
+      margemPct: receita > 0 ? ((receita - custo) / receita * 100) : null
+    };
+  }).filter(x => x.receita > 0 || x.custo > 0).sort((a, b) => b.receita - a.receita);
+}
+
+// Receita por Motorista, cruzada com custos diretos (diárias, vales, manobra
+// e descontos) lançados no Faturamento daquele motorista.
+function fcxComputeMargemMotorista(rows, C) {
+  const receitaPorMot = {};
+  rows.forEach(({ r, valor }) => {
+    const mot = C.mot ? String(r[C.mot] || '').trim() : '';
+    if (!mot) return;
+    if (!receitaPorMot[mot]) receitaPorMot[mot] = { receita: 0, placas: {} };
+    receitaPorMot[mot].receita += valor;
+    const placa = C.placaCv ? String(r[C.placaCv] || '').trim() : '';
+    if (placa) receitaPorMot[mot].placas[placa] = (receitaPorMot[mot].placas[placa] || 0) + valor;
+  });
+  const custoPorMot = {};
+  if (typeof fatAllRecords !== 'undefined') {
+    fatAllRecords.forEach(r => {
+      if (!r.motorista) return;
+      const custo = (r.diaria || 0) + (r.valeValor || 0) + (r.manobraValor || 0) + (r.despesasMot || 0);
+      custoPorMot[r.motorista] = (custoPorMot[r.motorista] || 0) + custo;
+    });
+  }
+  const nomes = new Set([...Object.keys(receitaPorMot), ...Object.keys(custoPorMot)]);
+  return [...nomes].map(nome => {
+    const rec = receitaPorMot[nome];
+    const receita = rec ? rec.receita : 0;
+    const custo = custoPorMot[nome] || 0;
+    const placaTop = rec ? Object.entries(rec.placas).sort((a, b) => b[1] - a[1])[0] : null;
+    return {
+      motorista: nome,
+      placa: placaTop ? placaTop[0] : '—',
+      receita, custo, margem: receita - custo,
+      margemPct: receita > 0 ? ((receita - custo) / receita * 100) : null
+    };
+  }).filter(x => x.receita > 0 || x.custo > 0).sort((a, b) => b.receita - a.receita);
+}
+
 function fcxRender() {
   const tbody = document.getElementById('fcxTableMensalBody');
   if (!contasReceberData.length) {
-    if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-lt)">Sem dados carregados. Atualize a aba Contas a Receber.</td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-lt)">Sem dados carregados. Atualize a aba Contas a Receber.</td></tr>';
     return;
   }
   fcxPopularFiltros();
+  fcxRegrasRenderTabela();
+  fcxPopularAnoPlaca();
+  const lastUpdEl = document.getElementById('fcxUltimaAtualizacao');
+  if (lastUpdEl) lastUpdEl.textContent = 'Atualizado às ' + new Date().toLocaleTimeString('pt-BR');
 
   const headers = Object.keys(contasReceberData[0]);
   const C = crCols(headers);
-  if (!C.dataPgto || (!C.freteValor && !C.freteReceber)) {
-    if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--warning)">Não foi possível identificar as colunas de vencimento/valor na planilha.</td></tr>';
+  if ((!C.dataPgto && !C.dataEmissao) || (!C.freteValor && !C.freteReceber)) {
+    if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--warning)">Não foi possível identificar as colunas de vencimento/valor na planilha.</td></tr>';
     return;
   }
 
+  const usarRegra = fcxUsarRegraAtiva();
   const fCliente = (document.getElementById('fcxCliente') || {}).value || '';
   const fMot = (document.getElementById('fcxMotorista') || {}).value || '';
   const dIni = (document.getElementById('fcxDataIni') || {}).value;
   const dFim = (document.getElementById('fcxDataFim') || {}).value;
+  const dIniObj = dIni ? new Date(dIni + 'T00:00:00') : null;
+  const dFimObj = dFim ? new Date(dFim + 'T23:59:59') : null;
 
   const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
 
-  let rows = contasReceberData.filter(r => {
+  let rows = contasReceberData.map(r => {
+    const efetiva = fcxDataEfetiva(r, C, usarRegra);
+    const valor = C.freteReceber ? parseMoney(r[C.freteReceber]) : parseMoney(r[C.freteValor]);
+    return { r, d: efetiva.data, regraLabel: efetiva.regraLabel, valor };
+  }).filter(({ r, d }) => {
+    if (!d) return false;
     if (fCliente && C.cliente && String(r[C.cliente] || '').trim() !== fCliente) return false;
     if (fMot && C.mot && String(r[C.mot] || '').trim() !== fMot) return false;
-    const d = parseDate(r[C.dataPgto]);
-    if (!d) return false;
-    if (dIni && d < new Date(dIni + 'T00:00:00')) return false;
-    if (dFim && d > new Date(dFim + 'T23:59:59')) return false;
+    if (dIniObj && d < dIniObj) return false;
+    if (dFimObj && d > dFimObj) return false;
     return true;
-  }).map(r => {
-    const d = parseDate(r[C.dataPgto]);
-    const valor = C.freteReceber ? parseMoney(r[C.freteReceber]) : parseMoney(r[C.freteValor]);
-    return { r, d, valor };
   });
 
-  // KPIs
+  // KPIs — a vencer / vencido
   const em7 = new Date(hoje); em7.setDate(em7.getDate() + 7);
   const em30 = new Date(hoje); em30.setDate(em30.getDate() + 30);
-  let totalVencido = 0, total7 = 0, total30 = 0, totalGeral = 0;
+  let totalVencido = 0, total7 = 0, total30 = 0, totalGeral = 0, recebido = 0;
   rows.forEach(({ d, valor }) => {
     totalGeral += valor;
     if (d < hoje) totalVencido += valor;
     else if (d <= em7) total7 += valor;
     if (d >= hoje && d <= em30) total30 += valor;
+    if (d <= hoje) recebido += valor;
   });
   document.getElementById('fcx-vencido').textContent = fmtMoney(totalVencido);
   document.getElementById('fcx-7dias').textContent = fmtMoney(total7);
   document.getElementById('fcx-30dias').textContent = fmtMoney(total30);
   document.getElementById('fcx-total').textContent = fmtMoney(totalGeral);
   document.getElementById('fcx-registros').textContent = rows.length;
+
+  // ── PAINEL EM TEMPO REAL ──
+  const despesasPeriodo = fcxDespesasFinanceiro(dIniObj, dFimObj);
+  const lucro = totalGeral - despesasPeriodo.totalGeral;
+  const margemPct = totalGeral > 0 ? (lucro / totalGeral * 100) : null;
+  const caixa = recebido - despesasPeriodo.totalPago;
+  const fechamento26 = fcxProximoFechamento26(hoje);
+  const entradasAteFechamento = rows.filter(x => x.d > hoje && x.d <= fechamento26).reduce((s, x) => s + x.valor, 0);
+  const despesasAteFechamento = fcxDespesasFinanceiro(new Date(hoje.getTime() + 86400000), fechamento26).totalGeral;
+  const previstoFechamento = entradasAteFechamento - despesasAteFechamento;
+
+  document.getElementById('fcx-caixa').textContent = fmtMoney(caixa);
+  document.getElementById('fcx-caixa').style.color = caixa >= 0 ? 'var(--success)' : 'var(--danger)';
+  document.getElementById('fcx-lucro').textContent = fmtMoney(lucro);
+  document.getElementById('fcx-lucro').style.color = lucro >= 0 ? 'var(--success)' : 'var(--danger)';
+  document.getElementById('fcx-margem').textContent = margemPct === null ? '—' : margemPct.toFixed(1) + '%';
+  document.getElementById('fcx-margem').style.color = margemPct === null ? '' : (margemPct >= 0 ? 'var(--success)' : 'var(--danger)');
+  document.getElementById('fcx-recebido').textContent = fmtMoney(recebido);
+  document.getElementById('fcx-despesas-periodo').textContent = fmtMoney(despesasPeriodo.totalGeral);
+  document.getElementById('fcx-apagar').textContent = fmtMoney(despesasPeriodo.totalAberto);
+  document.getElementById('fcx-fechamento26').textContent = fmtMoney(previstoFechamento) + ` (até ${fmtDate(fechamento26)})`;
+  document.getElementById('fcx-fechamento26').style.color = previstoFechamento >= 0 ? 'var(--success)' : 'var(--danger)';
 
   // Aging — faixas de vencimento
   const faixas = [
@@ -5593,10 +5975,7 @@ function fcxRender() {
   if (ctxA) {
     fcxChartAgingObj = new Chart(ctxA.getContext('2d'), {
       type: 'bar',
-      data: {
-        labels: faixas.map(f => f.label),
-        datasets: [{ label: 'Valor', data: agingValores, backgroundColor: agingCores, borderRadius: 6 }]
-      },
+      data: { labels: faixas.map(f => f.label), datasets: [{ label: 'Valor', data: agingValores, backgroundColor: agingCores, borderRadius: 6 }] },
       options: {
         responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + fmtMoney(ctx.raw) } } },
@@ -5605,7 +5984,7 @@ function fcxRender() {
     });
   }
 
-  // Previsão mensal + saldo acumulado
+  // Previsão mensal (entradas) + saídas (Financeiro) no mesmo período
   const porMes = {};
   rows.forEach(({ d, valor }) => {
     const chave = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -5614,7 +5993,8 @@ function fcxRender() {
     porMes[chave].total += valor;
     if (d < hoje) porMes[chave].vencido += valor; else porMes[chave].aVencer += valor;
   });
-  const mesesOrdenados = Object.keys(porMes).sort();
+  const porMesSaidas = despesasPeriodo.porMes;
+  const mesesOrdenados = [...new Set([...Object.keys(porMes), ...Object.keys(porMesSaidas)])].sort();
   const nomesMes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
   const fmtChaveMes = chave => {
     const [ano, mes] = chave.split('-');
@@ -5623,14 +6003,15 @@ function fcxRender() {
 
   if (fcxChartMensalObj) fcxChartMensalObj.destroy();
   const ctxM = document.getElementById('fcxChartMensal');
-  if (ctxM && mesesOrdenados.length) {
+  if (ctxM && Object.keys(porMes).length) {
+    const mesesEntradas = Object.keys(porMes).sort();
     fcxChartMensalObj = new Chart(ctxM.getContext('2d'), {
       type: 'bar',
       data: {
-        labels: mesesOrdenados.map(fmtChaveMes),
+        labels: mesesEntradas.map(fmtChaveMes),
         datasets: [
-          { label: 'Vencido', data: mesesOrdenados.map(k => porMes[k].vencido), backgroundColor: '#e74c3c', borderRadius: 4 },
-          { label: 'A Vencer', data: mesesOrdenados.map(k => porMes[k].aVencer), backgroundColor: '#4caf90', borderRadius: 4 }
+          { label: 'Vencido', data: mesesEntradas.map(k => porMes[k].vencido), backgroundColor: '#e74c3c', borderRadius: 4 },
+          { label: 'A Vencer', data: mesesEntradas.map(k => porMes[k].aVencer), backgroundColor: '#4caf90', borderRadius: 4 }
         ]
       },
       options: {
@@ -5641,27 +6022,63 @@ function fcxRender() {
     });
   }
 
-  // Tabela mensal com saldo acumulado
-  let acumulado = 0;
+  // Entradas x Saídas — gráfico combinado com saldo de caixa acumulado
+  if (fcxChartFluxoCompletoObj) fcxChartFluxoCompletoObj.destroy();
+  const ctxF = document.getElementById('fcxChartFluxoCompleto');
+  if (ctxF && mesesOrdenados.length) {
+    let acc = 0;
+    const saldoAcumuladoArr = mesesOrdenados.map(k => {
+      const ent = (porMes[k] || { total: 0 }).total;
+      const sai = (porMesSaidas[k] || { total: 0 }).total;
+      acc += (ent - sai);
+      return acc;
+    });
+    fcxChartFluxoCompletoObj = new Chart(ctxF.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: mesesOrdenados.map(fmtChaveMes),
+        datasets: [
+          { type: 'bar', label: 'Entradas', data: mesesOrdenados.map(k => (porMes[k] || { total: 0 }).total), backgroundColor: 'rgba(16,185,129,.75)', borderRadius: 4, order: 2 },
+          { type: 'bar', label: 'Saídas', data: mesesOrdenados.map(k => (porMesSaidas[k] || { total: 0 }).total), backgroundColor: 'rgba(239,68,68,.75)', borderRadius: 4, order: 2 },
+          { type: 'line', label: 'Saldo Acumulado', data: saldoAcumuladoArr, borderColor: '#D4AF37', backgroundColor: '#D4AF37', tension: .25, yAxisID: 'y1', order: 1, pointRadius: 3 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${fmtMoney(ctx.raw)}` } } },
+        scales: {
+          y: { ticks: { callback: v => fmtMoney(v) } },
+          y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { callback: v => fmtMoney(v) } }
+        }
+      }
+    });
+  }
+
+  // Tabela mensal — entradas, saídas e saldo de caixa acumulado
+  let acumuladoCaixa = 0;
   document.getElementById('fcxTableMensalBody').innerHTML = mesesOrdenados.length
     ? mesesOrdenados.map(k => {
-        const m = porMes[k];
-        acumulado += m.total;
+        const m = porMes[k] || { vencido: 0, aVencer: 0, qtd: 0, total: 0 };
+        const saidasMes = (porMesSaidas[k] || { total: 0 }).total;
+        const resultadoMes = m.total - saidasMes;
+        acumuladoCaixa += resultadoMes;
         return `<tr>
           <td>${fmtChaveMes(k)}</td>
           <td>${m.qtd}</td>
           <td style="color:var(--danger)">${fmtMoney(m.vencido)}</td>
           <td style="color:var(--success)">${fmtMoney(m.aVencer)}</td>
-          <td style="font-weight:700">${fmtMoney(m.total)}</td>
-          <td style="font-weight:700;color:var(--accent-dk)">${fmtMoney(acumulado)}</td>
+          <td style="font-weight:700;color:var(--success)">${fmtMoney(m.total)}</td>
+          <td style="font-weight:700;color:var(--danger)">${fmtMoney(saidasMes)}</td>
+          <td style="font-weight:700;color:${resultadoMes >= 0 ? 'var(--success)' : 'var(--danger)'}">${fmtMoney(resultadoMes)}</td>
+          <td style="font-weight:700;color:var(--accent-dk)">${fmtMoney(acumuladoCaixa)}</td>
         </tr>`;
       }).join('')
-    : '<tr><td colspan="6" style="text-align:center;color:var(--text-lt)">Nenhum registro encontrado para o filtro selecionado</td></tr>';
+    : '<tr><td colspan="8" style="text-align:center;color:var(--text-lt)">Nenhum registro encontrado para o filtro selecionado</td></tr>';
 
   // Maiores valores a vencer (top 15, apenas ainda não vencidos)
   const aVencerOrdenado = rows.filter(x => x.d >= hoje).sort((a, b) => b.valor - a.valor).slice(0, 15);
   document.getElementById('fcxTableDetalheBody').innerHTML = aVencerOrdenado.length
-    ? aVencerOrdenado.map(({ r, d, valor }) => {
+    ? aVencerOrdenado.map(({ r, d, valor, regraLabel }) => {
         const diffDias = Math.round((d - hoje) / 86400000);
         const situacao = diffDias <= 7 ? `<span style="color:var(--warning);font-weight:700">Vence em ${diffDias}d</span>` : `<span style="color:var(--text-lt)">Em ${diffDias}d</span>`;
         return `<tr>
@@ -5669,11 +6086,77 @@ function fcxRender() {
           <td>${C.mot ? (r[C.mot] || '—') : '—'}</td>
           <td>${C.cte ? (r[C.cte] || '—') : '—'}</td>
           <td>${fmtDate(d)}</td>
+          <td style="font-size:.72rem;color:var(--text-lt)">${escapeHTML(regraLabel || '—')}</td>
           <td>${situacao}</td>
           <td style="font-weight:700">${fmtMoney(valor)}</td>
         </tr>`;
       }).join('')
-    : '<tr><td colspan="6" style="text-align:center;color:var(--text-lt)">Nenhum valor a vencer encontrado</td></tr>';
+    : '<tr><td colspan="7" style="text-align:center;color:var(--text-lt)">Nenhum valor a vencer encontrado</td></tr>';
+
+  // ── MARGEM POR PLACA ──
+  const anoPlaca = +((document.getElementById('fcxPlacaAno') || {}).value) || new Date().getFullYear();
+  const margemPlacaArr = fcxComputeMargemPlaca(rows, C, anoPlaca).slice(0, 20);
+  if (fcxChartMargemPlacaObj) fcxChartMargemPlacaObj.destroy();
+  const ctxMP = document.getElementById('fcxChartMargemPlaca');
+  if (ctxMP && margemPlacaArr.length) {
+    fcxChartMargemPlacaObj = new Chart(ctxMP.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: margemPlacaArr.map(x => x.placa),
+        datasets: [
+          { label: 'Receita', data: margemPlacaArr.map(x => x.receita), backgroundColor: 'rgba(16,185,129,.7)', borderRadius: 4 },
+          { label: 'Custo Manutenção', data: margemPlacaArr.map(x => x.custo), backgroundColor: 'rgba(239,68,68,.7)', borderRadius: 4 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${fmtMoney(ctx.raw)}` } } },
+        scales: { y: { ticks: { callback: v => fmtMoney(v) } } }
+      }
+    });
+  }
+  document.getElementById('fcxTableMargemPlacaBody').innerHTML = margemPlacaArr.length
+    ? margemPlacaArr.map(x => `<tr>
+        <td><b>${escapeHTML(x.placa)}</b></td>
+        <td>${escapeHTML(x.motorista)}</td>
+        <td style="color:var(--success)">${fmtMoney(x.receita)}</td>
+        <td style="color:var(--danger)">${fmtMoney(x.custo)}</td>
+        <td style="font-weight:700;color:${x.margem >= 0 ? 'var(--success)' : 'var(--danger)'}">${fmtMoney(x.margem)}</td>
+        <td style="font-weight:700">${x.margemPct === null ? '—' : x.margemPct.toFixed(1) + '%'}</td>
+      </tr>`).join('')
+    : `<tr><td colspan="6" style="text-align:center;color:var(--text-lt)">Sem dados de receita/custo por placa no período — verifique se a Contas a Receber tem coluna de Placa Cavalo.</td></tr>`;
+
+  // ── MARGEM POR MOTORISTA ──
+  const margemMotoristaArr = fcxComputeMargemMotorista(rows, C).slice(0, 20);
+  if (fcxChartMargemMotoristaObj) fcxChartMargemMotoristaObj.destroy();
+  const ctxMM = document.getElementById('fcxChartMargemMotorista');
+  if (ctxMM && margemMotoristaArr.length) {
+    fcxChartMargemMotoristaObj = new Chart(ctxMM.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: margemMotoristaArr.map(x => x.motorista),
+        datasets: [
+          { label: 'Receita', data: margemMotoristaArr.map(x => x.receita), backgroundColor: 'rgba(16,185,129,.7)', borderRadius: 4 },
+          { label: 'Custos Diretos', data: margemMotoristaArr.map(x => x.custo), backgroundColor: 'rgba(239,68,68,.7)', borderRadius: 4 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${fmtMoney(ctx.raw)}` } } },
+        scales: { y: { ticks: { callback: v => fmtMoney(v) } } }
+      }
+    });
+  }
+  document.getElementById('fcxTableMargemMotoristaBody').innerHTML = margemMotoristaArr.length
+    ? margemMotoristaArr.map(x => `<tr>
+        <td><b>${escapeHTML(x.motorista)}</b></td>
+        <td>${escapeHTML(x.placa)}</td>
+        <td style="color:var(--success)">${fmtMoney(x.receita)}</td>
+        <td style="color:var(--danger)">${fmtMoney(x.custo)}</td>
+        <td style="font-weight:700;color:${x.margem >= 0 ? 'var(--success)' : 'var(--danger)'}">${fmtMoney(x.margem)}</td>
+        <td style="font-weight:700">${x.margemPct === null ? '—' : x.margemPct.toFixed(1) + '%'}</td>
+      </tr>`).join('')
+    : `<tr><td colspan="6" style="text-align:center;color:var(--text-lt)">Sem dados de receita/custo por motorista no período — abra a aba Faturamento para carregar diárias/vales.</td></tr>`;
 }
 
 
@@ -6759,7 +7242,10 @@ document.querySelectorAll('.cr-subtab-btn[data-crsub]').forEach(btn => {
     document.querySelectorAll('.cr-subpane').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(btn.dataset.crsub).classList.add('active');
-    if (btn.dataset.crsub === 'crSubFluxoCaixa') setTimeout(fcxRender, 50);
+    if (btn.dataset.crsub === 'crSubFluxoCaixa') {
+      setTimeout(fcxRender, 50);
+      if (typeof fatAllRecords !== 'undefined' && !fatAllRecords.length) loadFaturamentoData();
+    }
   });
 });
 
@@ -7448,7 +7934,7 @@ function fatUpdateResumoMes(totalFaturamento, totalReceber, totalDiarias, totalV
   const mesesSet = new Set(fatFiltered.map(r => `${r.ano}-${r.mes}`));
   const qtdMeses = mesesSet.size || 1;
   const mediaReceber = totalReceber / qtdMeses;
-  const mediaSaldoLiquido = saldoLiquido / qtdMeses;
+  const mediaComissao = totalComissao / qtdMeses;
 
   periodoEl.innerHTML = `<i class="fas fa-filter"></i> ${periodoTxt} — ${fatFiltered.length} lançamento${fatFiltered.length===1?'':'s'}`;
 
@@ -7458,10 +7944,11 @@ function fatUpdateResumoMes(totalFaturamento, totalReceber, totalDiarias, totalV
     { icon:'fa-hotel', cls:'blue', val: fmtMoney(totalDiarias), lbl:'Total Diárias' },
     { icon:'fa-hand-holding-dollar', cls:'red', val: fmtMoney(totalVales), lbl:'Vales / Manobra' },
     { icon:'fa-percent', cls:'brown', val: fmtMoney(totalComissao), lbl:'Comissão' },
+    { icon:'fa-file-invoice-dollar', cls:'red', val: fmtMoney(totalDespesas), lbl:'Despesas Mot.' },
     { icon:'fa-scale-balanced', cls: saldoLiquido >= 0 ? 'green' : 'red', val: fmtMoney(saldoLiquido), lbl:'Saldo Líquido (Receber − Desp.)' },
     { icon:'fa-user', cls:'brown', val: motoristasSet.size, lbl:'Motoristas no Período' },
     { icon:'fa-calculator', cls:'yellow', val: fmtMoney(mediaReceber), lbl:`Média Total a Receber / mês (${qtdMeses} ${qtdMeses===1?'mês':'meses'})` },
-    { icon:'fa-calculator', cls: mediaSaldoLiquido >= 0 ? 'green' : 'red', val: fmtMoney(mediaSaldoLiquido), lbl:`Média Saldo Líquido / mês (${qtdMeses} ${qtdMeses===1?'mês':'meses'})` }
+    { icon:'fa-calculator', cls:'brown', val: fmtMoney(mediaComissao), lbl:`Média da Comissão / mês (${qtdMeses} ${qtdMeses===1?'mês':'meses'})` }
   ];
 
   gridEl.innerHTML = itens.map(it => `
@@ -7474,6 +7961,11 @@ function fatUpdateResumoMes(totalFaturamento, totalReceber, totalDiarias, totalV
 function fatApplyFilters() {
   const emptyEl = document.getElementById('fatEmpty');
   const contentEl = document.getElementById('fatContent');
+
+  // Mantém a Margem por Motorista do Fluxo de Caixa sincronizada assim que
+  // os dados de Faturamento (diárias/vales/despesas por motorista) chegam.
+  const fcxPaneFat = document.getElementById('crSubFluxoCaixa');
+  if (fcxPaneFat && fcxPaneFat.classList.contains('active') && typeof fcxRender === 'function') setTimeout(fcxRender, 30);
 
   if (!fatAllRecords.length) {
     emptyEl.style.display = 'block';
