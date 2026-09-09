@@ -901,6 +901,11 @@ footer a{color:var(--accent);text-decoration:none;}
     <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem;margin-bottom:.5rem">Uma URL por linha (CSV). Cada motorista tem sua própria aba no mesmo documento — publique cada aba individualmente (Arquivo → Compartilhar → Publicar na Web → selecione a aba → CSV) e cole os links aqui. <b>Prefixe cada linha com o nome do motorista seguido de "|"</b> (ex.: <code>RODRIGO|https://docs.google.com/...</code>) — assim ele já aparece no filtro mesmo antes de ter lançamentos na planilha. Sem o prefixo, o nome só aparece depois que houver dados na aba.</p>
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">🔋 Baterias (CSV)</label>
     <input type="text" id="urlBaterias" placeholder="https://docs.google.com/spreadsheets/...">
+    <label style="font-size:.75rem;font-weight:700;color:var(--text-lt);margin-top:.5rem">⛽ Controle de Consumo por Litro — Planilha de Abastecimentos (CSV)</label>
+    <input type="text" id="urlAbastecimentosCsv" placeholder="URL padrão já configurada — cole aqui só se a planilha do GIRA mudar">
+    <label style="font-size:.75rem;font-weight:700;color:var(--text-lt);margin-top:.5rem">⛽ Controle de Consumo por Litro — Web App (Processar PDFs da pasta do Drive)</label>
+    <input type="text" id="urlAbastecimentosWebApp" placeholder="URL do Apps Script implantado (…/exec)">
+    <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem">Se o botão <b>Processar PDFs</b> parar de funcionar, normalmente é porque essa implantação do Apps Script expirou. No Apps Script: <b>Implantar → Gerenciar implantações → editar → nova versão</b>, com acesso "Qualquer pessoa", e cole a nova URL "…/exec" aqui.</p>
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt);margin-top:.5rem">📅 Agenda / Lembretes (CSV)</label>
     <input type="text" id="urlAgenda" placeholder="URL padrão M. Malacarne já configurada">
     <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem">Planilha com colunas: <code>titulo | data | hora | categoria | prioridade | responsavel | descricao | recorrencia</code>. Publique a aba como CSV (Arquivo → Publicar na Web → selecione a aba → CSV). <b>A URL padrão já está configurada e sincroniza automaticamente ao abrir a aba.</b></p>
@@ -4978,6 +4983,8 @@ function openUrlModal(){
   document.getElementById('urlFaturamento').value = URL_FAT;
   document.getElementById('urlBaterias').value = URL_BAT;
   document.getElementById('urlAgenda').value = URL_AGENDA;
+  document.getElementById('urlAbastecimentosCsv').value = localStorage.getItem('urlAbastecimentosCsv') || '';
+  document.getElementById('urlAbastecimentosWebApp').value = localStorage.getItem('urlAbastecimentosWebApp') || '';
   document.getElementById('nfeClientId').value = NFE_CLIENT_ID;
   document.getElementById('nfeClientSecret').value = NFE_CLIENT_SECRET;
   document.getElementById('nfeCnpj').value = NFE_CNPJ;
@@ -5007,6 +5014,15 @@ document.getElementById('saveUrlsBtn').onclick = () => {
   localStorage.setItem('urlBaterias', URL_BAT);
   localStorage.setItem('urlFaturamento', URL_FAT);
   localStorage.setItem('urlAgenda', URL_AGENDA);
+  // Controle de Consumo por Litro — planilha de abastecimentos e Web App
+  // de processamento de PDFs (só grava se o usuário preencher; em branco
+  // mantém a URL padrão embutida no sistema).
+  const novaAbastCsv = document.getElementById('urlAbastecimentosCsv').value.trim();
+  const novaAbastWebApp = document.getElementById('urlAbastecimentosWebApp').value.trim();
+  if (novaAbastCsv) { ABASTECIMENTOS_CSV_URL = novaAbastCsv; localStorage.setItem('urlAbastecimentosCsv', novaAbastCsv); }
+  else localStorage.removeItem('urlAbastecimentosCsv');
+  if (novaAbastWebApp) { WEBAPP_ABAST_URL = novaAbastWebApp; localStorage.setItem('urlAbastecimentosWebApp', novaAbastWebApp); }
+  else localStorage.removeItem('urlAbastecimentosWebApp');
   // NF-e credentials — salvas em sessionStorage (mais seguro; somem ao fechar a aba)
   NFE_CLIENT_ID     = document.getElementById('nfeClientId').value.trim();
   NFE_CLIENT_SECRET = document.getElementById('nfeClientSecret').value.trim();
@@ -5031,6 +5047,7 @@ document.getElementById('saveUrlsBtn').onclick = () => {
   loadContasReceberData(true);
   loadBateriasData();
   loadFaturamentoData();
+  if (typeof loadAbastecimentos === 'function') loadAbastecimentos({ silencioso: true });
   nfeCheckConfig();
   if (URL_AGENDA) agSincronizarSheets(true);
 };
@@ -5054,6 +5071,9 @@ document.getElementById('refreshDataBtn').onclick = async () => {
   // Se aba NF-e está ativa, também atualiza
   const nfePane = document.getElementById('tabNfe');
   if(nfePane && nfePane.classList.contains('active') && NFE_CLIENT_ID) nfeBuscarSEFAZ();
+  // Se a sub-aba Controle de Consumo por Litro está ativa, também atualiza
+  const consumoPane = document.getElementById('fatSubConsumo');
+  if (consumoPane && consumoPane.classList.contains('active') && typeof loadAbastecimentos === 'function') loadAbastecimentos({ silencioso: true });
   updateLastUpdate();
   atualizarSelectMotoristasCalculadora();
   btn.disabled = false;
@@ -8254,8 +8274,10 @@ let fatcFiltered = []; // registros após os filtros desta sub-aba
 // Planilha "Controle de Consumo por Litro" — alimentada automaticamente a
 // partir das notas fiscais (PDF) de abastecimento lançadas na pasta do Drive.
 // Publicada em Arquivo → Compartilhar → Publicar na Web → CSV.
-const ABASTECIMENTOS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCjwo2zV2NWdhstfp3J4kCRcnxKKg0OHNM9f1Xp7xx3_k-d4ev_wjYBBo51uKvncE3kPwTOX_rZHKp/pub?output=csv";
-const WEBAPP_ABAST_URL = "https://script.google.com/macros/s/AKfycbzFKYA_W-zh3o7kG0Z9xVgtcMfkYgUUcCrC_YOLkOdovRCebgdcsdsomgTsRRtizm9pGA/exec";
+const DEFAULT_ABASTECIMENTOS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCjwo2zV2NWdhstfp3J4kCRcnxKKg0OHNM9f1Xp7xx3_k-d4ev_wjYBBo51uKvncE3kPwTOX_rZHKp/pub?output=csv";
+const DEFAULT_WEBAPP_ABAST_URL = "https://script.google.com/macros/s/AKfycbzFKYA_W-zh3o7kG0Z9xVgtcMfkYgUUcCrC_YOLkOdovRCebgdcsdsomgTsRRtizm9pGA/exec";
+let ABASTECIMENTOS_CSV_URL = localStorage.getItem("urlAbastecimentosCsv") || DEFAULT_ABASTECIMENTOS_CSV_URL;
+let WEBAPP_ABAST_URL = localStorage.getItem("urlAbastecimentosWebApp") || DEFAULT_WEBAPP_ABAST_URL;
 let   abastAllRecords         = [];  // registros vindos da planilha ABASTECIMENTOS
 let   abastAutoRefreshTimer   = null;
 const ABAST_AUTO_REFRESH_MS   = 3 * 60 * 1000; // 3 minutos — a planilha recebe novos abastecimentos com frequência
@@ -8274,97 +8296,85 @@ function abastPararAutoRefresh() {
   if (abastAutoRefreshTimer) { clearInterval(abastAutoRefreshTimer); abastAutoRefreshTimer = null; }
 }
 
+// Mapeia as colunas da planilha de Abastecimentos de forma flexível
+// (mesmo padrão usado em crCols/finCols) — não depende de o cabeçalho vir
+// exatamente "DATA", "PLACA" etc., tolera variações de acento/maiúscula.
+function abastCols(headers) {
+  return {
+    data:  findCol(headers, ['data']),
+    hora:  findCol(headers, ['hora']),
+    placa: findCol(headers, ['placa']),
+    km:    findCol(headers, ['km']),
+    qtd:   findCol(headers, ['quantidade', 'litros', 'qtd']),
+    orig:  findCol(headers, ['original', 'valor original', 'valor']),
+    comb:  findCol(headers, ['combustivel']),
+    cupom: findCol(headers, ['cupom']),
+    nf:    findCol(headers, ['nota fiscal', 'nf']),
+    posto: findCol(headers, ['posto']),
+    nome:  findCol(headers, ['nome_motorista', 'nome motorista', 'motorista', 'nome']),
+    cpf:   findCol(headers, ['cpf_motorista', 'cpf motorista', 'cpf'])
+  };
+}
+
 async function loadAbastecimentos(opts) {
   const silencioso = !!(opts && opts.silencioso);
   const btn = document.getElementById('btnAtualizarConsumo');
   if (btn && !silencioso) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...'; }
 
-  // Tenta a URL publicada diretamente primeiro (o Google já libera CORS para
-  // links "Publicar na Web"); usa proxies só como contingência.
-  const cacheBuster = `${ABASTECIMENTOS_CSV_URL}${ABASTECIMENTOS_CSV_URL.includes('?') ? '&' : '?'}_=${Date.now()}`;
-  const proxies = [
-    cacheBuster,
-    `https://corsproxy.io/?${encodeURIComponent(ABASTECIMENTOS_CSV_URL)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(ABASTECIMENTOS_CSV_URL)}`,
-    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(ABASTECIMENTOS_CSV_URL)}`
-  ];
-
-  let text = null;
-  for (const url of proxies) {
-    try {
-      const r = await fetch(url, { cache: 'no-store' });
-      if (r.ok) { text = await r.text(); break; }
-    } catch(e) { /* tenta próximo proxy */ }
-  }
-
-  if (!text) {
-    if (!silencioso) showToast('Erro ao carregar planilha Controle de Consumo por Litro', 5000);
-    if (btn && !silencioso) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar'; }
-    return;
-  }
-
-  // Parse CSV (semicolon ou comma)
-  const linhas = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-  if (linhas.length < 2) {
+  const falhar = (msg) => {
     abastAllRecords = [];
     fatcPopularFiltros(); fatcApplyFilters();
+    if (!silencioso) showToast(msg, 6000);
     if (btn && !silencioso) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar'; }
+  };
+
+  // Usa o mesmo motor de busca (fetchCSV) usado por Financeiro/Contas a
+  // Receber/etc: tenta gviz nativo, depois direto, depois a cadeia de
+  // proxies de CORS já validada — em vez da cadeia própria/antiga desta
+  // aba, que tinha o formato do corsproxy.io desatualizado e travava sem
+  // timeout quando um proxy ficava fora do ar.
+  let rows;
+  try {
+    rows = await fetchCSV(ABASTECIMENTOS_CSV_URL);
+  } catch (e) {
+    falhar('Erro ao carregar Controle de Consumo por Litro: ' + e.message);
     return;
   }
 
-  const sep    = linhas[0].includes(';') ? ';' : ',';
-  const header = linhas[0].split(sep).map(h => h.replace(/^"|"$/g,'').trim().toUpperCase());
+  if (!rows || !rows.length) { falhar('Planilha de Controle de Consumo por Litro está vazia ou não publicada.'); return; }
 
-  const idx = k => header.indexOf(k);
-  const iData = idx('DATA'), iHora = idx('HORA'), iPlaca = idx('PLACA');
-  const iKm = idx('KM'), iQtd = idx('QUANTIDADE'), iOrig = idx('ORIGINAL');
-  const iComb = idx('COMBUSTIVEL'), iCupom = idx('CUPOM'), iNf = idx('NF');
-  const iPosto = idx('POSTO'), iNome = idx('NOME_MOTORISTA'), iCpf = idx('CPF_MOTORISTA');
+  const headers = Object.keys(rows[0]);
+  const A = abastCols(headers);
+  if (!A.placa) { falhar(`Coluna de Placa não encontrada na planilha. Cabeçalhos recebidos: ${headers.join(' | ')}`); return; }
 
-  abastAllRecords = [];
-  for (let i = 1; i < linhas.length; i++) {
-    const cols = linhas[i].split(sep).map(c => c.replace(/^"|"$/g,'').trim());
-    if (!cols[iPlaca]) continue;
-
-    const dataStr = cols[iData] || '';
-    let dataObj = null;
-    if (dataStr) {
-      const [d,m,y] = dataStr.split('/');
-      if (d && m && y) dataObj = new Date(`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`);
-    }
-
-    const parseN = v => {
-      if (!v) return 0;
-      const s = String(v).replace(/\./g,'').replace(',','.');
-      return parseFloat(s) || 0;
-    };
-
-    abastAllRecords.push({
+  abastAllRecords = rows.filter(r => r[A.placa]).map(r => {
+    const dataObj = A.data ? parseDate(r[A.data]) : null;
+    return {
       // campos de compatibilidade com fatAllRecords
       data:         dataObj,
-      dataStr:      dataStr,
+      dataStr:      A.data ? (r[A.data] || '') : '',
       ano:          dataObj ? dataObj.getFullYear() : null,
       mes:          dataObj ? dataObj.getMonth() + 1 : null,
-      motorista:    cols[iNome] || '',
-      placaCavalo:  cols[iPlaca] || '',
+      motorista:    A.nome ? String(r[A.nome] || '').trim() : '',
+      placaCavalo:  String(r[A.placa] || '').trim(),
       placaCarreta: '',
-      km:           parseN(cols[iKm]),
-      litrosCavalo: parseN(cols[iQtd]),
+      km:           A.km  ? parseMoney(r[A.km])  : 0,
+      litrosCavalo: A.qtd ? parseMoney(r[A.qtd]) : 0,
       litrosCarreta:0,
       mediaCavalo:  0,   // calculado abaixo por placa
       mediaCarreta: 0,
       frete: 0, comissao: 0, diaria: 0, bonus: 0,
       valesManobra: 0, empConsignado: 0, depFolha: 0, valorReceber: 0,
       // campos específicos de abastecimento
-      posto:        cols[iPosto] || '',
-      combustivel:  cols[iComb]  || '',
-      cupom:        cols[iCupom] || '',
-      nf:           cols[iNf]    || '',
-      valorOriginal:parseN(cols[iOrig]),
-      cpf:          cols[iCpf]   || '',
+      posto:        A.posto ? String(r[A.posto] || '').trim() : '',
+      combustivel:  A.comb  ? String(r[A.comb]  || '').trim() : '',
+      cupom:        A.cupom ? String(r[A.cupom] || '').trim() : '',
+      nf:           A.nf    ? String(r[A.nf]    || '').trim() : '',
+      valorOriginal:A.orig  ? parseMoney(r[A.orig]) : 0,
+      cpf:          A.cpf   ? String(r[A.cpf]   || '').trim() : '',
       _fonte:       'abastecimento'
-    });
-  }
+    };
+  });
 
   // Calcula mediaCavalo (km/L) por abastecimento quando km e litros disponíveis
   abastAllRecords.forEach(r => {
@@ -8376,6 +8386,25 @@ async function loadAbastecimentos(opts) {
   const n = abastAllRecords.length;
   if (!silencioso) showToast(`✅ ${n} abastecimento(s) carregado(s)`, 3000);
   if (btn && !silencioso) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar'; }
+}
+
+// Busca um endpoint (Web App do Apps Script) esperando JSON, com timeout e
+// diagnóstico claro do motivo da falha — em vez do genérico "Failed to
+// fetch" ou de um erro de parse de JSON sem contexto.
+async function abastFetchJson(url) {
+  let resp;
+  try {
+    resp = await fetchComTimeout(url, 25000);
+  } catch (e) {
+    throw new Error(e.name === 'AbortError'
+      ? 'Tempo esgotado ao conectar ao Web App (pasta grande ou script travado).'
+      : 'Não foi possível conectar ao Web App — verifique a URL em Config URLs e se o Apps Script está implantado com acesso liberado.');
+  }
+  const text = await resp.text();
+  if (!resp.ok) throw new Error(`Web App retornou erro HTTP ${resp.status}. Reimplante o Apps Script (Implantar → Gerenciar implantações) se o erro persistir.`);
+  if (/^\s*<(!doctype|html)/i.test(text)) throw new Error('O Web App pediu login ou o link expirou — no Apps Script, reimplante com acesso "Qualquer pessoa" (não "Qualquer pessoa com conta Google").');
+  try { return JSON.parse(text); }
+  catch (e) { throw new Error('Resposta inesperada do Web App (não veio em formato JSON válido).'); }
 }
 
 // ── ACIONAR WEB APP (processar PDFs da pasta do Drive) ───────────────────────
@@ -8392,8 +8421,7 @@ async function acionarWebApp() {
 
   try {
     // Primeiro verifica quantos PDFs estão pendentes
-    const chkResp = await fetch(WEBAPP_ABAST_URL + '?action=status');
-    const chk = await chkResp.json();
+    const chk = await abastFetchJson(WEBAPP_ABAST_URL + '?action=status');
     if (chk.pendentes === 0) {
       status.style.background = '#fef9c3';
       status.innerHTML = '<i class="fas fa-info-circle" style="color:#ca8a04"></i> Nenhum PDF novo na pasta — tudo já foi processado.';
@@ -8405,8 +8433,7 @@ async function acionarWebApp() {
     status.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Encontrado(s) <b>${chk.pendentes} PDF(s)</b> — extraindo dados com IA...`;
 
     // Dispara o processamento
-    const resp = await fetch(WEBAPP_ABAST_URL + '?action=processar');
-    const data = await resp.json();
+    const data = await abastFetchJson(WEBAPP_ABAST_URL + '?action=processar');
 
     if (data.status !== 'ok') throw new Error(data.msg || 'Erro desconhecido');
 
