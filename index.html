@@ -1565,6 +1565,25 @@ footer a{color:var(--accent);text-decoration:none;}
                 </table>
               </div>
             </div>
+
+            <!-- ── TABELA DETALHADA DE ABASTECIMENTOS ── -->
+            <div class="dash-card" style="margin-top:1.6rem;border-left:4px solid var(--accent)">
+              <div class="dash-card-title" style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">
+                <span><i class="fas fa-list-alt" style="color:var(--accent)"></i> Lançamentos de Abastecimento</span>
+                <span id="fatcAbastCount" style="font-size:.75rem;font-weight:400;color:var(--text-lt)"></span>
+                <button class="btn btn-success btn-sm" style="margin-left:auto" onclick="fatcExportarAbast()"><i class="fas fa-download"></i> CSV</button>
+              </div>
+              <div class="tbl-wrap">
+                <table class="data-table">
+                  <thead><tr>
+                    <th>Data</th><th>Hora</th><th>Placa</th><th>Motorista</th>
+                    <th>KM</th><th>KM Percorrido</th><th>Litros</th><th>Valor (R$)</th>
+                    <th>Combustível</th><th>Posto</th><th>Cupom/NF</th><th>km/L</th>
+                  </tr></thead>
+                  <tbody id="fatcAbastTbody"></tbody>
+                </table>
+              </div>
+            </div>
           </div><!-- /fatSubConsumo -->
 
         </div>
@@ -8170,8 +8189,11 @@ function fatApplyFilters() {
 // melhores/piores da sub-aba "Controle de Consumo por Litro".
 // ═══════════════════════════════════════════════════════════
 function fatRenderConsumo(records) {
+  // Verifica se a sub-aba está no DOM usando o container, não o canvas
+  // (o canvas pode não existir ainda, mas a tabela já pode estar disponível)
+  const subAbaEl = document.getElementById('fatSubConsumo');
+  if (!subAbaEl) return; // sub-aba ainda não foi renderizada
   const chartCvEl = document.getElementById('fatChartConsumoCavalo');
-  if (!chartCvEl) return; // sub-aba ainda não está no DOM
 
   // Se chamada sem argumento (compatibilidade), usa o conjunto filtrado
   // pelos filtros próprios desta sub-aba (fatcApplyFilters) — se ainda não
@@ -8290,6 +8312,54 @@ function fatRenderConsumo(records) {
   document.getElementById('fatTableConsumoCarretaBody').innerHTML = carArr.length
     ? carArr.map(v => `<tr><td>${escapeHTML(v.placa)}</td><td>${escapeHTML(v.motorista)}</td><td>${v.registros}</td><td>${fmtNum(v.litros)} L</td><td style="font-weight:700">${fmtKmL(v.media)}</td></tr>`).join('')
     : '<tr><td colspan="5" style="text-align:center;color:var(--text-lt)">Sem dados.</td></tr>';
+
+  // ── Tabela detalhada de lançamentos individuais ──
+  const tbodyAbast = document.getElementById('fatcAbastTbody');
+  const countAbast = document.getElementById('fatcAbastCount');
+  if (tbodyAbast) {
+    const sorted = [...dados].sort((a, b) => {
+      if (a.data && b.data) return b.data - a.data;
+      return (b.dataStr || '').localeCompare(a.dataStr || '');
+    });
+    tbodyAbast.innerHTML = sorted.length
+      ? sorted.map(r => {
+          const fmtL  = v => v ? v.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + ' L' : '—';
+          const fmtKm = v => v ? v.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' km' : '—';
+          const fmtR  = v => v ? 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
+          const media = r.mediaCavalo > 0 ? r.mediaCavalo.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + ' km/L' : '—';
+          const corMedia = r.mediaCavalo > 0
+            ? (r.mediaCavalo >= 3.0 ? 'color:var(--success);font-weight:700' : r.mediaCavalo < 2.0 ? 'color:var(--danger);font-weight:700' : 'font-weight:600')
+            : '';
+          return `<tr>
+            <td>${escapeHTML(r.dataStr || '')}</td>
+            <td>${escapeHTML(r.hora || '—')}</td>
+            <td><span style="font-weight:700">${escapeHTML(r.placaCavalo || '—')}</span></td>
+            <td>${escapeHTML(r.motorista || '—')}</td>
+            <td>${fmtKm(r.km)}</td>
+            <td>${fmtKm(r.kmPercorrido)}</td>
+            <td>${fmtL(r.litrosCavalo)}</td>
+            <td>${fmtR(r.valorOriginal)}</td>
+            <td>${escapeHTML(r.combustivel || '—')}</td>
+            <td>${escapeHTML(r.posto || '—')}</td>
+            <td style="font-size:.75rem">${escapeHTML(r.cupom || r.nf || '—')}</td>
+            <td style="${corMedia}">${media}</td>
+          </tr>`;
+        }).join('')
+      : '<tr><td colspan="12" style="text-align:center;color:var(--text-lt);padding:1.5rem">Nenhum abastecimento encontrado. Clique em <b>Processar PDFs</b> ou <b>Atualizar</b>.</td></tr>';
+    if (countAbast) countAbast.textContent = sorted.length ? `(${sorted.length} registros)` : '';
+  }
+}
+
+function fatcExportarAbast() {
+  const dados = (typeof fatcFiltered !== 'undefined' && fatcFiltered.length) ? fatcFiltered : fatcGetRecords();
+  if (!dados.length) { showToast('Nenhum dado para exportar.', 3000); return; }
+  const cols = ['dataStr','hora','placaCavalo','motorista','km','kmPercorrido','litrosCavalo','valorOriginal','combustivel','posto','cupom','nf','mediaCavalo'];
+  const labels = ['Data','Hora','Placa','Motorista','KM','KM Percorrido','Litros','Valor (R$)','Combustível','Posto','Cupom','NF','km/L'];
+  exportCSV(dados.map(r => {
+    const row = {};
+    cols.forEach((c, i) => { row[labels[i]] = r[c] ?? ''; });
+    return row;
+  }), 'abastecimentos_consumo');
 }
 
 function fatResetFilters() {
@@ -8568,8 +8638,8 @@ function fatcResetFilters() {
 }
 
 function fatcApplyFilters() {
-  const chartCvEl = document.getElementById('fatChartConsumoCavalo');
-  if (!chartCvEl) return; // sub-aba ainda não está no DOM
+  // Verifica pelo container da sub-aba, não pelo canvas (que pode não existir ainda no DOM)
+  if (!document.getElementById('fatSubConsumo')) return;
 
   const ano   = document.getElementById('fatcAno')?.value || '';
   const mes   = document.getElementById('fatcMes')?.value || '';
