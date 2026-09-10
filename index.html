@@ -901,8 +901,8 @@ footer a{color:var(--accent);text-decoration:none;}
     <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem;margin-bottom:.5rem">Uma URL por linha (CSV). Cada motorista tem sua própria aba no mesmo documento — publique cada aba individualmente (Arquivo → Compartilhar → Publicar na Web → selecione a aba → CSV) e cole os links aqui. <b>Prefixe cada linha com o nome do motorista seguido de "|"</b> (ex.: <code>RODRIGO|https://docs.google.com/...</code>) — assim ele já aparece no filtro mesmo antes de ter lançamentos na planilha. Sem o prefixo, o nome só aparece depois que houver dados na aba.</p>
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">🔋 Baterias (CSV)</label>
     <input type="text" id="urlBaterias" placeholder="https://docs.google.com/spreadsheets/...">
-    <label style="font-size:.75rem;font-weight:700;color:var(--text-lt);margin-top:.5rem">⛽ Controle de Consumo por Litro — Planilha de Abastecimentos (CSV)</label>
-    <input type="text" id="urlAbastecimentosCsv" placeholder="URL padrão já configurada — cole aqui só se a planilha do GIRA mudar">
+    <label style="font-size:.75rem;font-weight:700;color:var(--text-lt);margin-top:.5rem">⛽ Controle de Consumo por Litro — Planilha ABASTECIMENTOS.xlsx (CSV)</label>
+    <input type="text" id="urlAbastecimentosCsv" placeholder="URL padrão já configurada — cole aqui só se a planilha mudar">
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt);margin-top:.5rem">⛽ Controle de Consumo por Litro — Web App (Processar PDFs da pasta do Drive)</label>
     <input type="text" id="urlAbastecimentosWebApp" placeholder="URL do Apps Script implantado (…/exec)">
     <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem">Se o botão <b>Processar PDFs</b> parar de funcionar, normalmente é porque essa implantação do Apps Script expirou. No Apps Script: <b>Implantar → Gerenciar implantações → editar → nova versão</b>, com acesso "Qualquer pessoa", e cole a nova URL "…/exec" aqui.</p>
@@ -3081,14 +3081,14 @@ function findCol(headers, keywords) {
 // de por categoria de fato quando a planilha não tinha coluna "Categoria".
 // Se a planilha só tiver "Grupo Tipo de Contas", cai nele via fallback.
 function finColCategoria(headers) {
-  return findCol(headers, ['categoria','plano de contas','plano','tipo lancamento','classificacao']) || finColTipoContas(headers);
+  return findCol(headers, ['categoria','plano de contas','plano','tipo lancamento','classificacao','tipo de lancamento','tipo de despesa','natureza','grupo']) || finColTipoContas(headers);
 }
 
 // Coluna do GRUPO/TIPO DE CONTAS (agrupamento contábil mais amplo, ex.:
 // "Grupo Tipo de Contas"). Prioriza esse nome exato antes de variações mais
 // genéricas de "grupo", para não colidir com outras colunas.
 function finColTipoContas(headers) {
-  return findCol(headers, ['grupo tipo de contas','tipo de contas','grupo de contas','tipo de conta','grupo']);
+  return findCol(headers, ['grupo tipo de contas','tipo de contas','grupo de contas','tipo de conta','grupo','centro de custo','centro custo','ccusto']);
 }
 
 // Coluna de "Local" (praça/filial/unidade/cidade onde o lançamento ocorreu),
@@ -3274,9 +3274,16 @@ function csvParseSmart(text){
       const s = String(f || '').trim();
       return s && s.length <= 40 && isNaN(Number(s.replace(/[.,R$%]/g, '')));
     }).length;
-    const r = Papa.parse(texto, { header: true, skipEmptyLines: true });
-    if (!r.data || !r.data.length) continue;
-    if (validos > melhorPontuacao) { melhorPontuacao = validos; melhorDados = r.data; }
+    if (validos > melhorPontuacao) {
+      // skipEmptyLines:false preserva linhas com campos parcialmente vazios
+      // (ex.: lançamento sem categoria) — filtra só linhas 100% em branco depois.
+      const r = Papa.parse(texto, { header: true, skipEmptyLines: false });
+      if (!r.data || !r.data.length) continue;
+      const dados = r.data.filter(row => Object.values(row).some(v => String(v || '').trim() !== ''));
+      if (!dados.length) continue;
+      melhorPontuacao = validos;
+      melhorDados = dados;
+    }
     if (validos >= 3) break; // já achou um cabeçalho com cara de verdadeiro
   }
   return melhorDados || [];
@@ -3566,7 +3573,7 @@ function slideFinMonthlyData(){
   if (!financeiroData.length) return { labels: [], receita: [], despesa: [], totalReceita: 0, totalDespesa: 0 };
   const headers = Object.keys(financeiroData[0]);
   const colData = findCol(headers, ['data','date','vencimento','competencia','lancamento']);
-  const colValor = findCol(headers, ['valor','value','montante','total','vl ','vlr','preco','price']);
+  const colValor = findCol(headers, ['valor','value','montante','total','vl ','vlr','preco','price','vl pago','valor pago','vl total','valor total','vl lancamento','valor lancamento','debito','credito','quantia','importancia']);
   const colTipo = findCol(headers, ['tipo','type','natureza','classificacao']);
   const colCat   = finColCategoria(headers);
   const colDesc = findCol(headers, ['descricao','historico','memo','obs','description','lancamento','servico','produto']);
@@ -3600,7 +3607,7 @@ function slideFinResumo(){
   const colData  = findCol(headers, ['data','date','vencimento','competencia','lancamento']);
   const colValor = findCol(headers, ['valor','value','montante','total','vl ','vlr','preco','price']);
   const colCat   = finColCategoria(headers);
-  const colDesc  = findCol(headers, ['descricao','historico','memo','obs','description','lancamento','servico','produto']);
+  const colDesc  = findCol(headers, ['descricao','historico','memo','obs','description','lancamento','servico','produto','complemento','referencia','historico do lancamento','descricao do lancamento','fornecedor','favorecido','beneficiario']);
   const now = new Date();
   const mesAtualKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   const seisMesesAtras = new Date(now.getFullYear(), now.getMonth() - 5, 1);
@@ -8305,7 +8312,7 @@ let fatcFiltered = []; // registros após os filtros desta sub-aba
 // Planilha "Controle de Consumo por Litro" — alimentada automaticamente a
 // partir das notas fiscais (PDF) de abastecimento lançadas na pasta do Drive.
 // Publicada em Arquivo → Compartilhar → Publicar na Web → CSV.
-const DEFAULT_ABASTECIMENTOS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCjwo2zV2NWdhstfp3J4kCRcnxKKg0OHNM9f1Xp7xx3_k-d4ev_wjYBBo51uKvncE3kPwTOX_rZHKp/pub?output=csv";
+const DEFAULT_ABASTECIMENTOS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTcOHj4xU52hnDoRjXtTP-5JGOM5nleWQ5q_jNTWhRQJee_jKHBKayvgZIHe0MHf3xsmNEA4XLDTUJx/pub?output=csv";
 const DEFAULT_WEBAPP_ABAST_URL = "https://script.google.com/macros/s/AKfycbzFKYA_W-zh3o7kG0Z9xVgtcMfkYgUUcCrC_YOLkOdovRCebgdcsdsomgTsRRtizm9pGA/exec";
 let ABASTECIMENTOS_CSV_URL = localStorage.getItem("urlAbastecimentosCsv") || DEFAULT_ABASTECIMENTOS_CSV_URL;
 let WEBAPP_ABAST_URL = localStorage.getItem("urlAbastecimentosWebApp") || DEFAULT_WEBAPP_ABAST_URL;
@@ -8332,18 +8339,19 @@ function abastPararAutoRefresh() {
 // exatamente "DATA", "PLACA" etc., tolera variações de acento/maiúscula.
 function abastCols(headers) {
   return {
-    data:  findCol(headers, ['data']),
-    hora:  findCol(headers, ['hora']),
-    placa: findCol(headers, ['placa']),
-    km:    findCol(headers, ['km']),
-    qtd:   findCol(headers, ['quantidade', 'litros', 'qtd']),
-    orig:  findCol(headers, ['original', 'valor original', 'valor']),
-    comb:  findCol(headers, ['combustivel']),
-    cupom: findCol(headers, ['cupom']),
-    nf:    findCol(headers, ['nota fiscal', 'nf']),
-    posto: findCol(headers, ['posto']),
-    nome:  findCol(headers, ['nome_motorista', 'nome motorista', 'motorista', 'nome']),
-    cpf:   findCol(headers, ['cpf_motorista', 'cpf motorista', 'cpf'])
+    data:         findCol(headers, ['data']),
+    hora:         findCol(headers, ['hora']),
+    placa:        findCol(headers, ['placa']),
+    km:           findCol(headers, ['km']),
+    kmPercorrido: findCol(headers, ['km_percorrido', 'km percorrido', 'km_perc', 'percorrido']),
+    qtd:          findCol(headers, ['quantidade', 'litros', 'qtd']),
+    orig:         findCol(headers, ['original', 'valor original', 'valor']),
+    comb:         findCol(headers, ['combustivel']),
+    cupom:        findCol(headers, ['cupom']),
+    nf:           findCol(headers, ['nota fiscal', 'nf']),
+    posto:        findCol(headers, ['posto']),
+    nome:         findCol(headers, ['nome_motorista', 'nome motorista', 'motorista', 'nome']),
+    cpf:          findCol(headers, ['cpf_motorista', 'cpf motorista', 'cpf'])
   };
 }
 
@@ -8379,7 +8387,14 @@ async function loadAbastecimentos(opts) {
   if (!A.placa) { falhar(`Coluna de Placa não encontrada na planilha. Cabeçalhos recebidos: ${headers.join(' | ')}`); return; }
 
   abastAllRecords = rows.filter(r => r[A.placa]).map(r => {
-    const dataObj = A.data ? parseDate(r[A.data]) : null;
+    const dataObj      = A.data ? parseDate(r[A.data]) : null;
+    const litros       = A.qtd          ? parseMoney(r[A.qtd])          : 0;
+    const kmPercorrido = A.kmPercorrido ? parseMoney(r[A.kmPercorrido]) : 0;
+    const kmBruto      = A.km           ? parseMoney(r[A.km])           : 0;
+    // Usa KM_PERCORRIDO (calculado pelo Apps Script entre abastecimentos)
+    // quando disponível; senão cai para KM bruto como fallback.
+    const kmParaMedia  = kmPercorrido > 0 ? kmPercorrido : kmBruto;
+    const mediaCavalo  = (kmParaMedia > 0 && litros > 0) ? kmParaMedia / litros : 0;
     return {
       // campos de compatibilidade com fatAllRecords
       data:         dataObj,
@@ -8389,10 +8404,11 @@ async function loadAbastecimentos(opts) {
       motorista:    A.nome ? String(r[A.nome] || '').trim() : '',
       placaCavalo:  String(r[A.placa] || '').trim(),
       placaCarreta: '',
-      km:           A.km  ? parseMoney(r[A.km])  : 0,
-      litrosCavalo: A.qtd ? parseMoney(r[A.qtd]) : 0,
+      km:           kmBruto,
+      kmPercorrido: kmPercorrido,
+      litrosCavalo: litros,
       litrosCarreta:0,
-      mediaCavalo:  0,   // calculado abaixo por placa
+      mediaCavalo,
       mediaCarreta: 0,
       frete: 0, comissao: 0, diaria: 0, bonus: 0,
       valesManobra: 0, empConsignado: 0, depFolha: 0, valorReceber: 0,
@@ -8405,11 +8421,6 @@ async function loadAbastecimentos(opts) {
       cpf:          A.cpf   ? String(r[A.cpf]   || '').trim() : '',
       _fonte:       'abastecimento'
     };
-  });
-
-  // Calcula mediaCavalo (km/L) por abastecimento quando km e litros disponíveis
-  abastAllRecords.forEach(r => {
-    if (r.km > 0 && r.litrosCavalo > 0) r.mediaCavalo = r.km / r.litrosCavalo;
   });
 
   fatcPopularFiltros();
