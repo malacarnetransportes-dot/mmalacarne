@@ -8239,14 +8239,18 @@ function fatRenderConsumo(records) {
   const liRank = (v, cor) => `<li><span>${v.placa} <span style="color:var(--text-lt);font-weight:400">(${v.motorista})</span></span><span style="font-weight:700;color:${cor}">${fmtKmL(v.media)}</span></li>`;
 
   const top5Cav = cavArr.slice(0, 5);
-  const bot5Cav = [...cavArr].reverse().slice(0, 5);
+  // Piores: só exibe placas que NÃO estão no ranking de melhores (evita duplicata quando há poucas placas)
+  const top5CavSet = new Set(top5Cav.map(v => normalizaPlaca(v.placa)));
+  const bot5Cav = [...cavArr].reverse().filter(v => !top5CavSet.has(normalizaPlaca(v.placa))).slice(0, 5);
   document.getElementById('fatRankMelhoresCavalo').innerHTML = top5Cav.length ? top5Cav.map(v => liRank(v,'var(--success)')).join('') : semDados;
-  document.getElementById('fatRankPioresCavalo').innerHTML   = bot5Cav.length ? bot5Cav.map(v => liRank(v,'var(--danger)')).join('')  : semDados;
+  document.getElementById('fatRankPioresCavalo').innerHTML   = bot5Cav.length ? bot5Cav.map(v => liRank(v,'var(--danger)')).join('')  : '<li style="justify-content:center;color:var(--text-lt)">Sem dados suficientes para comparação.</li>';
 
   const top5Car = carArr.slice(0, 5);
-  const bot5Car = [...carArr].reverse().slice(0, 5);
+  // Piores: só exibe placas que NÃO estão no ranking de melhores (evita duplicata quando há poucas placas)
+  const top5CarSet = new Set(top5Car.map(v => normalizaPlaca(v.placa)));
+  const bot5Car = [...carArr].reverse().filter(v => !top5CarSet.has(normalizaPlaca(v.placa))).slice(0, 5);
   document.getElementById('fatRankMelhoresCarreta').innerHTML = top5Car.length ? top5Car.map(v => liRank(v,'var(--success)')).join('') : semDados;
-  document.getElementById('fatRankPioresCarreta').innerHTML   = bot5Car.length ? bot5Car.map(v => liRank(v,'var(--danger)')).join('')  : semDados;
+  document.getElementById('fatRankPioresCarreta').innerHTML   = bot5Car.length ? bot5Car.map(v => liRank(v,'var(--danger)')).join('')  : '<li style="justify-content:center;color:var(--text-lt)">Sem dados suficientes para comparação.</li>';
 
   // ── Gráficos: barras horizontais, gradiente verde (melhor) → vermelho (pior) ──
   const gradColor = (i, n) => {
@@ -8397,8 +8401,8 @@ function abastCols(headers) {
     km:           findCol(headers, ['km']),
     kmPercorrido: findCol(headers, ['km_percorrido', 'km percorrido', 'km_perc', 'percorrido']),
     qtd:          findCol(headers, ['quantidade', 'litros', 'qtd']),
-    orig:         findCol(headers, ['original', 'valor original', 'valor']),
-    comb:         findCol(headers, ['combustivel']),
+    orig:         findCol(headers, ['original', 'valor original', 'v. total', 'v total', 'vtotal', 'valor']),
+    comb:         findCol(headers, ['combustivel', 'descricao do produto', 'descricao produto', 'descricao', 'produto/servico', 'produto servico', 'desc']),
     cupom:        findCol(headers, ['cupom']),
     nf:           findCol(headers, ['nota fiscal', 'nf']),
     posto:        findCol(headers, ['posto']),
