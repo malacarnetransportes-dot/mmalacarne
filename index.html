@@ -2692,7 +2692,7 @@ footer a{color:var(--accent);text-decoration:none;}
             <div class="kpi-card"><div class="kpi-icon brown"><i class="fas fa-list-check"></i></div><div><div class="kpi-val" id="ag-total">—</div><div class="kpi-lbl">Total de Lembretes</div></div></div>
           </div>
 
-          <!-- Filtros + Novo Lembrete -->
+          <!-- Filtros + Atualizar -->
           <div class="dash-card" style="margin-bottom:1.2rem">
             <div class="filters-bar" style="flex-wrap:wrap;gap:.6rem">
               <div class="flt-grp"><label>Buscar</label><input type="text" id="agBusca" placeholder="Nome, descrição, tag..." oninput="agFiltrar()" autocomplete="off"></div>
@@ -2717,34 +2717,16 @@ footer a{color:var(--accent);text-decoration:none;}
                 </select>
               </div>
               <div class="flt-grp"><label>Responsável</label><input type="text" id="agFiltroResponsavel" placeholder="Ex: Diomar, Ronaldo..." oninput="agFiltrar()" autocomplete="off"></div>
-              <button class="btn btn-accent" onclick="agAbrirModal()"><i class="fas fa-plus"></i> Novo Lembrete</button>
-              <button class="btn btn-gray" onclick="agLimparFiltros()"><i class="fas fa-times"></i> Limpar</button>
-              <button class="btn btn-info btn-sm" onclick="agSincronizarSheets()" id="agSyncBtn" title="Recarregar lembretes da planilha Google Sheets"><i class="fas fa-sync-alt"></i> Sincronizar Planilha</button>
-              <button class="btn btn-success btn-sm" onclick="agExportarCSV()"><i class="fas fa-download"></i> CSV</button>
+              <button class="btn btn-accent" onclick="agAtualizarAgenda()" id="agSyncBtn"><i class="fas fa-sync-alt"></i> Atualizar</button>
             </div>
             <div id="agSyncStatus" style="font-size:.78rem;padding:.4rem .2rem;min-height:1.4rem"></div>
-          </div>
-
-          <!-- Sincronização com Google Doc de texto livre (ex.: agenda de treinamentos) -->
-          <div class="dash-card" style="margin-bottom:1.2rem">
-            <div class="dash-card-title" style="margin-bottom:.6rem"><i class="fas fa-file-lines"></i> Sincronizar com Documento (Google Doc de texto livre)</div>
-            <div style="font-size:.78rem;color:var(--text-lt);margin-bottom:.6rem">Para documentos que não são planilha — como um Doc com uma lista de compromissos em texto corrido. O sistema tenta reconhecer automaticamente o padrão "NOME DD/mês HH:MM às HH:MM - descrição", separado por linhas de asteriscos. Se o padrão do seu documento for diferente, cole o texto na caixa abaixo e ajuste manualmente os lembretes importados.</div>
-            <div class="filters-bar" style="margin-bottom:.6rem">
-              <div class="flt-grp" style="flex:1;min-width:280px"><label>URL do Google Doc</label><input type="text" id="agDocUrl" placeholder="https://docs.google.com/document/d/..."></div>
-              <button class="btn btn-info btn-sm" id="agDocBuscarBtn" onclick="agBuscarDoc({manual:true})"><i class="fas fa-cloud-arrow-down"></i> Buscar do Doc</button>
-              <label style="display:inline-flex;align-items:center;gap:.4rem;font-size:.78rem;color:var(--text-lt);cursor:pointer"><input type="checkbox" id="agDocAutoCheck"> Verificar automaticamente</label>
-            </div>
-            <div id="agDocStatus" style="font-size:.78rem;padding:.2rem;min-height:1.2rem;margin-bottom:.6rem"></div>
-            <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">Ou cole o texto do documento aqui</label>
-            <textarea id="agDocTexto" rows="6" style="width:100%;font-family:inherit;font-size:.8rem;padding:.6rem;border-radius:8px;border:1px solid var(--gray-200);resize:vertical" placeholder="Cole aqui o texto do documento, se a busca automática não funcionar..."></textarea>
-            <button class="btn btn-accent btn-sm" style="margin-top:.5rem" onclick="agImportarTextoColado()"><i class="fas fa-file-import"></i> Importar Texto Colado</button>
           </div>
 
           <!-- Cards de lembretes -->
           <div id="agGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1rem;margin-bottom:1.4rem"></div>
           <div id="agVazio" style="display:none;text-align:center;padding:3rem;color:var(--text-lt)">
             <i class="fas fa-calendar-xmark" style="font-size:2.5rem;opacity:.25;display:block;margin-bottom:.8rem"></i>
-            Nenhum lembrete encontrado. Clique em <strong>+ Novo Lembrete</strong> para começar.
+            Nenhum lembrete encontrado no documento da Agenda (ou nenhum bate com o filtro atual).
           </div>
 
         </div><!-- /tabAgenda -->
@@ -8388,7 +8370,7 @@ let ABASTECIMENTOS_CSV_URL = localStorage.getItem("urlAbastecimentosCsv") || DEF
 let WEBAPP_ABAST_URL = localStorage.getItem("urlAbastecimentosWebApp") || DEFAULT_WEBAPP_ABAST_URL;
 let   abastAllRecords         = [];  // registros vindos da planilha ABASTECIMENTOS
 let   abastAutoRefreshTimer   = null;
-const ABAST_AUTO_REFRESH_MS   = 3 * 60 * 1000; // 3 minutos — a planilha recebe novos abastecimentos com frequência
+const ABAST_AUTO_REFRESH_MS   = 1 * 60 * 1000; // 1 minuto — a planilha recebe novos abastecimentos com frequência
 
 // Liga a atualização automática enquanto a sub-aba "Controle de Consumo por
 // Litro" estiver aberta, já que a planilha é alimentada continuamente pelos
@@ -8464,22 +8446,43 @@ async function loadAbastecimentos(opts) {
     // Usa KM_PERCORRIDO (calculado pelo Apps Script entre abastecimentos)
     // quando disponível; senão cai para KM bruto como fallback.
     const kmParaMedia  = kmPercorrido > 0 ? kmPercorrido : kmBruto;
-    const mediaCavalo  = (kmParaMedia > 0 && litros > 0) ? kmParaMedia / litros : 0;
+    const media        = (kmParaMedia > 0 && litros > 0) ? kmParaMedia / litros : 0;
+
+    // Cruza a placa da nota com o cadastro de Frota/Motoristas (mesma base
+    // usada nas outras abas do sistema) — em vez de confiar só no texto
+    // livre da nota fiscal, que varia de posto pra posto e às vezes nem
+    // traz o nome do motorista (alguns só trazem o frentista do posto).
+    const placaRaw  = String(r[A.placa] || '').trim();
+    const placaNorm = placaRaw.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const tipo      = vencTipoPlaca(placaNorm); // 'cavalo' | 'carreta' | 'desconhecido'
+    const frotaReg  = FROTA_DATA.find(f => String(f.placa || '').toUpperCase().replace(/[^A-Z0-9]/g, '') === placaNorm)
+                    || FROTA_DATA.find(f => String(f.carreta || '').split(/\s/)[0].toUpperCase().replace(/[^A-Z0-9]/g, '') === placaNorm);
+
+    const motoristaXML   = A.nome ? String(r[A.nome] || '').trim() : '';
+    const motoristaFrota = (frotaReg && frotaReg.motorista && frotaReg.motorista !== '—') ? frotaReg.motorista : '';
+    // O cadastro oficial da frota tem prioridade; o texto da nota é só um
+    // reforço/fallback pra placas ainda não cadastradas.
+    const motorista = motoristaFrota || motoristaXML;
+
+    const ehCarreta       = tipo === 'carreta';
+    const placaCavalo     = ehCarreta ? (frotaReg ? frotaReg.placa : '') : placaRaw;
+    const placaCarreta    = ehCarreta ? placaRaw : (frotaReg && frotaReg.carreta ? String(frotaReg.carreta).split(/\s/)[0] : '');
+
     return {
       // campos de compatibilidade com fatAllRecords
       data:         dataObj,
       dataStr:      A.data ? (r[A.data] || '') : '',
       ano:          dataObj ? dataObj.getFullYear() : null,
       mes:          dataObj ? dataObj.getMonth() + 1 : null,
-      motorista:    A.nome ? String(r[A.nome] || '').trim() : '',
-      placaCavalo:  String(r[A.placa] || '').trim(),
-      placaCarreta: '',
+      motorista:    motorista,
+      placaCavalo:  placaCavalo,
+      placaCarreta: placaCarreta,
       km:           kmBruto,
       kmPercorrido: kmPercorrido,
-      litrosCavalo: litros,
-      litrosCarreta:0,
-      mediaCavalo,
-      mediaCarreta: 0,
+      litrosCavalo: ehCarreta ? 0 : litros,
+      litrosCarreta:ehCarreta ? litros : 0,
+      mediaCavalo:  ehCarreta ? 0 : media,
+      mediaCarreta: ehCarreta ? media : 0,
       frete: 0, comissao: 0, diaria: 0, bonus: 0,
       valesManobra: 0, empConsignado: 0, depFolha: 0, valorReceber: 0,
       // campos específicos de abastecimento
@@ -13272,18 +13275,67 @@ function agDocInit() {
   }
 }
 
+// ── Atualização única da Agenda: a tela agora é um espelho fiel do Google
+// Doc (DEFAULT_AG_DOC_URL) — sem mistura com planilha ou lembretes criados
+// manualmente, que era o motivo de aparecerem itens que não batiam com o
+// arquivo real. Um clique em "Atualizar" (ou o refresh automático) relê o
+// Doc do zero e troca a lista inteira.
+let agAutoRefreshTimer = null;
+const AG_AUTO_REFRESH_MS = 2 * 60 * 1000; // 2 minutos
+
+async function agAtualizarAgenda(silencioso = false) {
+  const statusEl = document.getElementById('agSyncStatus');
+  const btn = document.getElementById('agSyncBtn');
+  const agora = () => new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  if (btn && !silencioso) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Atualizando...'; }
+  if (statusEl) statusEl.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Lendo o documento da Agenda...';
+  try {
+    const resultado = await pneuFetchDocRaw(DEFAULT_AG_DOC_URL);
+    const texto = pneuExtrairTextoDoc(resultado);
+    if (!texto || texto.length < 3) {
+      agLembretes = [];
+      agSave(agLembretes);
+      agAtualizarKPIs();
+      agFiltrar();
+      if (statusEl) statusEl.innerHTML = `<span style="color:var(--warning)">Documento encontrado, mas sem conteúdo reconhecível (últ. verificação ${agora()}).</span>`;
+      return;
+    }
+    const itens = agParseTextoLivre(texto);
+    agLembretes = itens.filter(it => it.titulo).map(it => ({
+      id: 'ag_doc_' + it.titulo.slice(0, 12).replace(/\s/g, '_') + '_' + Math.random().toString(36).slice(2, 6),
+      titulo: it.titulo, data: it.data || '', hora: it.hora || '', dataFim: it.dataFim || '',
+      categoria: it.categoria || 'outro', prioridade: 'normal',
+      responsavel: it.responsavel || '', descricao: it.descricao || '', recorrencia: 'nenhuma',
+      concluido: false, criadoEm: Date.now(), _fromDoc: true
+    }));
+    agSave(agLembretes);
+    agAtualizarKPIs();
+    agFiltrar();
+    const msg = `✓ ${agLembretes.length} lembrete(s) — atualizado às ${agora()}`;
+    if (statusEl) statusEl.innerHTML = `<span style="color:var(--success)">${msg}</span>`;
+    if (!silencioso) showToast(msg);
+  } catch (err) {
+    const msgErro = err.message || 'erro desconhecido';
+    const semPermissao = /permiss|login|sem acesso|ServiceLogin/i.test(msgErro);
+    if (statusEl) statusEl.innerHTML = `<span style="color:#dc2626">Não consegui atualizar: ${msgErro}.${semPermissao
+      ? ' Verifique se o documento está compartilhado como "Qualquer pessoa com o link pode ver".'
+      : ''}</span>`;
+    if (!silencioso) showToast('⚠ Erro ao atualizar a Agenda: ' + msgErro);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar'; }
+  }
+}
+
+function agIniciarAutoRefresh() {
+  if (agAutoRefreshTimer) return;
+  agAutoRefreshTimer = setInterval(() => agAtualizarAgenda(true), AG_AUTO_REFRESH_MS);
+}
+
 function agendaInit() {
-  agLembretes = agLoad();
   agAtualizarKPIs();
   agFiltrar();
-  agDocInit();
-  const statusEl = document.getElementById('agSyncStatus');
-  if (!URL_AGENDA) {
-    if (statusEl) statusEl.innerHTML = '<span style="color:var(--text-lt)"><i class="fas fa-circle-info"></i> Nenhuma planilha de Agenda configurada — use o card "Sincronizar com Documento" abaixo se sua agenda for um Google Doc, ou crie lembretes manualmente. Se você tiver uma planilha (Google Sheets) de agenda, configure a URL em <b>Config URLs</b>.</span>';
-  } else {
-    // Auto-sincroniza silenciosamente se URL de planilha configurada
-    agSincronizarSheets(true);
-  }
+  agAtualizarAgenda(true);
+  agIniciarAutoRefresh();
 }
 
 // Fecha modal com Esc
