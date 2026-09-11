@@ -1517,10 +1517,6 @@ footer a{color:var(--accent);text-decoration:none;}
             </div>
 
             <!-- ── CAVALOS ── -->
-            <div class="dash-card" style="border-left:4px solid var(--info)">
-              <div class="dash-card-title"><i class="fas fa-truck" style="color:var(--info)"></i> Cavalos Mecânicos — Consumo Médio (km/L)</div>
-              <div class="chart-box" style="height:260px"><canvas id="fatChartConsumoCavalo"></canvas></div>
-            </div>
             <div class="charts-grid">
               <div class="dash-card">
                 <div class="dash-card-title"><i class="fas fa-trophy" style="color:var(--success)"></i> Ranking — Melhores Cavalos (km/L)</div>
@@ -1542,11 +1538,7 @@ footer a{color:var(--accent);text-decoration:none;}
             </div>
 
             <!-- ── CARRETAS / REFRIGERAÇÃO ── -->
-            <div class="dash-card" style="border-left:4px solid #06b6d4;margin-top:1.6rem">
-              <div class="dash-card-title"><i class="fas fa-snowflake" style="color:#06b6d4"></i> Carretas / Equipamentos de Refrigeração — Consumo Médio (km/L)</div>
-              <div class="chart-box" style="height:260px"><canvas id="fatChartConsumoCarreta"></canvas></div>
-            </div>
-            <div class="charts-grid">
+            <div class="charts-grid" style="margin-top:1.6rem">
               <div class="dash-card">
                 <div class="dash-card-title"><i class="fas fa-trophy" style="color:var(--success)"></i> Ranking — Melhores Carretas (km/L)</div>
                 <ul class="rank-list" id="fatRankMelhoresCarreta"></ul>
@@ -1554,15 +1546,6 @@ footer a{color:var(--accent);text-decoration:none;}
               <div class="dash-card">
                 <div class="dash-card-title"><i class="fas fa-triangle-exclamation" style="color:var(--danger)"></i> Ranking — Piores Carretas (km/L)</div>
                 <ul class="rank-list" id="fatRankPioresCarreta"></ul>
-              </div>
-            </div>
-            <div class="dash-card">
-              <div class="dash-card-title"><i class="fas fa-table"></i> Métricas Utilizadas por Carreta/Equip. de Refrigeração</div>
-              <div class="tbl-wrap">
-                <table class="data-table">
-                  <thead><tr><th>Placa</th><th>Motorista</th><th>Nº Registros</th><th>Total Litros</th><th>Média (km/L)</th></tr></thead>
-                  <tbody id="fatTableConsumoCarretaBody"></tbody>
-                </table>
               </div>
             </div>
 
@@ -7575,7 +7558,7 @@ function adicionarPDFManual() {
 let fatAllRecords = [];      // todos os registros (todos os motoristas/meses)
 let fatFiltered   = [];      // após filtros de Ano/Mês/Motorista
 let fatChartAno = null, fatChartDiariasVales = null;
-let fatChartConsumoCavalo = null, fatChartConsumoCarreta = null;
+
 let fatConfigMotoristas = []; // nomes configurados manualmente (prefixo "NOME|URL"), aparecem no filtro mesmo sem dados ainda
 let fatErrosCarregamento = []; // mensagens de planilha(s) que falharam ao carregar, usado no diagnóstico
 
@@ -8167,15 +8150,14 @@ function fatApplyFilters() {
 // Agrupa os lançamentos filtrados (fatFiltered) por PLACA — de cavalo
 // e de carreta/equip. de refrigeração — calculando a média (km/L)
 // registrada, o total de km, o total de litros e o nº de registros
-// usados no cálculo. Alimenta os KPIs, gráficos e rankings de
-// melhores/piores da sub-aba "Controle de Consumo por Litro".
+// usados no cálculo. Alimenta os KPIs e rankings de melhores/piores
+// da sub-aba "Controle de Consumo por Litro".
 // ═══════════════════════════════════════════════════════════
 function fatRenderConsumo(records) {
   // Verifica se a sub-aba está no DOM usando o container, não o canvas
   // (o canvas pode não existir ainda, mas a tabela já pode estar disponível)
   const subAbaEl = document.getElementById('fatSubConsumo');
   if (!subAbaEl) return; // sub-aba ainda não foi renderizada
-  const chartCvEl = document.getElementById('fatChartConsumoCavalo');
 
   // Se chamada sem argumento (compatibilidade), usa o conjunto filtrado
   // pelos filtros próprios desta sub-aba (fatcApplyFilters) — se ainda não
@@ -8252,52 +8234,10 @@ function fatRenderConsumo(records) {
   document.getElementById('fatRankMelhoresCarreta').innerHTML = top5Car.length ? top5Car.map(v => liRank(v,'var(--success)')).join('') : semDados;
   document.getElementById('fatRankPioresCarreta').innerHTML   = bot5Car.length ? bot5Car.map(v => liRank(v,'var(--danger)')).join('')  : '<li style="justify-content:center;color:var(--text-lt)">Sem dados suficientes para comparação.</li>';
 
-  // ── Gráficos: barras horizontais, gradiente verde (melhor) → vermelho (pior) ──
-  const gradColor = (i, n) => {
-    if (n <= 1) return 'rgba(16,185,129,.85)';
-    const t = i / (n - 1);
-    const r = Math.round(16  + t * (239 - 16));
-    const g = Math.round(185 + t * (68  - 185));
-    const b = Math.round(129 + t * (68  - 129));
-    return `rgba(${r},${g},${b},.85)`;
-  };
-
-  if (fatChartConsumoCavalo) fatChartConsumoCavalo.destroy();
-  fatChartConsumoCavalo = new Chart(chartCvEl.getContext('2d'), {
-    type: 'bar',
-    data: {
-      labels: cavArr.map(v => v.placa),
-      datasets: [{ label: 'Média (km/L)', data: cavArr.map(v => v.media), backgroundColor: cavArr.map((v,i) => gradColor(i, cavArr.length)) }]
-    },
-    options: {
-      indexAxis: 'y', responsive: true,
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmtKmL(c.raw) } } },
-      scales: { x: { beginAtZero: true, title: { display: true, text: 'km/L' } } }
-    }
-  });
-
-  if (fatChartConsumoCarreta) fatChartConsumoCarreta.destroy();
-  fatChartConsumoCarreta = new Chart(document.getElementById('fatChartConsumoCarreta').getContext('2d'), {
-    type: 'bar',
-    data: {
-      labels: carArr.map(v => v.placa),
-      datasets: [{ label: 'Média (km/L)', data: carArr.map(v => v.media), backgroundColor: carArr.map((v,i) => gradColor(i, carArr.length)) }]
-    },
-    options: {
-      indexAxis: 'y', responsive: true,
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmtKmL(c.raw) } } },
-      scales: { x: { beginAtZero: true, title: { display: true, text: 'km/L' } } }
-    }
-  });
-
-  // ── Tabelas de métricas utilizadas ──
+  // ── Tabela de métricas utilizadas (Cavalos) ──
   document.getElementById('fatTableConsumoCavaloBody').innerHTML = cavArr.length
     ? cavArr.map(v => `<tr><td>${escapeHTML(v.placa)}</td><td>${escapeHTML(v.motorista)}</td><td>${v.registros}</td><td>${fmtNum(v.km)} km</td><td>${fmtNum(v.litros)} L</td><td style="font-weight:700">${fmtKmL(v.media)}</td></tr>`).join('')
     : '<tr><td colspan="6" style="text-align:center;color:var(--text-lt)">Sem dados.</td></tr>';
-
-  document.getElementById('fatTableConsumoCarretaBody').innerHTML = carArr.length
-    ? carArr.map(v => `<tr><td>${escapeHTML(v.placa)}</td><td>${escapeHTML(v.motorista)}</td><td>${v.registros}</td><td>${fmtNum(v.litros)} L</td><td style="font-weight:700">${fmtKmL(v.media)}</td></tr>`).join('')
-    : '<tr><td colspan="5" style="text-align:center;color:var(--text-lt)">Sem dados.</td></tr>';
 
   // ── Tabela detalhada de lançamentos individuais ──
   const tbodyAbast = document.getElementById('fatcAbastTbody');
@@ -8447,10 +8387,11 @@ async function loadAbastecimentos(opts) {
     const litros       = A.qtd          ? parseMoney(r[A.qtd])          : 0;
     const kmPercorrido = A.kmPercorrido ? parseMoney(r[A.kmPercorrido]) : 0;
     const kmBruto      = A.km           ? parseMoney(r[A.km])           : 0;
-    // Usa KM_PERCORRIDO (calculado pelo Apps Script entre abastecimentos)
-    // quando disponível; senão cai para KM bruto como fallback.
-    const kmParaMedia  = kmPercorrido > 0 ? kmPercorrido : kmBruto;
-    const media        = (kmParaMedia > 0 && litros > 0) ? kmParaMedia / litros : 0;
+    // A média (km/L) só pode ser calculada a partir do KM_PERCORRIDO (delta
+    // entre abastecimentos consecutivos da mesma placa, calculado pelo Apps
+    // Script). Usar o KM bruto (odômetro absoluto) aqui geraria uma média
+    // sem sentido — por isso NÃO há mais fallback para o KM bruto.
+    const media = (kmPercorrido > 0 && litros > 0) ? kmPercorrido / litros : 0;
 
     // Cruza a placa da nota com o cadastro de Frota/Motoristas (mesma base
     // usada nas outras abas do sistema) — em vez de confiar só no texto
@@ -8476,6 +8417,7 @@ async function loadAbastecimentos(opts) {
       // campos de compatibilidade com fatAllRecords
       data:         dataObj,
       dataStr:      A.data ? (r[A.data] || '') : '',
+      hora:         A.hora ? String(r[A.hora] || '').trim() : '',
       ano:          dataObj ? dataObj.getFullYear() : null,
       mes:          dataObj ? dataObj.getMonth() + 1 : null,
       motorista:    motorista,
@@ -8510,13 +8452,13 @@ async function loadAbastecimentos(opts) {
 // Busca um endpoint (Web App do Apps Script) esperando JSON, com timeout e
 // diagnóstico claro do motivo da falha — em vez do genérico "Failed to
 // fetch" ou de um erro de parse de JSON sem contexto.
-async function abastFetchJson(url) {
+async function abastFetchJson(url, timeoutMs = 25000) {
   let resp;
   try {
-    resp = await fetchComTimeout(url, 25000);
+    resp = await fetchComTimeout(url, timeoutMs);
   } catch (e) {
     throw new Error(e.name === 'AbortError'
-      ? 'Tempo esgotado ao conectar ao Web App (pasta grande ou script travado).'
+      ? 'Tempo esgotado ao conectar ao Web App (lote grande — tente novamente, o Apps Script continua de onde parou).'
       : 'Não foi possível conectar ao Web App — verifique a URL em Config URLs e se o Apps Script está implantado com acesso liberado.');
   }
   const text = await resp.text();
@@ -8526,58 +8468,93 @@ async function abastFetchJson(url) {
   catch (e) { throw new Error('Resposta inesperada do Web App (não veio em formato JSON válido).'); }
 }
 
-// ── ACIONAR WEB APP (processar PDFs da pasta do Drive) ───────────────────────
+// ── ACIONAR WEB APP (processar XMLs da pasta do Drive) ────────────────────
+// O Apps Script agora processa em LOTES com orçamento de tempo próprio
+// (ver MAX_RUNTIME_MS no Code.gs), retornando "restante" > 0 quando ainda
+// sobrarem arquivos pendentes por causa do limite de execução do Google.
+// Por isso o front-end chama o Web App em loop até "restante" zerar, em vez
+// de um único disparo — isso é o que elimina o travamento com pastas
+// grandes (centenas de XML): cada chamada individual sempre termina dentro
+// do tempo, e o processamento total continua de onde parou a cada volta.
+const WEBAPP_BATCH_TIMEOUT_MS = 5 * 60 * 1000; // cada lote no servidor tem orçamento próprio (~4.5min); dá folga de rede
+const WEBAPP_MAX_LOOPS = 200; // trava de segurança contra loop infinito
+
 async function acionarWebApp() {
   const btn    = document.getElementById('btnProcessarPDFs');
   const status = document.getElementById('webAppStatus');
   if (!btn || !status) return;
 
   btn.disabled = true;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando PDFs...';
   status.style.display = 'block';
   status.style.background = 'var(--gray-100)';
-  status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando PDFs para extração — isso pode levar alguns minutos...';
+
+  const totais = { processados: 0, totalLinhas: 0, duplicatas: 0, erros: 0, log: [] };
 
   try {
-    // Primeiro verifica quantos PDFs estão pendentes
-    const chk = await abastFetchJson(WEBAPP_ABAST_URL + '?action=status');
+    // Primeiro verifica quantos XMLs estão pendentes
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando pendências...';
+    status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando XMLs pendentes na pasta...';
+    let chk = await abastFetchJson(WEBAPP_ABAST_URL + '?action=status');
     if (chk.pendentes === 0) {
       status.style.background = '#fef9c3';
-      status.innerHTML = '<i class="fas fa-info-circle" style="color:#ca8a04"></i> Nenhum PDF novo na pasta — tudo já foi processado.';
+      status.innerHTML = '<i class="fas fa-info-circle" style="color:#ca8a04"></i> Nenhum XML novo na pasta — tudo já foi processado.';
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-file-pdf"></i> Processar PDFs';
       return;
     }
 
-    status.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Encontrado(s) <b>${chk.pendentes} PDF(s)</b> — extraindo dados com IA...`;
+    const totalInicial = chk.pendentes;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando XMLs...';
 
-    // Dispara o processamento
-    const data = await abastFetchJson(WEBAPP_ABAST_URL + '?action=processar');
+    let loops = 0;
+    let restante = totalInicial;
+    while (restante > 0 && loops < WEBAPP_MAX_LOOPS) {
+      loops++;
+      status.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Lote ${loops}: extraindo dados — ` +
+        `<b>${totais.processados}</b>/<b>${totalInicial}</b> processado(s) até agora, ` +
+        `<b>${restante}</b> restante(s)...`;
 
-    if (data.status !== 'ok') throw new Error(data.msg || 'Erro desconhecido');
+      const data = await abastFetchJson(WEBAPP_ABAST_URL + '?action=processar', WEBAPP_BATCH_TIMEOUT_MS);
+      if (data.status !== 'ok') throw new Error(data.msg || 'Erro desconhecido');
 
-    const cor = data.erros > 0 ? '#fef2f2' : '#f0fdf4';
-    const ico = data.erros > 0 ? 'fa-exclamation-triangle" style="color:#dc2626' : 'fa-check-circle" style="color:#16a34a';
+      totais.processados += data.processados || 0;
+      totais.totalLinhas += data.totalLinhas || 0;
+      totais.duplicatas  += data.duplicatas  || 0;
+      totais.erros       += data.erros       || 0;
+      if (data.log) totais.log = totais.log.concat(data.log);
+
+      restante = typeof data.restante === 'number' ? data.restante : 0;
+
+      // Atualiza a tabela incrementalmente a cada lote gravado, para o
+      // usuário já ver os dados chegando em pastas grandes.
+      if (data.totalLinhas > 0) await loadAbastecimentos({ silencioso: true });
+
+      // Se o lote não processou nada e nem reduziu o restante, evita loop
+      // infinito (ex: todos os arquivos do lote deram erro de parsing).
+      if ((data.processados || 0) === 0 && restante === totalInicial && loops > 1) break;
+    }
+
+    const cor = totais.erros > 0 ? '#fef2f2' : '#f0fdf4';
+    const ico = totais.erros > 0 ? 'fa-exclamation-triangle" style="color:#dc2626' : 'fa-check-circle" style="color:#16a34a';
     status.style.background = cor;
     status.innerHTML =
       `<i class="fas ${ico}"></i> ` +
-      `<b>${data.processados}</b> PDF(s) processado(s) · ` +
-      `<b>${data.totalLinhas}</b> linha(s) gravada(s) · ` +
-      `<b>${data.duplicatas}</b> duplicata(s) · ` +
-      `<b>${data.erros}</b> erro(s)`;
+      `<b>${totais.processados}</b> XML(s) processado(s) em ${loops} lote(s) · ` +
+      `<b>${totais.totalLinhas}</b> linha(s) gravada(s) · ` +
+      `<b>${totais.duplicatas}</b> duplicata(s) · ` +
+      `<b>${totais.erros}</b> erro(s)` +
+      (restante > 0 ? ` · <b style="color:#dc2626">${restante} ainda pendente(s)</b> — clique novamente em Processar PDFs` : '');
 
-    // Recarrega a planilha para mostrar os novos dados
-    if (data.totalLinhas > 0) {
-      await loadAbastecimentos({ silencioso: true });
-      showToast('✅ Planilha atualizada com ' + data.totalLinhas + ' novo(s) registro(s)!', 4000);
+    if (totais.totalLinhas > 0) {
+      showToast('✅ Planilha atualizada com ' + totais.totalLinhas + ' novo(s) registro(s)!', 4000);
     }
 
-    // Mostra log detalhado no console
-    if (data.log) console.table(data.log);
+    if (totais.log.length) console.table(totais.log);
 
   } catch (e) {
     status.style.background = '#fef2f2';
-    status.innerHTML = '<i class="fas fa-times-circle" style="color:#dc2626"></i> Erro: ' + e.message;
+    status.innerHTML = '<i class="fas fa-times-circle" style="color:#dc2626"></i> Erro: ' + e.message +
+      (totais.totalLinhas > 0 ? ` (${totais.totalLinhas} registro(s) já gravado(s) antes do erro — clique novamente para continuar)` : '');
   }
 
   btn.disabled = false;
