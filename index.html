@@ -1480,6 +1480,7 @@ footer a{color:var(--accent);text-decoration:none;}
               <div class="dash-card-title"><i class="fas fa-gas-pump"></i> Controle de Consumo por Litro
                 <button id="btnAtualizarConsumo" class="btn btn-accent btn-sm" style="margin-left:1rem" onclick="loadAbastecimentos()"><i class="fas fa-sync-alt"></i> Atualizar</button>
                 <button id="btnProcessarPDFs" class="btn btn-success btn-sm" style="margin-left:.5rem" onclick="acionarWebApp()"><i class="fas fa-file-pdf"></i> Processar PDFs</button>
+                <button id="btnPararPDFs" class="btn btn-danger btn-sm" style="margin-left:.5rem;display:none" onclick="pararWebApp()"><i class="fas fa-stop"></i> Parar</button>
               </div>
               <div id="webAppStatus" style="display:none;margin-top:.5rem;font-size:.8rem;padding:.5rem .8rem;border-radius:8px;background:var(--gray-100)"></div>
               <div style="font-size:.78rem;color:var(--text-lt);margin-top:.4rem">Abastecimentos extraídos automaticamente das DANFes da pasta do Drive. Clique em <b>Processar PDFs</b> para importar novos arquivos. Use os filtros abaixo para refinar.</div>
@@ -8478,13 +8479,26 @@ async function abastFetchJson(url, timeoutMs = 25000) {
 // do tempo, e o processamento total continua de onde parou a cada volta.
 const WEBAPP_BATCH_TIMEOUT_MS = 5 * 60 * 1000; // cada lote no servidor tem orçamento próprio (~4.5min); dá folga de rede
 const WEBAPP_MAX_LOOPS = 200; // trava de segurança contra loop infinito
+let abastCancelarProcessamento = false;
+
+// Botão "Parar" — sinaliza pro loop de acionarWebApp parar de pedir novos
+// lotes assim que o lote em andamento terminar (não interrompe um lote já
+// em execução no servidor, só evita pedir o próximo).
+function pararWebApp() {
+  abastCancelarProcessamento = true;
+  const btnParar = document.getElementById('btnPararPDFs');
+  if (btnParar) { btnParar.disabled = true; btnParar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Parando...'; }
+}
 
 async function acionarWebApp() {
-  const btn    = document.getElementById('btnProcessarPDFs');
-  const status = document.getElementById('webAppStatus');
+  const btn      = document.getElementById('btnProcessarPDFs');
+  const btnParar = document.getElementById('btnPararPDFs');
+  const status   = document.getElementById('webAppStatus');
   if (!btn || !status) return;
 
+  abastCancelarProcessamento = false;
   btn.disabled = true;
+  if (btnParar) { btnParar.style.display = 'inline-flex'; btnParar.disabled = false; btnParar.innerHTML = '<i class="fas fa-stop"></i> Parar'; }
   status.style.display = 'block';
   status.style.background = 'var(--gray-100)';
 
@@ -8500,6 +8514,7 @@ async function acionarWebApp() {
       status.innerHTML = '<i class="fas fa-info-circle" style="color:#ca8a04"></i> Nenhum XML novo na pasta — tudo já foi processado.';
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-file-pdf"></i> Processar PDFs';
+      if (btnParar) btnParar.style.display = 'none';
       return;
     }
 
@@ -8509,6 +8524,7 @@ async function acionarWebApp() {
     let loops = 0;
     let restante = totalInicial;
     while (restante > 0 && loops < WEBAPP_MAX_LOOPS) {
+      if (abastCancelarProcessamento) break;
       loops++;
       status.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Lote ${loops}: extraindo dados — ` +
         `<b>${totais.processados}</b>/<b>${totalInicial}</b> processado(s) até agora, ` +
@@ -8529,16 +8545,18 @@ async function acionarWebApp() {
       // usuário já ver os dados chegando em pastas grandes.
       if (data.totalLinhas > 0) await loadAbastecimentos({ silencioso: true });
 
-      // Se o lote não processou nada e nem reduziu o restante, evita loop
-      // infinito (ex: todos os arquivos do lote deram erro de parsing).
+      // Se não reduziu o restante nem processou nada, evita loop infinito
+      // (ex: todos os arquivos do lote deram erro de parsing).
       if ((data.processados || 0) === 0 && restante === totalInicial && loops > 1) break;
+
+      if (abastCancelarProcessamento) break;
     }
 
     const cor = totais.erros > 0 ? '#fef2f2' : '#f0fdf4';
     const ico = totais.erros > 0 ? 'fa-exclamation-triangle" style="color:#dc2626' : 'fa-check-circle" style="color:#16a34a';
-    status.style.background = cor;
+    status.style.background = abastCancelarProcessamento ? '#fef9c3' : cor;
     status.innerHTML =
-      `<i class="fas ${ico}"></i> ` +
+      (abastCancelarProcessamento ? '<i class="fas fa-hand" style="color:#ca8a04"></i> Interrompido pelo usuário — ' : `<i class="fas ${ico}"></i> `) +
       `<b>${totais.processados}</b> XML(s) processado(s) em ${loops} lote(s) · ` +
       `<b>${totais.totalLinhas}</b> linha(s) gravada(s) · ` +
       `<b>${totais.duplicatas}</b> duplicata(s) · ` +
@@ -8555,10 +8573,13 @@ async function acionarWebApp() {
     status.style.background = '#fef2f2';
     status.innerHTML = '<i class="fas fa-times-circle" style="color:#dc2626"></i> Erro: ' + e.message +
       (totais.totalLinhas > 0 ? ` (${totais.totalLinhas} registro(s) já gravado(s) antes do erro — clique novamente para continuar)` : '');
+    if (btnParar) btnParar.style.display = 'none';
   }
 
   btn.disabled = false;
   btn.innerHTML = '<i class="fas fa-file-pdf"></i> Processar PDFs';
+  if (btnParar) btnParar.style.display = 'none';
+  abastCancelarProcessamento = false;
 }
 
 function fatcGetRecords() {
