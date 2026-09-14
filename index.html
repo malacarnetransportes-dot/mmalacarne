@@ -3276,8 +3276,8 @@ function csvParseSmart(text){
 
 // Busca com timeout — evita que um proxy fora do ar deixe a página "travada"
 // esperando por minutos antes de tentar a próxima opção.
-function fetchComTimeout(url, ms = 9000) {
-  const ctrl = new AbortController();
+function fetchComTimeout(url, ms = 9000, externalCtrl) {
+  const ctrl = externalCtrl || new AbortController();
   const timer = setTimeout(() => ctrl.abort(), ms);
   return fetch(url, { cache: 'no-store', signal: ctrl.signal }).finally(() => clearTimeout(timer));
 }
@@ -8310,7 +8310,7 @@ let fatcFiltered = []; // registros após os filtros desta sub-aba
 // partir das notas fiscais (PDF) de abastecimento lançadas na pasta do Drive.
 // Publicada em Arquivo → Compartilhar → Publicar na Web → CSV.
 const DEFAULT_ABASTECIMENTOS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTcOHj4xU52hnDoRjXtTP-5JGOM5nleWQ5q_jNTWhRQJee_jKHBKayvgZIHe0MHf3xsmNEA4XLDTUJx/pub?output=csv";
-const DEFAULT_WEBAPP_ABAST_URL = "https://script.google.com/macros/s/AKfycbzrjVm4_OHoqeMaoJzu6NmuiREK7--y9DXLH_D2FPo2xzSwCwZwEVNQANB4albmIatC/exec";
+const DEFAULT_WEBAPP_ABAST_URL = "https://script.google.com/macros/s/AKfycbwCPQdtxg7CM_HnQDM781UtKvrOpik9UNBazkXNVGo92lSw06VSq1kP4Vyg3KnbznQ/exec";
 let ABASTECIMENTOS_CSV_URL = localStorage.getItem("urlAbastecimentosCsv") || DEFAULT_ABASTECIMENTOS_CSV_URL;
 let WEBAPP_ABAST_URL = localStorage.getItem("urlAbastecimentosWebApp") || DEFAULT_WEBAPP_ABAST_URL;
 let   abastAllRecords         = [];  // registros vindos da planilha ABASTECIMENTOS
@@ -8453,11 +8453,16 @@ async function loadAbastecimentos(opts) {
 // Busca um endpoint (Web App do Apps Script) esperando JSON, com timeout e
 // diagnóstico claro do motivo da falha — em vez do genérico "Failed to
 // fetch" ou de um erro de parse de JSON sem contexto.
-async function abastFetchJson(url, timeoutMs = 25000) {
+async function abastFetchJson(url, timeoutMs = 25000, ctrl) {
   let resp;
   try {
-    resp = await fetchComTimeout(url, timeoutMs);
+    resp = await fetchComTimeout(url, timeoutMs, ctrl);
   } catch (e) {
+    if (e.name === 'AbortError' && ctrl && ctrl.canceladoPeloUsuario) {
+      const err = new Error('Cancelado pelo usuário');
+      err.isCancel = true;
+      throw err;
+    }
     throw new Error(e.name === 'AbortError'
       ? 'Tempo esgotado ao conectar ao Web App (lote grande — tente novamente, o Apps Script continua de onde parou).'
       : 'Não foi possível conectar ao Web App — verifique a URL em Config URLs e se o Apps Script está implantado com acesso liberado.');
@@ -8480,12 +8485,17 @@ async function abastFetchJson(url, timeoutMs = 25000) {
 const WEBAPP_BATCH_TIMEOUT_MS = 5 * 60 * 1000; // cada lote no servidor tem orçamento próprio (~4.5min); dá folga de rede
 const WEBAPP_MAX_LOOPS = 200; // trava de segurança contra loop infinito
 let abastCancelarProcessamento = false;
+let abastControllerAtivo = null;
 
-// Botão "Parar" — sinaliza pro loop de acionarWebApp parar de pedir novos
-// lotes assim que o lote em andamento terminar (não interrompe um lote já
-// em execução no servidor, só evita pedir o próximo).
+// Botão "Parar" — cancela a requisição em andamento NA HORA (não espera o
+// lote atual terminar) e sinaliza pro loop de acionarWebApp não pedir mais
+// nenhum lote depois disso.
 function pararWebApp() {
   abastCancelarProcessamento = true;
+  if (abastControllerAtivo) {
+    abastControllerAtivo.canceladoPeloUsuario = true;
+    abastControllerAtivo.abort();
+  }
   const btnParar = document.getElementById('btnPararPDFs');
   if (btnParar) { btnParar.disabled = true; btnParar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Parando...'; }
 }
@@ -8530,7 +8540,16 @@ async function acionarWebApp() {
         `<b>${totais.processados}</b>/<b>${totalInicial}</b> processado(s) até agora, ` +
         `<b>${restante}</b> restante(s)...`;
 
-      const data = await abastFetchJson(WEBAPP_ABAST_URL + '?action=processar', WEBAPP_BATCH_TIMEOUT_MS);
+      abastControllerAtivo = new AbortController();
+      let data;
+      try {
+        data = await abastFetchJson(WEBAPP_ABAST_URL + '?action=processar', WEBAPP_BATCH_TIMEOUT_MS, abastControllerAtivo);
+      } catch (e) {
+        if (e.isCancel) break; // usuário clicou Parar durante este lote — encerra sem virar mensagem de erro
+        throw e;
+      } finally {
+        abastControllerAtivo = null;
+      }
       if (data.status !== 'ok') throw new Error(data.msg || 'Erro desconhecido');
 
       totais.processados += data.processados || 0;
@@ -10216,44 +10235,71 @@ function copiarSenha(senha, sistema) {
 // FROTA / MOTORISTAS
 // ═══════════════════════════════════════════════════════════
 const FROTA_DATA = [
-  // ── MOTORISTAS ATIVOS ──
+  // ── MOTORISTAS ATIVOS (conjunto vigente desde 01/09/2026 — ver
+  // HISTORICO_CONJUNTOS abaixo pro que valia antes disso) ──
   // Campos cavaloMarca/cavaloModelo/cavaloAno e carretaMarca/carretaAno/refrigMarca/refrigModelo/refrigAno
-  // vêm do cadastro oficial da frota (Padrão Gentrex) e alimentam os rankings por marca/ano da Manutenção.
+  // seguem a PLACA (são do veículo físico), não do motorista — por isso não mudam quando só o motorista troca.
   {motorista:'ADRIANO VAZ DOS SANTOS',     placa:'RYE7J26', carreta:'QJH0591',                  paletes:'28', celular:'46 - 99983-7772', cpf:'023.114.919-03',
     cavaloMarca:'SCANIA', cavaloModelo:'SCANIA/R450 A6X2', cavaloAno:2022, carretaMarca:'RANDON', carretaAno:2018, refrigMarca:'THERMOKING', refrigModelo:'SLX 400i', refrigAno:2018},
+  {motorista:'ANDERSON PANDOLFO',          placa:'QJC0B40', carreta:'MLB0J76',                  paletes:'28', celular:'', cpf:'',
+    cavaloMarca:'SCANIA', cavaloModelo:'SCANIA / RH 400 A6X2', cavaloAno:2018, carretaMarca:'FACCHINI', carretaAno:2013, refrigMarca:'THERMOKING', refrigModelo:'SB210', refrigAno:2014},
   {motorista:'ANDERSON VEIGA SANTOS',       placa:'QTM0G30', carreta:'RYQ7I03 — 30 pal. Van',    paletes:'30', celular:'42 - 99832-0501', cpf:'012.273.449-10',
     cavaloMarca:'VOLVO', cavaloModelo:'VOLVO / FH 460 6X2T', cavaloAno:'2019/2020', carretaMarca:'RANDON', carretaAno:2023, refrigMarca:'CARRIER', refrigModelo:'X4 7500', refrigAno:2023},
-  {motorista:'CRISTIANO DE ALMEIDA',        placa:'QIG7598', carreta:'RXQ4H32',                  paletes:'28', celular:'49 - 99110-7517', cpf:'029.395.799-11',
+  {motorista:'ANDRE ALEXSANDRO DE ARAUJO', placa:'QIG7598', carreta:'RXQ4H32',                  paletes:'28', celular:'', cpf:'',
     cavaloMarca:'IVECO', cavaloModelo:'IVECO / HI WAY STRALIS 600 S44T', cavaloAno:2018, carretaMarca:'RANDON', carretaAno:2018, refrigMarca:'THERMOKING', refrigModelo:'SB200', refrigAno:null},
-  {motorista:'ERI ORLANDO ROMERO',          placa:'QJC0B40', carreta:'MLB0J76',                  paletes:'28', celular:'92 - 99220-9993', cpf:'706.920.112-50',
-    cavaloMarca:'SCANIA', cavaloModelo:'SCANIA / RH 400 A6X2', cavaloAno:2018, carretaMarca:'FACCHINI', carretaAno:2013, refrigMarca:'THERMOKING', refrigModelo:'SB210', refrigAno:2014},
-  {motorista:'GILSON MARGOTTI',             placa:'RAC4780', carreta:'RXS3D84',                  paletes:'28', celular:'41 - 99930-9646', cpf:'045.221.079-86',
-    cavaloMarca:'VOLVO', cavaloModelo:'VOLVO / FH 460 6X2T', cavaloAno:'2019/2020', carretaMarca:'FACCHINI', carretaAno:2022, refrigMarca:'THERMOKING', refrigModelo:'SB210+', refrigAno:2008},
+  {motorista:'CRISTIANO DE ALMEIDA',        placa:'QJA0E90', carreta:'OKD8A19',                  paletes:'28', celular:'49 - 99110-7517', cpf:'029.395.799-11',
+    cavaloMarca:'SCANIA', cavaloModelo:'SCANIA / RH 400 A6X2', cavaloAno:2018, carretaMarca:'', carretaAno:null, refrigMarca:'', refrigModelo:'', refrigAno:null}, // OKD8A19: specs da carreta ainda não cadastradas
+  {motorista:'DIRCEU LOPES VIEIRA',         placa:'RAC4780', carreta:'MGG7C96 — 30 pal. Van',    paletes:'30', celular:'', cpf:'',
+    cavaloMarca:'VOLVO', cavaloModelo:'VOLVO / FH 460 6X2T', cavaloAno:'2019/2020', carretaMarca:'RANDON', carretaAno:2010, refrigMarca:'CARRIER', refrigModelo:'X 1800', refrigAno:2010},
+  {motorista:'ERI ORLANDO ROMERO',          placa:'RLB3E46', carreta:'IWV8B19',                  paletes:'28', celular:'92 - 99220-9993', cpf:'706.920.112-50',
+    cavaloMarca:'SCANIA', cavaloModelo:'SCANIA/R450 A6X2', cavaloAno:2021, carretaMarca:'NOMA', carretaAno:2016, refrigMarca:'CARRIER', refrigModelo:'X 2100', refrigAno:2016},
+  {motorista:'ERNANI PAULO HEPP',           placa:'RLB3C26', carreta:'MKB0A39 — 30 pal. Van',    paletes:'30', celular:'', cpf:'',
+    cavaloMarca:'SCANIA', cavaloModelo:'SCANIA/R450 A6X2', cavaloAno:2021, carretaMarca:'RANDON', carretaAno:2011, refrigMarca:'THERMOKING', refrigModelo:'SB210', refrigAno:2012},
   {motorista:'HILDO ANTONIO ALMEIDA',       placa:'QJY0640', carreta:'QHI5B08',                  paletes:'28', celular:'49 - 99913-6578', cpf:'394.955.669-91',
     cavaloMarca:'IVECO', cavaloModelo:'IVECO / HI WAY STRALIS 600 S44T', cavaloAno:2019, carretaMarca:'FACCHINI', carretaAno:2016, refrigMarca:'THERMOKING', refrigModelo:'SB300', refrigAno:2016},
-  {motorista:'JORGE ODAIR LOPES',           placa:'RLB3C26', carreta:'MKB0A39 — 30 pal. Van',    paletes:'30', celular:'49 - 99840-9613', cpf:'848.045.729-53',
-    cavaloMarca:'SCANIA', cavaloModelo:'SCANIA/R450 A6X2', cavaloAno:2021, carretaMarca:'RANDON', carretaAno:2011, refrigMarca:'THERMOKING', refrigModelo:'SB210', refrigAno:2012},
   {motorista:'JOSIAS FERREIRA DOS SANTOS',  placa:'QTM0E20', carreta:'QIW2885',                  paletes:'28', celular:'41 - 99782-7246', cpf:'035.686.699-86',
     cavaloMarca:'VOLVO', cavaloModelo:'VOLVO / FH 460 6X2T', cavaloAno:'2019/2020', carretaMarca:'RANDON', carretaAno:2018, refrigMarca:'THERMOKING', refrigModelo:'SLX 400i', refrigAno:2018},
   {motorista:'LEANDRO L KLEE',              placa:'RYE7J76', carreta:'RLO9G15',                  paletes:'28', celular:'49 - 99910-0398', cpf:'038.197.969-59',
     cavaloMarca:'SCANIA', cavaloModelo:'SCANIA/R450 A6X2', cavaloAno:2022, carretaMarca:'RANDON', carretaAno:2021, refrigMarca:'CARRIER', refrigModelo:'X4 7500', refrigAno:2021},
-  {motorista:'MARIANO DE SOUZA',            placa:'QJA0E90', carreta:'QHA1357',                  paletes:'30', celular:'87 - 98134-2532', cpf:'098.235.784-27',
-    cavaloMarca:'SCANIA', cavaloModelo:'SCANIA / RH 400 A6X2', cavaloAno:2018, carretaMarca:'RANDON', carretaAno:2014, refrigMarca:'THERMOKING', refrigModelo:'SB300', refrigAno:2014},
-  {motorista:'RAFAEL DE FRANÇA RAMOS',      placa:'RLB3E46', carreta:'IWV8B19',                  paletes:'28', celular:'42 - 98804-7766', cpf:'065.936.019-50',
-    cavaloMarca:'SCANIA', cavaloModelo:'SCANIA/R450 A6X2', cavaloAno:2021, carretaMarca:'NOMA', carretaAno:2016, refrigMarca:'CARRIER', refrigModelo:'X 2100', refrigAno:2016},
+  {motorista:'MARIANO DE SOUZA',            placa:'RLB3E26', carreta:'QHA1357',                  paletes:'30', celular:'87 - 98134-2532', cpf:'098.235.784-27',
+    cavaloMarca:'SCANIA', cavaloModelo:'SCANIA/R450 A6X2', cavaloAno:2021, carretaMarca:'RANDON', carretaAno:2014, refrigMarca:'THERMOKING', refrigModelo:'SB300', refrigAno:2014},
   {motorista:'RODRIGO DA ROSA',             placa:'RYE7J36', carreta:'RDS9H31',                  paletes:'30', celular:'49 - 99922-8442', cpf:'944.742.309-49',
     cavaloMarca:'SCANIA', cavaloModelo:'SCANIA/R450 A6X2', cavaloAno:2022, carretaMarca:'RANDON', carretaAno:2020, refrigMarca:'CARRIER', refrigModelo:'X4 7500', refrigAno:2020},
   // ── VEÍCULOS PARADOS ──
   {motorista:'—',                           placa:'QJL8F70', carreta:'RXS3D84',                  paletes:'28', celular:'49 - 99927-1817', cpf:'560.043.389-15',
     cavaloMarca:'IVECO', cavaloModelo:'IVECO / HI WAY STRALIS 600 S44T', cavaloAno:2019, carretaMarca:'FACCHINI', carretaAno:2022, refrigMarca:'THERMOKING', refrigModelo:'SB 190', refrigAno:2022},
-  {motorista:'—',                           placa:'RLB3E26', carreta:'MGG7C96 — 30 pal. Van',    paletes:'28', celular:'',               cpf:'',
-    cavaloMarca:'SCANIA', cavaloModelo:'SCANIA/R450 A6X2', cavaloAno:2021, carretaMarca:'RANDON', carretaAno:2010, refrigMarca:'CARRIER', refrigModelo:'X 1800', refrigAno:2010},
   {motorista:'—',                           placa:'RAC4760', carreta:'RDS9G71',                  paletes:'28', celular:'',               cpf:'',
     cavaloMarca:'VOLVO', cavaloModelo:'VOLVO / FH 460 6X2T', cavaloAno:'2019/2020', carretaMarca:'RANDON', carretaAno:2020, refrigMarca:'CARRIER', refrigModelo:'X4 7500', refrigAno:2020},
   {motorista:'—',                           placa:'MKQ1A80', carreta:'MME7C92',                  paletes:'28', celular:'',               cpf:'',
     cavaloMarca:'SCANIA', cavaloModelo:'SCANIA / G 400 A6X2', cavaloAno:2012, carretaMarca:'FACCHINI', carretaAno:2019, refrigMarca:'THERMOKING', refrigModelo:'SB190', refrigAno:2018},
   {motorista:'—',                           placa:'MKR1080', carreta:'MHF6E75 — 30 pal. Van',    paletes:'28', celular:'',               cpf:'',
     cavaloMarca:'SCANIA', cavaloModelo:'SCANIA / G 400 A6X2', cavaloAno:'2012', carretaMarca:'RANDON', carretaAno:2010, refrigMarca:'CARRIER', refrigModelo:'X 1800', refrigAno:2010},
+];
+
+// ── HISTÓRICO DE CONJUNTOS ──────────────────────────────────────────────
+// Registro de auditoria das trocas de motorista/cavalo/carreta, com a data
+// de vigência de cada mudança. O FROTA_DATA acima reflete só o cadastro
+// ATUAL; este histórico existe pra documentar o que valia ANTES de cada
+// data de corte, caso um relatório histórico precise disso no futuro.
+// IMPORTANTE: hoje nenhuma tela do dashboard consulta este histórico
+// automaticamente pra reclassificar dados antigos por data — os relatórios
+// que filtram por PLACA/motorista usam o cadastro atual (FROTA_DATA). Se
+// precisar que algum relatório específico respeite a data da troca, avise
+// qual tela que a gente liga isso.
+const HISTORICO_CONJUNTOS = [
+  {
+    vigenciaDesde: '2026-09-01',
+    trocas: [
+      { cavalo:'QJC0B40', carreta:'MLB0J76', motoristaAntes:'ERI ORLANDO ROMERO',      motoristaDepois:'ANDERSON PANDOLFO' },
+      { cavalo:'QIG7598', carreta:'RXQ4H32', motoristaAntes:'CRISTIANO DE ALMEIDA',    motoristaDepois:'ANDRE ALEXSANDRO DE ARAUJO' },
+      { cavalo:'RLB3E46', carreta:'IWV8B19', motoristaAntes:'RAFAEL DE FRANÇA RAMOS',  motoristaDepois:'ERI ORLANDO ROMERO' },
+      { cavalo:'RLB3C26', carreta:'MKB0A39', motoristaAntes:'JORGE ODAIR LOPES',       motoristaDepois:'ERNANI PAULO HEPP' },
+      { cavalo:'RAC4780', carretaAntes:'RXS3D84', carretaDepois:'MGG7C96', motoristaAntes:'GILSON MARGOTTI', motoristaDepois:'DIRCEU LOPES VIEIRA' },
+      { motorista:'MARIANO DE SOUZA', cavaloAntes:'QJA0E90', cavaloDepois:'RLB3E26', carreta:'QHA1357' }, // trocou de cavalo, manteve a carreta
+      { motorista:'CRISTIANO DE ALMEIDA', cavaloAntes:'QIG7598', carretaAntes:'RXQ4H32', cavaloDepois:'QJA0E90', carretaDepois:'OKD8A19' } // conjunto novo inteiro
+    ],
+    observacao: 'RAFAEL DE FRANÇA RAMOS, GILSON MARGOTTI e JORGE ODAIR LOPES saem da lista de motoristas ativos nesta data.'
+  }
 ];
 
 // ── Cadastros extras adicionados pela tela (localStorage) ──
