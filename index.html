@@ -236,6 +236,32 @@ footer a{color:var(--accent);text-decoration:none;}
 .slide-hero-banner.is-ok{background:#ecfdf5;color:#047857;}
 .slide-hero-banner.is-alert{background:#fef2f2;color:#b91c1c;}
 
+/* ── MODAL TV ── */
+#tvLinkModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9000;align-items:center;justify-content:center;}
+#tvLinkModal.open{display:flex;}
+.tv-modal-box{background:#fff;border-radius:20px;padding:2rem 2.2rem;max-width:480px;width:90%;box-shadow:0 24px 64px rgba(0,0,0,.22);position:relative;}
+.tv-modal-box h2{font-size:1.15rem;font-weight:800;color:#1c2333;margin-bottom:.3rem;display:flex;align-items:center;gap:.5rem;}
+.tv-modal-box h2 i{color:var(--accent-dk);}
+.tv-modal-desc{font-size:.82rem;color:var(--text-lt);margin-bottom:1.3rem;line-height:1.55;}
+.tv-url-box{background:#f8fafc;border:1.5px solid var(--gray-200);border-radius:10px;padding:.75rem 1rem;font-size:.78rem;font-family:monospace;color:#1c2333;word-break:break-all;margin-bottom:1rem;max-height:72px;overflow-y:auto;}
+.tv-modal-btns{display:flex;gap:.7rem;flex-wrap:wrap;}
+.tv-modal-btns button{flex:1;min-width:120px;padding:.6rem 1rem;border-radius:10px;font-weight:700;font-size:.82rem;cursor:pointer;border:none;transition:.18s;}
+.tv-btn-copy{background:linear-gradient(135deg,var(--accent),var(--accent-dk));color:#111;}
+.tv-btn-copy:hover{opacity:.9;}
+.tv-btn-open{background:#f1f5f9;color:#1c2333;border:1.5px solid var(--gray-200)!important;}
+.tv-btn-open:hover{background:#e2e8f0;}
+.tv-btn-close{background:#fef2f2;color:#b91c1c;}
+.tv-btn-close:hover{background:#fee2e2;}
+.tv-modal-tip{margin-top:1.1rem;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:.75rem 1rem;font-size:.78rem;color:#92400e;line-height:1.5;}
+.tv-modal-tip strong{display:block;margin-bottom:.2rem;}
+#tvCopyFeedback{font-size:.75rem;color:var(--success);font-weight:700;margin-top:.4rem;min-height:16px;}
+/* modo quiosque — oculta tudo exceto o slideOverlay */
+body.tv-kiosk-mode>*:not(#slideOverlay){display:none!important;}
+body.tv-kiosk-mode #slideOverlay{display:flex!important;}
+body.tv-kiosk-mode .slide-close{display:none!important;}
+/* cursor oculto após 3s de inatividade no modo TV */
+body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
+
 .pneu-legend{display:flex;flex-wrap:wrap;gap:1.1rem;justify-content:center;margin-top:1rem;font-size:.78rem;color:var(--text-lt);}
 .pneu-legend span{display:flex;align-items:center;gap:.4rem;}
 .pneu-dot{display:inline-block;width:10px;height:10px;border-radius:50%;}
@@ -688,6 +714,28 @@ footer a{color:var(--accent);text-decoration:none;}
   <div class="slide-progress"><div class="slide-progress-bar" id="slideProgressBar"></div></div>
 </div>
 
+<!-- ══════════════ MODAL TV ══════════════ -->
+<div id="tvLinkModal">
+  <div class="tv-modal-box">
+    <h2><i class="fas fa-tv"></i> Gestão à Vista — TV</h2>
+    <p class="tv-modal-desc">Abra este link no navegador da sua TV Samsung (ou qualquer Smart TV). O painel entrará automaticamente no modo apresentação, sem precisar de login.</p>
+    <div class="tv-url-box" id="tvLinkUrl">—</div>
+    <div id="tvCopyFeedback"></div>
+    <div class="tv-modal-btns">
+      <button class="tv-btn-copy" id="tvBtnCopy"><i class="fas fa-copy"></i> Copiar Link</button>
+      <button class="tv-btn-open" id="tvBtnOpen"><i class="fas fa-external-link-alt"></i> Abrir Aqui</button>
+      <button class="tv-btn-close" id="tvBtnClose"><i class="fas fa-times"></i> Fechar</button>
+    </div>
+    <div class="tv-modal-tip">
+      <strong><i class="fas fa-lightbulb"></i> Como usar na TV Samsung:</strong>
+      1. Abra o navegador Samsung Internet na TV.<br>
+      2. Cole o link acima na barra de endereço.<br>
+      3. O slideshow inicia automaticamente em tela cheia.<br>
+      4. O cursor some após 5 segundos de inatividade.
+    </div>
+  </div>
+</div>
+
 <!-- ══════════════ SITE PÚBLICO ══════════════ -->
 <div id="publicSite">
 
@@ -986,6 +1034,7 @@ footer a{color:var(--accent);text-decoration:none;}
       </nav>
       <div class="pa-sidebar-footer">
         <button class="pa-nav-item" id="openSlideModeBtn" style="font-size:.8rem;color:var(--accent)"><i class="fas fa-tv"></i> Gestão à Vista (Slide)</button>
+        <button class="pa-nav-item" id="openTvLinkBtn" style="font-size:.8rem;color:#3b82f6" title="Gerar link para abrir na TV Samsung"><i class="fas fa-cast"></i> Abrir na TV</button>
         <button class="pa-nav-item" id="openUrlConfig" style="font-size:.8rem"><i class="fas fa-cog"></i> Config URLs</button>
         <button class="pa-nav-item" id="logoutPrivateBtn" style="font-size:.8rem;color:#ef4444"><i class="fas fa-sign-out-alt"></i> Sair</button>
       </div>
@@ -15091,6 +15140,104 @@ async function diaSyncFromSheets() {
     }
   }
 }
+
+
+// ═══════════════════════════════════════════════════════════
+// MODO TV — link ?tv=1 + modal de geração de link
+// ═══════════════════════════════════════════════════════════
+
+// ── Gera URL com ?tv=1 a partir da URL atual ──
+function tvBuildUrl() {
+  const u = new URL(window.location.href);
+  u.searchParams.set('tv', '1');
+  // remove hash para garantir carregamento limpo
+  u.hash = '';
+  return u.toString();
+}
+
+// ── Modal ──
+function tvOpenModal() {
+  const modal = document.getElementById('tvLinkModal');
+  const urlEl = document.getElementById('tvLinkUrl');
+  urlEl.textContent = tvBuildUrl();
+  document.getElementById('tvCopyFeedback').textContent = '';
+  modal.classList.add('open');
+}
+function tvCloseModal() {
+  document.getElementById('tvLinkModal').classList.remove('open');
+}
+
+document.getElementById('openTvLinkBtn').addEventListener('click', tvOpenModal);
+document.getElementById('tvBtnClose').addEventListener('click', tvCloseModal);
+document.getElementById('tvLinkModal').addEventListener('click', function(e){
+  if (e.target === this) tvCloseModal();
+});
+
+document.getElementById('tvBtnCopy').addEventListener('click', function() {
+  const url = tvBuildUrl();
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(() => {
+      document.getElementById('tvCopyFeedback').textContent = '✓ Link copiado!';
+    }).catch(() => tvFallbackCopy(url));
+  } else {
+    tvFallbackCopy(url);
+  }
+});
+function tvFallbackCopy(url) {
+  const ta = document.createElement('textarea');
+  ta.value = url;
+  ta.style.position = 'fixed';ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+  document.getElementById('tvCopyFeedback').textContent = '✓ Link copiado!';
+}
+
+document.getElementById('tvBtnOpen').addEventListener('click', function() {
+  window.open(tvBuildUrl(), '_blank');
+});
+
+// ── Detecção de ?tv=1 ao carregar ──
+(function tvKioskInit() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('tv') !== '1') return;
+
+  // Aguarda o DOM e os dados estarem prontos antes de disparar o slideshow
+  document.body.classList.add('tv-kiosk-mode');
+
+  // Ocultar cursor após 5s de inatividade (ideal para TV)
+  let cursorTimer;
+  function tvResetCursor() {
+    document.body.classList.remove('tv-hide-cursor');
+    clearTimeout(cursorTimer);
+    cursorTimer = setTimeout(() => document.body.classList.add('tv-hide-cursor'), 5000);
+  }
+  ['mousemove','mousedown','keydown','touchstart'].forEach(ev =>
+    document.addEventListener(ev, tvResetCursor, {passive:true})
+  );
+  tvResetCursor();
+
+  // Iniciar slideshow assim que possível
+  function tvLaunch() {
+    if (typeof openSlideMode === 'function') {
+      openSlideMode();
+      // Em modo TV não permite fechar com Esc
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') e.stopImmediatePropagation();
+      }, true);
+    } else {
+      setTimeout(tvLaunch, 300);
+    }
+  }
+
+  // Aguarda evento DOMContentLoaded + pequeno delay para scripts inicializarem
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(tvLaunch, 800));
+  } else {
+    setTimeout(tvLaunch, 800);
+  }
+})();
 
 </script>
 </body>
