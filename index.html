@@ -3810,6 +3810,10 @@ function slideBuildSlides(){
     { title: '<i class="fas fa-gauge-high"></i> Controle de Velocidade', type: 'vel-resumo' },
     // 6) Resumo de Pneus
     { title: '<i class="fas fa-circle-dot"></i> Resumo de Pneus', type: 'pneu-resumo' },
+    // 7) Ranking de Consumo — Melhores Cavalos
+    { title: '<i class="fas fa-trophy"></i> Ranking — Melhores Cavalos (km/L)', type: 'consumo-melhores' },
+    // 8) Ranking de Consumo — Piores Cavalos
+    { title: '<i class="fas fa-triangle-exclamation"></i> Ranking — Piores Cavalos (km/L)', type: 'consumo-piores' },
   ];
 }
 
@@ -3903,6 +3907,36 @@ async function slideRenderWeather(body, s, slides, idx) {
   <div style="font-size:.68rem;color:var(--text-lt);margin-top:.9rem">Fonte: Open-Meteo · Concórdia — SC (−27.23 / −52.03)</div>`;
   body.classList.add('show');
   slideRenderDots(slides, idx);
+}
+
+// ── Resumo de Consumo de Cavalos para o slide ──
+// Lê diretamente os li's já renderizados na aba de Consumo/Abastecimentos.
+// Se a aba ainda não foi aberta, retorna null (slide mostrará estado de espera).
+function slideConsumoResumo() {
+  const elMelh = document.getElementById('fatRankMelhoresCavalo');
+  const elPior = document.getElementById('fatRankPioresCavalo');
+  if (!elMelh || !elPior) return null;
+
+  function parseItems(ul) {
+    return [...ul.querySelectorAll('li')].map(li => {
+      const spans = li.querySelectorAll('span');
+      if (!spans.length) return null;
+      // primeiro span: "PLACA (Motorista)" — segundo span (dentro do primeiro ou separado): valor
+      const texto = spans[0]?.textContent || '';
+      const valor = spans[spans.length - 1]?.textContent?.trim() || '';
+      // Extrai placa e motorista do texto
+      const m = texto.match(/^([^\(]+)\(([^\)]*)\)/);
+      const placa     = m ? m[1].trim() : texto.trim();
+      const motorista = m ? m[2].trim() : '—';
+      if (!valor || valor === texto) return null;
+      return { placa, motorista, valor };
+    }).filter(Boolean);
+  }
+
+  const melhores = parseItems(elMelh);
+  const piores   = parseItems(elPior);
+  if (!melhores.length && !piores.length) return null;
+  return { melhores, piores };
 }
 
 let slideFinChartInstance = null;
@@ -4129,6 +4163,58 @@ function slideRender(){
             ${d.ranking.map(([nome,valor]) => `<div class="slide-status-row"><span style="max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHTML(nome)}">${escapeHTML(nome)}</span><span class="n" style="color:var(--accent-dk)">${fmtMoney(valor)}</span></div>`).join('')}
           </div>
         </div>` : ''}`;
+      requestAnimationFrame(() => body.classList.add('show'));
+      slideRenderDots(slides, idx);
+      return;
+    }
+    if (s.type === 'consumo-melhores' || s.type === 'consumo-piores') {
+      const tipo = s.type === 'consumo-melhores' ? 'melhores' : 'piores';
+      const d = slideConsumoResumo();
+      if (!d) {
+        if (typeof loadAbastecimentos === 'function') loadAbastecimentos({ silencioso: true });
+        body.innerHTML = `<div class="slide-section-title">${s.title}</div>
+          <div class="slide-status-card" style="max-width:520px;width:100%;text-align:center;color:var(--text-lt)">
+            <i class="fas fa-spinner fa-spin" style="font-size:1.4rem;margin-bottom:.6rem;display:block"></i>
+            Carregando dados de consumo...<br>
+            <span style="font-size:.78rem">Acesse a aba Abastecimentos para importar os dados.</span>
+          </div>`;
+        requestAnimationFrame(() => body.classList.add('show'));
+        slideRenderDots(slides, idx);
+        return;
+      }
+      const lista = d[tipo];
+      const corValor = tipo === 'melhores' ? 'var(--success)' : 'var(--danger)';
+      const corBorda = tipo === 'melhores' ? 'var(--success)' : 'var(--danger)';
+      const iconMedal = tipo === 'melhores'
+        ? ['🥇','🥈','🥉','4°','5°','6°','7°','8°','9°','10°']
+        : ['💀','⚠️','🔴','4°','5°','6°','7°','8°','9°','10°'];
+      if (!lista.length) {
+        body.innerHTML = `<div class="slide-section-title">${s.title}</div>
+          <div class="slide-status-card" style="max-width:520px;width:100%;text-align:center;color:var(--text-lt)">
+            Sem dados suficientes para exibir o ranking.
+          </div>`;
+        requestAnimationFrame(() => body.classList.add('show'));
+        slideRenderDots(slides, idx);
+        return;
+      }
+      body.innerHTML = `<div class="slide-section-title">${s.title}</div>
+        <div style="display:flex;flex-direction:column;gap:.7rem;max-width:680px;width:100%">
+          ${lista.map((item, i) => `
+            <div style="
+              display:flex;align-items:center;gap:1rem;
+              background:#fff;border:1px solid rgba(139,115,85,.15);
+              border-left:5px solid ${i === 0 ? corBorda : 'rgba(139,115,85,.2)'};
+              border-radius:16px;padding:.85rem 1.2rem;
+              box-shadow:0 ${i===0?'6px 22px':'4px 16px'} rgba(30,42,58,${i===0?'.1':'.06'});
+            ">
+              <div style="font-size:${i < 3 ? '1.6rem' : '1rem'};min-width:2.2rem;text-align:center;line-height:1">${iconMedal[i] || (i+1)+'°'}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.05rem;color:#1c2333">${escapeHTML(item.placa)}</div>
+                <div style="font-family:'Inter',sans-serif;font-size:.78rem;color:var(--text-lt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHTML(item.motorista)}</div>
+              </div>
+              <div style="font-family:'Poppins',sans-serif;font-size:1.45rem;font-weight:800;color:${corValor};white-space:nowrap">${escapeHTML(item.valor)}</div>
+            </div>`).join('')}
+        </div>`;
       requestAnimationFrame(() => body.classList.add('show'));
       slideRenderDots(slides, idx);
       return;
