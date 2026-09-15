@@ -695,10 +695,24 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
     <div class="slide-brand"><img class="slide-logo" src="Screenshot_2.jpg" alt="M-Malacarne" onerror="this.style.display='none'"> <span class="brand-mark">M-MALACARNE</span><span class="brand-sep">·</span><span class="brand-sub" style="font-size:1.15rem;font-weight:800;color:#1c2333;letter-spacing:.5px">GESTÃO À VISTA</span></div>
     <div class="slide-counter" id="slideCounter"></div>
     <div style="display:flex;gap:.5rem;align-items:center">
+      <!-- ── RÁDIO ATUAL FM 103.5 — liga/desliga ── -->
+      <div id="slideRadioWrap" style="display:flex;align-items:center;gap:.45rem;background:#fff;border:1px solid rgba(139,115,85,.2);border-radius:22px;padding:.15rem .55rem .15rem .15rem;">
+        <button id="slideRadioBtn" title="Rádio Atual FM 103.5 — ligar/desligar"
+                style="background:transparent;border:none;color:#1c2333;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:.2s"
+                onclick="slideRadioToggle()"><i class="fas fa-radio" id="slideRadioIcon"></i></button>
+        <span id="slideRadioLabel" style="font-family:'Inter',sans-serif;font-size:.68rem;font-weight:700;color:var(--text-lt);letter-spacing:.6px;white-space:nowrap">RÁDIO OFF</span>
+        <input type="range" id="slideRadioVol" min="0" max="100" value="60" title="Volume"
+               oninput="slideRadioSetVolume(this.value)"
+               style="display:none;width:66px;accent-color:var(--accent-dk);cursor:pointer">
+      </div>
       <button id="slideFullscreenBtn" title="Tela Inteira" style="background:#fff;border:1px solid rgba(139,115,85,.2);color:#1c2333;width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:.9rem;transition:.2s;display:flex;align-items:center;justify-content:center;" onclick="slideToggleFullscreen()"><i class="fas fa-expand" id="slideFullscreenIcon"></i></button>
       <button class="slide-close" id="slideCloseBtn" title="Fechar (Esc)"><i class="fas fa-times"></i></button>
     </div>
   </div>
+  <!-- Player de fallback: se o stream direto não tocar (mudança de porta do
+       servidor da rádio, bloqueio de mixed-content etc.), carrega o player
+       oficial da Atual FM num iframe minúsculo, que resolve a URL sozinho. -->
+  <div id="slideRadioFallback" style="display:none;position:absolute;bottom:8px;left:8px;z-index:5;width:260px;height:56px;border-radius:10px;overflow:hidden;box-shadow:0 6px 20px rgba(30,42,58,.15)"></div>
   <div class="slide-datebar">
     <div class="slide-db-weekday" id="slideWeekday">—</div>
     <div class="slide-db-sep"></div>
@@ -4517,6 +4531,128 @@ function openSlideMode(){
   }
 }
 
+// ═══════════════════════════════════════════════════════════
+// RÁDIO ATUAL FM 103.5 (Concórdia/SC) na Gestão à Vista
+// ═══════════════════════════════════════════════════════════
+// O stream fica no servidor de streaming da rádio (LogicaHost). Como a
+// porta/caminho pode mudar sem aviso, tentamos uma lista de URLs em
+// sequência; se nenhuma tocar, caímos no player oficial embutido num
+// iframe pequeno (ele resolve a URL sozinho, só exige 1 clique).
+// A URL pode ser fixada manualmente em localStorage['urlRadioAtualFM'].
+const RADIO_ATUAL_STREAMS = [
+  'https://radio02.logicahost.com.br:8038/stream',
+  'https://radio02.logicahost.com.br:8038/live',
+  'https://radio02.logicahost.com.br:8038/;stream.mp3',
+  'https://radio02.logicahost.com.br/stream/8038'
+];
+const RADIO_ATUAL_WIDGET = 'https://radio02.logicahost.com.br/cp/widgets/player/single/?p=8038';
+const RADIO_ATUAL_SITE   = 'https://atualfm.com.br/ouca-ao-vivo/';
+
+let slideRadioAudio = null;
+let slideRadioLigado = false;
+
+function slideRadioUI(estado, texto){
+  const icon  = document.getElementById('slideRadioIcon');
+  const label = document.getElementById('slideRadioLabel');
+  const vol   = document.getElementById('slideRadioVol');
+  const wrap  = document.getElementById('slideRadioWrap');
+  if (!icon || !label) return;
+  if (estado === 'on') {
+    icon.className = 'fas fa-radio';
+    icon.style.color = 'var(--success)';
+    label.textContent = texto || 'ATUAL FM 103.5';
+    label.style.color = 'var(--success)';
+    if (vol) vol.style.display = 'block';
+    if (wrap) wrap.style.borderColor = 'var(--success)';
+  } else if (estado === 'loading') {
+    icon.className = 'fas fa-spinner fa-spin';
+    icon.style.color = 'var(--accent-dk)';
+    label.textContent = texto || 'SINTONIZANDO...';
+    label.style.color = 'var(--accent-dk)';
+    if (vol) vol.style.display = 'none';
+  } else {
+    icon.className = 'fas fa-radio';
+    icon.style.color = '#1c2333';
+    label.textContent = texto || 'RÁDIO OFF';
+    label.style.color = 'var(--text-lt)';
+    if (vol) vol.style.display = 'none';
+    if (wrap) wrap.style.borderColor = 'rgba(139,115,85,.2)';
+  }
+}
+
+// Tenta tocar uma URL com limite de tempo — sem isso, uma URL morta
+// deixaria o botão travado em "sintonizando" pra sempre.
+function slideRadioTentar(url, timeoutMs){
+  return new Promise((resolve, reject) => {
+    const a = new Audio();
+    a.preload = 'none';
+    a.crossOrigin = 'anonymous';
+    const volEl = document.getElementById('slideRadioVol');
+    a.volume = volEl ? (parseInt(volEl.value, 10) / 100) : 0.6;
+    a.src = url;
+    let resolvido = false;
+    const limpar = () => { clearTimeout(t); a.oncanplay = a.onplaying = a.onerror = null; };
+    const t = setTimeout(() => {
+      if (resolvido) return;
+      resolvido = true; limpar();
+      try { a.pause(); a.src = ''; } catch(e){}
+      reject(new Error('timeout'));
+    }, timeoutMs || 6000);
+    a.onplaying = () => { if (resolvido) return; resolvido = true; limpar(); resolve(a); };
+    a.onerror   = () => { if (resolvido) return; resolvido = true; limpar(); reject(new Error('erro de stream')); };
+    a.play().catch(err => { if (resolvido) return; resolvido = true; limpar(); reject(err); });
+  });
+}
+
+async function slideRadioLigar(){
+  slideRadioUI('loading');
+  const salva = localStorage.getItem('urlRadioAtualFM');
+  const urls = salva ? [salva].concat(RADIO_ATUAL_STREAMS) : RADIO_ATUAL_STREAMS.slice();
+
+  for (const url of urls) {
+    try {
+      const a = await slideRadioTentar(url, 6000);
+      slideRadioAudio = a;
+      slideRadioLigado = true;
+      localStorage.setItem('urlRadioAtualFM', url); // acerta de primeira na próxima vez
+      slideRadioUI('on');
+      return;
+    } catch (e) { /* tenta a próxima */ }
+  }
+
+  // Nenhuma URL direta funcionou → player oficial embutido
+  const fb = document.getElementById('slideRadioFallback');
+  if (fb) {
+    fb.innerHTML = `<iframe src="${RADIO_ATUAL_WIDGET}" style="width:100%;height:100%;border:0" allow="autoplay"></iframe>`;
+    fb.style.display = 'block';
+    slideRadioLigado = true;
+    slideRadioUI('on', 'PLAYER ATUAL FM');
+    showToast('Stream direto indisponível — abri o player oficial da Atual FM no canto da tela (clique em ▶).', 7000);
+  } else {
+    slideRadioUI('off', 'RÁDIO INDISPONÍVEL');
+  }
+}
+
+function slideRadioDesligar(){
+  if (slideRadioAudio) {
+    try { slideRadioAudio.pause(); slideRadioAudio.src = ''; } catch(e){}
+    slideRadioAudio = null;
+  }
+  const fb = document.getElementById('slideRadioFallback');
+  if (fb) { fb.innerHTML = ''; fb.style.display = 'none'; }
+  slideRadioLigado = false;
+  slideRadioUI('off');
+}
+
+function slideRadioToggle(){
+  if (slideRadioLigado) slideRadioDesligar();
+  else slideRadioLigar();
+}
+
+function slideRadioSetVolume(v){
+  if (slideRadioAudio) slideRadioAudio.volume = Math.max(0, Math.min(100, parseInt(v,10))) / 100;
+}
+
 function slideToggleFullscreen(){
   const icon = document.getElementById('slideFullscreenIcon');
   if (!document.fullscreenElement) {
@@ -4539,6 +4675,8 @@ function closeSlideMode(){
   clearInterval(slideProgressTimer);
   clearInterval(slideClockTimer);
   if (slideFinChartInstance) { slideFinChartInstance.destroy(); slideFinChartInstance = null; }
+  // Rádio não fica tocando depois que o painel é fechado
+  if (typeof slideRadioDesligar === 'function') slideRadioDesligar();
   if (document.fullscreenElement) {
     document.exitFullscreen().catch(()=>{});
   }
