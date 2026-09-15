@@ -3599,6 +3599,9 @@ document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
 // "Possui quadro de gestão à vista? (Painel Impresso / TV / Telas)"
 // ═══════════════════════════════════════════════════════════
 let slideTimer = null, slideProgressTimer = null, slideIdx = 0;
+// Evita disparar várias cargas simultâneas da planilha de abastecimentos
+// enquanto o slide de consumo de combustível está esperando os dados.
+let _slideConsumoCarregando = false;
 const SLIDE_DURATION = 18000; // ms por slide (8s originais + 10s pedidos)
 
 function slideText(id, fallback){
@@ -3712,10 +3715,90 @@ function slideVelResumo(){
   const media = velocidades.length ? velocidades.reduce((a,b) => a+b, 0) / velocidades.length : 0;
   const max = velocidades.length ? Math.max(...velocidades) : 0;
   const graves = velRaw.filter(r => r.velocidade >= 90).length;
+
+  // Ranking de ocorrências por motorista (top 8 — o slide 2/2 tem espaço)
   const porMotorista = {};
   velRaw.forEach(r => { if (!r.motorista || r.motorista === 'PARADO') return; porMotorista[r.motorista] = (porMotorista[r.motorista] || 0) + 1; });
-  const ranking = Object.entries(porMotorista).sort((a,b) => b[1]-a[1]).slice(0,5);
-  return { total: velRaw.length, motoristas: motoristasSet.size, placas: placasSet.size, media, max, graves, ranking };
+  const ranking = Object.entries(porMotorista).sort((a,b) => b[1]-a[1]).slice(0,8);
+
+  // Ranking de ocorrências por placa
+  const porPlaca = {};
+  velRaw.forEach(r => { if (!r.placa) return; porPlaca[r.placa] = (porPlaca[r.placa] || 0) + 1; });
+  const rankingPlacas = Object.entries(porPlaca).sort((a,b) => b[1]-a[1]).slice(0,8);
+
+  // Distribuição por faixa de velocidade — dá a noção de gravidade
+  const faixas = [
+    { label: 'Até 89 km/h',   min: 0,   max: 90,       cor: 'var(--success)', qtd: 0 },
+    { label: '90 a 99 km/h',  min: 90,  max: 100,      cor: 'var(--warning)', qtd: 0 },
+    { label: '100 a 109 km/h',min: 100, max: 110,      cor: '#f97316',        qtd: 0 },
+    { label: '110 km/h ou +', min: 110, max: Infinity, cor: 'var(--danger)',  qtd: 0 },
+  ];
+  velRaw.forEach(r => {
+    const f = faixas.find(x => r.velocidade >= x.min && r.velocidade < x.max);
+    if (f) f.qtd++;
+  });
+
+  // Top 5 maiores velocidades registradas (com placa, motorista e local)
+  const topOcorrencias = [...velRaw].sort((a,b) => b.velocidade - a.velocidade).slice(0,5).map(r => ({
+    placa: r.placa || '—',
+    motorista: (r.motorista && r.motorista !== 'PARADO') ? r.motorista : '—',
+    velocidade: r.velocidade,
+    local: r.local || '—',
+    data: r.dataHora ? r.dataHora.toLocaleDateString('pt-BR') : (r.dataStr || '—')
+  }));
+
+  // Período coberto pelos dados
+  const datas = velRaw.map(r => r.dataHora).filter(Boolean).sort((a,b) => a-b);
+  const periodo = datas.length
+    ? `${datas[0].toLocaleDateString('pt-BR')} a ${datas[datas.length-1].toLocaleDateString('pt-BR')}`
+    : '—';
+
+  return { total: velRaw.length, motoristas: motoristasSet.size, placas: placasSet.size,
+           media, max, graves, ranking, rankingPlacas, faixas, topOcorrencias, periodo };
+}
+
+// ── Vencimentos: detalhe por categoria para a Gestão à Vista ──
+// Monta, direto de vencData (sem depender de a aba Vencimentos ter sido
+// aberta nem de vencAlertasAtuais estar atualizado), a lista completa do
+// que está VENCIDO e a lista dos PRÓXIMOS vencimentos. Se não houver
+// nenhum vencimento nos próximos 30 dias, devolve mesmo assim os próximos
+// documentos a vencer — sempre há um "próximo" pra mostrar embaixo.
+function slideVencDetalhe(catKey){
+  const cat = VENC_CATEGORIAS.find(c => c.key === catKey);
+  const vazio = { vencidos: [], proximos: [], proximosSao30: true };
+  if (!cat || typeof vencData === 'undefined') return vazio;
+  const rows = vencData[cat.key] || [];
+  if (!rows.length) return vazio;
+
+  const now = new Date(); now.setHours(0,0,0,0);
+  const em30 = new Date(now); em30.setDate(em30.getDate() + 30);
+  const headers = Object.keys(rows[0]);
+  const colId = findCol(headers, ['placa','veiculo','motorista','nome','funcionario','colaborador']);
+  const colDataCandidatos = cat.key === 'licenciamento'
+    ? findColCandidates(headers, ['vencimento','validade','vcto','venc','jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez','situacao','sit.','sit ','data'])
+    : findColCandidates(headers, ['vencimento','vcto','validade','venc','data']);
+  const colData = vencMelhorColunaData(rows, headers, colDataCandidatos);
+  const colSituacao = cat.key === 'licenciamento' ? findCol(headers, ['situacao','sit.','sit ']) : null;
+  const formato = vencDetectarFormato(rows, colData);
+
+  const vencidos = [], prox30 = [], futuros = [];
+  rows.forEach(row => {
+    const { d, status } = vencCalcularStatusLinha(row, cat, headers, colId, colData, colSituacao, formato, now, em30);
+    if (!d) return;
+    const item = { id: colId ? (row[colId] || '—') : '—', data: d,
+                   dias: Math.round((d - now) / 86400000) };
+    if (status === 'vencido')      vencidos.push(item);
+    else if (status === 'proximo') prox30.push(item);
+    else                           futuros.push(item);
+  });
+
+  vencidos.sort((a,b) => a.data - b.data);   // o mais antigo (mais crítico) primeiro
+  prox30.sort((a,b) => a.data - b.data);
+  futuros.sort((a,b) => a.data - b.data);
+
+  // Se não há nada vencendo em 30 dias, mostra os 5 próximos a vencer
+  const proximos = prox30.length ? prox30 : futuros.slice(0,5);
+  return { vencidos, proximos, proximosSao30: prox30.length > 0 };
 }
 
 // Resumo de Pneus: varre PNEU_DATA (+ ajustes salvos no localStorage)
@@ -3806,14 +3889,15 @@ function slideBuildSlides(){
       title: `<i class="fas ${c.icon}"></i> Vencimentos — ${c.label}`,
       type: 'venc-single', categoria: c
     })),
-    // 5) Controle de Velocidade
-    { title: '<i class="fas fa-gauge-high"></i> Controle de Velocidade', type: 'vel-resumo' },
+    // 5) Controle de Velocidade — dividido em 2 partes para dar a ideia completa
+    { title: '<i class="fas fa-gauge-high"></i> Controle de Velocidade (1/2) — Visão Geral', type: 'vel-resumo' },
+    { title: '<i class="fas fa-gauge-high"></i> Controle de Velocidade (2/2) — Rankings e Ocorrências', type: 'vel-resumo-2' },
     // 6) Resumo de Pneus
     { title: '<i class="fas fa-circle-dot"></i> Resumo de Pneus', type: 'pneu-resumo' },
-    // 7) Ranking de Consumo — Melhores Cavalos
-    { title: '<i class="fas fa-trophy"></i> Ranking — Melhores Cavalos (km/L)', type: 'consumo-melhores' },
-    // 8) Ranking de Consumo — Piores Cavalos
-    { title: '<i class="fas fa-triangle-exclamation"></i> Ranking — Piores Cavalos (km/L)', type: 'consumo-piores' },
+    // 7) Ranking de Consumo de COMBUSTÍVEL — Melhores Cavalos
+    { title: '<i class="fas fa-gas-pump"></i> Consumo de Combustível — Melhores Médias (km/L)', type: 'consumo-melhores' },
+    // 8) Ranking de Consumo de COMBUSTÍVEL — Piores Cavalos
+    { title: '<i class="fas fa-gas-pump"></i> Consumo de Combustível — Piores Médias (km/L)', type: 'consumo-piores' },
   ];
 }
 
@@ -4009,20 +4093,38 @@ function slideRender(){
       const c = s.categoria;
       const total = c.vencidos + c.proximos + c.ok;
       const pct = n => total ? (n/total*100) : 0;
-      // Coleta quem está atrasado/vencido nessa categoria
-      const atrasados = (typeof vencAlertasAtuais !== 'undefined')
-        ? vencAlertasAtuais.filter(a => a.catKey === c.key && a.vencido).map(a => a.id).filter(Boolean)
-        : [];
-      const proxLista = (typeof vencAlertasAtuais !== 'undefined')
-        ? vencAlertasAtuais.filter(a => a.catKey === c.key && !a.vencido).map(a => a.id).filter(Boolean)
-        : [];
       const fmtDataA = d => d ? new Date(d).toLocaleDateString('pt-BR') : '—';
-      const atrasadosAlerts = (typeof vencAlertasAtuais !== 'undefined')
-        ? vencAlertasAtuais.filter(a => a.catKey === c.key && a.vencido)
-        : [];
-      const proxAlertsLista = (typeof vencAlertasAtuais !== 'undefined')
-        ? vencAlertasAtuais.filter(a => a.catKey === c.key && !a.vencido)
-        : [];
+
+      // Lista calculada direto de vencData — não depende de vencAlertasAtuais,
+      // que podia estar vazio e fazer o slide dizer "Todos em dia" mesmo com
+      // o KPI de Vencidos maior que zero.
+      const det = slideVencDetalhe(c.key);
+      // Sem dados carregados ainda: mostra "carregando" em vez de um falso
+      // "tudo em dia" (zero vencidos só porque a planilha não chegou).
+      const semDados = !(typeof vencData !== 'undefined' && Array.isArray(vencData[c.key]) && vencData[c.key].length);
+      if (semDados && total === 0) {
+        body.innerHTML = `<div class="slide-section-title">${s.title}</div>
+          <div class="slide-status-card" style="max-width:520px;width:100%;text-align:center;color:var(--text-lt)">
+            <i class="fas fa-spinner fa-spin" style="font-size:1.4rem;margin-bottom:.6rem;display:block"></i>
+            Carregando vencimentos...
+          </div>`;
+        requestAnimationFrame(() => body.classList.add('show'));
+        slideRenderDots(slides, idx);
+        return;
+      }
+      const listaVencidos = det.vencidos;
+      const listaProximos = det.proximos;
+      const tudoEmDia = c.vencidos === 0 && listaVencidos.length === 0;
+
+      const linhaVencido = a => `<div class="slide-status-row">
+        <span style="font-weight:700;color:#b91c1c;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHTML(String(a.id))}</span>
+        <span style="font-size:.75rem;color:var(--danger);font-weight:700">${fmtDataA(a.data)} · ${Math.abs(a.dias)}d atrás</span>
+      </div>`;
+      const linhaProximo = a => `<div class="slide-status-row">
+        <span style="font-weight:600;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHTML(String(a.id))}</span>
+        <span style="font-size:.75rem;color:var(--warning);font-weight:700">${fmtDataA(a.data)} · em ${a.dias}d</span>
+      </div>`;
+
       body.innerHTML = `<div class="slide-section-title">${s.title}</div>
         <div class="slide-kpi-grid" style="max-width:900px;margin-bottom:.9rem">
           <div class="slide-kpi-card${c.vencidos > 0 ? ' is-danger' : ''}"><div class="slide-kpi-val">${c.vencidos}</div><div class="slide-kpi-lbl">Vencidos</div></div>
@@ -4032,21 +4134,46 @@ function slideRender(){
         <div class="slide-status-bar" style="max-width:760px;width:100%;height:8px;margin-bottom:1.1rem">
           <span style="width:${pct(c.vencidos)}%;background:var(--danger)"></span><span style="width:${pct(c.proximos)}%;background:var(--warning)"></span><span style="width:${pct(c.ok)}%;background:var(--success)"></span>
         </div>
-        ${atrasadosAlerts.length || proxAlertsLista.length ? `
-        <div style="display:flex;gap:1rem;max-width:1100px;width:100%;flex-wrap:wrap;justify-content:center">
-          ${atrasadosAlerts.length ? `<div class="slide-status-card" style="flex:1;min-width:260px;max-width:520px;text-align:left;border-left:4px solid var(--danger)">
-            <div class="slide-status-card-head"><i class="fas fa-exclamation-triangle" style="color:var(--danger)"></i> Precisam Regularizar — Vencido</div>
-            <div class="slide-status-rows" style="max-height:180px;overflow-y:auto">
-              ${atrasadosAlerts.map(a=>`<div class="slide-status-row"><span style="font-weight:700;color:#b91c1c">${escapeHTML(a.id)}</span><span style="font-size:.72rem;color:var(--danger)">${fmtDataA(a.data)}</span></div>`).join('')}
+
+        <!-- Bloco 1 (em cima): o que está VENCIDO -->
+        <div style="max-width:860px;width:100%;display:flex;flex-direction:column;gap:1rem">
+          ${listaVencidos.length ? `
+          <div class="slide-status-card" style="text-align:left;border-left:5px solid var(--danger)">
+            <div class="slide-status-card-head"><i class="fas fa-exclamation-triangle" style="color:var(--danger)"></i>
+              Vencido — Regularizar Imediatamente
+              <span style="margin-left:auto;font-size:.8rem;color:var(--danger);font-weight:800">${listaVencidos.length}</span>
             </div>
-          </div>` : ''}
-          ${proxAlertsLista.length ? `<div class="slide-status-card" style="flex:1;min-width:260px;max-width:520px;text-align:left;border-left:4px solid var(--warning)">
-            <div class="slide-status-card-head"><i class="fas fa-clock" style="color:var(--warning)"></i> Vence em 30 dias</div>
-            <div class="slide-status-rows" style="max-height:180px;overflow-y:auto">
-              ${proxAlertsLista.map(a=>`<div class="slide-status-row"><span style="font-weight:600">${escapeHTML(a.id)}</span><span style="font-size:.72rem;color:var(--warning)">${fmtDataA(a.data)}</span></div>`).join('')}
+            <div class="slide-status-rows" style="max-height:220px;overflow-y:auto">
+              ${listaVencidos.map(linhaVencido).join('')}
             </div>
-          </div>` : ''}
-        </div>` : `<div style="color:var(--success);font-size:1rem;font-weight:600;margin-top:.5rem"><i class="fas fa-check-circle"></i> Todos em dia!</div>`}
+          </div>`
+          : (c.vencidos > 0 ? `
+          <div class="slide-status-card" style="text-align:left;border-left:5px solid var(--danger)">
+            <div class="slide-status-card-head"><i class="fas fa-exclamation-triangle" style="color:var(--danger)"></i> Vencido — Regularizar Imediatamente</div>
+            <div class="slide-status-rows"><div class="slide-status-row"><span>${c.vencidos} registro(s) vencido(s) — abra a aba Vencimentos para ver a lista</span></div></div>
+          </div>` : `
+          <div class="slide-hero-banner is-ok" style="margin:0">
+            <i class="fas fa-check-circle"></i> Nenhum documento vencido nesta categoria
+          </div>`)}
+
+          <!-- Bloco 2 (embaixo): o PRÓXIMO a vencer -->
+          ${listaProximos.length ? `
+          <div class="slide-status-card" style="text-align:left;border-left:5px solid var(--warning)">
+            <div class="slide-status-card-head"><i class="fas fa-clock" style="color:var(--warning)"></i>
+              ${det.proximosSao30 ? 'Próximos a Vencer — 30 dias' : 'Próximos a Vencer (nada nos 30 dias)'}
+              <span style="margin-left:auto;font-size:.8rem;color:var(--warning);font-weight:800">${listaProximos.length}</span>
+            </div>
+            <div class="slide-status-rows" style="max-height:200px;overflow-y:auto">
+              ${listaProximos.map(linhaProximo).join('')}
+            </div>
+          </div>` : `
+          <div class="slide-status-card" style="text-align:left;border-left:5px solid var(--success)">
+            <div class="slide-status-card-head"><i class="fas fa-clock" style="color:var(--success)"></i> Próximos a Vencer</div>
+            <div class="slide-status-rows"><div class="slide-status-row"><span>Nenhum vencimento próximo registrado.</span></div></div>
+          </div>`}
+        </div>
+
+        ${tudoEmDia && !listaProximos.length ? `<div style="color:var(--success);font-size:1rem;font-weight:700;margin-top:.9rem"><i class="fas fa-check-circle"></i> Categoria 100% em dia!</div>` : ''}
         `;
       requestAnimationFrame(() => body.classList.add('show'));
       slideRenderDots(slides, idx);
@@ -4072,7 +4199,7 @@ function slideRender(){
       slideRenderDots(slides, idx);
       return;
     }
-    if (s.type === 'vel-resumo') {
+    if (s.type === 'vel-resumo' || s.type === 'vel-resumo-2') {
       const d = slideVelResumo();
       if (!d) {
         body.innerHTML = `<div class="slide-section-title">${s.title}</div>
@@ -4080,24 +4207,77 @@ function slideRender(){
             <i class="fas fa-spinner fa-spin" style="font-size:1.4rem;margin-bottom:.6rem"></i><br>
             Carregando dados de telemetria...
           </div>`;
-        if (typeof velInit === 'function') velInit();
+        if (typeof velInit === 'function' && !velLoaded) {
+          Promise.resolve(velInit()).then(() => slideRerenderSe(['vel-resumo','vel-resumo-2'])).catch(()=>{});
+        }
         requestAnimationFrame(() => body.classList.add('show'));
         slideRenderDots(slides, idx);
         return;
       }
-      body.innerHTML = `<div class="slide-section-title">${s.title}</div>
-        <div class="slide-kpi-grid" style="margin-bottom:1.6rem;max-width:1050px">
-          <div class="slide-kpi-card"><div class="slide-kpi-val">${d.total}</div><div class="slide-kpi-lbl">Ocorrências no Período</div></div>
-          <div class="slide-kpi-card"><div class="slide-kpi-val">${d.motoristas}</div><div class="slide-kpi-lbl">Motoristas com Excesso</div></div>
-          <div class="slide-kpi-card"><div class="slide-kpi-val">${d.placas}</div><div class="slide-kpi-lbl">Placas com Excesso</div></div>
-          <div class="slide-kpi-card"><div class="slide-kpi-val">${d.media.toFixed(1)} km/h</div><div class="slide-kpi-lbl">Velocidade Média</div></div>
-          <div class="slide-kpi-card is-warning"><div class="slide-kpi-val">${d.max.toFixed(0)} km/h</div><div class="slide-kpi-lbl">Velocidade Máxima</div></div>
-          <div class="slide-kpi-card${d.graves > 0 ? ' is-danger' : ''}"><div class="slide-kpi-val">${d.graves}</div><div class="slide-kpi-lbl">Excessos Graves (≥90 km/h)</div></div>
+
+      // ── PARTE 1/2: visão geral (KPIs + faixas de gravidade) ──
+      if (s.type === 'vel-resumo') {
+        const totalFaixa = d.faixas.reduce((a,f) => a+f.qtd, 0) || 1;
+        body.innerHTML = `<div class="slide-section-title">${s.title}
+            <span style="display:block;font-size:.85rem;font-weight:500;color:var(--text-lt);margin-top:.35rem">Período dos dados: ${d.periodo}</span>
+          </div>
+          <div class="slide-kpi-grid" style="margin-bottom:1.5rem;max-width:1050px">
+            <div class="slide-kpi-card"><div class="slide-kpi-val">${d.total}</div><div class="slide-kpi-lbl">Ocorrências no Período</div></div>
+            <div class="slide-kpi-card"><div class="slide-kpi-val">${d.motoristas}</div><div class="slide-kpi-lbl">Motoristas com Excesso</div></div>
+            <div class="slide-kpi-card"><div class="slide-kpi-val">${d.placas}</div><div class="slide-kpi-lbl">Placas com Excesso</div></div>
+            <div class="slide-kpi-card"><div class="slide-kpi-val">${d.media.toFixed(1)} km/h</div><div class="slide-kpi-lbl">Velocidade Média</div></div>
+            <div class="slide-kpi-card is-warning"><div class="slide-kpi-val">${d.max.toFixed(0)} km/h</div><div class="slide-kpi-lbl">Velocidade Máxima</div></div>
+            <div class="slide-kpi-card${d.graves > 0 ? ' is-danger' : ''}"><div class="slide-kpi-val">${d.graves}</div><div class="slide-kpi-lbl">Excessos Graves (≥90 km/h)</div></div>
+          </div>
+          <div class="slide-status-card" style="max-width:760px;width:100%;text-align:left">
+            <div class="slide-status-card-head"><i class="fas fa-chart-simple"></i> Gravidade dos Excessos — Distribuição por Faixa</div>
+            <div class="slide-status-rows">
+              ${d.faixas.map(f => `
+                <div style="display:flex;align-items:center;gap:.8rem">
+                  <span style="font-family:'Inter',sans-serif;font-size:.8rem;color:var(--text-lt);min-width:130px;text-align:left">${f.label}</span>
+                  <div style="flex:1;height:14px;border-radius:7px;background:var(--gray-100);overflow:hidden">
+                    <div style="height:100%;width:${(f.qtd/totalFaixa*100).toFixed(1)}%;background:${f.cor};border-radius:7px"></div>
+                  </div>
+                  <span style="font-weight:800;font-size:1rem;color:${f.cor};min-width:64px;text-align:right">${f.qtd} <span style="font-size:.72rem;font-weight:600;color:var(--text-lt)">(${(f.qtd/totalFaixa*100).toFixed(0)}%)</span></span>
+                </div>`).join('')}
+            </div>
+          </div>
+          <div style="margin-top:1rem;font-family:'Inter',sans-serif;font-size:.8rem;color:var(--text-lt)">
+            <i class="fas fa-arrow-right" style="color:var(--accent-dk)"></i> Continua no próximo slide: rankings de motoristas, placas e maiores velocidades
+          </div>`;
+        requestAnimationFrame(() => body.classList.add('show'));
+        slideRenderDots(slides, idx);
+        return;
+      }
+
+      // ── PARTE 2/2: rankings e maiores ocorrências ──
+      body.innerHTML = `<div class="slide-section-title">${s.title}
+          <span style="display:block;font-size:.85rem;font-weight:500;color:var(--text-lt);margin-top:.35rem">Quem, qual veículo e onde aconteceram os maiores excessos</span>
         </div>
-        ${d.ranking.length ? `<div class="slide-status-card" style="max-width:560px;width:100%;text-align:left">
-          <div class="slide-status-card-head"><i class="fas fa-ranking-star"></i> Top 5 Motoristas — Mais Ocorrências</div>
+        <div style="display:flex;gap:1rem;max-width:1180px;width:100%;flex-wrap:wrap;justify-content:center;margin-bottom:1rem">
+          ${d.ranking.length ? `<div class="slide-status-card" style="flex:1;min-width:280px;max-width:520px;text-align:left">
+            <div class="slide-status-card-head"><i class="fas fa-user-tie"></i> Motoristas — Mais Ocorrências</div>
+            <div class="slide-status-rows" style="max-height:230px;overflow-y:auto">
+              ${d.ranking.map(([nome,qtd],i) => `<div class="slide-status-row${i===0?' danger':''}"><span style="max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i+1}º ${escapeHTML(nome)}</span><span class="n">${qtd}</span></div>`).join('')}
+            </div>
+          </div>` : ''}
+          ${d.rankingPlacas.length ? `<div class="slide-status-card" style="flex:1;min-width:280px;max-width:520px;text-align:left">
+            <div class="slide-status-card-head"><i class="fas fa-truck"></i> Placas — Mais Ocorrências</div>
+            <div class="slide-status-rows" style="max-height:230px;overflow-y:auto">
+              ${d.rankingPlacas.map(([placa,qtd],i) => `<div class="slide-status-row${i===0?' danger':''}"><span>${i+1}º ${escapeHTML(placa)}</span><span class="n">${qtd}</span></div>`).join('')}
+            </div>
+          </div>` : ''}
+        </div>
+        ${d.topOcorrencias.length ? `<div class="slide-status-card" style="max-width:1180px;width:100%;text-align:left;border-left:5px solid var(--danger)">
+          <div class="slide-status-card-head"><i class="fas fa-gauge-high" style="color:var(--danger)"></i> Top 5 Maiores Velocidades Registradas</div>
           <div class="slide-status-rows">
-            ${d.ranking.map(([nome,qtd]) => `<div class="slide-status-row"><span>${escapeHTML(nome)}</span><span class="n">${qtd}</span></div>`).join('')}
+            ${d.topOcorrencias.map((o,i) => `<div class="slide-status-row">
+              <span style="max-width:72%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                <b>${i+1}º ${escapeHTML(o.placa)}</b> — ${escapeHTML(o.motorista)}
+                <span style="color:var(--text-lt);font-size:.74rem"> · ${escapeHTML(o.data)} · ${escapeHTML(o.local)}</span>
+              </span>
+              <span class="n" style="color:var(--danger)">${o.velocidade.toFixed(0)} km/h</span>
+            </div>`).join('')}
           </div>
         </div>` : ''}`;
       requestAnimationFrame(() => body.classList.add('show'));
@@ -4174,12 +4354,20 @@ function slideRender(){
       const tipo = s.type === 'consumo-melhores' ? 'melhores' : 'piores';
       const d = slideConsumoResumo();
       if (!d) {
-        if (typeof loadAbastecimentos === 'function') loadAbastecimentos({ silencioso: true });
+        // Dispara a carga da planilha de Abastecimentos e, quando terminar,
+        // re-renderiza este slide — antes ele ficava preso no spinner porque
+        // ninguém avisava a Gestão à Vista que os dados tinham chegado.
+        if (typeof loadAbastecimentos === 'function' && !_slideConsumoCarregando) {
+          _slideConsumoCarregando = true;
+          Promise.resolve(loadAbastecimentos({ silencioso: true }))
+            .then(() => { _slideConsumoCarregando = false; slideRerenderSe(['consumo-melhores','consumo-piores']); })
+            .catch(() => { _slideConsumoCarregando = false; });
+        }
         body.innerHTML = `<div class="slide-section-title">${s.title}</div>
-          <div class="slide-status-card" style="max-width:520px;width:100%;text-align:center;color:var(--text-lt)">
+          <div class="slide-status-card" style="max-width:560px;width:100%;text-align:center;color:var(--text-lt)">
             <i class="fas fa-spinner fa-spin" style="font-size:1.4rem;margin-bottom:.6rem;display:block"></i>
-            Carregando dados de consumo...<br>
-            <span style="font-size:.78rem">Acesse a aba Abastecimentos para importar os dados.</span>
+            Carregando notas de abastecimento (combustível)...<br>
+            <span style="font-size:.78rem">Fonte: planilha Controle de Consumo por Litro — aba Faturamento › Abastecimentos.</span>
           </div>`;
         requestAnimationFrame(() => body.classList.add('show'));
         slideRenderDots(slides, idx);
@@ -4194,13 +4382,18 @@ function slideRender(){
       if (!lista.length) {
         body.innerHTML = `<div class="slide-section-title">${s.title}</div>
           <div class="slide-status-card" style="max-width:520px;width:100%;text-align:center;color:var(--text-lt)">
-            Sem dados suficientes para exibir o ranking.
+            Sem abastecimentos suficientes para calcular a média de combustível.<br>
+            <span style="font-size:.78rem">É preciso ter KM percorrido e litros lançados na planilha de abastecimentos.</span>
           </div>`;
         requestAnimationFrame(() => body.classList.add('show'));
         slideRenderDots(slides, idx);
         return;
       }
-      body.innerHTML = `<div class="slide-section-title">${s.title}</div>
+      body.innerHTML = `<div class="slide-section-title">${s.title}
+          <span style="display:block;font-size:.85rem;font-weight:500;color:var(--text-lt);margin-top:.35rem">
+            Média de km por litro de diesel por cavalo mecânico — base: notas de abastecimento
+          </span>
+        </div>
         <div style="display:flex;flex-direction:column;gap:.7rem;max-width:680px;width:100%">
           ${lista.map((item, i) => `
             <div style="
@@ -4234,6 +4427,19 @@ function slideRender(){
 function slideRenderDots(slides, idx){
   const dots = document.getElementById('slideDots');
   dots.innerHTML = slides.map((_,i) => `<div class="slide-dot${i===idx?' active':''}"></div>`).join('');
+}
+
+// Re-renderiza o slide que está na tela SE ele for de um dos tipos
+// informados. Usado quando um carregamento em segundo plano termina
+// (telemetria, abastecimentos, vencimentos) e o slide ainda está
+// mostrando "Carregando..." — sem isso ele ficava travado no spinner
+// até a rotação passar por ele de novo.
+function slideRerenderSe(tipos){
+  const overlay = document.getElementById('slideOverlay');
+  if (!overlay || !overlay.classList.contains('active')) return;
+  const slides = slideBuildSlides();
+  const s = slides[slideIdx % slides.length];
+  if (s && tipos.indexOf(s.type) !== -1) slideRender();
 }
 
 function slideStartProgress(){
@@ -4270,10 +4476,16 @@ function slideUpdateClock(){
 function openSlideMode(){
   slideIdx = 0;
   // Dispara carregamentos em segundo plano
-  if (!velLoaded && typeof velInit === 'function') velInit();
-  // Garante dados de consumo (ranking km/L) mesmo sem a aba ter sido aberta
+  if (!velLoaded && typeof velInit === 'function') {
+    Promise.resolve(velInit()).then(() => slideRerenderSe(['vel-resumo','vel-resumo-2'])).catch(()=>{});
+  }
+  // Garante dados de consumo de COMBUSTÍVEL (ranking km/L) mesmo sem a aba
+  // ter sido aberta — e re-renderiza o slide quando a planilha responder.
   if ((!Array.isArray(abastAllRecords) || !abastAllRecords.length) && typeof loadAbastecimentos === 'function') {
-    loadAbastecimentos({ silencioso: true });
+    _slideConsumoCarregando = true;
+    Promise.resolve(loadAbastecimentos({ silencioso: true }))
+      .then(() => { _slideConsumoCarregando = false; slideRerenderSe(['consumo-melhores','consumo-piores']); })
+      .catch(() => { _slideConsumoCarregando = false; });
   }
 
   document.getElementById('slideOverlay').classList.add('active');
@@ -4300,9 +4512,7 @@ function openSlideMode(){
     vencInit().then(() => {
       slideRecalcularVencCounts();
       // Re-renderiza slide atual se for de vencimento
-      const slides = slideBuildSlides();
-      const s = slides[slideIdx % slides.length];
-      if (s && s.type === 'venc-single') slideRender();
+      slideRerenderSe(['venc-single']);
     }).catch(() => {});
   }
 }
