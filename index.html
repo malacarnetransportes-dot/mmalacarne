@@ -15411,12 +15411,31 @@ async function diaSyncFromSheets() {
 // MODO TV — link ?tv=1 + modal de geração de link
 // ═══════════════════════════════════════════════════════════
 
-// ── Gera URL com ?tv=1 a partir da URL atual ──
+// ── Gera URL com ?tv=1 + todas as URLs configuradas embutidas ──
+// Assim a TV abre o link e já sabe de onde buscar os dados, sem precisar de login.
 function tvBuildUrl() {
   const u = new URL(window.location.href);
   u.searchParams.set('tv', '1');
-  // remove hash para garantir carregamento limpo
   u.hash = '';
+
+  // Embutir URLs configuradas (do localStorage / variáveis globais)
+  const pairs = [
+    ['fin',    typeof URL_FIN    !== 'undefined' ? URL_FIN    : (localStorage.getItem('urlFinanceiro')  || '')],
+    ['bat',    typeof URL_BAT    !== 'undefined' ? URL_BAT    : (localStorage.getItem('urlBaterias')    || '')],
+    ['fat',    typeof URL_FAT    !== 'undefined' ? URL_FAT    : (localStorage.getItem('urlFaturamento') || '')],
+    ['agenda', typeof URL_AGENDA !== 'undefined' ? URL_AGENDA : (localStorage.getItem('urlAgenda')      || '')],
+    ['abastCsv',    localStorage.getItem('urlAbastecimentosCsv')    || ''],
+    ['abastWebApp', localStorage.getItem('urlAbastecimentosWebApp') || ''],
+    ['pneuDoc',     localStorage.getItem('pneu_doc_url')            || ''],
+    ['checklist',   localStorage.getItem('url_checklist')           || ''],
+  ];
+  if (typeof VENC_CATEGORIAS !== 'undefined') {
+    VENC_CATEGORIAS.forEach(function(cat) {
+      var v = localStorage.getItem('url_venc_' + cat.key) || '';
+      if (v) u.searchParams.set('venc_' + cat.key, v);
+    });
+  }
+  pairs.forEach(function(pair) { if (pair[1]) u.searchParams.set(pair[0], pair[1]); });
   return u.toString();
 }
 
@@ -15468,39 +15487,65 @@ document.getElementById('tvBtnOpen').addEventListener('click', function() {
   const params = new URLSearchParams(window.location.search);
   if (params.get('tv') !== '1') return;
 
-  // Aguarda o DOM e os dados estarem prontos antes de disparar o slideshow
   document.body.classList.add('tv-kiosk-mode');
 
-  // Ocultar cursor após 5s de inatividade (ideal para TV)
-  let cursorTimer;
+  // ── Restaurar URLs embutidas no link para o localStorage da TV ──
+  // Isso permite que a TV busque os dados sem precisar de login manual.
+  const tvUrlMap = [
+    ['fin',          'urlFinanceiro'],
+    ['bat',          'urlBaterias'],
+    ['fat',          'urlFaturamento'],
+    ['agenda',       'urlAgenda'],
+    ['abastCsv',     'urlAbastecimentosCsv'],
+    ['abastWebApp',  'urlAbastecimentosWebApp'],
+    ['pneuDoc',      'pneu_doc_url'],
+    ['checklist',    'url_checklist'],
+  ];
+  tvUrlMap.forEach(function(pair) {
+    var v = params.get(pair[0]);
+    if (v) localStorage.setItem(pair[1], v);
+  });
+  // Vencimentos por categoria
+  params.forEach(function(v, k) {
+    if (k.startsWith('venc_') && v) localStorage.setItem('url_' + k, v);
+  });
+  // Atualizar variáveis globais já inicializadas com os valores do localStorage
+  if (params.get('fin'))   { try { URL_FIN    = params.get('fin');   } catch(e){} }
+  if (params.get('bat'))   { try { URL_BAT    = params.get('bat');   } catch(e){} }
+  if (params.get('fat'))   { try { URL_FAT    = params.get('fat');   } catch(e){} }
+  if (params.get('agenda')){ try { URL_AGENDA = params.get('agenda');} catch(e){} }
+
+  // Ocultar cursor após 5s de inatividade
+  var cursorTimer;
   function tvResetCursor() {
     document.body.classList.remove('tv-hide-cursor');
     clearTimeout(cursorTimer);
-    cursorTimer = setTimeout(() => document.body.classList.add('tv-hide-cursor'), 5000);
+    cursorTimer = setTimeout(function(){ document.body.classList.add('tv-hide-cursor'); }, 5000);
   }
-  ['mousemove','mousedown','keydown','touchstart'].forEach(ev =>
-    document.addEventListener(ev, tvResetCursor, {passive:true})
-  );
+  ['mousemove','mousedown','keydown','touchstart'].forEach(function(ev) {
+    document.addEventListener(ev, tvResetCursor, {passive:true});
+  });
   tvResetCursor();
 
-  // Iniciar slideshow assim que possível
+  // Iniciar slideshow: aguarda dados carregarem antes de abrir
   function tvLaunch() {
-    if (typeof openSlideMode === 'function') {
-      openSlideMode();
-      // Em modo TV não permite fechar com Esc
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') e.stopImmediatePropagation();
-      }, true);
+    if (typeof openSlideMode !== 'function') { setTimeout(tvLaunch, 300); return; }
+    // Dispara carregamento dos dados com as URLs restauradas
+    if (typeof refreshAllData === 'function') {
+      refreshAllData().then(function(){ openSlideMode(); }).catch(function(){ openSlideMode(); });
     } else {
-      setTimeout(tvLaunch, 300);
+      openSlideMode();
     }
+    // Em modo TV não permite fechar com Esc
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') e.stopImmediatePropagation();
+    }, true);
   }
 
-  // Aguarda evento DOMContentLoaded + pequeno delay para scripts inicializarem
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => setTimeout(tvLaunch, 800));
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(tvLaunch, 900); });
   } else {
-    setTimeout(tvLaunch, 800);
+    setTimeout(tvLaunch, 900);
   }
 })();
 
