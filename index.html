@@ -8991,7 +8991,6 @@ function abastCols(headers) {
     hora:         findCol(headers, ['hora']),
     placa:        findCol(headers, ['placa']),
     km:           findCol(headers, ['km']),
-    kmPercorrido: findCol(headers, ['km_percorrido', 'km percorrido', 'km_perc', 'percorrido']),
     qtd:          findCol(headers, ['quantidade', 'litros', 'qtd']),
     orig:         findCol(headers, ['original', 'valor original', 'v. total', 'v total', 'vtotal', 'valor']),
     comb:         findCol(headers, ['combustivel', 'descricao do produto', 'descricao produto', 'descricao', 'produto/servico', 'produto servico', 'desc']),
@@ -9036,14 +9035,12 @@ async function loadAbastecimentos(opts) {
 
   abastAllRecords = rows.filter(r => r[A.placa]).map(r => {
     const dataObj      = A.data ? parseDate(r[A.data]) : null;
-    const litros       = A.qtd          ? parseMoney(r[A.qtd])          : 0;
-    const kmPercorrido = A.kmPercorrido ? parseMoney(r[A.kmPercorrido]) : 0;
-    const kmBruto      = A.km           ? parseMoney(r[A.km])           : 0;
-    // A média (km/L) só pode ser calculada a partir do KM_PERCORRIDO (delta
-    // entre abastecimentos consecutivos da mesma placa, calculado pelo Apps
-    // Script). Usar o KM bruto (odômetro absoluto) aqui geraria uma média
-    // sem sentido — por isso NÃO há mais fallback para o KM bruto.
-    const media = (kmPercorrido > 0 && litros > 0) ? kmPercorrido / litros : 0;
+    const litros       = A.qtd ? parseMoney(r[A.qtd]) : 0;
+    const kmBruto      = A.km  ? parseMoney(r[A.km])  : 0;
+    // kmPercorrido e media são calculados pelo dashboard após carregar todos
+    // os registros, ordenando por placa + data/hora (ver bloco abaixo do map).
+    const kmPercorrido = 0;
+    const media        = 0;
 
     // Cruza a placa da nota com o cadastro de Frota/Motoristas (mesma base
     // usada nas outras abas do sistema) — em vez de confiar só no texto
@@ -9092,6 +9089,50 @@ async function loadAbastecimentos(opts) {
       cpf:          A.cpf   ? String(r[A.cpf]   || '').trim() : '',
       _fonte:       'abastecimento'
     };
+  });
+
+  // ── Calcula kmPercorrido (delta entre abastecimentos consecutivos da mesma
+  //    placa) e a média km/L aqui no dashboard, sem depender de coluna na
+  //    planilha. Agrupa por placa normalizada, ordena por data+hora real e
+  //    subtrai o KM bruto (odômetro) do registro anterior da mesma placa.
+  //    Registros sem KM válido são pulados sem quebrar a sequência. ────────
+  const MAX_KM_DELTA_DASH = 4000; // salto implausível entre abastecimentos
+  const _porPlaca = {};
+  abastAllRecords.forEach((rec, idx) => {
+    const pnorm = (rec.placaCavalo || rec.placaCarreta || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (!pnorm) return;
+    if (!_porPlaca[pnorm]) _porPlaca[pnorm] = [];
+    _porPlaca[pnorm].push(idx);
+  });
+  Object.values(_porPlaca).forEach(indices => {
+    // ordena pelo timestamp real (data + hora) para garantir sequência correta
+    indices.sort((a, b) => {
+      const ra = abastAllRecords[a], rb = abastAllRecords[b];
+      const da = ra.data ? ra.data.getTime() : 0;
+      const db = rb.data ? rb.data.getTime() : 0;
+      if (da !== db) return da - db;
+      const ha = String(ra.hora || '').replace(':', '');
+      const hb = String(rb.hora || '').replace(':', '');
+      return ha.localeCompare(hb);
+    });
+    let ultimoKm = 0;
+    indices.forEach(idx => {
+      const rec = abastAllRecords[idx];
+      const km  = rec.km || 0;
+      if (km > 0) {
+        if (ultimoKm > 0) {
+          const delta = km - ultimoKm;
+          if (delta > 0 && delta <= MAX_KM_DELTA_DASH) {
+            rec.kmPercorrido = delta;
+            const litros = rec.litrosCavalo || rec.litrosCarreta || 0;
+            const media  = litros > 0 ? delta / litros : 0;
+            if (rec.litrosCavalo > 0) rec.mediaCavalo  = media;
+            else                      rec.mediaCarreta = media;
+          }
+        }
+        ultimoKm = km;
+      }
+    });
   });
 
   fatcPopularFiltros();
