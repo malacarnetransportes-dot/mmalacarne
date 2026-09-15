@@ -3910,32 +3910,35 @@ async function slideRenderWeather(body, s, slides, idx) {
 }
 
 // ── Resumo de Consumo de Cavalos para o slide ──
-// Lê diretamente os li's já renderizados na aba de Consumo/Abastecimentos.
-// Se a aba ainda não foi aberta, retorna null (slide mostrará estado de espera).
+// Calcula direto de abastAllRecords (mesmo dado da aba de Abastecimentos),
+// sem depender de a sub-aba ter sido aberta pelo usuário.
 function slideConsumoResumo() {
-  const elMelh = document.getElementById('fatRankMelhoresCavalo');
-  const elPior = document.getElementById('fatRankPioresCavalo');
-  if (!elMelh || !elPior) return null;
+  if (!Array.isArray(abastAllRecords) || !abastAllRecords.length) return null;
 
-  function parseItems(ul) {
-    return [...ul.querySelectorAll('li')].map(li => {
-      const spans = li.querySelectorAll('span');
-      if (!spans.length) return null;
-      // primeiro span: "PLACA (Motorista)" — segundo span (dentro do primeiro ou separado): valor
-      const texto = spans[0]?.textContent || '';
-      const valor = spans[spans.length - 1]?.textContent?.trim() || '';
-      // Extrai placa e motorista do texto
-      const m = texto.match(/^([^\(]+)\(([^\)]*)\)/);
-      const placa     = m ? m[1].trim() : texto.trim();
-      const motorista = m ? m[2].trim() : '—';
-      if (!valor || valor === texto) return null;
-      return { placa, motorista, valor };
-    }).filter(Boolean);
-  }
+  const fmtKmL = v => v ? v.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + ' km/L' : '—';
 
-  const melhores = parseItems(elMelh);
-  const piores   = parseItems(elPior);
-  if (!melhores.length && !piores.length) return null;
+  // Agrupa por placa de CAVALO (mesma lógica de loadAbastecimentos)
+  const cavMap = {};
+  abastAllRecords.forEach(r => {
+    const p = normalizaPlaca(r.placaCavalo);
+    if (!p) return;
+    if (!cavMap[p]) cavMap[p] = { placa: r.placaCavalo, medias: [], motoristas: new Set() };
+    if (r.mediaCavalo > 0) cavMap[p].medias.push(r.mediaCavalo);
+    if (r.motorista) cavMap[p].motoristas.add(r.motorista);
+  });
+  const cavArr = Object.values(cavMap).map(v => ({
+    placa:     v.placa,
+    media:     v.medias.length ? v.medias.reduce((a, b) => a + b, 0) / v.medias.length : 0,
+    motorista: [...v.motoristas].join(', ') || '—',
+  })).filter(v => v.media > 0).sort((a, b) => b.media - a.media);
+
+  if (!cavArr.length) return null;
+
+  const top5CavSet = new Set(cavArr.slice(0, 5).map(v => normalizaPlaca(v.placa)));
+  const melhores = cavArr.slice(0, 5).map(v => ({ placa: v.placa, motorista: v.motorista, valor: fmtKmL(v.media) }));
+  const piores   = [...cavArr].reverse().filter(v => !top5CavSet.has(normalizaPlaca(v.placa))).slice(0, 5)
+                              .map(v => ({ placa: v.placa, motorista: v.motorista, valor: fmtKmL(v.media) }));
+
   return { melhores, piores };
 }
 
@@ -4268,6 +4271,10 @@ function openSlideMode(){
   slideIdx = 0;
   // Dispara carregamentos em segundo plano
   if (!velLoaded && typeof velInit === 'function') velInit();
+  // Garante dados de consumo (ranking km/L) mesmo sem a aba ter sido aberta
+  if ((!Array.isArray(abastAllRecords) || !abastAllRecords.length) && typeof loadAbastecimentos === 'function') {
+    loadAbastecimentos({ silencioso: true });
+  }
 
   document.getElementById('slideOverlay').classList.add('active');
   document.getElementById('slideBody').classList.remove('show');
@@ -10066,9 +10073,17 @@ function slideRecalcularVencCounts(){
     let vencidos = 0, proximos = 0, ok = 0;
     rows.forEach(row => {
       const { d, status } = vencCalcularStatusLinha(row, cat, headers, colId, colData, colSituacao, formato, now, em30);
-      if (status === 'vencido') { vencidos++; vencAlertasAtuais.push({ categoria: cat.label, catKey: cat.key, icon: cat.icon, id: colId ? (row[colId] || '—') : '—', data: d, vencido: true }); }
-      else if (status === 'proximo') { proximos++; vencAlertasAtuais.push({ categoria: cat.label, catKey: cat.key, icon: cat.icon, id: colId ? (row[colId] || '—') : '—', data: d, vencido: false }); }
-      else ok++;
+      // Só conta como "em dia" se há uma data válida e não está vencida/próxima
+      if (status === 'vencido') {
+        vencidos++;
+        vencAlertasAtuais.push({ categoria: cat.label, catKey: cat.key, icon: cat.icon, id: colId ? (row[colId] || '—') : '—', data: d, vencido: true });
+      } else if (status === 'proximo') {
+        proximos++;
+        vencAlertasAtuais.push({ categoria: cat.label, catKey: cat.key, icon: cat.icon, id: colId ? (row[colId] || '—') : '—', data: d, vencido: false });
+      } else if (d) {
+        // status === 'ok' mas só conta se a data foi encontrada
+        ok++;
+      }
     });
     vencCounts[cat.key] = { vencidos, proximos, ok };
   });
