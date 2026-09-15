@@ -8908,7 +8908,11 @@ function fatRenderConsumo(records) {
             <td>${fmtR(r.valorOriginal)}</td>
             <td>${escapeHTML(r.combustivel || '—')}</td>
             <td>${escapeHTML(r.posto || '—')}</td>
-            <td style="font-size:.75rem">${escapeHTML(r.cupom || r.nf || '—')}</td>
+            <td style="font-size:.75rem;line-height:1.35">${
+              r.nf
+                ? `<span style="font-weight:700">NF ${escapeHTML(r.nf)}</span>` + (r.cupom && r.cupom !== r.nf ? `<br><span style="color:var(--text-lt)">Cupom ${escapeHTML(r.cupom)}</span>` : '')
+                : (r.cupom ? `Cupom ${escapeHTML(r.cupom)}` : '—')
+            }</td>
             <td style="${corMedia}">${media}</td>
           </tr>`;
         }).join('')
@@ -8950,8 +8954,15 @@ let fatcFiltered = []; // registros após os filtros desta sub-aba
 // partir das notas fiscais (PDF) de abastecimento lançadas na pasta do Drive.
 // Publicada em Arquivo → Compartilhar → Publicar na Web → CSV.
 const DEFAULT_ABASTECIMENTOS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTcOHj4xU52hnDoRjXtTP-5JGOM5nleWQ5q_jNTWhRQJee_jKHBKayvgZIHe0MHf3xsmNEA4XLDTUJx/pub?output=csv";
-const DEFAULT_WEBAPP_ABAST_URL = "https://script.google.com/macros/s/AKfycbwCPQdtxg7CM_HnQDM781UtKvrOpik9UNBazkXNVGo92lSw06VSq1kP4Vyg3KnbznQ/exec";
+const DEFAULT_WEBAPP_ABAST_URL = "https://script.google.com/macros/s/AKfycbxwRggVMrmBO2apnwA-zxiLVLibkMZJxLr8tNHZkpzE3P-VTlrWgQd0_c4IL8MwFgEe/exec";
 let ABASTECIMENTOS_CSV_URL = localStorage.getItem("urlAbastecimentosCsv") || DEFAULT_ABASTECIMENTOS_CSV_URL;
+// Migração automática: se o navegador tinha salva a URL antiga do Web App
+// (versão anterior, com bugs), descarta e usa a nova URL embutida acima —
+// assim não é preciso abrir o modal de configuração e trocar na mão.
+const URL_WEBAPP_ANTIGA = "https://script.google.com/macros/s/AKfycbwZ9kDLD-RwNN6xGxMq6i77j1PSgs1NQrrgyVgKKmlCxMYKk_jb9tHPhjWpU8ctvBOJ/exec";
+if (localStorage.getItem("urlAbastecimentosWebApp") === URL_WEBAPP_ANTIGA) {
+  localStorage.removeItem("urlAbastecimentosWebApp");
+}
 let WEBAPP_ABAST_URL = localStorage.getItem("urlAbastecimentosWebApp") || DEFAULT_WEBAPP_ABAST_URL;
 let   abastAllRecords         = [];  // registros vindos da planilha ABASTECIMENTOS
 let   abastAutoRefreshTimer   = null;
