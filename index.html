@@ -4266,10 +4266,9 @@ function slideUpdateClock(){
 
 function openSlideMode(){
   slideIdx = 0;
-  // Dispara o carregamento da telemetria de velocidade em segundo plano
-  // assim que o painel abre, para o slide de Controle de Velocidade já
-  // ter dados prontos quando a rotação chegar nele.
+  // Dispara carregamentos em segundo plano
   if (!velLoaded && typeof velInit === 'function') velInit();
+
   document.getElementById('slideOverlay').classList.add('active');
   document.getElementById('slideBody').classList.remove('show');
   slideRender();
@@ -4279,6 +4278,25 @@ function openSlideMode(){
   slideClockTimer = setInterval(slideUpdateClock, 1000);
   if (document.documentElement.requestFullscreen) {
     document.documentElement.requestFullscreen().catch(()=>{});
+  }
+
+  // Garante que vencimentos estejam carregados e vencCounts atualizado.
+  // Se vencData ainda está vazio (aba nunca aberta), dispara vencInit();
+  // quando terminar chama slideRecalcularVencCounts() e re-renderiza o
+  // slide atual caso seja de vencimento — assim os dados são sempre reais.
+  const vencJaCarregado = typeof vencData !== 'undefined' &&
+    Object.values(vencData).some(arr => Array.isArray(arr) && arr.length > 0);
+  if (vencJaCarregado) {
+    // Dados já existem mas vencCounts pode estar zerado (aba não foi aberta)
+    slideRecalcularVencCounts();
+  } else if (typeof vencInit === 'function') {
+    vencInit().then(() => {
+      slideRecalcularVencCounts();
+      // Re-renderiza slide atual se for de vencimento
+      const slides = slideBuildSlides();
+      const s = slides[slideIdx % slides.length];
+      if (s && s.type === 'venc-single') slideRender();
+    }).catch(() => {});
   }
 }
 
@@ -10024,6 +10042,35 @@ function vencRecalcularTodosOsAlertas(){
         vencAlertasAtuais.push({ categoria: cat.label, catKey: cat.key, icon: cat.icon, id: colId ? (row[colId] || '—') : '—', data: d, vencido: status === 'vencido' });
       }
     });
+  });
+}
+
+// Recalcula vencCounts E vencAlertasAtuais a partir de vencData —
+// usado pela Gestão à Vista para exibir dados reais sem depender de
+// a aba Vencimentos ter sido aberta pelo usuário.
+function slideRecalcularVencCounts(){
+  vencAlertasAtuais = [];
+  const now = new Date(); now.setHours(0,0,0,0);
+  const em30 = new Date(now); em30.setDate(em30.getDate() + 30);
+  VENC_CATEGORIAS.forEach(cat => {
+    const rows = vencData[cat.key] || [];
+    if (!rows.length) { vencCounts[cat.key] = { vencidos:0, proximos:0, ok:0 }; return; }
+    const headers = Object.keys(rows[0]);
+    const colId = findCol(headers, ['placa','veiculo','motorista','nome','funcionario','colaborador']);
+    const colDataCandidatos = cat.key === 'licenciamento'
+      ? findColCandidates(headers, ['vencimento','validade','vcto','venc','jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez','situacao','sit.','sit ','data'])
+      : findColCandidates(headers, ['vencimento','vcto','validade','venc','data']);
+    const colData = vencMelhorColunaData(rows, headers, colDataCandidatos);
+    const colSituacao = cat.key === 'licenciamento' ? findCol(headers, ['situacao','sit.','sit ']) : null;
+    const formato = vencDetectarFormato(rows, colData);
+    let vencidos = 0, proximos = 0, ok = 0;
+    rows.forEach(row => {
+      const { d, status } = vencCalcularStatusLinha(row, cat, headers, colId, colData, colSituacao, formato, now, em30);
+      if (status === 'vencido') { vencidos++; vencAlertasAtuais.push({ categoria: cat.label, catKey: cat.key, icon: cat.icon, id: colId ? (row[colId] || '—') : '—', data: d, vencido: true }); }
+      else if (status === 'proximo') { proximos++; vencAlertasAtuais.push({ categoria: cat.label, catKey: cat.key, icon: cat.icon, id: colId ? (row[colId] || '—') : '—', data: d, vencido: false }); }
+      else ok++;
+    });
+    vencCounts[cat.key] = { vencidos, proximos, ok };
   });
 }
 
