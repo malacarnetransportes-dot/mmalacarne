@@ -1093,6 +1093,7 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
           <div class="dash-card">
             <div class="dash-card-title" style="margin-bottom:.75rem"><i class="fas fa-sliders-h"></i> Filtros</div>
             <div class="filters-bar">
+              <div class="flt-grp"><label>Mês</label><select id="crMes" onchange="applyCRFilters()"><option value="">Todos os Meses</option></select></div>
               <div class="flt-grp"><label>Motorista</label><select id="crMotorista" onchange="applyCRFilters()"><option value="">Todos</option></select></div>
               <div class="flt-grp"><label>Placa</label><input type="text" id="crPlaca" placeholder="Ex: RYE7J26" oninput="applyCRFilters()"></div>
               <div class="flt-grp"><label>Cliente</label><select id="crCliente" onchange="applyCRFilters()"><option value="">Todos</option></select></div>
@@ -1111,9 +1112,9 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
             </div>
           </div>
 
-          <!-- Card Resumo -->
+          <!-- Card Resumo / Card Inicial (mês corrente por padrão) -->
           <div class="dash-card" id="crResumoCard" style="display:none">
-            <div class="dash-card-title" style="margin-bottom:.75rem"><i class="fas fa-clipboard-list"></i> Resumo do Período Filtrado</div>
+            <div class="dash-card-title" style="margin-bottom:.75rem"><i class="fas fa-clipboard-list"></i> <span id="crResumoTitulo">Resumo do Mês</span></div>
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem" id="crResumoGrid">
               <div style="background:var(--surface-dk);border-radius:8px;padding:.85rem 1rem">
                 <div style="font-size:.7rem;color:var(--text-lt);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.3rem">Frete Valor (Receita)</div>
@@ -5940,6 +5941,20 @@ let currentCRFiltered = [];
 let crChartClienteObj = null;
 window.crReceitaTotal = 0;
 
+const CR_MESES_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+function crMonthKey(d) {
+  if (!d) return '';
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+function crMonthKeyAtual() {
+  return crMonthKey(new Date());
+}
+function crMonthLabel(key) {
+  if (!key) return '';
+  const [y, m] = key.split('-');
+  return CR_MESES_PT[(+m) - 1] + '/' + y;
+}
+
 function crCols(headers) {
   return {
     descr:        findCol(headers, ['descr', 'tipo', 'natureza', 'servico', 'referencia', 'ref']),
@@ -5983,11 +5998,15 @@ function crPopularFiltros(rows) {
   if (!rows.length) return;
   const headers = Object.keys(rows[0]);
   const C = crCols(headers);
-  const motoristas = new Set(), clientes = new Set(), tipos = new Set();
+  const motoristas = new Set(), clientes = new Set(), tipos = new Set(), meses = new Set();
   rows.forEach(r => {
     if (C.mot && r[C.mot]) motoristas.add(String(r[C.mot]).trim());
     if (C.cliente && r[C.cliente]) clientes.add(String(r[C.cliente]).trim());
     if (C.descr && r[C.descr]) tipos.add(String(r[C.descr]).trim());
+    if (C.dataEmissao) {
+      const d = parseDate(r[C.dataEmissao]);
+      if (d) meses.add(crMonthKey(d));
+    }
   });
   const fill = (id, set) => {
     const sel = document.getElementById(id);
@@ -5999,6 +6018,29 @@ function crPopularFiltros(rows) {
   fill('crMotorista', motoristas);
   fill('crCliente', clientes);
   fill('crTipo', tipos);
+
+  // Filtro de Mês: sempre garante o mês corrente como opção (mesmo sem
+  // lançamentos ainda) e, na primeira carga, deixa o mês corrente
+  // pré-selecionado para já abrir o card inicial com os dados do mês atual.
+  const mesSel = document.getElementById('crMes');
+  if (mesSel) {
+    const mesAtual = crMonthKeyAtual();
+    meses.add(mesAtual);
+    const atual = mesSel.value;
+    const jaEscolhido = mesSel.dataset.userSet === '1';
+    const ordenados = [...meses].sort().reverse();
+    mesSel.innerHTML = '<option value="">Todos os Meses</option>' +
+      ordenados.map(k => `<option value="${k}">${crMonthLabel(k)}</option>`).join('');
+    if (jaEscolhido && ordenados.includes(atual)) {
+      mesSel.value = atual;
+    } else if (!jaEscolhido) {
+      mesSel.value = mesAtual;
+    }
+    if (!mesSel.dataset.bound) {
+      mesSel.addEventListener('change', () => { mesSel.dataset.userSet = '1'; });
+      mesSel.dataset.bound = '1';
+    }
+  }
 }
 
 function applyCRFilters() {
@@ -6028,6 +6070,7 @@ function applyCRFilters() {
     return;
   }
 
+  const fMes     = (document.getElementById('crMes') || {}).value || '';
   const fMot     = (document.getElementById('crMotorista') || {}).value || '';
   const fPlaca   = ((document.getElementById('crPlaca') || {}).value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
   const fCliente = (document.getElementById('crCliente') || {}).value || '';
@@ -6039,6 +6082,10 @@ function applyCRFilters() {
   const dpFim    = (document.getElementById('crDataPgtoFim') || {}).value;
 
   const filtered = contasReceberData.filter(row => {
+    if (fMes && C.dataEmissao) {
+      const d = parseDate(row[C.dataEmissao]);
+      if (!d || crMonthKey(d) !== fMes) return false;
+    }
     if (fMot && C.mot && String(row[C.mot] || '').trim() !== fMot) return false;
     if (fCliente && C.cliente && String(row[C.cliente] || '').trim() !== fCliente) return false;
     if (fTipo && C.descr && String(row[C.descr] || '').trim() !== fTipo) return false;
@@ -6173,10 +6220,16 @@ function applyCRFilters() {
     }).join('');
   }
 
-  // Card Resumo
+  // Card Resumo / Card Inicial — fica sempre visível (mesmo sem
+  // lançamentos no período) para mostrar de cara a situação do mês
+  // selecionado, com título dinâmico conforme o filtro de Mês.
   const resumoCard = document.getElementById('crResumoCard');
   if (resumoCard) {
-    resumoCard.style.display = filtered.length ? '' : 'none';
+    resumoCard.style.display = '';
+    const tituloEl = document.getElementById('crResumoTitulo');
+    if (tituloEl) {
+      tituloEl.textContent = fMes ? `Resumo do Mês — ${crMonthLabel(fMes)}` : 'Resumo do Período Filtrado';
+    }
     const totalFV = filtered.reduce((s,r) => s + parseMoney(r[C.freteValor]||''), 0);
     const totalFR = filtered.reduce((s,r) => s + parseMoney(r[C.freteReceber]||''), 0);
     const totalIC = C.icms ? filtered.reduce((s,r) => s + parseMoney(r[C.icms]||''), 0) : 0;
@@ -6259,6 +6312,9 @@ function resetCRFilters() {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
+  // "Limpar" volta o filtro de Mês para "Todos os Meses" (visão geral).
+  const mesSel = document.getElementById('crMes');
+  if (mesSel) { mesSel.value = ''; mesSel.dataset.userSet = '1'; }
   applyCRFilters();
 }
 
