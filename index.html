@@ -1144,8 +1144,8 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
           </div>
 
           <div class="dash-grid-2col">
-            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-crown"></i> Ranking por Cliente</div><ol class="rank-list" id="crRankCliente"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
-            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-id-card"></i> Ranking por Motorista</div><ol class="rank-list" id="crRankMotorista"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
+            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-crown"></i> Ranking por Cliente <span id="crRankClientePeriodo" style="font-weight:400;color:var(--text-lt);font-size:.72rem;margin-left:.4rem"></span></div><ol class="rank-list" id="crRankCliente"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
+            <div class="dash-card"><div class="dash-card-title"><i class="fas fa-id-card"></i> Ranking por Motorista <span id="crRankMotoristaPeriodo" style="font-weight:400;color:var(--text-lt);font-size:.72rem;margin-left:.4rem"></span></div><ol class="rank-list" id="crRankMotorista"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
           </div>
 
           <div class="dash-card">
@@ -1250,6 +1250,28 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
               <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-hourglass-half"></i></div><div><div class="kpi-val" id="fcx-7dias">R$ —</div><div class="kpi-lbl">A Vencer (7 dias)</div></div></div>
               <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-calendar-days"></i></div><div><div class="kpi-val" id="fcx-30dias">R$ —</div><div class="kpi-lbl">A Vencer (30 dias)</div></div></div>
               <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-sack-dollar"></i></div><div><div class="kpi-val" id="fcx-total">R$ —</div><div class="kpi-lbl">Total a Receber (filtrado)</div></div></div>
+            </div>
+
+            <div style="font-size:.76rem;color:var(--text-lt);margin:-.4rem 0 .8rem" id="fcxPeriodoApurado"></div>
+
+            <div class="dash-card">
+              <div class="dash-card-title"><i class="fas fa-user-clock"></i> Vencidos — Quem Está em Atraso <span id="fcxVencidosCount" style="font-weight:400;color:var(--text-lt);font-size:.75rem"></span></div>
+              <div class="tbl-wrap">
+                <table class="data-table">
+                  <thead><tr><th>Cliente</th><th>Motorista</th><th>Placa</th><th>CTE</th><th>Vencimento</th><th>Dias em Atraso</th><th>Valor</th></tr></thead>
+                  <tbody id="fcxTableVencidosBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="dash-card">
+              <div class="dash-card-title"><i class="fas fa-hourglass-half"></i> Próximos a Vencer — 30 dias <span id="fcxProximos30Count" style="font-weight:400;color:var(--text-lt);font-size:.75rem"></span></div>
+              <div class="tbl-wrap">
+                <table class="data-table">
+                  <thead><tr><th>Cliente</th><th>Motorista</th><th>Placa</th><th>CTE</th><th>Vencimento</th><th>Dias até Vencer</th><th>Valor</th></tr></thead>
+                  <tbody id="fcxTableProximos30Body"></tbody>
+                </table>
+              </div>
             </div>
 
             <div class="dash-card">
@@ -6112,6 +6134,29 @@ function applyCRFilters() {
 
   currentCRFiltered = filtered;
 
+  // Período apurado (com base na Data de Emissão dos lançamentos filtrados) —
+  // usado como legenda nos rankings, para deixar claro qual intervalo de
+  // datas está sendo somado ali.
+  let crPeriodoLabel = 'Sem dados no período';
+  if (C.dataEmissao) {
+    let pMin = null, pMax = null;
+    filtered.forEach(row => {
+      const d = parseDate(row[C.dataEmissao]);
+      if (!d) return;
+      if (!pMin || d < pMin) pMin = d;
+      if (!pMax || d > pMax) pMax = d;
+    });
+    if (pMin && pMax) {
+      crPeriodoLabel = (pMin.getTime() === pMax.getTime())
+        ? `Período apurado: ${fmtDate(pMin)}`
+        : `Período apurado: ${fmtDate(pMin)} a ${fmtDate(pMax)}`;
+    }
+  }
+  ['crRankClientePeriodo', 'crRankMotoristaPeriodo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = filtered.length ? `(${crPeriodoLabel.replace('Período apurado: ', '')})` : '';
+  });
+
   // KPIs
   let totalFreteValor = 0, totalFreteReceber = 0, totalIcms = 0;
   filtered.forEach(row => {
@@ -6670,6 +6715,68 @@ function fcxRender() {
   document.getElementById('fcx-30dias').textContent = fmtMoney(total30);
   document.getElementById('fcx-total').textContent = fmtMoney(totalGeral);
   document.getElementById('fcx-registros').textContent = rows.length;
+
+  // Período apurado (com base na Data de Emissão dos lançamentos filtrados) —
+  // deixa claro qual intervalo de datas embasa os números do Fluxo de Caixa.
+  const periodoEl = document.getElementById('fcxPeriodoApurado');
+  if (periodoEl) {
+    let pMin = null, pMax = null;
+    rows.forEach(({ r }) => {
+      const de = C.dataEmissao ? parseDate(r[C.dataEmissao]) : null;
+      if (!de) return;
+      if (!pMin || de < pMin) pMin = de;
+      if (!pMax || de > pMax) pMax = de;
+    });
+    periodoEl.innerHTML = pMin && pMax
+      ? `<i class="fas fa-calendar-check"></i> Período apurado: <b>${fmtDate(pMin)} a ${fmtDate(pMax)}</b> · ${rows.length} lançamento(s)`
+      : '';
+  }
+
+  // Vencidos — quem está em atraso (Cliente / Motorista / Placa)
+  const vencidosLista = rows.filter(x => x.d < hoje)
+    .sort((a, b) => a.d - b.d); // mais antigo (mais crítico) primeiro
+  const vencCountEl = document.getElementById('fcxVencidosCount');
+  if (vencCountEl) vencCountEl.textContent = vencidosLista.length ? `(${vencidosLista.length})` : '';
+  const vencBody = document.getElementById('fcxTableVencidosBody');
+  if (vencBody) {
+    vencBody.innerHTML = vencidosLista.length
+      ? vencidosLista.map(({ r, d, valor }) => {
+          const diasAtraso = Math.round((hoje - d) / 86400000);
+          return `<tr>
+            <td>${C.cliente ? (r[C.cliente] || '—') : '—'}</td>
+            <td>${C.mot ? (r[C.mot] || '—') : '—'}</td>
+            <td>${C.placaCv ? (r[C.placaCv] || '—') : '—'}</td>
+            <td>${C.cte ? (r[C.cte] || '—') : '—'}</td>
+            <td>${fmtDate(d)}</td>
+            <td style="color:var(--danger);font-weight:700">${diasAtraso}d</td>
+            <td style="font-weight:700;color:var(--danger)">${fmtMoney(valor)}</td>
+          </tr>`;
+        }).join('')
+      : '<tr><td colspan="7" style="text-align:center;color:var(--text-lt)">Nenhum lançamento vencido — tudo em dia!</td></tr>';
+  }
+
+  // Próximos a Vencer — 30 dias (Cliente / Motorista / Placa)
+  const proximos30Lista = rows.filter(x => x.d >= hoje && x.d <= em30)
+    .sort((a, b) => a.d - b.d); // mais próximo primeiro
+  const prox30CountEl = document.getElementById('fcxProximos30Count');
+  if (prox30CountEl) prox30CountEl.textContent = proximos30Lista.length ? `(${proximos30Lista.length})` : '';
+  const prox30Body = document.getElementById('fcxTableProximos30Body');
+  if (prox30Body) {
+    prox30Body.innerHTML = proximos30Lista.length
+      ? proximos30Lista.map(({ r, d, valor }) => {
+          const diasAte = Math.round((d - hoje) / 86400000);
+          return `<tr>
+            <td>${C.cliente ? (r[C.cliente] || '—') : '—'}</td>
+            <td>${C.mot ? (r[C.mot] || '—') : '—'}</td>
+            <td>${C.placaCv ? (r[C.placaCv] || '—') : '—'}</td>
+            <td>${C.cte ? (r[C.cte] || '—') : '—'}</td>
+            <td>${fmtDate(d)}</td>
+            <td style="color:${diasAte <= 7 ? 'var(--warning)' : 'var(--text-lt)'};font-weight:700">${diasAte}d</td>
+            <td style="font-weight:700">${fmtMoney(valor)}</td>
+          </tr>`;
+        }).join('')
+      : '<tr><td colspan="7" style="text-align:center;color:var(--text-lt)">Nenhum vencimento nos próximos 30 dias</td></tr>';
+  }
 
   // ── PAINEL EM TEMPO REAL ──
   const despesasPeriodo = fcxDespesasFinanceiro(dIniObj, dFimObj);
