@@ -1039,7 +1039,7 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
         <button class="pa-nav-item" data-tab="tabFrota"><i class="fas fa-id-card"></i> Frota / Motoristas</button>
         <button class="pa-nav-item" data-tab="tabPneus"><i class="fas fa-circle-dot"></i> Pneus</button>
         <button class="pa-nav-item" data-tab="tabVencimentos" style="position:relative"><i class="fas fa-triangle-exclamation"></i> Vencimentos</button>
-        <button class="pa-nav-item" data-tab="tabVagas"><i class="fas fa-user-tie"></i> Vagas / Entrevistas</button>
+        <button class="pa-nav-item" data-tab="tabConsumoLitro"><i class="fas fa-gas-pump"></i> Controle de Consumo</button>
         <button class="pa-nav-item" data-tab="tabChecklist"><i class="fas fa-clipboard-check"></i> Checklist Veículos</button>
         <button class="pa-nav-item" data-tab="tabAuditoria"><i class="fas fa-clipboard-check"></i> Auditoria</button>
         <button class="pa-nav-item" data-tab="tabNfe"><i class="fas fa-file-invoice"></i> NF-e / Abast.</button>
@@ -2159,61 +2159,100 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
           <div id="vencCategoriasWrap"></div>
         </div><!-- /tabVencimentos -->
 
-        <!-- ── TAB VAGAS / ENTREVISTAS ── -->
-        <div id="tabVagas" class="tab-pane">
-          <div class="dash-card" style="margin-bottom:1.2rem">
-            <div style="font-weight:700;font-size:.92rem;color:#1e2a3a;margin-bottom:.3rem"><i class="fas fa-user-tie" style="color:var(--accent)"></i> Vagas e Controle de Entrevistas</div>
-            <div style="font-size:.8rem;color:var(--text-lt)">Link da vaga aberta e acompanhamento estratificado de cada candidato.</div>
-          </div>
-          <div class="dash-card" style="margin-bottom:1.2rem">
-            <a href="https://docs.google.com/forms/d/1AbknS9cnRL9M_kPLYkaqRorpsFFodZdgJps36zhJ_ms/viewform?edit_requested=true" target="_blank" rel="noopener noreferrer" class="antt-card">
-              <i class="fas fa-briefcase"></i><div><div style="font-weight:700">Formulário de Vaga Aberta</div><div style="font-size:.78rem;color:var(--text-lt)">Abrir formulário de candidatura</div></div>
-            </a>
-          </div>
-          <div class="dash-card" style="margin-bottom:1.2rem">
-            <div style="font-weight:700;font-size:.88rem;color:#1e2a3a;margin-bottom:.8rem"><i class="fas fa-user-plus" style="color:var(--accent)"></i> Novo Candidato / Entrevista</div>
-            <div class="pneu-leitura-form" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
-              <label>Nome <input type="text" id="vagaNome" placeholder="Nome do candidato"></label>
-              <label>Vaga <input type="text" id="vagaCargo" placeholder="Ex: Motorista"></label>
-              <label>Data Entrevista <input type="date" id="vagaData"></label>
-              <label>Etapa
-                <select id="vagaEtapa">
-                  <option>Triagem</option><option>Entrevista Agendada</option><option>Entrevistado</option><option>Aprovado</option><option>Reprovado</option><option>Contratado</option>
-                </select>
-              </label>
-              <label>Telefone <input type="text" id="vagaTelefone" placeholder="(49) 99999-9999"></label>
-              <label>Experiência (anos) <input type="number" id="vagaExperiencia" min="0" placeholder="0"></label>
+        <!-- ── TAB CONTROLE DE CONSUMO POR LITRO ── -->
+        <div id="tabConsumoLitro" class="tab-pane">
+          <div class="dash-card" style="background:linear-gradient(135deg,rgba(212,175,55,.08),rgba(212,175,55,.02));border:1px solid rgba(212,175,55,.25);margin-bottom:1rem">
+            <div class="dash-card-title" style="font-size:1rem"><i class="fas fa-gas-pump" style="color:var(--accent)"></i> Controle de Consumo por Litro
+              <button id="btnAtualizarConsumoTab" class="btn btn-accent btn-sm" style="margin-left:1rem" onclick="loadAbastecimentos()"><i class="fas fa-sync-alt"></i> Atualizar</button>
+              <button id="btnProcessarPDFsTab" class="btn btn-success btn-sm" style="margin-left:.5rem" onclick="acionarWebApp()"><i class="fas fa-file-pdf"></i> Processar PDFs</button>
+              <button id="btnPararPDFsTab" class="btn btn-danger btn-sm" style="margin-left:.5rem;display:none" onclick="pararWebApp()"><i class="fas fa-stop"></i> Parar</button>
+              <button id="btnLimparRelerTab" class="btn btn-gray btn-sm" style="margin-left:.5rem" onclick="abastLimparEReler()"><i class="fas fa-broom"></i> Limpar e reler</button>
             </div>
-            <div style="font-weight:700;font-size:.8rem;color:#1e2a3a;margin:1rem 0 .5rem"><i class="fas fa-clipboard-check" style="color:var(--accent)"></i> Critérios de Avaliação (usados na pontuação automática)</div>
-            <div class="pneu-leitura-form" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
-              <label>Documentação completa (CNH, etc.) <select id="vagaDocumentacao"><option value="sim">Sim</option><option value="nao">Não</option></select></label>
-              <label>Disponibilidade imediata <select id="vagaDisponibilidade"><option value="sim">Sim</option><option value="nao">Não</option></select></label>
-              <label>Exame toxicológico OK <select id="vagaToxicologico"><option value="sim">Sim</option><option value="nao">Não</option><option value="pendente">Pendente</option></select></label>
-              <label>Pontualidade na entrevista <select id="vagaPontualidade"><option value="otima">Ótima</option><option value="boa">Boa</option><option value="regular">Regular</option><option value="ruim">Ruim</option></select></label>
-              <label>Comunicação <select id="vagaComunicacao"><option value="otima">Ótima</option><option value="boa">Boa</option><option value="regular">Regular</option><option value="ruim">Ruim</option></select></label>
-              <label style="grid-column:1/-1">Observações <input type="text" id="vagaObs" placeholder="Avaliação, pontos de atenção..."></label>
-              <button class="pneu-leitura-btn" id="vagaSalvarBtn" style="grid-column:1/-1"><i class="fas fa-save"></i> Salvar Candidato (calcula pontuação e parecer automaticamente)</button>
+            <div id="webAppStatusTab" style="display:none;margin-top:.5rem;font-size:.8rem;padding:.5rem .8rem;border-radius:8px;background:var(--gray-100)"></div>
+            <div style="font-size:.78rem;color:var(--text-lt);margin-top:.4rem">Abastecimentos extraídos automaticamente das DANFes da pasta do Drive. Use os filtros abaixo para refinar.</div>
+          </div>
+
+          <!-- FILTROS -->
+          <div class="dash-card" style="margin-bottom:1rem">
+            <div class="dash-card-title" style="margin-bottom:.8rem"><i class="fas fa-filter"></i> Filtros</div>
+            <div class="filters-bar">
+              <div class="flt-grp"><label>Ano</label><select id="fatcAnoTab"><option value="">Todos</option></select></div>
+              <div class="flt-grp"><label>Mês</label><select id="fatcMesTab"><option value="">Todos</option><option value="1">Jan</option><option value="2">Fev</option><option value="3">Mar</option><option value="4">Abr</option><option value="5">Mai</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Ago</option><option value="9">Set</option><option value="10">Out</option><option value="11">Nov</option><option value="12">Dez</option></select></div>
+              <div class="flt-grp"><label>Motorista</label><select id="fatcMotoristaTab"><option value="">Todos</option></select></div>
+              <div class="flt-grp"><label>Placa Cavalo</label><select id="fatcCavaloTab"><option value="">Todas</option></select></div>
+              <div class="flt-grp"><label>Placa Carreta</label><select id="fatcCarretaTab"><option value="">Todas</option></select></div>
+              <div class="flt-grp"><label>Posto</label><select id="fatcPostoTab"><option value="">Todos</option></select></div>
+              <div class="flt-grp"><label>Data Início</label><input type="date" id="fatcDataInicioTab"></div>
+              <div class="flt-grp"><label>Data Fim</label><input type="date" id="fatcDataFimTab"></div>
+              <button class="btn btn-accent" onclick="fatcApplyFiltersTab()"><i class="fas fa-search"></i> Filtrar</button>
+              <button class="btn btn-gray" onclick="fatcResetFiltersTab()"><i class="fas fa-times"></i> Limpar</button>
             </div>
           </div>
 
-          <div class="dash-card" style="margin-bottom:1.2rem">
-            <div style="font-weight:700;font-size:.88rem;color:#1e2a3a;margin-bottom:.6rem"><i class="fas fa-chart-simple" style="color:var(--accent)"></i> Funil de Contratação (visão para decisão)</div>
-            <div class="chart-box" style="height:220px"><canvas id="vagaFunilChart" height="140"></canvas></div>
+          <!-- KPIs -->
+          <div class="kpi-grid" id="fatConsumoKpisTab">
+            <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-truck"></i></div><div><div class="kpi-val" id="fatct-mediacv">—</div><div class="kpi-lbl">Média Geral Cavalos (km/L)</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-trailer"></i></div><div><div class="kpi-val" id="fatct-mediacr">—</div><div class="kpi-lbl">Média Geral Carretas (km/L)</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-gas-pump"></i></div><div><div class="kpi-val" id="fatct-litros">—</div><div class="kpi-lbl">Total Litros Consumidos</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon brown"><i class="fas fa-road"></i></div><div><div class="kpi-val" id="fatct-km">—</div><div class="kpi-lbl">Total KM Rodado</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-thumbs-up"></i></div><div><div class="kpi-val" id="fatct-melhorcv" style="font-size:1rem">—</div><div class="kpi-lbl">Cavalo Mais Econômico</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-triangle-exclamation"></i></div><div><div class="kpi-val" id="fatct-piorcv" style="font-size:1rem">—</div><div class="kpi-lbl">Cavalo Menos Econômico</div></div></div>
           </div>
 
-          <div class="dash-card" style="margin-bottom:1.2rem;display:flex;gap:1rem;flex-wrap:wrap;align-items:end">
-            <div class="flt-grp"><label>Filtrar por Etapa</label>
-              <select id="vagaFiltroEtapa"><option value="">Todas</option><option>Triagem</option><option>Entrevista Agendada</option><option>Entrevistado</option><option>Aprovado</option><option>Reprovado</option><option>Contratado</option></select>
+          <!-- RANKINGS 2x2 -->
+          <div class="charts-grid" style="margin-top:1.2rem">
+            <div class="dash-card">
+              <div class="dash-card-title"><i class="fas fa-trophy" style="color:var(--success)"></i> Melhores Cavalos (km/L)</div>
+              <ul class="rank-list" id="fatRankMelhoresCavaloTab"></ul>
             </div>
-            <div class="flt-grp"><label>Filtrar por Parecer</label>
-              <select id="vagaFiltroParecer"><option value="">Todos</option><option value="recomendado">🟢 Recomendado</option><option value="analise">🟡 Em Análise</option><option value="naorecomendado">🔴 Não Recomendado</option></select>
+            <div class="dash-card">
+              <div class="dash-card-title"><i class="fas fa-triangle-exclamation" style="color:var(--danger)"></i> Piores Cavalos (km/L)</div>
+              <ul class="rank-list" id="fatRankPioresCavaloTab"></ul>
             </div>
           </div>
-          <div class="dash-card">
-            <div style="font-weight:700;font-size:.88rem;color:#1e2a3a;margin-bottom:.6rem"><i class="fas fa-people-group" style="color:var(--accent)"></i> Candidatos</div>
-            <div class="tbl-wrap"><table class="data-table"><thead><tr><th>Nome</th><th>Vaga</th><th>Data Entrevista</th><th>Etapa</th><th>Pontuação</th><th>Parecer</th><th>Telefone</th><th>Observações</th><th></th></tr></thead><tbody id="vagaTableBody"></tbody></table></div>
+          <div class="charts-grid" style="margin-top:1rem">
+            <div class="dash-card">
+              <div class="dash-card-title"><i class="fas fa-trophy" style="color:var(--success)"></i> Melhores Carretas (km/L)</div>
+              <ul class="rank-list" id="fatRankMelhoresCarretaTab"></ul>
+            </div>
+            <div class="dash-card">
+              <div class="dash-card-title"><i class="fas fa-triangle-exclamation" style="color:var(--danger)"></i> Piores Carretas (km/L)</div>
+              <ul class="rank-list" id="fatRankPioresCarretaTab"></ul>
+            </div>
           </div>
-        </div><!-- /tabVagas -->
+
+          <!-- RANKING PREÇO POR LITRO POR POSTO -->
+          <div class="charts-grid" style="margin-top:1rem">
+            <div class="dash-card">
+              <div class="dash-card-title"><i class="fas fa-tag" style="color:#0ea5e9"></i> Ranking Preço por Litro — Postos (mais baratos)</div>
+              <ul class="rank-list" id="fatRankPostoBarato"></ul>
+            </div>
+            <div class="dash-card">
+              <div class="dash-card-title"><i class="fas fa-receipt" style="color:#f97316"></i> Ranking Preço por Litro — Postos (mais caros)</div>
+              <ul class="rank-list" id="fatRankPostoCaro"></ul>
+            </div>
+          </div>
+
+          <!-- TABELA DETALHADA -->
+          <div class="dash-card" style="margin-top:1rem;border-left:4px solid var(--accent)">
+            <div class="dash-card-title" style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">
+              <span><i class="fas fa-list-alt" style="color:var(--accent)"></i> Lançamentos de Abastecimento</span>
+              <span id="fatcAbastCountTab" style="font-size:.75rem;font-weight:400;color:var(--text-lt)"></span>
+              <button class="btn btn-success btn-sm" style="margin-left:auto" onclick="fatcExportarAbastTab()"><i class="fas fa-download"></i> CSV</button>
+            </div>
+            <div class="tbl-wrap">
+              <table class="data-table">
+                <thead><tr>
+                  <th>Data</th><th>Hora</th><th>Placa</th><th>Motorista</th>
+                  <th>KM</th><th>KM Percorrido</th><th>Litros</th><th>Valor (R$)</th>
+                  <th>R$/L</th><th>Combustível</th><th>Posto</th><th>Cupom/NF</th><th>km/L</th>
+                </tr></thead>
+                <tbody id="fatcAbastTbodyTab"></tbody>
+              </table>
+            </div>
+          </div>
+        </div><!-- /tabConsumoLitro -->
+
 
         <!-- ── TAB CHECKLIST VEÍCULOS ── -->
         <div id="tabChecklist" class="tab-pane">
@@ -3561,7 +3600,7 @@ const pageTitles = {
   tabNfe: '<i class="fas fa-file-invoice" style="color:var(--accent)"></i> NF-e / Abastecimentos',
   tabPneus: '<i class="fas fa-circle-dot" style="color:var(--accent)"></i> Controle de Pneus',
   tabVencimentos: '<i class="fas fa-triangle-exclamation" style="color:var(--accent)"></i> Controle de Vencimentos',
-  tabVagas: '<i class="fas fa-user-tie" style="color:var(--accent)"></i> Vagas / Entrevistas',
+  tabConsumoLitro: '<i class="fas fa-gas-pump" style="color:var(--accent)"></i> Controle de Consumo',
   tabChecklist: '<i class="fas fa-clipboard-check" style="color:var(--accent)"></i> Checklist de Veículos',
   tabVelocidade: '<i class="fas fa-gauge-high" style="color:var(--accent)"></i> Controle de Velocidade',
   tabJornada: '<i class="fas fa-money-check-dollar" style="color:var(--accent)"></i> Jornada e Compensação',
@@ -3610,7 +3649,7 @@ document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
     if (t === 'tabAuditoria') setTimeout(audInit, 50);
     if (t === 'tabNfe')       setTimeout(nfeInit, 50);
     if (t === 'tabPneus')     setTimeout(pneuInit, 50);
-    if (t === 'tabVagas')     setTimeout(vagaInit, 50);
+    if (t === 'tabConsumoLitro') { fatcInitTab(); webAppSyncStatus(); }
     if (t === 'tabChecklist') setTimeout(checklistInit, 50);
     if (t === 'tabVelocidade') setTimeout(velInit, 50);
     if (t === 'tabJornada')   setTimeout(jorInit, 50);
@@ -3923,9 +3962,9 @@ function slideBuildSlides(){
     // 6) Resumo de Pneus
     { title: '<i class="fas fa-circle-dot"></i> Resumo de Pneus', type: 'pneu-resumo' },
     // 7) Ranking de Consumo de COMBUSTÍVEL — Melhores Cavalos
-    { title: '<i class="fas fa-gas-pump"></i> Consumo de Combustível — Melhores Médias (km/L)', type: 'consumo-melhores' },
+    { title: '<i class="fas fa-gas-pump"></i> Consumo de Combustível — Melhores Médias (km/L) · Mês Vigente', type: 'consumo-melhores' },
     // 8) Ranking de Consumo de COMBUSTÍVEL — Piores Cavalos
-    { title: '<i class="fas fa-gas-pump"></i> Consumo de Combustível — Piores Médias (km/L)', type: 'consumo-piores' },
+    { title: '<i class="fas fa-gas-pump"></i> Consumo de Combustível — Piores Médias (km/L) · Mês Vigente', type: 'consumo-piores' },
   ];
 }
 
@@ -4029,9 +4068,18 @@ function slideConsumoResumo() {
 
   const fmtKmL = v => v ? v.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + ' km/L' : '—';
 
-  // Agrupa por placa de CAVALO (mesma lógica de loadAbastecimentos)
+  // Filtra apenas o MÊS VIGENTE para a Gestão à Vista
+  const now = new Date();
+  const anoV = now.getFullYear(), mesV = now.getMonth() + 1;
+  const recs = abastAllRecords.filter(r => r.ano === anoV && r.mes === mesV);
+  const fonte = recs.length ? recs : abastAllRecords; // fallback: tudo se mês vazio
+
+  const mesesNomes = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const labelMes = `${mesesNomes[mesV]}/${anoV}`;
+
+  // Agrupa por placa de CAVALO
   const cavMap = {};
-  abastAllRecords.forEach(r => {
+  fonte.forEach(r => {
     const p = normalizaPlaca(r.placaCavalo);
     if (!p) return;
     if (!cavMap[p]) cavMap[p] = { placa: r.placaCavalo, medias: [], motoristas: new Set() };
@@ -4051,7 +4099,7 @@ function slideConsumoResumo() {
   const piores   = [...cavArr].reverse().filter(v => !top5CavSet.has(normalizaPlaca(v.placa))).slice(0, 5)
                               .map(v => ({ placa: v.placa, motorista: v.motorista, valor: fmtKmL(v.media) }));
 
-  return { melhores, piores };
+  return { melhores, piores, labelMes, ehMesVigente: recs.length > 0 };
 }
 
 let slideFinChartInstance = null;
@@ -4145,12 +4193,18 @@ function slideRender(){
       const tudoEmDia = c.vencidos === 0 && listaVencidos.length === 0;
 
       const linhaVencido = a => `<div class="slide-status-row">
-        <span style="font-weight:700;color:#b91c1c;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHTML(String(a.id))}</span>
-        <span style="font-size:.75rem;color:var(--danger);font-weight:700">${fmtDataA(a.data)} · ${Math.abs(a.dias)}d atrás</span>
+        <div style="display:flex;flex-direction:column;min-width:0;flex:1">
+          <span style="font-weight:800;color:#b91c1c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHTML(String(a.id))}</span>
+          <span style="font-size:.7rem;color:#6b7280">Vencido há ${Math.abs(a.dias)} dia(s)</span>
+        </div>
+        <span style="font-size:.8rem;color:var(--danger);font-weight:700;white-space:nowrap;margin-left:.6rem">${fmtDataA(a.data)}</span>
       </div>`;
       const linhaProximo = a => `<div class="slide-status-row">
-        <span style="font-weight:600;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHTML(String(a.id))}</span>
-        <span style="font-size:.75rem;color:var(--warning);font-weight:700">${fmtDataA(a.data)} · em ${a.dias}d</span>
+        <div style="display:flex;flex-direction:column;min-width:0;flex:1">
+          <span style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHTML(String(a.id))}</span>
+          <span style="font-size:.7rem;color:#6b7280">Vence em ${a.dias} dia(s)</span>
+        </div>
+        <span style="font-size:.8rem;color:var(--warning);font-weight:700;white-space:nowrap;margin-left:.6rem">${fmtDataA(a.data)}</span>
       </div>`;
 
       body.innerHTML = `<div class="slide-section-title">${s.title}</div>
@@ -4419,7 +4473,7 @@ function slideRender(){
       }
       body.innerHTML = `<div class="slide-section-title">${s.title}
           <span style="display:block;font-size:.85rem;font-weight:500;color:var(--text-lt);margin-top:.35rem">
-            Média de km por litro de diesel por cavalo mecânico — base: notas de abastecimento
+            Média de km por litro de diesel por cavalo mecânico${d.ehMesVigente ? ` — <b style="color:var(--accent)">${d.labelMes}</b>` : ' — histórico geral'}
           </span>
         </div>
         <div style="display:flex;flex-direction:column;gap:.7rem;max-width:680px;width:100%">
@@ -8967,17 +9021,22 @@ function fatRenderConsumo(records) {
   dados.forEach(r => {
     const p = normalizaPlaca(r.placaCavalo);
     if (!p) return;
-    if (!cavMap[p]) cavMap[p] = { placa: r.placaCavalo, medias: [], km: 0, litros: 0, registros: 0, motoristas: new Set(), postos: new Set() };
+    if (!cavMap[p]) cavMap[p] = { placa: r.placaCavalo, medias: [], km: 0, litros: 0, kmTotal: 0, registros: 0, motoristas: new Set(), postos: new Set() };
     if (r.mediaCavalo > 0) cavMap[p].medias.push(r.mediaCavalo);
     cavMap[p].km += r.km || 0;
     cavMap[p].litros += r.litrosCavalo || 0;
+    cavMap[p].kmTotal += r.kmPercorrido || 0;
     if (r.mediaCavalo > 0 || r.litrosCavalo > 0 || r.km > 0) cavMap[p].registros++;
     if (r.motorista) cavMap[p].motoristas.add(r.motorista);
     if (r.posto) cavMap[p].postos.add(r.posto);
   });
   const cavArr = Object.values(cavMap).map(v => ({
     ...v,
-    media: v.medias.length ? v.medias.reduce((a,b)=>a+b,0)/v.medias.length : 0,
+    // Média correta: km percorrido total / litros totais do período.
+    // Fallback para média aritmética quando não há kmPercorrido registrado.
+    media: v.litros > 0 && v.kmTotal > 0
+      ? v.kmTotal / v.litros
+      : (v.medias.length ? v.medias.reduce((a,b)=>a+b,0)/v.medias.length : 0),
     motorista: [...v.motoristas].join(', ') || '—'
   })).filter(v => v.media > 0).sort((a,b) => b.media - a.media);
 
@@ -9079,6 +9138,258 @@ function fatcExportarAbast() {
     const row = {};
     cols.forEach((c, i) => { row[labels[i]] = r[c] ?? ''; });
     return row;
+  }), 'abastecimentos_consumo');
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAB AUTÔNOMA — Controle de Consumo por Litro (tabConsumoLitro)
+// Espelha toda a lógica de fatcApplyFilters mas operando nos
+// IDs com sufixo "Tab" para não colidir com a sub-aba Faturamento.
+// ═══════════════════════════════════════════════════════════
+let fatcFilteredTab = [];
+
+function fatcInitTab() {
+  // Popula filtros e aplica mês vigente por padrão
+  const recs = fatcGetRecords();
+  const now = new Date();
+  const anoAtual = String(now.getFullYear());
+  const mesAtual = String(now.getMonth() + 1);
+
+  const motoristas = [...new Set(recs.map(r => r.motorista).filter(Boolean))].sort();
+  const anos       = [...new Set(recs.map(r => r.ano).filter(Boolean))].sort((a,b) => b-a);
+  const cavalos    = [...new Set(recs.map(r => r.placaCavalo).filter(Boolean))].sort();
+  const carretas   = [...new Set(recs.map(r => r.placaCarreta).filter(Boolean))].sort();
+  const postos     = [...new Set(recs.map(r => r.posto).filter(Boolean))].sort();
+
+  const fill = (id, opts, blank) => {
+    const el = document.getElementById(id); if (!el) return;
+    el.innerHTML = blank + opts.map(v => `<option value="${v}">${v}</option>`).join('');
+  };
+  fill('fatcAnoTab',      anos,      '<option value="">Todos</option>');
+  fill('fatcMotoristaTab', motoristas,'<option value="">Todos</option>');
+  fill('fatcCavaloTab',   cavalos,   '<option value="">Todas</option>');
+  fill('fatcCarretaTab',  carretas,  '<option value="">Todas</option>');
+  fill('fatcPostoTab',    postos,    '<option value="">Todos</option>');
+
+  // Préseleciona mês e ano vigente
+  const elAno = document.getElementById('fatcAnoTab');
+  const elMes = document.getElementById('fatcMesTab');
+  if (elAno && anos.includes(+anoAtual)) elAno.value = anoAtual;
+  if (elMes) elMes.value = mesAtual;
+
+  fatcApplyFiltersTab();
+}
+
+function fatcResetFiltersTab() {
+  ['fatcAnoTab','fatcMesTab','fatcMotoristaTab','fatcCavaloTab','fatcCarretaTab','fatcPostoTab'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.selectedIndex = 0;
+  });
+  const di = document.getElementById('fatcDataInicioTab'); if (di) di.value = '';
+  const df = document.getElementById('fatcDataFimTab');    if (df) df.value = '';
+  fatcApplyFiltersTab();
+}
+
+function fatcApplyFiltersTab() {
+  const ano   = document.getElementById('fatcAnoTab')?.value || '';
+  const mes   = document.getElementById('fatcMesTab')?.value || '';
+  const mot   = document.getElementById('fatcMotoristaTab')?.value || '';
+  const cav   = document.getElementById('fatcCavaloTab')?.value || '';
+  const car   = document.getElementById('fatcCarretaTab')?.value || '';
+  const posto = document.getElementById('fatcPostoTab')?.value || '';
+  const di    = document.getElementById('fatcDataInicioTab')?.value || '';
+  const df    = document.getElementById('fatcDataFimTab')?.value || '';
+  const dtIni = di ? new Date(di + 'T00:00:00') : null;
+  const dtFim = df ? new Date(df + 'T23:59:59') : null;
+
+  fatcFilteredTab = fatcGetRecords().filter(r => {
+    if (ano && String(r.ano) !== ano) return false;
+    if (mes && String(r.mes) !== mes) return false;
+    if (mot && r.motorista !== mot) return false;
+    if (cav && normalizaPlaca(r.placaCavalo) !== normalizaPlaca(cav)) return false;
+    if (car && normalizaPlaca(r.placaCarreta) !== normalizaPlaca(car)) return false;
+    if (posto && (r.posto||'').toUpperCase() !== posto.toUpperCase()) return false;
+    if (dtIni && r.data < dtIni) return false;
+    if (dtFim && r.data > dtFim) return false;
+    return true;
+  });
+
+  fatRenderConsumoTab(fatcFilteredTab);
+}
+
+function fatRenderConsumoTab(dados) {
+  if (!document.getElementById('tabConsumoLitro')) return;
+  dados = dados || fatcFilteredTab || fatcGetRecords();
+
+  const fmtKmL = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' km/L' : '—';
+  const fmtNum = v => (v||0).toLocaleString('pt-BR',{maximumFractionDigits:0});
+  const fmtR   = v => v ? 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
+
+  // ── Agrupa por placa CAVALO ──
+  const cavMap = {};
+  dados.forEach(r => {
+    const p = normalizaPlaca(r.placaCavalo); if (!p) return;
+    if (!cavMap[p]) cavMap[p] = { placa:r.placaCavalo, medias:[], km:0, litros:0, kmTotal:0, registros:0, motoristas:new Set() };
+    if (r.mediaCavalo > 0) cavMap[p].medias.push(r.mediaCavalo);
+    cavMap[p].km += r.km || 0;
+    cavMap[p].litros += r.litrosCavalo || 0;
+    cavMap[p].kmTotal += r.kmPercorrido || 0;
+    if (r.mediaCavalo > 0 || r.litrosCavalo > 0 || r.km > 0) cavMap[p].registros++;
+    if (r.motorista) cavMap[p].motoristas.add(r.motorista);
+  });
+  const cavArr = Object.values(cavMap).map(v => ({
+    ...v,
+    media: v.litros > 0 && v.kmTotal > 0
+      ? v.kmTotal / v.litros
+      : (v.medias.length ? v.medias.reduce((a,b)=>a+b,0)/v.medias.length : 0),
+    motorista: [...v.motoristas].join(', ') || '—'
+  })).filter(v => v.media > 0).sort((a,b) => b.media - a.media);
+
+  // ── Agrupa por placa CARRETA ──
+  const carMap = {};
+  dados.forEach(r => {
+    const p = normalizaPlaca(r.placaCarreta); if (!p) return;
+    if (!carMap[p]) carMap[p] = { placa:r.placaCarreta, medias:[], litros:0, registros:0, motoristas:new Set() };
+    if (r.mediaCarreta > 0) carMap[p].medias.push(r.mediaCarreta);
+    carMap[p].litros += r.litrosCarreta || 0;
+    if (r.mediaCarreta > 0 || r.litrosCarreta > 0) carMap[p].registros++;
+    if (r.motorista) carMap[p].motoristas.add(r.motorista);
+  });
+  const carArr = Object.values(carMap).map(v => ({
+    ...v,
+    media: v.medias.length ? v.medias.reduce((a,b)=>a+b,0)/v.medias.length : 0,
+    motorista: [...v.motoristas].join(', ') || '—'
+  })).filter(v => v.media > 0).sort((a,b) => b.media - a.media);
+
+  // ── KPIs ──
+  const mediaGeral = arr => arr.length ? arr.reduce((s,v)=>s+v.media,0)/arr.length : 0;
+  const totalLitros = dados.reduce((s,r)=>s+(r.litrosCavalo||0)+(r.litrosCarreta||0),0);
+  const totalKm = cavArr.reduce((s,v)=>s+v.km,0);
+
+  const setV = (id,val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
+  setV('fatct-mediacv', fmtKmL(mediaGeral(cavArr)));
+  setV('fatct-mediacr', fmtKmL(mediaGeral(carArr)));
+  setV('fatct-litros',  fmtNum(totalLitros) + ' L');
+  setV('fatct-km',      fmtNum(totalKm) + ' km');
+  setV('fatct-melhorcv', cavArr.length ? `${cavArr[0].placa} — ${fmtKmL(cavArr[0].media)}` : '—');
+  setV('fatct-piorcv',   cavArr.length ? `${cavArr[cavArr.length-1].placa} — ${fmtKmL(cavArr[cavArr.length-1].media)}` : '—');
+
+  // ── Rankings km/L ──
+  const semDados = '<li style="justify-content:center;color:var(--text-lt)">Sem dados.</li>';
+  const liRank = (v, cor) => `<li><span>${v.placa} <span style="color:var(--text-lt);font-weight:400">(${v.motorista.split(',')[0].trim()})</span></span><span style="font-weight:700;color:${cor}">${fmtKmL(v.media)}</span></li>`;
+  const top5Cav = cavArr.slice(0,5);
+  const top5CavSet = new Set(top5Cav.map(v=>normalizaPlaca(v.placa)));
+  const bot5Cav = [...cavArr].reverse().filter(v=>!top5CavSet.has(normalizaPlaca(v.placa))).slice(0,5);
+  const top5Car = carArr.slice(0,5);
+  const top5CarSet = new Set(top5Car.map(v=>normalizaPlaca(v.placa)));
+  const bot5Car = [...carArr].reverse().filter(v=>!top5CarSet.has(normalizaPlaca(v.placa))).slice(0,5);
+
+  const setList = (id,items,fb) => { const el=document.getElementById(id); if(el) el.innerHTML = items.length ? items : fb; };
+  setList('fatRankMelhoresCavaloTab', top5Cav.map(v=>liRank(v,'var(--success)')).join(''), semDados);
+  setList('fatRankPioresCavaloTab',   bot5Cav.map(v=>liRank(v,'var(--danger)')).join(''),  '<li style="justify-content:center;color:var(--text-lt)">Sem dados suficientes.</li>');
+  setList('fatRankMelhoresCarretaTab',top5Car.map(v=>liRank(v,'var(--success)')).join(''), semDados);
+  setList('fatRankPioresCarretaTab',  bot5Car.map(v=>liRank(v,'var(--danger)')).join(''),  '<li style="justify-content:center;color:var(--text-lt)">Sem dados suficientes.</li>');
+
+  // ── Ranking preço por litro por POSTO ──
+  // Calcula preço médio (R$/L) por posto usando registros com valor e litros válidos
+  const postoMap = {};
+  dados.forEach(r => {
+    const posto = (r.posto||'').trim(); if (!posto) return;
+    const litros = (r.litrosCavalo||0) + (r.litrosCarreta||0);
+    const valor  = r.valorOriginal || 0;
+    if (litros <= 0 || valor <= 0) return;
+    const pL = valor / litros;
+    if (pL <= 0 || pL > 20) return; // sanidade: R$/L plausível para diesel
+    if (!postoMap[posto]) postoMap[posto] = { nome:posto, precos:[], total:0, regs:0 };
+    postoMap[posto].precos.push(pL);
+    postoMap[posto].total += valor;
+    postoMap[posto].regs++;
+  });
+  const postoArr = Object.values(postoMap).map(v => ({
+    ...v,
+    media: v.precos.reduce((a,b)=>a+b,0)/v.precos.length
+  })).filter(v => v.regs >= 1).sort((a,b) => a.media - b.media);
+
+  const liPosto = (v, pos, cor) => {
+    const pL = 'R$ ' + v.media.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) + '/L';
+    const regs = v.regs === 1 ? '1 abast.' : v.regs + ' abast.';
+    return `<li><span><b style="margin-right:.3rem;color:${cor}">${pos}º</b>${v.nome.length>28 ? v.nome.slice(0,28)+'…':v.nome} <span style="color:var(--text-lt);font-weight:400;font-size:.73rem">(${regs})</span></span><span style="font-weight:700;color:${cor}">${pL}</span></li>`;
+  };
+
+  const top5Barato = postoArr.slice(0,5);
+  const top5Caro   = [...postoArr].reverse().slice(0,5);
+  setList('fatRankPostoBarato', top5Barato.map((v,i)=>liPosto(v,i+1,'var(--success)')).join(''), semDados);
+  setList('fatRankPostoCaro',   top5Caro.map((v,i)=>liPosto(v,i+1,'var(--danger)')).join(''),   semDados);
+
+  // ── Tabela detalhada ──
+  const tbody = document.getElementById('fatcAbastTbodyTab');
+  const count = document.getElementById('fatcAbastCountTab');
+  if (tbody) {
+    const sorted = [...dados].sort((a,b) => {
+      if (a.data && b.data) return b.data - a.data;
+      return (b.dataStr||'').localeCompare(a.dataStr||'');
+    });
+    tbody.innerHTML = sorted.length ? sorted.map(r => {
+      const fmtL  = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' L' : '—';
+      const fmtKm = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:0}) + ' km' : '—';
+      const litros = (r.litrosCavalo||0) + (r.litrosCarreta||0);
+      const pL     = (litros > 0 && r.valorOriginal > 0) ? r.valorOriginal/litros : 0;
+      const pLTxt  = pL > 0 ? 'R$ ' + pL.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'/L' : '—';
+      const media  = r.mediaCavalo > 0 ? r.mediaCavalo.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' km/L' : '—';
+      const corMedia = r.mediaCavalo > 0
+        ? (r.mediaCavalo >= 3.0 ? 'color:var(--success);font-weight:700' : r.mediaCavalo < 2.0 ? 'color:var(--danger);font-weight:700' : 'font-weight:600')
+        : '';
+      return `<tr>
+        <td>${escapeHTML(r.dataStr||'')}</td>
+        <td>${escapeHTML(r.hora||'—')}</td>
+        <td><span style="font-weight:700">${escapeHTML(r.placaCavalo||'—')}</span></td>
+        <td>${escapeHTML(r.motorista||'—')}</td>
+        <td>${fmtKm(r.km)}</td>
+        <td>${fmtKm(r.kmPercorrido)}</td>
+        <td>${fmtL(litros||null)}</td>
+        <td>${fmtR(r.valorOriginal)}</td>
+        <td style="font-size:.8rem;color:#0369a1;font-weight:600">${pLTxt}</td>
+        <td>${escapeHTML(r.combustivel||'—')}</td>
+        <td>${escapeHTML(r.posto||'—')}</td>
+        <td style="font-size:.75rem;line-height:1.35">${r.nf ? `<span style="font-weight:700">NF ${escapeHTML(r.nf)}</span>`+(r.cupom&&r.cupom!==r.nf?`<br><span style="color:var(--text-lt)">Cupom ${escapeHTML(r.cupom)}</span>`:'') : (r.cupom ? `Cupom ${escapeHTML(r.cupom)}` : '—')}</td>
+        <td style="${corMedia}">${media}</td>
+      </tr>`;
+    }).join('') : '<tr><td colspan="13" style="text-align:center;color:var(--text-lt);padding:1.5rem">Nenhum abastecimento encontrado.</td></tr>';
+    if (count) count.textContent = sorted.length ? `(${sorted.length} registros)` : '';
+  }
+}
+
+// Sincroniza o status visual entre a aba autônoma e a sub-aba Faturamento
+function webAppSyncStatus() {
+  const src  = document.getElementById('webAppStatus');
+  const dest = document.getElementById('webAppStatusTab');
+  if (!src || !dest) return;
+  const observer = new MutationObserver(() => {
+    dest.style.display  = src.style.display;
+    dest.style.background = src.style.background;
+    dest.innerHTML      = src.innerHTML;
+  });
+  observer.observe(src, { attributes: true, childList: true, subtree: true, characterData: true });
+  // Sincroniza também os botões
+  const syncBtn = (srcId, dstId) => {
+    const s = document.getElementById(srcId), d = document.getElementById(dstId);
+    if (!s || !d) return;
+    new MutationObserver(() => { d.disabled = s.disabled; d.innerHTML = s.innerHTML; })
+      .observe(s, { attributes: true, childList: true });
+    new MutationObserver(() => { s.disabled = d.disabled; s.innerHTML = d.innerHTML; })
+      .observe(d, { attributes: true, childList: true });
+  };
+  syncBtn('btnProcessarPDFs',   'btnProcessarPDFsTab');
+  syncBtn('btnPararPDFs',       'btnPararPDFsTab');
+  syncBtn('btnLimparReler',     'btnLimparRelerTab');
+}
+
+function fatcExportarAbastTab() {
+  const dados = fatcFilteredTab.length ? fatcFilteredTab : fatcGetRecords();
+  if (!dados.length) { showToast('Nenhum dado para exportar.', 3000); return; }
+  const cols   = ['dataStr','hora','placaCavalo','motorista','km','kmPercorrido','litrosCavalo','valorOriginal','combustivel','posto','cupom','nf','mediaCavalo'];
+  const labels = ['Data','Hora','Placa','Motorista','KM','KM Percorrido','Litros','Valor (R$)','Combustível','Posto','Cupom','NF','km/L'];
+  exportCSV(dados.map(r => {
+    const row = {}; cols.forEach((c,i) => { row[labels[i]] = r[c] ?? ''; }); return row;
   }), 'abastecimentos_consumo');
 }
 
@@ -9240,6 +9551,18 @@ async function loadAbastecimentos(opts) {
     };
   });
 
+  // ── Deduplica por NF + placa para evitar que a mesma nota seja contada
+  //    duas vezes quando o Apps Script processa a pasta mais de uma vez.
+  const seenKey = new Set();
+  abastAllRecords = abastAllRecords.filter(r => {
+    if (!r.nf) return true; // sem NF: não filtra (cupom fiscal)
+    const placa = normalizaPlaca(r.placaCavalo || r.placaCarreta || '');
+    const k = r.nf + '|' + placa;
+    if (seenKey.has(k)) return false;
+    seenKey.add(k);
+    return true;
+  });
+
   // ── Calcula kmPercorrido (delta entre abastecimentos consecutivos da mesma
   //    placa) e a média km/L aqui no dashboard, sem depender de coluna na
   //    planilha. Agrupa por placa normalizada, ordena por data+hora real e
@@ -9341,36 +9664,97 @@ function pararWebApp() {
   if (btnParar) { btnParar.disabled = true; btnParar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Parando...'; }
 }
 
-// ── LIMPAR CONTROLE DE PROCESSADOS E RELER TUDO ──────────────────────────
-// Zera a memória de "arquivos já lidos" no Apps Script (?action=limpar) e
-// dispara o processamento de novo — útil quando um XML não entrou na
-// planilha (ex: erro pontual de parsing) e precisa ser relido do zero.
-// Não duplica linha: a checagem de duplicata na planilha (NF+PLACA) segue
+// ── LIMPAR BUSCA E RELER TUDO ────────────────────────────────────────────
+// Pula a verificação de "pendentes" e chama ?action=processar diretamente,
+// forçando reprocessamento mesmo quando o Apps Script acha que não há novos
+// arquivos. Útil quando um XML não entrou na planilha e precisa ser relido.
+// Não duplica linhas: a checagem de duplicata na planilha (NF+PLACA) segue
 // valendo mesmo relendo tudo.
 async function abastLimparEReler() {
-  const status = document.getElementById('webAppStatus');
-  const btn = document.getElementById('btnLimparReler');
-  const btnProcessar = document.getElementById('btnProcessarPDFs');
+  const status   = document.getElementById('webAppStatus');
+  const btn      = document.getElementById('btnLimparReler');
+  const btnProc  = document.getElementById('btnProcessarPDFs');
+  const btnParar = document.getElementById('btnPararPDFs');
 
-  // Desabilita ambos os botões durante toda a operação
-  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Limpando...'; }
-  if (btnProcessar) btnProcessar.disabled = true;
-  if (status) { status.style.display = 'block'; status.style.background = 'var(--gray-100)'; status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Limpando controle de processados...'; }
+  // Desabilita ambos durante toda a operação
+  if (btn)    { btn.disabled = true;  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Relendo...'; }
+  if (btnProc){ btnProc.disabled = true; btnProc.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando XMLs...'; }
+  if (btnParar){ btnParar.style.display = 'inline-flex'; btnParar.disabled = false; btnParar.innerHTML = '<i class="fas fa-stop"></i> Parar'; }
+  if (status) { status.style.display = 'block'; status.style.background = 'var(--gray-100)'; status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Forçando reprocessamento de todos os arquivos da pasta...'; }
+
+  abastCancelarProcessamento = false;
+
+  const totais = { processados: 0, totalLinhas: 0, duplicatas: 0, erros: 0, log: [] };
 
   try {
-    const r = await abastFetchJson(WEBAPP_ABAST_URL + '?action=limpar');
-    if (r.status !== 'ok') throw new Error(r.msg || 'Erro ao limpar controle.');
+    let loops = 0;
+    let restante = 1; // arranca sem saber o total — processa até restante zerar
 
-    // Atualiza status antes de chamar acionarWebApp
-    if (status) { status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Controle limpo — relendo todos os arquivos...'; }
+    while (restante > 0 && loops < WEBAPP_MAX_LOOPS) {
+      if (abastCancelarProcessamento) break;
+      loops++;
+      status.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Lote ${loops}: relendo arquivos — ` +
+        `<b>${totais.processados}</b> processado(s) até agora...`;
 
-    await acionarWebApp(); // relê a pasta inteira (arquivos já gravados não duplicam)
+      abastControllerAtivo = new AbortController();
+      let data;
+      try {
+        data = await abastFetchJson(WEBAPP_ABAST_URL + '?action=processar', WEBAPP_BATCH_TIMEOUT_MS, abastControllerAtivo);
+      } catch (e) {
+        if (e.isCancel) break;
+        throw e;
+      } finally {
+        abastControllerAtivo = null;
+      }
+
+      if (data.status !== 'ok') throw new Error(data.msg || 'Erro desconhecido');
+
+      totais.processados += data.processados || 0;
+      totais.totalLinhas += data.totalLinhas || 0;
+      totais.duplicatas  += data.duplicatas  || 0;
+      totais.erros       += data.erros       || 0;
+      if (data.log) totais.log = totais.log.concat(data.log);
+
+      restante = typeof data.restante === 'number' ? data.restante : 0;
+
+      if (data.totalLinhas > 0) await loadAbastecimentos({ silencioso: true });
+
+      // Sem progresso e sem pendentes: tudo já estava processado
+      if ((data.processados || 0) === 0 && restante === 0) break;
+      // Trava de segurança: sem progresso por 2 loops seguidos
+      if ((data.processados || 0) === 0 && loops > 1) break;
+    }
+
+    const cor = totais.erros > 0 ? '#fef2f2' : totais.processados === 0 ? '#fef9c3' : '#f0fdf4';
+    const ico = totais.erros > 0
+      ? 'fa-exclamation-triangle" style="color:#dc2626'
+      : totais.processados === 0
+        ? 'fa-info-circle" style="color:#ca8a04'
+        : 'fa-check-circle" style="color:#16a34a';
+
+    status.style.background = abastCancelarProcessamento ? '#fef9c3' : cor;
+    status.innerHTML =
+      (abastCancelarProcessamento
+        ? '<i class="fas fa-hand" style="color:#ca8a04"></i> Interrompido pelo usuário — '
+        : `<i class="fas ${ico}"></i> `) +
+      (totais.processados === 0 && !abastCancelarProcessamento
+        ? 'Nenhum arquivo novo encontrado — tudo já estava na planilha.'
+        : `<b>${totais.processados}</b> XML(s) relido(s) em ${loops} lote(s) · ` +
+          `<b>${totais.totalLinhas}</b> linha(s) gravada(s) · ` +
+          `<b>${totais.duplicatas}</b> duplicata(s) · ` +
+          `<b>${totais.erros}</b> erro(s)`);
+
+    if (totais.totalLinhas > 0) showToast('✅ Planilha atualizada com ' + totais.totalLinhas + ' novo(s) registro(s)!', 4000);
+    if (totais.log.length) console.table(totais.log);
+
   } catch (e) {
     if (status) { status.style.background = '#fef2f2'; status.innerHTML = '<i class="fas fa-times-circle" style="color:#dc2626"></i> Erro: ' + e.message; }
-    if (btnProcessar) { btnProcessar.disabled = false; btnProcessar.innerHTML = '<i class="fas fa-file-pdf"></i> Processar PDFs'; }
   } finally {
-    // Sempre restaura o botão Limpar ao final, independentemente do resultado
-    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-broom"></i> Limpar busca e reler'; }
+    if (btn)    { btn.disabled = false;  btn.innerHTML = '<i class="fas fa-broom"></i> Limpar busca e reler'; }
+    if (btnProc){ btnProc.disabled = false; btnProc.innerHTML = '<i class="fas fa-file-pdf"></i> Processar PDFs'; }
+    if (btnParar){ btnParar.style.display = 'none'; }
+    abastCancelarProcessamento = false;
+    abastControllerAtivo = null;
   }
 }
 
