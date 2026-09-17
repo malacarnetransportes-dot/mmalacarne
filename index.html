@@ -1570,6 +1570,7 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
                 <button id="btnAtualizarConsumo" class="btn btn-accent btn-sm" style="margin-left:1rem" onclick="loadAbastecimentos()"><i class="fas fa-sync-alt"></i> Atualizar</button>
                 <button id="btnProcessarPDFs" class="btn btn-success btn-sm" style="margin-left:.5rem" onclick="acionarWebApp()"><i class="fas fa-file-pdf"></i> Processar PDFs</button>
                 <button id="btnPararPDFs" class="btn btn-danger btn-sm" style="margin-left:.5rem;display:none" onclick="pararWebApp()"><i class="fas fa-stop"></i> Parar</button>
+                <button id="btnLimparReler" class="btn btn-gray btn-sm" style="margin-left:.5rem" onclick="abastLimparEReler()"><i class="fas fa-broom"></i> Limpar busca e reler</button>
               </div>
               <div id="webAppStatus" style="display:none;margin-top:.5rem;font-size:.8rem;padding:.5rem .8rem;border-radius:8px;background:var(--gray-100)"></div>
               <div style="font-size:.78rem;color:var(--text-lt);margin-top:.4rem">Abastecimentos extraídos automaticamente das DANFes da pasta do Drive. Clique em <b>Processar PDFs</b> para importar novos arquivos. Use os filtros abaixo para refinar.</div>
@@ -1617,16 +1618,6 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
                 <ul class="rank-list" id="fatRankPioresCavalo"></ul>
               </div>
             </div>
-            <div class="dash-card">
-              <div class="dash-card-title"><i class="fas fa-table"></i> Métricas Utilizadas por Cavalo</div>
-              <div class="tbl-wrap">
-                <table class="data-table">
-                  <thead><tr><th>Placa</th><th>Motorista</th><th>Nº Registros</th><th>Total KM</th><th>Total Litros</th><th>Média (km/L)</th></tr></thead>
-                  <tbody id="fatTableConsumoCavaloBody"></tbody>
-                </table>
-              </div>
-            </div>
-
             <!-- ── CARRETAS / REFRIGERAÇÃO ── -->
             <div class="charts-grid" style="margin-top:1.6rem">
               <div class="dash-card">
@@ -9038,11 +9029,6 @@ function fatRenderConsumo(records) {
   document.getElementById('fatRankMelhoresCarreta').innerHTML = top5Car.length ? top5Car.map(v => liRank(v,'var(--success)')).join('') : semDados;
   document.getElementById('fatRankPioresCarreta').innerHTML   = bot5Car.length ? bot5Car.map(v => liRank(v,'var(--danger)')).join('')  : '<li style="justify-content:center;color:var(--text-lt)">Sem dados suficientes para comparação.</li>';
 
-  // ── Tabela de métricas utilizadas (Cavalos) ──
-  document.getElementById('fatTableConsumoCavaloBody').innerHTML = cavArr.length
-    ? cavArr.map(v => `<tr><td>${escapeHTML(v.placa)}</td><td>${escapeHTML(v.motorista)}</td><td>${v.registros}</td><td>${fmtNum(v.km)} km</td><td>${fmtNum(v.litros)} L</td><td style="font-weight:700">${fmtKmL(v.media)}</td></tr>`).join('')
-    : '<tr><td colspan="6" style="text-align:center;color:var(--text-lt)">Sem dados.</td></tr>';
-
   // ── Tabela detalhada de lançamentos individuais ──
   const tbodyAbast = document.getElementById('fatcAbastTbody');
   const countAbast = document.getElementById('fatcAbastCount');
@@ -9353,6 +9339,28 @@ function pararWebApp() {
   }
   const btnParar = document.getElementById('btnPararPDFs');
   if (btnParar) { btnParar.disabled = true; btnParar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Parando...'; }
+}
+
+// ── LIMPAR CONTROLE DE PROCESSADOS E RELER TUDO ──────────────────────────
+// Zera a memória de "arquivos já lidos" no Apps Script (?action=limpar) e
+// dispara o processamento de novo — útil quando um XML não entrou na
+// planilha (ex: erro pontual de parsing) e precisa ser relido do zero.
+// Não duplica linha: a checagem de duplicata na planilha (NF+PLACA) segue
+// valendo mesmo relendo tudo.
+async function abastLimparEReler() {
+  const status = document.getElementById('webAppStatus');
+  const btn = document.getElementById('btnLimparReler');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Limpando...'; }
+  if (status) { status.style.display = 'block'; status.style.background = 'var(--gray-100)'; status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Limpando controle de processados...'; }
+  try {
+    const r = await abastFetchJson(WEBAPP_ABAST_URL + '?action=limpar');
+    if (r.status !== 'ok') throw new Error(r.msg || 'Erro ao limpar controle.');
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-broom"></i> Limpar busca e reler'; }
+    await acionarWebApp(); // relê a pasta inteira (arquivos já gravados não duplicam)
+  } catch (e) {
+    if (status) { status.style.background = '#fef2f2'; status.innerHTML = '<i class="fas fa-times-circle" style="color:#dc2626"></i> Erro: ' + e.message; }
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-broom"></i> Limpar busca e reler'; }
+  }
 }
 
 async function acionarWebApp() {
