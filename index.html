@@ -9361,10 +9361,10 @@ function fatRenderConsumoTab(dados) {
       const placas = [...new Set(suspeitos.map(r => r.placaCavalo).filter(Boolean))].join(', ');
       elAlertaKm.style.display = 'flex';
       elAlertaKm.innerHTML = `<i class="fas fa-triangle-exclamation" style="color:#b45309;font-size:1.1rem;flex-shrink:0"></i>
-        <div><b style="color:#b45309">${suspeitos.length} registro(s) com KM implausível</b> — delta &gt; 4.000 km.
-        Provável causa: <b>placa da carreta lançada como odômetro do cavalo</b> em vez do KM real.
+        <div><b style="color:#b45309">${suspeitos.length} registro(s) com KM implausível</b> — delta &gt; 4.000 km dentro da mesma sequência (placa + tipo combustível).
+        Verifique se o odômetro foi digitado errado ou se houve troca de veículo sem atualização da placa.
         Placas envolvidas: <b>${escapeHTML(placas||'—')}</b>.
-        Verifique esses lançamentos na planilha — eles estão marcados com ⚠️ na tabela abaixo.</div>`;
+        Esses lançamentos estão marcados com ⚠️ na tabela abaixo.</div>`;
     } else {
       elAlertaKm.style.display = 'none';
     }
@@ -9576,6 +9576,31 @@ async function loadAbastecimentos(opts) {
     const placaCavalo     = ehCarreta ? (frotaReg ? frotaReg.placa : '') : placaRaw;
     const placaCarreta    = ehCarreta ? placaRaw : (frotaReg && frotaReg.carreta ? String(frotaReg.carreta).split(/\s/)[0] : '');
 
+    // ── Classifica o combustível para decidir se os litros vão para cavalo ou carreta ──
+    // Independente do que a placa diz no cadastro:
+    //   • Arla 32         → não é diesel; vai para litrosCarreta mas sem contar em km/L
+    //   • Diesel Comum / S500 → sempre carreta
+    //   • S10 / sem info  → segue o tipo da placa (ehCarreta já cuida disso)
+    const combRaw = A.comb ? String(r[A.comb] || '').trim().toLowerCase().replace(/\s|-/g,'') : '';
+    const ehArla        = combRaw.includes('arla');
+    const ehDieselCarreta = !ehArla && (
+      combRaw.includes('s500') ||
+      (combRaw.includes('diesel') && !combRaw.includes('s10') && combRaw.includes('comum')) ||
+      (combRaw.includes('diesel') && !combRaw.includes('s10') && !combRaw.includes('comum') && !combRaw.includes('s500') && combRaw === 'dieselcomum')
+    );
+    // Diesel Comum/S500 força carreta mesmo que a placa esteja como cavalo
+    const ehCarretaPorCombustivel = ehCarreta || ehDieselCarreta;
+    const litCavalo = ehArla ? 0 : (ehCarretaPorCombustivel ? 0 : litros);
+    const litCarreta = ehArla ? 0 : (ehCarretaPorCombustivel ? litros : 0);
+    const litArla    = ehArla ? litros : 0;
+    // Ajusta placas quando o combustível forçou carreta numa placa de cavalo
+    const placaCavaloFinal  = ehDieselCarreta && !ehCarreta
+      ? placaRaw   // a placa física é a carreta; cavalo fica em branco (não temos info)
+      : placaCavalo;
+    const placaCarretaFinal = ehDieselCarreta && !ehCarreta
+      ? placaRaw
+      : placaCarreta;
+
     return {
       // campos de compatibilidade com fatAllRecords
       data:         dataObj,
@@ -9584,14 +9609,16 @@ async function loadAbastecimentos(opts) {
       ano:          dataObj ? dataObj.getFullYear() : null,
       mes:          dataObj ? dataObj.getMonth() + 1 : null,
       motorista:    motorista,
-      placaCavalo:  placaCavalo,
-      placaCarreta: placaCarreta,
+      placaCavalo:  placaCavaloFinal,
+      placaCarreta: placaCarretaFinal,
       km:           kmBruto,
       kmPercorrido: kmPercorrido,
-      litrosCavalo: ehCarreta ? 0 : litros,
-      litrosCarreta:ehCarreta ? litros : 0,
-      mediaCavalo:  ehCarreta ? 0 : media,
-      mediaCarreta: ehCarreta ? media : 0,
+      litrosCavalo: litCavalo,
+      litrosCarreta:litCarreta,
+      litrosArla:   litArla,
+      mediaCavalo:  0,
+      mediaCarreta: 0,
+      ehArla:       ehArla,
       frete: 0, comissao: 0, diaria: 0, bonus: 0,
       valesManobra: 0, empConsignado: 0, depFolha: 0, valorReceber: 0,
       // campos específicos de abastecimento
@@ -9618,19 +9645,35 @@ async function loadAbastecimentos(opts) {
   });
 
   // ── Calcula kmPercorrido (delta entre abastecimentos consecutivos da mesma
-  //    placa) e a média km/L aqui no dashboard, sem depender de coluna na
-  //    planilha. Agrupa por placa normalizada, ordena por data+hora real e
-  //    subtrai o KM bruto (odômetro) do registro anterior da mesma placa.
-  //    Registros sem KM válido são pulados sem quebrar a sequência. ────────
+  //    placa + tipo de combustível) separando as sequências de odômetro:
+  //    • Arla 32 → ignorado (não é diesel, sem odômetro relevante)
+  //    • Diesel Comum / S500 → sempre CARRETA (sequência própria por placa)
+  //    • S10 → usa o tipo já identificado (cavalo ou carreta) pelo FROTA_DATA
+  //    A chave é placa+grupo para não misturar odômetros de cavalo e carreta. ──
   const MAX_KM_DELTA_DASH = 4000; // salto implausível entre abastecimentos
+
+  // Regra simplificada e explícita:
+  // "diesel comum" ou "s500/s-500" → grupo 'carreta' independente da placa
+  // "arla" → ignorar no cálculo de KM
+  // demais → usa cavalo (S10, sem info, etc.)
+  function _grupoKm(rec) {
+    if (rec.ehArla) return null; // Arla: ignora no odômetro
+    // Se o registro foi classificado como carreta (pelo combustível ou pela placa), usa placa carreta
+    if (rec.litrosCarreta > 0 || (rec.litrosCavalo === 0 && rec.placaCarreta && !rec.placaCavalo))
+      return 'CARRETA_' + (rec.placaCarreta || rec.placaCavalo || '').toUpperCase().replace(/[^A-Z0-9]/g,'');
+    const pnorm = (rec.placaCavalo || rec.placaCarreta || '').toUpperCase().replace(/[^A-Z0-9]/g,'');
+    return 'CAVALO_' + pnorm;
+  }
+
   const _porPlaca = {};
   abastAllRecords.forEach((rec, idx) => {
-    const pnorm = (rec.placaCavalo || rec.placaCarreta || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-    if (!pnorm) return;
-    if (!_porPlaca[pnorm]) _porPlaca[pnorm] = [];
-    _porPlaca[pnorm].push(idx);
+    const grupo = _grupoKm(rec);
+    if (!grupo) return; // Arla: pula
+    if (!_porPlaca[grupo]) _porPlaca[grupo] = [];
+    _porPlaca[grupo].push(idx);
   });
-  Object.values(_porPlaca).forEach(indices => {
+  Object.entries(_porPlaca).forEach(([grupo, indices]) => {
+    const ehGrupoCarreta = grupo.startsWith('CARRETA_');
     // ordena pelo timestamp real (data + hora) para garantir sequência correta
     indices.sort((a, b) => {
       const ra = abastAllRecords[a], rb = abastAllRecords[b];
@@ -9650,12 +9693,24 @@ async function loadAbastecimentos(opts) {
           const delta = km - ultimoKm;
           if (delta > 0 && delta <= MAX_KM_DELTA_DASH) {
             rec.kmPercorrido = delta;
-            const litros = rec.litrosCavalo || rec.litrosCarreta || 0;
+            const litros = (ehGrupoCarreta ? rec.litrosCarreta : rec.litrosCavalo) ||
+                           rec.litrosCavalo || rec.litrosCarreta || 0;
             const media  = litros > 0 ? delta / litros : 0;
-            if (rec.litrosCavalo > 0) rec.mediaCavalo  = media;
-            else                      rec.mediaCarreta = media;
+            if (ehGrupoCarreta) {
+              rec.mediaCarreta = media;
+              // garante que o campo litrosCarreta está preenchido quando o combustível
+              // é Diesel Comum/S500 (pode ter sido classificado como litrosCavalo
+              // pelo parser original antes de sabermos o tipo pelo combustível)
+              if (!rec.litrosCarreta && rec.litrosCavalo) {
+                rec.litrosCarreta = rec.litrosCavalo;
+                rec.litrosCavalo  = 0;
+                rec.mediaCavalo   = 0;
+              }
+            } else {
+              rec.mediaCavalo = media;
+            }
           } else if (delta > MAX_KM_DELTA_DASH) {
-            // Delta implausível — provável mistura de placa cavalo/carreta no odômetro
+            // Delta implausível mesmo dentro do mesmo grupo — sinaliza para revisão
             rec.kmDeltaSuspeito = delta;
           }
         }
