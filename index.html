@@ -2233,6 +2233,17 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
             </div>
           </div>
 
+          <!-- RANKING POSTO POR VOLUME -->
+          <div class="charts-grid" style="margin-top:1rem">
+            <div class="dash-card" style="grid-column:1/-1">
+              <div class="dash-card-title"><i class="fas fa-gas-pump" style="color:#6366f1"></i> Ranking Postos — Mais Abastecidos (volume em litros)</div>
+              <ul class="rank-list" id="fatRankPostoVolume"></ul>
+            </div>
+          </div>
+
+          <!-- ALERTA KM SUSPEITO -->
+          <div id="fatAlertaKmSuspeito" style="display:none;gap:.75rem;align-items:flex-start;background:rgba(251,191,36,.12);border:1px solid #fbbf24;border-radius:10px;padding:.85rem 1rem;margin-top:1rem;font-size:.82rem;line-height:1.5;color:#78350f"></div>
+
           <!-- TABELA DETALHADA -->
           <div class="dash-card" style="margin-top:1rem;border-left:4px solid var(--accent)">
             <div class="dash-card-title" style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">
@@ -9320,6 +9331,45 @@ function fatRenderConsumoTab(dados) {
   setList('fatRankPostoBarato', top5Barato.map((v,i)=>liPosto(v,i+1,'var(--success)')).join(''), semDados);
   setList('fatRankPostoCaro',   top5Caro.map((v,i)=>liPosto(v,i+1,'var(--danger)')).join(''),   semDados);
 
+  // ── Ranking por volume — postos mais abastecidos (litros) ──
+  const postoVolMap = {};
+  dados.forEach(r => {
+    const posto = (r.posto||'').trim(); if (!posto) return;
+    const litros = (r.litrosCavalo||0) + (r.litrosCarreta||0);
+    if (litros <= 0) return;
+    if (!postoVolMap[posto]) postoVolMap[posto] = { nome:posto, litros:0, valor:0, regs:0 };
+    postoVolMap[posto].litros += litros;
+    postoVolMap[posto].valor  += r.valorOriginal || 0;
+    postoVolMap[posto].regs++;
+  });
+  const postoVolArr = Object.values(postoVolMap).sort((a,b) => b.litros - a.litros);
+  const liPostoVol = (v, pos) => {
+    const lTxt = v.litros.toLocaleString('pt-BR',{maximumFractionDigits:0}) + ' L';
+    const vTxt = 'R$ ' + v.valor.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const regs = v.regs === 1 ? '1 abast.' : v.regs + ' abast.';
+    const cores = ['#d97706','#6366f1','#0369a1','#059669','#dc2626'];
+    const cor = cores[pos-1] || 'var(--text)';
+    return `<li><span><b style="margin-right:.3rem;color:${cor}">${pos}º</b>${v.nome.length>28 ? v.nome.slice(0,28)+'…':v.nome} <span style="color:var(--text-lt);font-weight:400;font-size:.73rem">(${regs})</span></span><span style="font-weight:700;color:${cor}">${lTxt} <span style="color:var(--text-lt);font-size:.75rem;font-weight:400">· ${vTxt}</span></span></li>`;
+  };
+  setList('fatRankPostoVolume', postoVolArr.slice(0,8).map((v,i)=>liPostoVol(v,i+1)).join(''), semDados);
+
+  // ── Alerta de KM suspeito ──
+  const suspeitos = dados.filter(r => r.kmDeltaSuspeito);
+  const elAlertaKm = document.getElementById('fatAlertaKmSuspeito');
+  if (elAlertaKm) {
+    if (suspeitos.length > 0) {
+      const placas = [...new Set(suspeitos.map(r => r.placaCavalo).filter(Boolean))].join(', ');
+      elAlertaKm.style.display = 'flex';
+      elAlertaKm.innerHTML = `<i class="fas fa-triangle-exclamation" style="color:#b45309;font-size:1.1rem;flex-shrink:0"></i>
+        <div><b style="color:#b45309">${suspeitos.length} registro(s) com KM implausível</b> — delta &gt; 4.000 km.
+        Provável causa: <b>placa da carreta lançada como odômetro do cavalo</b> em vez do KM real.
+        Placas envolvidas: <b>${escapeHTML(placas||'—')}</b>.
+        Verifique esses lançamentos na planilha — eles estão marcados com ⚠️ na tabela abaixo.</div>`;
+    } else {
+      elAlertaKm.style.display = 'none';
+    }
+  }
+
   // ── Tabela detalhada ──
   const tbody = document.getElementById('fatcAbastTbodyTab');
   const count = document.getElementById('fatcAbastCountTab');
@@ -9338,13 +9388,17 @@ function fatRenderConsumoTab(dados) {
       const corMedia = r.mediaCavalo > 0
         ? (r.mediaCavalo >= 3.0 ? 'color:var(--success);font-weight:700' : r.mediaCavalo < 2.0 ? 'color:var(--danger);font-weight:700' : 'font-weight:600')
         : '';
-      return `<tr>
+      const kmPercorridoCell = r.kmDeltaSuspeito
+        ? `<span style="color:#b45309;font-weight:700" title="Delta KM implausível (${r.kmDeltaSuspeito.toLocaleString('pt-BR')} km) — verifique se a placa da CARRETA foi lançada como odômetro do cavalo">⚠️ ${r.kmDeltaSuspeito.toLocaleString('pt-BR')} km?</span>`
+        : fmtKm(r.kmPercorrido);
+      const trStyle = r.kmDeltaSuspeito ? ' style="background:rgba(251,191,36,.08)"' : '';
+      return `<tr${trStyle}>
         <td>${escapeHTML(r.dataStr||'')}</td>
         <td>${escapeHTML(r.hora||'—')}</td>
         <td><span style="font-weight:700">${escapeHTML(r.placaCavalo||'—')}</span></td>
         <td>${escapeHTML(r.motorista||'—')}</td>
         <td>${fmtKm(r.km)}</td>
-        <td>${fmtKm(r.kmPercorrido)}</td>
+        <td>${kmPercorridoCell}</td>
         <td>${fmtL(litros||null)}</td>
         <td>${fmtR(r.valorOriginal)}</td>
         <td style="font-size:.8rem;color:#0369a1;font-weight:600">${pLTxt}</td>
@@ -9600,6 +9654,9 @@ async function loadAbastecimentos(opts) {
             const media  = litros > 0 ? delta / litros : 0;
             if (rec.litrosCavalo > 0) rec.mediaCavalo  = media;
             else                      rec.mediaCarreta = media;
+          } else if (delta > MAX_KM_DELTA_DASH) {
+            // Delta implausível — provável mistura de placa cavalo/carreta no odômetro
+            rec.kmDeltaSuspeito = delta;
           }
         }
         ultimoKm = km;
