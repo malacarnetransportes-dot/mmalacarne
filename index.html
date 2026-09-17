@@ -1532,6 +1532,11 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
                 <div class="dash-card-title"><i class="fas fa-calendar-check"></i> Resumo do Mês Filtrado</div>
                 <div id="fatResumoPeriodo" style="font-size:.82rem;color:var(--text-lt);margin:-.4rem 0 1rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px"></div>
                 <div class="kpi-grid fat-resumo-grid" id="fatResumoGrid" style="margin-bottom:0"></div>
+                <!-- Card do veículo do motorista filtrado — só aparece com filtro de Motorista ativo -->
+                <div id="fatResumoVeiculoCard" style="display:none;margin-top:1rem;padding:1rem;background:linear-gradient(135deg,#f0f7ff,#e8f4fd);border:1px solid #bfdbfe;border-radius:var(--r12)">
+                  <div style="font-size:.72rem;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:.6rem"><i class="fas fa-truck-ramp-box"></i> Cavalo / Carreta do Motorista</div>
+                  <div id="fatResumoVeiculoBody" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.6rem;font-size:.82rem"></div>
+                </div>
               </div>
               <div class="dash-card">
                 <div class="dash-card-title"><i class="fas fa-calendar"></i> Faturamento por Ano</div>
@@ -8858,6 +8863,62 @@ function fatUpdateResumoMes(totalFaturamento, totalReceber, totalDiarias, totalV
       <div class="kpi-icon ${it.cls}"><i class="fas ${it.icon}"></i></div>
       <div><div class="kpi-val">${it.val}</div><div class="kpi-lbl">${it.lbl}</div></div>
     </div>`).join('');
+
+  fatUpdateResumoVeiculo();
+}
+
+// Mostra, quando o filtro de Motorista está ativo na aba Lançamentos, o
+// cavalo/carreta cadastrados para esse motorista (cruzando FROTA_DATA) e o
+// custo dos abastecimentos de cada um no mesmo período filtrado (Ano/Mês),
+// usando os registros já carregados pelo Controle de Consumo por Litro
+// (abastAllRecords) — sem precisar recarregar nada.
+function fatUpdateResumoVeiculo() {
+  const card = document.getElementById('fatResumoVeiculoCard');
+  const body = document.getElementById('fatResumoVeiculoBody');
+  if (!card || !body) return;
+
+  const mot = document.getElementById('fatMotorista')?.value || '';
+  if (!mot) { card.style.display = 'none'; return; }
+
+  const ano = document.getElementById('fatAno')?.value || '';
+  const mes = document.getElementById('fatMes')?.value || '';
+
+  const frotaReg = (typeof FROTA_DATA !== 'undefined' ? FROTA_DATA : [])
+    .find(f => f.motorista === mot);
+  const placaCavalo  = frotaReg ? String(frotaReg.placa || '—').trim() : '—';
+  const placaCarreta = frotaReg && frotaReg.carreta ? String(frotaReg.carreta).split(/\s/)[0].trim() : '—';
+
+  const npCav = normalizaPlaca(placaCavalo);
+  const npCar = normalizaPlaca(placaCarreta);
+
+  const abast = (typeof abastAllRecords !== 'undefined' ? abastAllRecords : []).filter(r => {
+    if (ano && String(r.ano) !== ano) return false;
+    if (mes && String(r.mes) !== mes) return false;
+    const pc = normalizaPlaca(r.placaCavalo), pr = normalizaPlaca(r.placaCarreta);
+    return (npCav && pc === npCav) || (npCar && pr === npCar);
+  });
+
+  const custoCav = abast.reduce((s,r)=>s+(r.valorCavalo||0),0);
+  const custoCar = abast.reduce((s,r)=>s+(r.valorCarreta||0),0);
+  const litrosCav = abast.reduce((s,r)=>s+(r.litrosCavalo||0),0);
+  const litrosCar = abast.reduce((s,r)=>s+(r.litrosCarreta||0),0);
+
+  card.style.display = 'block';
+  const itens = [
+    { lbl:'Placa Cavalo',              val: placaCavalo },
+    { lbl:'Placa Carreta',             val: placaCarreta },
+    { lbl:'Abastecimentos no Período', val: abast.length },
+    { lbl:'Litros Cavalo',             val: litrosCav ? litrosCav.toLocaleString('pt-BR',{maximumFractionDigits:0}) + ' L' : '—' },
+    { lbl:'Litros Carreta',            val: litrosCar ? litrosCar.toLocaleString('pt-BR',{maximumFractionDigits:0}) + ' L' : '—' },
+    { lbl:'Custo Abastec. Cavalo',     val: fmtMoney(custoCav) },
+    { lbl:'Custo Abastec. Carreta',    val: fmtMoney(custoCar) },
+    { lbl:'Custo Total Combustível',   val: fmtMoney(custoCav + custoCar) }
+  ];
+  body.innerHTML = itens.map(it => `
+    <div>
+      <div style="font-weight:700;color:var(--primary)">${escapeHTML(String(it.val))}</div>
+      <div style="color:var(--text-lt);font-size:.72rem">${it.lbl}</div>
+    </div>`).join('');
 }
 
 function fatApplyFilters() {
@@ -9593,6 +9654,12 @@ async function loadAbastecimentos(opts) {
     const litCavalo = ehArla ? 0 : (ehCarretaPorCombustivel ? 0 : litros);
     const litCarreta = ehArla ? 0 : (ehCarretaPorCombustivel ? litros : 0);
     const litArla    = ehArla ? litros : 0;
+    // Valor da nota (valorOriginal) segue a mesma classificação cavalo/carreta/arla
+    // dos litros, para permitir somar custo por cavalo e por carreta ao filtrar.
+    const valorNota    = A.orig ? parseMoney(r[A.orig]) : 0;
+    const valCavalo    = ehArla ? 0 : (ehCarretaPorCombustivel ? 0 : valorNota);
+    const valCarreta   = ehArla ? 0 : (ehCarretaPorCombustivel ? valorNota : 0);
+    const valArla      = ehArla ? valorNota : 0;
     // Ajusta placas quando o combustível forçou carreta numa placa de cavalo
     const placaCavaloFinal  = ehDieselCarreta && !ehCarreta
       ? placaRaw   // a placa física é a carreta; cavalo fica em branco (não temos info)
@@ -9626,7 +9693,10 @@ async function loadAbastecimentos(opts) {
       combustivel:  A.comb  ? String(r[A.comb]  || '').trim() : '',
       cupom:        A.cupom ? String(r[A.cupom] || '').trim() : '',
       nf:           A.nf    ? String(r[A.nf]    || '').trim() : '',
-      valorOriginal:A.orig  ? parseMoney(r[A.orig]) : 0,
+      valorOriginal:valorNota,
+      valorCavalo:  valCavalo,
+      valorCarreta: valCarreta,
+      valorArla:    valArla,
       cpf:          A.cpf   ? String(r[A.cpf]   || '').trim() : '',
       _fonte:       'abastecimento'
     };
@@ -9684,37 +9754,57 @@ async function loadAbastecimentos(opts) {
       const hb = String(rb.hora || '').replace(':', '');
       return ha.localeCompare(hb);
     });
+    // ── Baseline (ultimoKm) só avança quando a leitura é válida (estritamente
+    //    maior que a última baseline aceita). Antes, qualquer km>0 virava a
+    //    nova baseline mesmo quando vinha menor/igual (nota com odômetro
+    //    digitado errado, registro duplicado, etc.) — isso "puxava para
+    //    baixo" a baseline e corrompia em cascata todos os deltas seguintes,
+    //    mesmo com a planilha em ordem cronológica correta. Agora uma
+    //    leitura inválida (delta <= 0) é só sinalizada e IGNORADA para fins
+    //    de baseline: o próximo registro válido compara contra a última
+    //    baseline boa, não contra o valor corrompido. ──
     let ultimoKm = 0;
     indices.forEach(idx => {
       const rec = abastAllRecords[idx];
       const km  = rec.km || 0;
-      if (km > 0) {
-        if (ultimoKm > 0) {
-          const delta = km - ultimoKm;
-          if (delta > 0 && delta <= MAX_KM_DELTA_DASH) {
-            rec.kmPercorrido = delta;
-            const litros = (ehGrupoCarreta ? rec.litrosCarreta : rec.litrosCavalo) ||
-                           rec.litrosCavalo || rec.litrosCarreta || 0;
-            const media  = litros > 0 ? delta / litros : 0;
-            if (ehGrupoCarreta) {
-              rec.mediaCarreta = media;
-              // garante que o campo litrosCarreta está preenchido quando o combustível
-              // é Diesel Comum/S500 (pode ter sido classificado como litrosCavalo
-              // pelo parser original antes de sabermos o tipo pelo combustível)
-              if (!rec.litrosCarreta && rec.litrosCavalo) {
-                rec.litrosCarreta = rec.litrosCavalo;
-                rec.litrosCavalo  = 0;
-                rec.mediaCavalo   = 0;
-              }
-            } else {
-              rec.mediaCavalo = media;
-            }
-          } else if (delta > MAX_KM_DELTA_DASH) {
-            // Delta implausível mesmo dentro do mesmo grupo — sinaliza para revisão
-            rec.kmDeltaSuspeito = delta;
-          }
-        }
+      if (km <= 0) return;
+
+      if (ultimoKm <= 0) {
+        // primeira leitura válida do grupo — só define a baseline
         ultimoKm = km;
+        return;
+      }
+
+      const delta = km - ultimoKm;
+
+      if (delta > 0 && delta <= MAX_KM_DELTA_DASH) {
+        rec.kmPercorrido = delta;
+        const litros = (ehGrupoCarreta ? rec.litrosCarreta : rec.litrosCavalo) ||
+                       rec.litrosCavalo || rec.litrosCarreta || 0;
+        const media  = litros > 0 ? delta / litros : 0;
+        if (ehGrupoCarreta) {
+          rec.mediaCarreta = media;
+          // garante que o campo litrosCarreta está preenchido quando o combustível
+          // é Diesel Comum/S500 (pode ter sido classificado como litrosCavalo
+          // pelo parser original antes de sabermos o tipo pelo combustível)
+          if (!rec.litrosCarreta && rec.litrosCavalo) {
+            rec.litrosCarreta = rec.litrosCavalo;
+            rec.litrosCavalo  = 0;
+            rec.mediaCavalo   = 0;
+            if (!rec.valorCarreta && rec.valorCavalo) {
+              rec.valorCarreta = rec.valorCavalo;
+              rec.valorCavalo  = 0;
+            }
+          }
+        } else {
+          rec.mediaCavalo = media;
+        }
+        ultimoKm = km; // baseline avança só em leitura válida
+      } else {
+        // delta <= 0 (km igual/menor que a baseline) ou > MAX_KM_DELTA_DASH:
+        // sinaliza para revisão e NÃO mexe na baseline, para não corromper
+        // os próximos cálculos da sequência.
+        rec.kmDeltaSuspeito = delta;
       }
     });
   });
@@ -10095,6 +10185,8 @@ function fatcRenderResumoCard(records, f) {
   const totalKm         = records.reduce((s,r)=>s+(r.km||0),0);
   const totalLitrosCav  = records.reduce((s,r)=>s+(r.litrosCavalo||0),0);
   const totalLitrosCar  = records.reduce((s,r)=>s+(r.litrosCarreta||0),0);
+  const totalCustoCav   = records.reduce((s,r)=>s+(r.valorCavalo||0),0);
+  const totalCustoCar   = records.reduce((s,r)=>s+(r.valorCarreta||0),0);
   const motoristasSet   = new Set(records.map(r=>r.motorista).filter(Boolean));
   const placasCavSet    = new Set(records.map(r=>r.placaCavalo).filter(Boolean));
   const placasCarSet    = new Set(records.map(r=>r.placaCarreta).filter(Boolean));
@@ -10113,7 +10205,10 @@ function fatcRenderResumoCard(records, f) {
     { lbl:'Média Carreta (km/L)',      val: fmtKmL(mediaCar) },
     { lbl:'Total KM',                  val: fmtNum(totalKm) + ' km' },
     { lbl:'Total Litros Cavalo',       val: fmtNum(totalLitrosCav) + ' L' },
-    { lbl:'Total Litros Carreta',      val: fmtNum(totalLitrosCar) + ' L' }
+    { lbl:'Total Litros Carreta',      val: fmtNum(totalLitrosCar) + ' L' },
+    { lbl:'Custo Abastec. Cavalo',     val: fmtMoney(totalCustoCav) },
+    { lbl:'Custo Abastec. Carreta',    val: fmtMoney(totalCustoCar) },
+    { lbl:'Custo Total (Cavalo+Carreta)', val: fmtMoney(totalCustoCav + totalCustoCar) }
   ];
 
   body.innerHTML = itens.map(it => `
@@ -12727,7 +12822,7 @@ async function nfeBuscarSEFAZ(){
             fornecedor: emitente, cnpjEmit,
             produto: '(sem detalhe de itens)',
             qtd:'—', un:'—', vlrUnit: 0, vlrTotal: det.valor_total||det.valorTotal||0,
-            tipo: 'outras', chave: chaveAcc
+            tipo: 'outras', chave: chaveAcc, doc:'nfe'
           });
         } else {
           for(const item of itensArr){
@@ -12744,17 +12839,78 @@ async function nfeBuscarSEFAZ(){
               fornecedor: emitente, cnpjEmit,
               produto: descricao,
               qtd: qtd||'—', un, vlrUnit, vlrTotal,
-              tipo, chave: chaveAcc
+              tipo, chave: chaveAcc, doc:'nfe'
             });
           }
         }
       }catch(e){ /* ignora erros de notas individuais */ }
     }
 
+    // ── CT-e (Conhecimento de Transporte Eletrônico) — documento diferente da
+    // NF-e: não tem lista de "itens/produtos", é a prestação do serviço de
+    // frete/transporte em si. Lido separadamente porque a estrutura do XML
+    // e o endpoint da Nuvem Fiscal são outros (/cte em vez de /nfe). ──
+    status.textContent = `Buscando CT-e...`;
+    let todasCte = [];
+    try {
+      skip = 0; hasMore = true;
+      while(hasMore){
+        let url = `https://api.nuvemfiscal.com.br/cte?cpf_cnpj=${NFE_CNPJ}&top=${top}&skip=${skip}&ambiente=producao`;
+        if(di) url += `&dataInicial=${di}T00:00:00`;
+        if(df) url += `&dataFinal=${df}T23:59:59`;
+
+        const r = await fetch(url,{headers:{Authorization:`Bearer ${token}`}});
+        if(!r.ok) break; // CT-e pode não estar habilitado no plano — não trava a busca de NF-e
+        const page = await r.json();
+        const items = page.data || page.results || page.items || [];
+        todasCte = todasCte.concat(items);
+
+        status.textContent = `Carregando... ${todasCte.length} CT-e`;
+        if(items.length < top) hasMore=false;
+        else skip += top;
+      }
+    } catch(e) { /* CT-e indisponível — segue só com NF-e */ }
+
+    status.textContent = `Processando ${todasCte.length} CT-e...`;
+    for(const cte of todasCte){
+      try{
+        const chave = cte.chave_acesso || cte.chaveAcesso || cte.id || '';
+        const id    = cte.id || chave;
+        if(!id) continue;
+
+        const dr = await fetch(`https://api.nuvemfiscal.com.br/cte/${id}`,{headers:{Authorization:`Bearer ${token}`}});
+        if(!dr.ok) continue;
+        const det = await dr.json();
+
+        const infCte    = det.cte?.infCte || {};
+        const emitCte   = det.emitente?.razao_social || det.emitente?.nome || infCte.emit?.xNome || '—';
+        const emissao   = det.data_emissao || det.dataEmissao || cte.data_emissao || '';
+        const emissaoFmt= emissao ? new Date(emissao).toLocaleDateString('pt-BR') : '—';
+        const chaveAcc  = det.chave_acesso || chave || '—';
+        // Valor da prestação do serviço de transporte
+        const vTPrest   = infCte.vPrest?.vTPrest ?? det.valor_total ?? det.valorTotal ?? 0;
+        const vlrTotal  = parseFloat(vTPrest || 0);
+        // Descrição básica de origem/destino, quando disponível, ajuda a
+        // identificar a viagem sem precisar abrir o XML completo.
+        const origem  = infCte.ide?.UFIni || '';
+        const destino = infCte.ide?.UFFim || '';
+        const rota    = (origem || destino) ? ` (${origem||'?'} → ${destino||'?'})` : '';
+
+        rows.push({
+          emissao: emissaoFmt, emissaoDate: emissao,
+          fornecedor: emitCte, cnpjEmit: '',
+          produto: `CT-e — Frete/Transporte${rota}`,
+          qtd:'—', un:'—', vlrUnit: 0, vlrTotal,
+          tipo:'frete', chave: chaveAcc, doc:'cte'
+        });
+      }catch(e){ /* ignora erros de CT-e individuais */ }
+    }
+
     nfeAllData = rows;
     localStorage.setItem('nfeCache', JSON.stringify({ts: Date.now(), data: rows}));
     nfeRender(rows);
-    showToast(`✅ ${rows.length} itens de ${todas.length} NF-e carregados!`);
+    const nCte = rows.filter(r=>r.doc==='cte').length;
+    showToast(`✅ ${rows.length} itens de ${todas.length} NF-e${nCte?` + ${nCte} CT-e`:''} carregados!`);
 
   } catch(e) {
     loading.style.display='none';
@@ -12814,6 +12970,7 @@ function nfeRender(rows){
   tbody.innerHTML = rows.map(r=>{
     const tipoLabel = r.tipo==='combustivel'?'<span class="badge badge-warning">⛽ Combustível</span>':
                       r.tipo==='manutencao'?'<span class="badge badge-info">🔧 Manutenção</span>':
+                      r.tipo==='frete'?'<span class="badge badge-info">🚚 CT-e Frete</span>':
                       '<span class="badge badge-gray">Outros</span>';
     const vlrFmt = r.vlrTotal?fmtMoney(r.vlrTotal):'—';
     const vlrUFmt= r.vlrUnit?fmtMoney(r.vlrUnit):'—';
