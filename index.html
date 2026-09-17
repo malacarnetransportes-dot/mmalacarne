@@ -9350,15 +9350,26 @@ function pararWebApp() {
 async function abastLimparEReler() {
   const status = document.getElementById('webAppStatus');
   const btn = document.getElementById('btnLimparReler');
+  const btnProcessar = document.getElementById('btnProcessarPDFs');
+
+  // Desabilita ambos os botões durante toda a operação
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Limpando...'; }
+  if (btnProcessar) btnProcessar.disabled = true;
   if (status) { status.style.display = 'block'; status.style.background = 'var(--gray-100)'; status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Limpando controle de processados...'; }
+
   try {
     const r = await abastFetchJson(WEBAPP_ABAST_URL + '?action=limpar');
     if (r.status !== 'ok') throw new Error(r.msg || 'Erro ao limpar controle.');
-    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-broom"></i> Limpar busca e reler'; }
+
+    // Atualiza status antes de chamar acionarWebApp
+    if (status) { status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Controle limpo — relendo todos os arquivos...'; }
+
     await acionarWebApp(); // relê a pasta inteira (arquivos já gravados não duplicam)
   } catch (e) {
     if (status) { status.style.background = '#fef2f2'; status.innerHTML = '<i class="fas fa-times-circle" style="color:#dc2626"></i> Erro: ' + e.message; }
+    if (btnProcessar) { btnProcessar.disabled = false; btnProcessar.innerHTML = '<i class="fas fa-file-pdf"></i> Processar PDFs'; }
+  } finally {
+    // Sempre restaura o botão Limpar ao final, independentemente do resultado
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-broom"></i> Limpar busca e reler'; }
   }
 }
