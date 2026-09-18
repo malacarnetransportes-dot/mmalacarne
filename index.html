@@ -9380,8 +9380,16 @@ function fatResetFilters() {
 // Planilha "Controle de Consumo por Litro" — alimentada automaticamente a
 // partir das notas fiscais (PDF) de abastecimento lançadas na pasta do Drive.
 // Publicada em Arquivo → Compartilhar → Publicar na Web → CSV.
-const DEFAULT_ABASTECIMENTOS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTcOHj4xU52hnDoRjXtTP-5JGOM5nleWQ5q_jNTWhRQJee_jKHBKayvgZIHe0MHf3xsmNEA4XLDTUJx/pub?output=csv";
+const DEFAULT_ABASTECIMENTOS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRXJ7y5LudxmuyyuloVI7h_WAPyy9hXliRErgcPukEOaFlX84Mi8X7iXiWH_zv7ro1pvRnfnkUwvH8O/pub?output=csv";
 const DEFAULT_WEBAPP_ABAST_URL = "https://script.google.com/macros/s/AKfycbxwRggVMrmBO2apnwA-zxiLVLibkMZJxLr8tNHZkpzE3P-VTlrWgQd0_c4IL8MwFgEe/exec";
+// Migração automática: se o navegador tinha salva a URL antiga da planilha
+// de Abastecimentos (publicação anterior, desatualizada), descarta e usa a
+// nova URL embutida acima — assim não é preciso abrir o modal de
+// configuração e trocar na mão.
+const URL_CSV_ANTIGA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTcOHj4xU52hnDoRjXtTP-5JGOM5nleWQ5q_jNTWhRQJee_jKHBKayvgZIHe0MHf3xsmNEA4XLDTUJx/pub?output=csv";
+if (localStorage.getItem("urlAbastecimentosCsv") === URL_CSV_ANTIGA) {
+  localStorage.removeItem("urlAbastecimentosCsv");
+}
 let ABASTECIMENTOS_CSV_URL = localStorage.getItem("urlAbastecimentosCsv") || DEFAULT_ABASTECIMENTOS_CSV_URL;
 // Migração automática: se o navegador tinha salva a URL antiga do Web App
 // (versão anterior, com bugs), descarta e usa a nova URL embutida acima —
