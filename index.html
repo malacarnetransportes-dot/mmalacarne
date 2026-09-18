@@ -2111,7 +2111,7 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
           <!-- KPIs -->
           <div class="kpi-grid" id="fatConsumoKpisTab">
             <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-truck"></i></div><div><div class="kpi-val" id="fatct-mediacv">—</div><div class="kpi-lbl">Média Geral Cavalos (km/L)</div></div></div>
-            <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-trailer"></i></div><div><div class="kpi-val" id="fatct-mediacr">—</div><div class="kpi-lbl">Média Geral Carretas (km/L)</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-trailer"></i></div><div><div class="kpi-val" id="fatct-mediacr">—</div><div class="kpi-lbl">Média Geral Carretas (L/h)</div></div></div>
             <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-gas-pump"></i></div><div><div class="kpi-val" id="fatct-litros">—</div><div class="kpi-lbl">Total Litros Consumidos</div></div></div>
             <div class="kpi-card"><div class="kpi-icon brown"><i class="fas fa-road"></i></div><div><div class="kpi-val" id="fatct-km">—</div><div class="kpi-lbl">Total KM Rodado</div></div></div>
             <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-thumbs-up"></i></div><div><div class="kpi-val" id="fatct-melhorcv" style="font-size:1rem">—</div><div class="kpi-lbl">Cavalo Mais Econômico</div></div></div>
@@ -2131,11 +2131,11 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
           </div>
           <div class="charts-grid" style="margin-top:1rem">
             <div class="dash-card">
-              <div class="dash-card-title"><i class="fas fa-trophy" style="color:var(--success)"></i> Melhores Carretas (km/L)</div>
+              <div class="dash-card-title"><i class="fas fa-trophy" style="color:var(--success)"></i> Melhores Carretas (L/h)</div>
               <ul class="rank-list" id="fatRankMelhoresCarretaTab"></ul>
             </div>
             <div class="dash-card">
-              <div class="dash-card-title"><i class="fas fa-triangle-exclamation" style="color:var(--danger)"></i> Piores Carretas (km/L)</div>
+              <div class="dash-card-title"><i class="fas fa-triangle-exclamation" style="color:var(--danger)"></i> Piores Carretas (L/h)</div>
               <ul class="rank-list" id="fatRankPioresCarretaTab"></ul>
             </div>
           </div>
@@ -2175,7 +2175,7 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
                 <thead><tr>
                   <th>Data</th><th>Hora</th><th>Placa</th><th>Tipo</th><th>Motorista</th>
                   <th>KM / Horas</th><th>Percorrido</th><th>Litros</th><th>Valor (R$)</th>
-                  <th>R$/L</th><th>Combustível</th><th>Posto</th><th>Cupom/NF</th><th>km/L</th>
+                  <th>R$/L</th><th>Combustível</th><th>Posto</th><th>Cupom/NF</th><th>Média</th>
                 </tr></thead>
                 <tbody id="fatcAbastTbodyTab"></tbody>
               </table>
@@ -3580,8 +3580,12 @@ document.querySelectorAll('.pa-nav-item[data-tab]').forEach(btn => {
     if (t === 'tabNfe')       setTimeout(nfeInit, 50);
     if (t === 'tabPneus')     setTimeout(pneuInit, 50);
     if (t === 'tabConsumoLitro') {
-      if (primeira) setTimeout(() => { loadAbastecimentos(); }, 50);
-      fatcInitTab();
+      if (primeira) {
+        setTimeout(() => { loadAbastecimentos(); }, 50);
+        fatcInitTab(); // só na 1ª abertura: popula os filtros e pré-seleciona o mês vigente
+      } else {
+        fatcApplyFiltersTab(); // reabrindo a aba: mantém os filtros que o usuário já tinha escolhido
+      }
       abastIniciarAutoRefresh();
     } else {
       abastPararAutoRefresh();
@@ -9070,6 +9074,9 @@ function fatRenderConsumoTab(dados) {
   dados = dados || fatcFilteredTab || fatcGetRecords();
 
   const fmtKmL = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' km/L' : '—';
+  // Carreta usa L/h (litros consumidos por hora do equipamento parado) — o
+  // inverso de km/L: aqui MENOR é melhor (equipamento mais econômico).
+  const fmtLH  = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' L/h' : '—';
   const fmtNum = v => (v||0).toLocaleString('pt-BR',{maximumFractionDigits:0});
   const fmtR   = v => v ? 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
 
@@ -9091,7 +9098,7 @@ function fatRenderConsumoTab(dados) {
       ? v.kmTotal / v.litros
       : (v.medias.length ? v.medias.reduce((a,b)=>a+b,0)/v.medias.length : 0),
     motorista: [...v.motoristas].join(', ') || '—'
-  })).filter(v => v.media > 0).sort((a,b) => b.media - a.media);
+  })).filter(v => v.media > 0).sort((a,b) => b.media - a.media); // cavalo: maior km/L = melhor
 
   // ── Agrupa por placa CARRETA ──
   const carMap = {};
@@ -9107,7 +9114,7 @@ function fatRenderConsumoTab(dados) {
     ...v,
     media: v.medias.length ? v.medias.reduce((a,b)=>a+b,0)/v.medias.length : 0,
     motorista: [...v.motoristas].join(', ') || '—'
-  })).filter(v => v.media > 0).sort((a,b) => b.media - a.media);
+  })).filter(v => v.media > 0).sort((a,b) => a.media - b.media); // carreta: menor L/h = melhor
 
   // ── KPIs ──
   const mediaGeral = arr => arr.length ? arr.reduce((s,v)=>s+v.media,0)/arr.length : 0;
@@ -9119,18 +9126,21 @@ function fatRenderConsumoTab(dados) {
 
   const setV = (id,val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
   setV('fatct-mediacv', fmtKmL(mediaGeral(cavArr)));
-  setV('fatct-mediacr', fmtKmL(mediaGeral(carArr)));
+  setV('fatct-mediacr', fmtLH(mediaGeral(carArr)));
   setV('fatct-litros',  fmtNum(totalLitros) + ' L');
   setV('fatct-km',      fmtNum(totalKm) + ' km');
   setV('fatct-melhorcv', cavArr.length ? `${cavArr[0].placa} — ${fmtKmL(cavArr[0].media)}` : '—');
   setV('fatct-piorcv',   cavArr.length ? `${cavArr[cavArr.length-1].placa} — ${fmtKmL(cavArr[cavArr.length-1].media)}` : '—');
 
-  // ── Rankings km/L ──
+  // ── Rankings km/L (cavalo) e L/h (carreta) ──
   const semDados = '<li style="justify-content:center;color:var(--text-lt)">Sem dados.</li>';
   const liRank = (v, cor) => `<li><span>${v.placa} <span style="color:var(--text-lt);font-weight:400">(${v.motorista.split(',')[0].trim()})</span></span><span style="font-weight:700;color:${cor}">${fmtKmL(v.media)}</span></li>`;
+  const liRankCar = (v, cor) => `<li><span>${v.placa} <span style="color:var(--text-lt);font-weight:400">(${v.motorista.split(',')[0].trim()})</span></span><span style="font-weight:700;color:${cor}">${fmtLH(v.media)}</span></li>`;
   const top5Cav = cavArr.slice(0,5);
   const top5CavSet = new Set(top5Cav.map(v=>normalizaPlaca(v.placa)));
   const bot5Cav = [...cavArr].reverse().filter(v=>!top5CavSet.has(normalizaPlaca(v.placa))).slice(0,5);
+  // carArr já está ordenado do menor L/h (melhor) pro maior (pior) — top5Car
+  // pega os primeiros (melhores) e bot5Car os últimos (piores), sem inverter.
   const top5Car = carArr.slice(0,5);
   const top5CarSet = new Set(top5Car.map(v=>normalizaPlaca(v.placa)));
   const bot5Car = [...carArr].reverse().filter(v=>!top5CarSet.has(normalizaPlaca(v.placa))).slice(0,5);
@@ -9138,8 +9148,8 @@ function fatRenderConsumoTab(dados) {
   const setList = (id,items,fb) => { const el=document.getElementById(id); if(el) el.innerHTML = items.length ? items : fb; };
   setList('fatRankMelhoresCavaloTab', top5Cav.map(v=>liRank(v,'var(--success)')).join(''), semDados);
   setList('fatRankPioresCavaloTab',   bot5Cav.map(v=>liRank(v,'var(--danger)')).join(''),  '<li style="justify-content:center;color:var(--text-lt)">Sem dados suficientes.</li>');
-  setList('fatRankMelhoresCarretaTab',top5Car.map(v=>liRank(v,'var(--success)')).join(''), semDados);
-  setList('fatRankPioresCarretaTab',  bot5Car.map(v=>liRank(v,'var(--danger)')).join(''),  '<li style="justify-content:center;color:var(--text-lt)">Sem dados suficientes.</li>');
+  setList('fatRankMelhoresCarretaTab',top5Car.map(v=>liRankCar(v,'var(--success)')).join(''), semDados);
+  setList('fatRankPioresCarretaTab',  bot5Car.map(v=>liRankCar(v,'var(--danger)')).join(''),  '<li style="justify-content:center;color:var(--text-lt)">Sem dados suficientes.</li>');
 
   // ── Ranking preço por litro por POSTO ──
   // Calcula preço médio (R$/L) por posto usando registros com valor e litros válidos
@@ -9231,9 +9241,12 @@ function fatRenderConsumoTab(dados) {
       // toda abastecida de carreta aparecia com km/L "—" mesmo tendo dado.
       const ehCarretaLinha = r.tipoAbastecido === 'carreta';
       const mediaVal = ehCarretaLinha ? r.mediaCarreta : r.mediaCavalo;
-      const media  = mediaVal > 0 ? mediaVal.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' km/L' : '—';
+      const media  = mediaVal > 0 ? mediaVal.toLocaleString('pt-BR',{maximumFractionDigits:2}) + (ehCarretaLinha ? ' L/h' : ' km/L') : '—';
+      // Thresholds de cor (verde ≥3, vermelho <2) valem pra km/L (cavalo,
+      // maior é melhor). Não fazem sentido pra L/h (carreta, menor é
+      // melhor), então carreta fica só em negrito, sem semáforo de cor.
       const corMedia = mediaVal > 0
-        ? (mediaVal >= 3.0 ? 'color:var(--success);font-weight:700' : mediaVal < 2.0 ? 'color:var(--danger);font-weight:700' : 'font-weight:600')
+        ? (ehCarretaLinha ? 'font-weight:700' : (mediaVal >= 3.0 ? 'color:var(--success);font-weight:700' : mediaVal < 2.0 ? 'color:var(--danger);font-weight:700' : 'font-weight:600'))
         : '';
       const kmPercorridoCell = r.kmDeltaSuspeito
         ? `<span style="color:#b45309;font-weight:700" title="Delta implausível (${r.kmDeltaSuspeito.toLocaleString('pt-BR')}) — verifique se a placa da CARRETA foi lançada como odômetro do cavalo">⚠️ ${r.kmDeltaSuspeito.toLocaleString('pt-BR')}?</span>`
@@ -9291,6 +9304,7 @@ function fatcRenderResumoCardTab(records, f) {
   titulo.textContent = partes.length ? partes.join(' · ') : 'Resumo do Filtro';
 
   const fmtKmL = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' km/L' : '—';
+  const fmtLH  = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' L/h' : '—';
   const fmtNum = v => (v || 0).toLocaleString('pt-BR',{maximumFractionDigits:0});
 
   const mediasCav = records.map(r => r.mediaCavalo).filter(v => v > 0);
@@ -9320,7 +9334,7 @@ function fatcRenderResumoCardTab(records, f) {
     { lbl:'Placas Carreta',            val: placasCarSet.size ? [...placasCarSet].join(', ') : '—' },
     { lbl:'Período dos Registros',     val: periodoTxt },
     { lbl:'Média Cavalo (km/L)',       val: fmtKmL(mediaCav) },
-    { lbl:'Média Carreta (km/L)',      val: fmtKmL(mediaCar) },
+    { lbl:'Média Carreta (L/h)',       val: fmtLH(mediaCar) },
     { lbl:'Total KM',                  val: fmtNum(totalKm) + ' km' },
     { lbl:'Total Litros Cavalo',       val: fmtNum(totalLitrosCav) + ' L' },
     { lbl:'Total Litros Carreta',      val: fmtNum(totalLitrosCar) + ' L' },
@@ -9339,12 +9353,16 @@ function fatcRenderResumoCardTab(records, f) {
 function fatcExportarAbastTab() {
   const dados = fatcFilteredTab.length ? fatcFilteredTab : fatcGetRecords();
   if (!dados.length) { showToast('Nenhum dado para exportar.', 3000); return; }
-  const labels = ['Data','Hora','Placa','Tipo','Motorista','KM/Horas','Percorrido','Litros','Valor (R$)','Combustível','Posto','Cupom','NF','km/L'];
+  const labels = ['Data','Hora','Placa','Tipo','Motorista','KM/Horas','Percorrido','Litros','Valor (R$)','Combustível','Posto','Cupom','NF','Média'];
   exportCSV(dados.map(r => {
-    const tipo   = r.tipoAbastecido === 'carreta' ? 'Carreta' : (r.tipoAbastecido === 'arla' ? 'Arla' : 'Cavalo');
-    const media  = r.tipoAbastecido === 'carreta' ? r.mediaCarreta : r.mediaCavalo;
+    const ehCar  = r.tipoAbastecido === 'carreta';
+    const tipo   = ehCar ? 'Carreta' : (r.tipoAbastecido === 'arla' ? 'Arla' : 'Cavalo');
+    const mediaN = ehCar ? r.mediaCarreta : r.mediaCavalo;
+    // Unidade explícita no texto, já que a coluna mistura km/L (cavalo) e
+    // L/h (carreta) — sem isso, o número sozinho fica ambíguo no CSV.
+    const media  = mediaN > 0 ? mediaN.toLocaleString('pt-BR',{maximumFractionDigits:2}) + (ehCar ? ' L/h' : ' km/L') : '';
     const litros = (r.litrosCavalo||0) + (r.litrosCarreta||0);
-    const vals   = [r.dataStr, r.hora, (r.placaFisica || r.placaCavalo), tipo, r.motorista, r.km, r.kmPercorrido, litros, r.valorOriginal, r.combustivel, r.posto, r.cupom, r.nf, media || ''];
+    const vals   = [r.dataStr, r.hora, (r.placaFisica || r.placaCavalo), tipo, r.motorista, r.km, r.kmPercorrido, litros, r.valorOriginal, r.combustivel, r.posto, r.cupom, r.nf, media];
     const row = {}; labels.forEach((l,i) => { row[l] = vals[i] ?? ''; }); return row;
   }), 'abastecimentos_consumo');
 }
@@ -9596,36 +9614,64 @@ async function loadAbastecimentos(opts) {
       const hb = String(rb.hora || '').replace(':', '');
       return ha.localeCompare(hb);
     });
-    // ── Baseline (ultimoKm) só avança quando a leitura é válida (estritamente
-    //    maior que a última baseline aceita). Antes, qualquer km>0 virava a
-    //    nova baseline mesmo quando vinha menor/igual (nota com odômetro
-    //    digitado errado, registro duplicado, etc.) — isso "puxava para
-    //    baixo" a baseline e corrompia em cascata todos os deltas seguintes,
-    //    mesmo com a planilha em ordem cronológica correta. Agora uma
-    //    leitura inválida (delta <= 0) é só sinalizada e IGNORADA para fins
-    //    de baseline: o próximo registro válido compara contra a última
-    //    baseline boa, não contra o valor corrompido. ──
-    let ultimoKm = 0;
-    indices.forEach(idx => {
-      const rec = abastAllRecords[idx];
-      const km  = rec.km || 0;
-      if (km <= 0) return;
 
-      if (ultimoKm <= 0) {
-        // primeira leitura válida do grupo — só define a baseline
-        ultimoKm = km;
-        return;
+    // ── Identifica a sequência correta de odômetro/horímetro do grupo. ──
+    // CORREÇÃO (18/09/2026): a versão anterior avançava a baseline de forma
+    // gulosa, sempre em ordem cronológica, e SEMPRE aceitava a 1ª leitura
+    // válida do grupo como baseline inicial sem questionar. Se por acaso
+    // fosse justamente essa 1ª leitura que estivesse com o odômetro digitado
+    // errado (nota malformada, dígito trocado etc.), todas as leituras
+    // seguintes — mesmo perfeitamente corretas entre si — ficavam comparadas
+    // contra uma baseline já corrompida e eram marcadas como suspeitas em
+    // cascata. Agora, em vez de andar cronologicamente e confiar às cegas na
+    // primeira leitura, procura-se a MAIOR cadeia de leituras (preservando a
+    // ordem cronológica) em que cada passo tem delta > 0 e ≤
+    // MAX_KM_DELTA_DASH — um "maior subconjunto crescente plausível", numa
+    // lógica parecida com longest-increasing-subsequence. Isso encontra a
+    // sequência mais provável de ser a real INDEPENDENTE de qual leitura
+    // específica esteja corrompida (seja a primeira, uma do meio, ou várias
+    // intercaladas), e ainda permite "pular" uma leitura ruim no meio da
+    // cadeia sem perder o restante da sequência válida.
+    const validIdx = indices.filter(idx => (abastAllRecords[idx].km || 0) > 0);
+    const n = validIdx.length;
+    if (n > 0) {
+      const dp = new Array(n).fill(1);
+      const prev = new Array(n).fill(-1);
+      for (let i = 0; i < n; i++) {
+        const kmI = abastAllRecords[validIdx[i]].km;
+        for (let j = 0; j < i; j++) {
+          const kmJ = abastAllRecords[validIdx[j]].km;
+          const delta = kmI - kmJ;
+          if (delta > 0 && delta <= MAX_KM_DELTA_DASH && dp[j] + 1 > dp[i]) {
+            dp[i] = dp[j] + 1;
+            prev[i] = j;
+          }
+        }
       }
+      // Encontra o fim da maior cadeia e reconstrói os índices que a compõem
+      let bestEnd = 0;
+      for (let i = 1; i < n; i++) if (dp[i] > dp[bestEnd]) bestEnd = i;
+      const chainSet = new Set();
+      for (let i = bestEnd; i !== -1; i = prev[i]) chainSet.add(i);
 
-      const delta = km - ultimoKm;
-
-      if (delta > 0 && delta <= MAX_KM_DELTA_DASH) {
+      // Preenche kmPercorrido/média só para quem está na cadeia (usando o
+      // predecessor real dela, que pode "pular" uma leitura ruim no meio).
+      for (let i = 0; i < n; i++) {
+        if (!chainSet.has(i)) continue;
+        const p = prev[i];
+        if (p === -1) continue; // 1º elo da cadeia: só define o início, sem delta
+        const rec   = abastAllRecords[validIdx[i]];
+        const delta = abastAllRecords[validIdx[i]].km - abastAllRecords[validIdx[p]].km;
         rec.kmPercorrido = delta;
         const litros = (ehGrupoCarreta ? rec.litrosCarreta : rec.litrosCavalo) ||
                        rec.litrosCavalo || rec.litrosCarreta || 0;
-        const media  = litros > 0 ? delta / litros : 0;
         if (ehGrupoCarreta) {
-          rec.mediaCarreta = media;
+          // Carreta usa horímetro (equipamento de frio parado, não rodando),
+          // então a métrica padrão de consumo não é "km/L" — é L/h (litros
+          // consumidos por hora de funcionamento do equipamento), o inverso
+          // do que era calculado antes (delta horas / litros = "h/L", sem
+          // sentido prático nenhum pra comparar consumo entre equipamentos).
+          rec.mediaCarreta = delta > 0 ? litros / delta : 0;
           // garante que o campo litrosCarreta está preenchido quando o combustível
           // é Diesel Comum/S500 (pode ter sido classificado como litrosCavalo
           // pelo parser original antes de sabermos o tipo pelo combustível)
@@ -9640,16 +9686,27 @@ async function loadAbastecimentos(opts) {
             }
           }
         } else {
-          rec.mediaCavalo = media;
+          // Cavalo usa odômetro (km rodado) — km/L é a métrica correta aqui.
+          rec.mediaCavalo = litros > 0 ? delta / litros : 0;
         }
-        ultimoKm = km; // baseline avança só em leitura válida
-      } else {
-        // delta <= 0 (km igual/menor que a baseline) ou > MAX_KM_DELTA_DASH:
-        // sinaliza para revisão e NÃO mexe na baseline, para não corromper
-        // os próximos cálculos da sequência.
-        rec.kmDeltaSuspeito = delta;
       }
-    });
+
+      // Quem ficou de fora da cadeia é sinalizado para revisão — o delta
+      // mostrado é contra o elo da cadeia cronologicamente mais próximo
+      // ANTES dele (o de referência mais intuitivo pro usuário conferir),
+      // ou contra o primeiro elo da cadeia se a leitura vier antes de tudo.
+      const chainOrdered = [...chainSet].sort((a,b) => a-b);
+      for (let i = 0; i < n; i++) {
+        if (chainSet.has(i)) continue;
+        const rec = abastAllRecords[validIdx[i]];
+        let ref = null;
+        for (const c of chainOrdered) { if (c < i) ref = c; else break; }
+        if (ref === null && chainOrdered.length) ref = chainOrdered[0];
+        if (ref !== null) {
+          rec.kmDeltaSuspeito = abastAllRecords[validIdx[i]].km - abastAllRecords[validIdx[ref]].km;
+        }
+      }
+    }
   });
 
   fatcPopularFiltrosTab();
@@ -11902,9 +11959,9 @@ const AUD_DATA = [
     id:'combustivel', title:'Controle de Consumo por Litro', icon:'fas fa-gas-pump',
     items:[
       {id:'1s', code:'1.s', pts:8,  text:'Possui controle de consumo Média por Litro dos cavalos com métricas e ranking de melhores e piores?',
-        hint:'✅ Sistema: aba "Faturamento" → colunas de média km/L por motorista/cavalo. O ranking já é gerado automaticamente — mostre ao auditor filtrando por período.'},
+        hint:'✅ Sistema: aba "Controle de Consumo" → coluna de média km/L por motorista/cavalo. O ranking já é gerado automaticamente — mostre ao auditor filtrando por período.'},
       {id:'1t', code:'1.t', pts:5,  text:'Possui controle de consumo Média por Litro das carretas/Equipamentos de Refrigeração com métricas e ranking de melhores e piores?',
-        hint:'✅ Sistema: aba "Faturamento" → coluna "Média Carreta (km/L)". Verifique se carretas e equipamentos de frio estão identificados com consumo registrado.'},
+        hint:'✅ Sistema: aba "Controle de Consumo" → coluna "Média Geral Carretas (L/h)". Verifique se carretas e equipamentos de frio estão identificados com consumo registrado.'},
     ]
   },
   {
