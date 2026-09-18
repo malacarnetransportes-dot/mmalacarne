@@ -2173,8 +2173,8 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
             <div class="tbl-wrap">
               <table class="data-table">
                 <thead><tr>
-                  <th>Data</th><th>Hora</th><th>Placa</th><th>Motorista</th>
-                  <th>KM</th><th>KM Percorrido</th><th>Litros</th><th>Valor (R$)</th>
+                  <th>Data</th><th>Hora</th><th>Placa</th><th>Tipo</th><th>Motorista</th>
+                  <th>KM / Horas</th><th>Percorrido</th><th>Litros</th><th>Valor (R$)</th>
                   <th>R$/L</th><th>Combustível</th><th>Posto</th><th>Cupom/NF</th><th>km/L</th>
                 </tr></thead>
                 <tbody id="fatcAbastTbodyTab"></tbody>
@@ -9199,7 +9199,7 @@ function fatRenderConsumoTab(dados) {
   const elAlertaKm = document.getElementById('fatAlertaKmSuspeito');
   if (elAlertaKm) {
     if (suspeitos.length > 0) {
-      const placas = [...new Set(suspeitos.map(r => r.placaCavalo).filter(Boolean))].join(', ');
+      const placas = [...new Set(suspeitos.map(r => r.placaFisica || r.placaCavalo).filter(Boolean))].join(', ');
       elAlertaKm.style.display = 'flex';
       elAlertaKm.innerHTML = `<i class="fas fa-triangle-exclamation" style="color:#b45309;font-size:1.1rem;flex-shrink:0"></i>
         <div><b style="color:#b45309">${suspeitos.length} registro(s) com KM implausível</b> — delta &gt; 4.000 km dentro da mesma sequência (placa + tipo combustível).
@@ -9221,24 +9221,36 @@ function fatRenderConsumoTab(dados) {
     });
     tbody.innerHTML = sorted.length ? sorted.map(r => {
       const fmtL  = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' L' : '—';
-      const fmtKm = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:0}) + ' km' : '—';
+      const fmtKm = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:0}) : '—';
       const litros = (r.litrosCavalo||0) + (r.litrosCarreta||0);
       const pL     = (litros > 0 && r.valorOriginal > 0) ? r.valorOriginal/litros : 0;
       const pLTxt  = pL > 0 ? 'R$ ' + pL.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'/L' : '—';
-      const media  = r.mediaCavalo > 0 ? r.mediaCavalo.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' km/L' : '—';
-      const corMedia = r.mediaCavalo > 0
-        ? (r.mediaCavalo >= 3.0 ? 'color:var(--success);font-weight:700' : r.mediaCavalo < 2.0 ? 'color:var(--danger);font-weight:700' : 'font-weight:600')
+      // Carreta usa horímetro (equipamento de frio), não odômetro — por isso
+      // a média correta de cada linha é mediaCavalo OU mediaCarreta, nunca
+      // as duas ao mesmo tempo. A tabela antiga só olhava mediaCavalo, então
+      // toda abastecida de carreta aparecia com km/L "—" mesmo tendo dado.
+      const ehCarretaLinha = r.tipoAbastecido === 'carreta';
+      const mediaVal = ehCarretaLinha ? r.mediaCarreta : r.mediaCavalo;
+      const media  = mediaVal > 0 ? mediaVal.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' km/L' : '—';
+      const corMedia = mediaVal > 0
+        ? (mediaVal >= 3.0 ? 'color:var(--success);font-weight:700' : mediaVal < 2.0 ? 'color:var(--danger);font-weight:700' : 'font-weight:600')
         : '';
       const kmPercorridoCell = r.kmDeltaSuspeito
-        ? `<span style="color:#b45309;font-weight:700" title="Delta KM implausível (${r.kmDeltaSuspeito.toLocaleString('pt-BR')} km) — verifique se a placa da CARRETA foi lançada como odômetro do cavalo">⚠️ ${r.kmDeltaSuspeito.toLocaleString('pt-BR')} km?</span>`
-        : fmtKm(r.kmPercorrido);
+        ? `<span style="color:#b45309;font-weight:700" title="Delta implausível (${r.kmDeltaSuspeito.toLocaleString('pt-BR')}) — verifique se a placa da CARRETA foi lançada como odômetro do cavalo">⚠️ ${r.kmDeltaSuspeito.toLocaleString('pt-BR')}?</span>`
+        : fmtKm(r.kmPercorrido) + (r.kmPercorrido ? (ehCarretaLinha ? ' h' : ' km') : '');
       const trStyle = r.kmDeltaSuspeito ? ' style="background:rgba(251,191,36,.08)"' : '';
+      const tipoBadge = r.tipoAbastecido === 'carreta'
+        ? '<span style="font-size:.7rem;font-weight:700;color:#0369a1;background:#e0f2fe;padding:.15rem .5rem;border-radius:6px"><i class="fas fa-snowflake"></i> Carreta</span>'
+        : r.tipoAbastecido === 'arla'
+          ? '<span style="font-size:.7rem;font-weight:700;color:#78350f;background:#fef3c7;padding:.15rem .5rem;border-radius:6px">Arla</span>'
+          : '<span style="font-size:.7rem;font-weight:700;color:#166534;background:#dcfce7;padding:.15rem .5rem;border-radius:6px"><i class="fas fa-truck"></i> Cavalo</span>';
       return `<tr${trStyle}>
         <td>${escapeHTML(r.dataStr||'')}</td>
         <td>${escapeHTML(r.hora||'—')}</td>
-        <td><span style="font-weight:700">${escapeHTML(r.placaCavalo||'—')}</span></td>
+        <td><span style="font-weight:700">${escapeHTML(r.placaFisica || r.placaCavalo || '—')}</span></td>
+        <td>${tipoBadge}</td>
         <td>${escapeHTML(r.motorista||'—')}</td>
-        <td>${fmtKm(r.km)}</td>
+        <td>${fmtKm(r.km)}${r.km ? (ehCarretaLinha ? ' h' : ' km') : ''}</td>
         <td>${kmPercorridoCell}</td>
         <td>${fmtL(litros||null)}</td>
         <td>${fmtR(r.valorOriginal)}</td>
@@ -9248,7 +9260,7 @@ function fatRenderConsumoTab(dados) {
         <td style="font-size:.75rem;line-height:1.35">${r.nf ? `<span style="font-weight:700">NF ${escapeHTML(r.nf)}</span>`+(r.cupom&&r.cupom!==r.nf?`<br><span style="color:var(--text-lt)">Cupom ${escapeHTML(r.cupom)}</span>`:'') : (r.cupom ? `Cupom ${escapeHTML(r.cupom)}` : '—')}</td>
         <td style="${corMedia}">${media}</td>
       </tr>`;
-    }).join('') : '<tr><td colspan="13" style="text-align:center;color:var(--text-lt);padding:1.5rem">Nenhum abastecimento encontrado.</td></tr>';
+    }).join('') : '<tr><td colspan="14" style="text-align:center;color:var(--text-lt);padding:1.5rem">Nenhum abastecimento encontrado.</td></tr>';
     if (count) count.textContent = sorted.length ? `(${sorted.length} registros)` : '';
   }
 }
@@ -9327,10 +9339,13 @@ function fatcRenderResumoCardTab(records, f) {
 function fatcExportarAbastTab() {
   const dados = fatcFilteredTab.length ? fatcFilteredTab : fatcGetRecords();
   if (!dados.length) { showToast('Nenhum dado para exportar.', 3000); return; }
-  const cols   = ['dataStr','hora','placaCavalo','motorista','km','kmPercorrido','litrosCavalo','valorOriginal','combustivel','posto','cupom','nf','mediaCavalo'];
-  const labels = ['Data','Hora','Placa','Motorista','KM','KM Percorrido','Litros','Valor (R$)','Combustível','Posto','Cupom','NF','km/L'];
+  const labels = ['Data','Hora','Placa','Tipo','Motorista','KM/Horas','Percorrido','Litros','Valor (R$)','Combustível','Posto','Cupom','NF','km/L'];
   exportCSV(dados.map(r => {
-    const row = {}; cols.forEach((c,i) => { row[labels[i]] = r[c] ?? ''; }); return row;
+    const tipo   = r.tipoAbastecido === 'carreta' ? 'Carreta' : (r.tipoAbastecido === 'arla' ? 'Arla' : 'Cavalo');
+    const media  = r.tipoAbastecido === 'carreta' ? r.mediaCarreta : r.mediaCavalo;
+    const litros = (r.litrosCavalo||0) + (r.litrosCarreta||0);
+    const vals   = [r.dataStr, r.hora, (r.placaFisica || r.placaCavalo), tipo, r.motorista, r.km, r.kmPercorrido, litros, r.valorOriginal, r.combustivel, r.posto, r.cupom, r.nf, media || ''];
+    const row = {}; labels.forEach((l,i) => { row[l] = vals[i] ?? ''; }); return row;
   }), 'abastecimentos_consumo');
 }
 
@@ -9497,6 +9512,14 @@ async function loadAbastecimentos(opts) {
       motorista:    motorista,
       placaCavalo:  placaCavaloFinal,
       placaCarreta: placaCarretaFinal,
+      // Placa física realmente lida na nota fiscal (o que a bomba abasteceu de
+      // fato) e o tipo desse abastecimento — usados na tabela pra distinguir
+      // visualmente abastecidas de cavalo e de carreta, já que placaCavalo/
+      // placaCarreta acima às vezes ficam ambas preenchidas com o mesmo valor
+      // (nota de carreta impressa com a placa do cavalo) e a tabela antiga só
+      // mostrava placaCavalo, escondendo as abastecidas de carreta.
+      placaFisica:     placaRaw,
+      tipoAbastecido:  ehArla ? 'arla' : (ehCarretaPorCombustivel ? 'carreta' : 'cavalo'),
       km:           kmBruto,
       kmPercorrido: kmPercorrido,
       litrosCavalo: litCavalo,
@@ -9610,6 +9633,7 @@ async function loadAbastecimentos(opts) {
             rec.litrosCarreta = rec.litrosCavalo;
             rec.litrosCavalo  = 0;
             rec.mediaCavalo   = 0;
+            rec.tipoAbastecido = 'carreta';
             if (!rec.valorCarreta && rec.valorCavalo) {
               rec.valorCarreta = rec.valorCavalo;
               rec.valorCavalo  = 0;
