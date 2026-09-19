@@ -206,6 +206,22 @@ footer a{color:var(--accent);text-decoration:none;}
 .slide-kpi-card:hover{transform:translateY(-4px);}
 .slide-kpi-val{font-family:'Poppins',system-ui,sans-serif;font-size:clamp(1.25rem,2.4vw,2.1rem);font-weight:600;color:var(--accent-dk);margin-bottom:.45rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.2px;}
 .slide-kpi-lbl{font-family:'Inter',sans-serif;font-size:.78rem;font-weight:600;color:var(--text-lt);text-transform:uppercase;letter-spacing:1px;}
+/* ── Gestão à Vista: listas de vencidos/próximos com NOME + PLACA ── */
+.slide-kpi-grid.compact{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.8rem;max-width:1180px;}
+.slide-kpi-grid.compact .slide-kpi-card{padding:.9rem .8rem;}
+.slide-kpi-grid.compact .slide-kpi-val{font-size:clamp(1.2rem,2vw,1.8rem);margin-bottom:.2rem;}
+.slide-venc-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:.55rem 1.2rem;}
+.slide-venc-row{display:flex;justify-content:space-between;align-items:center;gap:.7rem;padding:.55rem .8rem;border-radius:12px;background:rgba(245,158,11,.07);font-family:'Inter',sans-serif;min-width:0;}
+.slide-venc-row.is-vencido{background:rgba(239,68,68,.07);}
+.slide-venc-main{display:flex;flex-direction:column;min-width:0;flex:1;gap:.1rem;}
+.slide-venc-nome{font-weight:800;font-size:1.02rem;color:#1c2333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.slide-venc-row.is-vencido .slide-venc-nome{color:#b91c1c;}
+.slide-venc-sub{display:flex;flex-wrap:wrap;align-items:center;gap:.25rem .7rem;font-size:.78rem;color:#6b7280;}
+.slide-venc-placa{font-family:'Poppins',system-ui,sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.6px;color:#1c2333;}
+.slide-venc-placa i{color:var(--accent-dk);margin-right:.25rem;}
+.slide-venc-tag{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:.05rem .4rem;border-radius:6px;background:rgba(139,115,85,.14);color:#6b5a3f;}
+.slide-venc-data{font-weight:700;font-size:.85rem;white-space:nowrap;color:var(--warning);}
+.slide-venc-row.is-vencido .slide-venc-data{color:var(--danger);}
 .slide-links-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.2rem;max-width:1000px;width:100%;}
 .slide-dots{display:flex;gap:.5rem;justify-content:center;padding:1.4rem 0;}
 .slide-dot{width:9px;height:9px;border-radius:50%;background:rgba(139,115,85,.18);transition:.2s;}
@@ -3765,6 +3781,125 @@ function slideVelResumo(){
            media, max, graves, ranking, rankingPlacas, faixas, topOcorrencias, periodo };
 }
 
+// ── Gestão à Vista: resolve NOME + PLACA de qualquer linha de vencimento ──
+// As planilhas de vencimento trazem só UMA das duas coisas (Licenciamento →
+// placa; ASO/Toxicológico/CNH/etc. → motorista). Aqui completamos a outra
+// metade cruzando com o FROTA_DATA (cavalo + carreta + motorista vigente).
+const SLIDE_PLACA_RE = /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/;
+function slideNormNome(s){
+  return String(s||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^A-Z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+}
+function slideResolverNomePlaca(o){
+  o = o || {};
+  let n = String(o.nome || '').trim();
+  let p = normalizaPlaca(o.placa);
+  const id = String(o.ident || '').trim();
+  if (p && !SLIDE_PLACA_RE.test(p)) p = '';                       // coluna "placa" com lixo
+  if (n && SLIDE_PLACA_RE.test(normalizaPlaca(n))) { if (!p) p = normalizaPlaca(n); n = ''; } // "nome" que é placa
+  if (id && !n && !p) { if (SLIDE_PLACA_RE.test(normalizaPlaca(id))) p = normalizaPlaca(id); else n = id; }
+  const frota = (typeof FROTA_DATA !== 'undefined') ? FROTA_DATA : [];
+  const carretasDe = f => String(f.carreta || '').split(/[\s\/,;+]+/).map(normalizaPlaca).filter(Boolean);
+  let tipo = 'cavalo';
+  if (p) {
+    let f = frota.find(x => normalizaPlaca(x.placa) === p);
+    if (!f) {
+      f = frota.find(x => carretasDe(x).includes(p));
+      tipo = (f || (typeof CARRETA_PLACAS_FIXAS !== 'undefined' && CARRETA_PLACAS_FIXAS.has(p))) ? 'carreta' : 'cavalo';
+    }
+    if (!n && f && f.motorista && f.motorista !== '—') n = f.motorista;
+  } else if (n) {
+    const nn = slideNormNome(n);
+    const ativos = frota.filter(x => x.motorista && x.motorista !== '—');
+    let f = ativos.find(x => slideNormNome(x.motorista) === nn);
+    if (!f && nn.length >= 5) f = ativos.find(x => { const m = slideNormNome(x.motorista); return m.startsWith(nn) || nn.startsWith(m); });
+    if (f && f.placa) p = normalizaPlaca(f.placa);
+  }
+  return { nome: (n || '—').toUpperCase(), placa: p || '—', tipo };
+}
+
+// Uma linha "NOME / PLACA / quando / data" (usada em Vencimentos e Baterias)
+function slideVencLinhaHTML(a, vencido){
+  const fmt = d => d ? new Date(d).toLocaleDateString('pt-BR') : '—';
+  const quando = vencido ? `Vencido há ${Math.abs(a.dias)} dia(s)` : (a.dias <= 0 ? 'Vence hoje' : `Vence em ${a.dias} dia(s)`);
+  const tag = a.tipo === 'carreta' ? '<span class="slide-venc-tag">carreta</span>' : '';
+  return `<div class="slide-venc-row${vencido ? ' is-vencido' : ''}">
+    <div class="slide-venc-main">
+      <span class="slide-venc-nome" title="${escapeHTML(a.nome)}">${escapeHTML(a.nome)}</span>
+      <span class="slide-venc-sub"><span class="slide-venc-placa"><i class="fas fa-truck"></i>${escapeHTML(a.placa)}</span>${tag}<span>${quando}</span></span>
+    </div>
+    <span class="slide-venc-data">${fmt(a.data)}</span>
+  </div>`;
+}
+// Card completo (cabeçalho + contador + lista em grade)
+function slideVencCardHTML(o){
+  const vencido = o.tipo === 'vencido';
+  const cor = vencido ? 'var(--danger)' : 'var(--warning)';
+  const icone = vencido ? 'fa-exclamation-triangle' : 'fa-clock';
+  if (!o.itens.length) {
+    return vencido
+      ? `<div class="slide-hero-banner is-ok" style="margin:0"><i class="fas fa-check-circle"></i> ${o.vazio}</div>`
+      : `<div class="slide-status-card" style="text-align:left;border-left:5px solid var(--success)">
+           <div class="slide-status-card-head"><i class="fas fa-clock" style="color:var(--success)"></i> ${o.titulo}</div>
+           <div class="slide-status-rows"><div class="slide-status-row"><span>${o.vazio}</span></div></div>
+         </div>`;
+  }
+  return `<div class="slide-status-card" style="text-align:left;border-left:5px solid ${cor}">
+    <div class="slide-status-card-head"><i class="fas ${icone}" style="color:${cor}"></i> ${o.titulo}
+      <span style="margin-left:auto;font-size:.95rem;color:${cor};font-weight:800">${o.itens.length}</span>
+    </div>
+    <div class="slide-venc-list">${o.itens.map(a => slideVencLinhaHTML(a, vencido)).join('')}</div>
+  </div>`;
+}
+
+// Se a lista não couber na tela (TV sem ninguém rolando), rola sozinha
+// devagar durante o tempo do slide.
+let _slideScrollRaf = null, _slideScrollTo = null;
+function slideAutoScrollStop(){
+  if (_slideScrollRaf) cancelAnimationFrame(_slideScrollRaf);
+  clearTimeout(_slideScrollTo);
+  _slideScrollRaf = null;
+}
+function slideAutoScroll(body){
+  slideAutoScrollStop();
+  body.scrollTop = 0;
+  _slideScrollTo = setTimeout(() => {
+    const max = body.scrollHeight - body.clientHeight;
+    if (max <= 4) return;
+    const dur = Math.max(4000, SLIDE_DURATION - 6500);
+    const t0 = performance.now();
+    const step = t => {
+      const pr = Math.min(1, (t - t0) / dur);
+      body.scrollTop = max * pr;
+      if (pr < 1) _slideScrollRaf = requestAnimationFrame(step);
+    };
+    _slideScrollRaf = requestAnimationFrame(step);
+  }, 2500);
+}
+
+// Baterias: lista (dedup por placa, igual à aba Baterias) do que está
+// VENCIDO e do que vence em até 90 dias — com nome do motorista e placa.
+function slideBateriasDetalhe(){
+  if (typeof bateriasData === 'undefined' || !bateriasData.length) return null;
+  const headers = Object.keys(bateriasData[0]);
+  const colVeiculo = findCol(headers, ['veiculo','placa','caminhao','carro','cavalo','truck','frota']);
+  const colData    = findCol(headers, ['vencimento','data','validade','troca','substituicao','proxima']);
+  if (!colData) return { vencidos: [], proximos: [] };
+  const now = new Date(); now.setHours(0,0,0,0);
+  const em90 = new Date(now); em90.setDate(em90.getDate() + 90);
+  const vencidos = [], proximos = [];
+  dedupePorPlaca(bateriasData, colVeiculo, colData).forEach(row => {
+    const d = parseDate(row[colData]);
+    if (!d || d > em90) return;
+    const pn = slideResolverNomePlaca({ placa: colVeiculo ? row[colVeiculo] : '', ident: colVeiculo ? row[colVeiculo] : '' });
+    const item = { nome: pn.nome, placa: pn.placa, tipo: pn.tipo, data: d, dias: Math.round((d - now) / 86400000) };
+    if (d < now) vencidos.push(item); else proximos.push(item);
+  });
+  vencidos.sort((a,b) => a.data - b.data);
+  proximos.sort((a,b) => a.data - b.data);
+  return { vencidos, proximos };
+}
+
 // ── Vencimentos: detalhe por categoria para a Gestão à Vista ──
 // Monta, direto de vencData (sem depender de a aba Vencimentos ter sido
 // aberta nem de vencAlertasAtuais estar atualizado), a lista completa do
@@ -3782,6 +3917,8 @@ function slideVencDetalhe(catKey){
   const em30 = new Date(now); em30.setDate(em30.getDate() + 30);
   const headers = Object.keys(rows[0]);
   const colId = findCol(headers, ['placa','veiculo','motorista','nome','funcionario','colaborador']);
+  const colPlaca = findCol(headers, ['placa','veiculo','cavalo']);
+  const colNome  = findCol(headers, ['motorista','nome','funcionario','colaborador']);
   const colDataCandidatos = cat.key === 'licenciamento'
     ? findColCandidates(headers, ['vencimento','validade','vcto','venc','jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez','situacao','sit.','sit ','data'])
     : findColCandidates(headers, ['vencimento','vcto','validade','venc','data']);
@@ -3793,7 +3930,9 @@ function slideVencDetalhe(catKey){
   rows.forEach(row => {
     const { d, status } = vencCalcularStatusLinha(row, cat, headers, colId, colData, colSituacao, formato, now, em30);
     if (!d) return;
-    const item = { id: colId ? (row[colId] || '—') : '—', data: d,
+    const ident = colId ? String(row[colId] || '').trim() : '';
+    const pn = slideResolverNomePlaca({ nome: colNome ? row[colNome] : '', placa: colPlaca ? row[colPlaca] : '', ident });
+    const item = { id: ident || '—', nome: pn.nome, placa: pn.placa, tipo: pn.tipo, data: d,
                    dias: Math.round((d - now) / 86400000) };
     if (status === 'vencido')      vencidos.push(item);
     else if (status === 'proximo') prox30.push(item);
@@ -3880,7 +4019,7 @@ function slideBuildSlides(){
     // 1) Previsão do Tempo — Concórdia SC (semana)
     { title: '<i class="fas fa-cloud-sun"></i> Previsão do Tempo — Concórdia/SC', type: 'weather-concordia' },
     // 2) Baterias — destaca em vermelho se houver vencidas
-    { title: '<i class="fas fa-battery-three-quarters"></i> Baterias', kpis: [
+    { title: '<i class="fas fa-battery-three-quarters"></i> Baterias', type: 'bat-single', kpis: [
         { val: slideText('bat-total','—'), lbl: 'Total Baterias' },
         { val: slideText('bat-vencidas','—'), lbl: 'Vencidas', danger: true },
         { val: slideText('bat-proximas','—'), lbl: 'Próx. 30 dias', warning: true },
@@ -4023,13 +4162,18 @@ function slideConsumoResumo() {
   fonte.forEach(r => {
     const p = normalizaPlaca(r.placaCavalo);
     if (!p) return;
-    if (!cavMap[p]) cavMap[p] = { placa: r.placaCavalo, medias: [], motoristas: new Set() };
-    if (r.mediaCavalo > 0) cavMap[p].medias.push(r.mediaCavalo);
+    if (!cavMap[p]) cavMap[p] = { placa: r.placaCavalo, kmPar: 0, litrosPar: 0, motoristas: new Set() };
+    // Mesma regra da aba Controle de Consumo: Σ km percorrido ÷ Σ litros dos
+    // abastecimentos que têm km percorrido (cavalo, sem carreta/arla).
+    if (r.tipoAbastecido !== 'carreta' && r.tipoAbastecido !== 'arla' && (r.kmPercorrido || 0) > 0 && (r.litrosCavalo || 0) > 0) {
+      cavMap[p].kmPar += r.kmPercorrido;
+      cavMap[p].litrosPar += r.litrosCavalo;
+    }
     if (r.motorista) cavMap[p].motoristas.add(r.motorista);
   });
   const cavArr = Object.values(cavMap).map(v => ({
     placa:     v.placa,
-    media:     v.medias.length ? v.medias.reduce((a, b) => a + b, 0) / v.medias.length : 0,
+    media:     v.litrosPar > 0 && v.kmPar > 0 ? v.kmPar / v.litrosPar : 0,
     motorista: [...v.motoristas].join(', ') || '—',
   })).filter(v => v.media > 0).sort((a, b) => b.media - a.media);
 
@@ -4062,6 +4206,7 @@ function slideRender(){
   const s = slides[idx];
   const body = document.getElementById('slideBody');
   body.classList.remove('show');
+  slideAutoScrollStop();
   const counterEl = document.getElementById('slideCounter');
   if (counterEl) counterEl.textContent = `${idx + 1} / ${slides.length}`;
 
@@ -4106,11 +4251,31 @@ function slideRender(){
       slideRenderDots(slides, idx);
       return;
     }
+    if (s.type === 'bat-single') {
+      const det = slideBateriasDetalhe();
+      const kpiHTML = `<div class="slide-kpi-grid compact" style="margin-bottom:1rem">${s.kpis.map(slideKpiCard).join('')}</div>`;
+      if (!det) {
+        body.innerHTML = `<div class="slide-section-title">${s.title}</div>${kpiHTML}
+          <div class="slide-status-card" style="max-width:520px;width:100%;text-align:center;color:var(--text-lt)">
+            <i class="fas fa-spinner fa-spin" style="font-size:1.4rem;margin-bottom:.6rem;display:block"></i>
+            Carregando baterias...
+          </div>`;
+      } else {
+        body.innerHTML = `<div class="slide-section-title">${s.title}</div>${kpiHTML}
+          <div style="max-width:1180px;width:100%;display:flex;flex-direction:column;gap:1rem">
+            ${slideVencCardHTML({ tipo:'vencido', titulo:'Vencidas — Trocar Imediatamente', itens: det.vencidos, vazio:'Nenhuma bateria vencida' })}
+            ${slideVencCardHTML({ tipo:'proximo', titulo:'Próximas a Vencer — até 3 meses', itens: det.proximos, vazio:'Nenhuma bateria vencendo nos próximos 3 meses.' })}
+          </div>`;
+      }
+      requestAnimationFrame(() => body.classList.add('show'));
+      slideRenderDots(slides, idx);
+      slideAutoScroll(body);
+      return;
+    }
     if (s.type === 'venc-single') {
       const c = s.categoria;
       const total = c.vencidos + c.proximos + c.ok;
       const pct = n => total ? (n/total*100) : 0;
-      const fmtDataA = d => d ? new Date(d).toLocaleDateString('pt-BR') : '—';
 
       // Lista calculada direto de vencData — não depende de vencAlertasAtuais,
       // que podia estar vazio e fazer o slide dizer "Todos em dia" mesmo com
@@ -4133,23 +4298,22 @@ function slideRender(){
       const listaProximos = det.proximos;
       const tudoEmDia = c.vencidos === 0 && listaVencidos.length === 0;
 
-      const linhaVencido = a => `<div class="slide-status-row">
-        <div style="display:flex;flex-direction:column;min-width:0;flex:1">
-          <span style="font-weight:800;color:#b91c1c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHTML(String(a.id))}</span>
-          <span style="font-size:.7rem;color:#6b7280">Vencido há ${Math.abs(a.dias)} dia(s)</span>
-        </div>
-        <span style="font-size:.8rem;color:var(--danger);font-weight:700;white-space:nowrap;margin-left:.6rem">${fmtDataA(a.data)}</span>
-      </div>`;
-      const linhaProximo = a => `<div class="slide-status-row">
-        <div style="display:flex;flex-direction:column;min-width:0;flex:1">
-          <span style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHTML(String(a.id))}</span>
-          <span style="font-size:.7rem;color:#6b7280">Vence em ${a.dias} dia(s)</span>
-        </div>
-        <span style="font-size:.8rem;color:var(--warning);font-weight:700;white-space:nowrap;margin-left:.6rem">${fmtDataA(a.data)}</span>
-      </div>`;
+      // Bloco 1 (em cima): VENCIDOS — nome + placa
+      const blocoVencidos = (!listaVencidos.length && c.vencidos > 0)
+        ? `<div class="slide-status-card" style="text-align:left;border-left:5px solid var(--danger)">
+            <div class="slide-status-card-head"><i class="fas fa-exclamation-triangle" style="color:var(--danger)"></i> Vencido — Regularizar Imediatamente</div>
+            <div class="slide-status-rows"><div class="slide-status-row"><span>${c.vencidos} registro(s) vencido(s) — abra a aba Vencimentos para ver a lista</span></div></div>
+          </div>`
+        : slideVencCardHTML({ tipo:'vencido', titulo:'Vencido — Regularizar Imediatamente', itens: listaVencidos, vazio:'Nenhum documento vencido nesta categoria' });
+
+      // Bloco 2 (embaixo): PRÓXIMOS a vencer — nome + placa
+      const blocoProximos = slideVencCardHTML({
+        tipo:'proximo',
+        titulo: det.proximosSao30 ? 'Próximos a Vencer — 30 dias' : 'Próximos a Vencer (nada nos 30 dias)',
+        itens: listaProximos, vazio:'Nenhum vencimento próximo registrado.' });
 
       body.innerHTML = `<div class="slide-section-title">${s.title}</div>
-        <div class="slide-kpi-grid" style="max-width:900px;margin-bottom:.9rem">
+        <div class="slide-kpi-grid compact" style="max-width:900px;margin-bottom:.9rem">
           <div class="slide-kpi-card${c.vencidos > 0 ? ' is-danger' : ''}"><div class="slide-kpi-val">${c.vencidos}</div><div class="slide-kpi-lbl">Vencidos</div></div>
           <div class="slide-kpi-card${c.proximos > 0 ? ' is-warning' : ''}"><div class="slide-kpi-val">${c.proximos}</div><div class="slide-kpi-lbl">Próx. 30 dias</div></div>
           <div class="slide-kpi-card is-ok"><div class="slide-kpi-val">${c.ok}</div><div class="slide-kpi-lbl">Em dia</div></div>
@@ -4157,49 +4321,15 @@ function slideRender(){
         <div class="slide-status-bar" style="max-width:760px;width:100%;height:8px;margin-bottom:1.1rem">
           <span style="width:${pct(c.vencidos)}%;background:var(--danger)"></span><span style="width:${pct(c.proximos)}%;background:var(--warning)"></span><span style="width:${pct(c.ok)}%;background:var(--success)"></span>
         </div>
-
-        <!-- Bloco 1 (em cima): o que está VENCIDO -->
-        <div style="max-width:860px;width:100%;display:flex;flex-direction:column;gap:1rem">
-          ${listaVencidos.length ? `
-          <div class="slide-status-card" style="text-align:left;border-left:5px solid var(--danger)">
-            <div class="slide-status-card-head"><i class="fas fa-exclamation-triangle" style="color:var(--danger)"></i>
-              Vencido — Regularizar Imediatamente
-              <span style="margin-left:auto;font-size:.8rem;color:var(--danger);font-weight:800">${listaVencidos.length}</span>
-            </div>
-            <div class="slide-status-rows" style="max-height:220px;overflow-y:auto">
-              ${listaVencidos.map(linhaVencido).join('')}
-            </div>
-          </div>`
-          : (c.vencidos > 0 ? `
-          <div class="slide-status-card" style="text-align:left;border-left:5px solid var(--danger)">
-            <div class="slide-status-card-head"><i class="fas fa-exclamation-triangle" style="color:var(--danger)"></i> Vencido — Regularizar Imediatamente</div>
-            <div class="slide-status-rows"><div class="slide-status-row"><span>${c.vencidos} registro(s) vencido(s) — abra a aba Vencimentos para ver a lista</span></div></div>
-          </div>` : `
-          <div class="slide-hero-banner is-ok" style="margin:0">
-            <i class="fas fa-check-circle"></i> Nenhum documento vencido nesta categoria
-          </div>`)}
-
-          <!-- Bloco 2 (embaixo): o PRÓXIMO a vencer -->
-          ${listaProximos.length ? `
-          <div class="slide-status-card" style="text-align:left;border-left:5px solid var(--warning)">
-            <div class="slide-status-card-head"><i class="fas fa-clock" style="color:var(--warning)"></i>
-              ${det.proximosSao30 ? 'Próximos a Vencer — 30 dias' : 'Próximos a Vencer (nada nos 30 dias)'}
-              <span style="margin-left:auto;font-size:.8rem;color:var(--warning);font-weight:800">${listaProximos.length}</span>
-            </div>
-            <div class="slide-status-rows" style="max-height:200px;overflow-y:auto">
-              ${listaProximos.map(linhaProximo).join('')}
-            </div>
-          </div>` : `
-          <div class="slide-status-card" style="text-align:left;border-left:5px solid var(--success)">
-            <div class="slide-status-card-head"><i class="fas fa-clock" style="color:var(--success)"></i> Próximos a Vencer</div>
-            <div class="slide-status-rows"><div class="slide-status-row"><span>Nenhum vencimento próximo registrado.</span></div></div>
-          </div>`}
+        <div style="max-width:1180px;width:100%;display:flex;flex-direction:column;gap:1rem">
+          ${blocoVencidos}
+          ${blocoProximos}
         </div>
-
         ${tudoEmDia && !listaProximos.length ? `<div style="color:var(--success);font-size:1rem;font-weight:700;margin-top:.9rem"><i class="fas fa-check-circle"></i> Categoria 100% em dia!</div>` : ''}
         `;
       requestAnimationFrame(() => body.classList.add('show'));
       slideRenderDots(slides, idx);
+      slideAutoScroll(body);
       return;
     }
     if (s.type === 'rh-resumo') {
@@ -9074,7 +9204,7 @@ function fatRenderConsumoTab(dados) {
   const cavMap = {};
   dados.forEach(r => {
     const p = normalizaPlaca(r.placaCavalo); if (!p) return;
-    if (!cavMap[p]) cavMap[p] = { placa:r.placaCavalo, medias:[], km:0, litros:0, kmTotal:0, registros:0, motoristas:new Set() };
+    if (!cavMap[p]) cavMap[p] = { placa:r.placaCavalo, medias:[], km:0, litros:0, kmTotal:0, kmPar:0, litrosPar:0, regsPar:0, registros:0, motoristas:new Set() };
     if (r.mediaCavalo > 0) cavMap[p].medias.push(r.mediaCavalo);
     // Só acumula km/litros/kmTotal para registros de CAVALO.
     // Registros de carreta têm placaCavalo preenchido (do cadastro da frota)
@@ -9083,6 +9213,17 @@ function fatRenderConsumoTab(dados) {
       cavMap[p].km      += r.km || 0;
       cavMap[p].litros  += r.litrosCavalo || 0;
       cavMap[p].kmTotal += r.kmPercorrido || 0;
+      // CORREÇÃO (19/09/2026): o km/L do ranking só pode usar os litros dos
+      // abastecimentos que TÊM km percorrido (delta de odômetro válido).
+      // Antes, litros de abastecidas sem leitura de KM (1ª do período, KM
+      // faltando, leitura fora da cadeia) entravam no divisor mas seus km
+      // não entravam no dividendo — a média despencava (ex.: 0,83 km/L) e o
+      // ranking não batia com a coluna "Média" das linhas da tabela.
+      if ((r.kmPercorrido || 0) > 0 && (r.litrosCavalo || 0) > 0) {
+        cavMap[p].kmPar     += r.kmPercorrido;
+        cavMap[p].litrosPar += r.litrosCavalo;
+        cavMap[p].regsPar++;
+      }
     }
     if (r.mediaCavalo > 0 || r.litrosCavalo > 0) cavMap[p].registros++;
     if (r.motorista) cavMap[p].motoristas.add(r.motorista);
@@ -9092,7 +9233,7 @@ function fatRenderConsumoTab(dados) {
     // Usa somente o cálculo direto do período filtrado (kmTotal/litros).
     // O fallback v.medias contém médias pré-calculadas de TODA a história
     // da placa — usá-lo aqui distorceria o ranking do período selecionado.
-    media: v.litros > 0 && v.kmTotal > 0 ? v.kmTotal / v.litros : 0,
+    media: v.litrosPar > 0 && v.kmPar > 0 ? v.kmPar / v.litrosPar : 0,
     motorista: [...v.motoristas].join(', ') || '—'
   })).filter(v => v.media > 0).sort((a,b) => b.media - a.media); // cavalo: maior km/L = melhor
 
@@ -9100,19 +9241,26 @@ function fatRenderConsumoTab(dados) {
   const carMap = {};
   dados.forEach(r => {
     const p = normalizaPlaca(r.placaCarreta); if (!p) return;
-    if (!carMap[p]) carMap[p] = { placa:r.placaCarreta, medias:[], litros:0, horasTotal:0, registros:0, motoristas:new Set() };
+    if (!carMap[p]) carMap[p] = { placa:r.placaCarreta, medias:[], litros:0, horasTotal:0, litrosPar:0, horasPar:0, regsPar:0, registros:0, motoristas:new Set() };
     if (r.mediaCarreta > 0) carMap[p].medias.push(r.mediaCarreta);
     carMap[p].litros    += r.litrosCarreta || 0;
     // kmPercorrido nas carretas é delta do horímetro (horas de funcionamento)
     carMap[p].horasTotal += (r.tipoAbastecido === 'carreta' ? r.kmPercorrido : 0) || 0;
+    // Só pareia litros com horas quando o abastecimento TEM delta de horímetro
+    // (mesma correção do cavalo).
+    if (r.tipoAbastecido === 'carreta' && (r.kmPercorrido || 0) > 0 && (r.litrosCarreta || 0) > 0) {
+      carMap[p].horasPar  += r.kmPercorrido;
+      carMap[p].litrosPar += r.litrosCarreta;
+      carMap[p].regsPar++;
+    }
     if (r.mediaCarreta > 0 || r.litrosCarreta > 0) carMap[p].registros++;
     if (r.motorista) carMap[p].motoristas.add(r.motorista);
   });
   const carArr = Object.values(carMap).map(v => ({
     ...v,
     // Prefere cálculo direto litros/horasTotal (mais preciso que média das médias)
-    media: v.litros > 0 && v.horasTotal > 0
-      ? v.litros / v.horasTotal
+    media: v.litrosPar > 0 && v.horasPar > 0
+      ? v.litrosPar / v.horasPar
       : (v.medias.length ? v.medias.reduce((a,b)=>a+b,0)/v.medias.length : 0),
     motorista: [...v.motoristas].join(', ') || '—'
   })).filter(v => v.media > 0).sort((a,b) => a.media - b.media); // carreta: menor L/h = melhor
@@ -9135,8 +9283,9 @@ function fatRenderConsumoTab(dados) {
 
   // ── Rankings km/L (cavalo) e L/h (carreta) ──
   const semDados = '<li style="justify-content:center;color:var(--text-lt)">Sem dados.</li>';
-  const liRank = (v, cor) => `<li><span>${v.placa} <span style="color:var(--text-lt);font-weight:400">(${v.motorista.split(',')[0].trim()})</span></span><span style="font-weight:700;color:${cor}">${fmtKmL(v.media)}</span></li>`;
-  const liRankCar = (v, cor) => `<li><span>${v.placa} <span style="color:var(--text-lt);font-weight:400">(${v.motorista.split(',')[0].trim()})</span></span><span style="font-weight:700;color:${cor}">${fmtLH(v.media)}</span></li>`;
+  const nAbast = v => `<span style="color:var(--text-lt);font-weight:400;font-size:.73rem"> · ${v.regsPar||0} abast.</span>`;
+  const liRank = (v, cor) => `<li><span>${v.placa} <span style="color:var(--text-lt);font-weight:400">(${v.motorista.split(',')[0].trim()})</span>${nAbast(v)}</span><span style="font-weight:700;color:${cor}">${fmtKmL(v.media)}</span></li>`;
+  const liRankCar = (v, cor) => `<li><span>${v.placa} <span style="color:var(--text-lt);font-weight:400">(${v.motorista.split(',')[0].trim()})</span>${nAbast(v)}</span><span style="font-weight:700;color:${cor}">${fmtLH(v.media)}</span></li>`;
   const top5Cav = cavArr.slice(0,5);
   const top5CavSet = new Set(top5Cav.map(v=>normalizaPlaca(v.placa)));
   const bot5Cav = [...cavArr].reverse().filter(v=>!top5CavSet.has(normalizaPlaca(v.placa))).slice(0,5);
@@ -9309,14 +9458,20 @@ function fatcRenderResumoCardTab(records, f) {
   const fmtNum = v => (v || 0).toLocaleString('pt-BR',{maximumFractionDigits:0});
 
   // KM e litros: só registros de cavalo para cálculo de km/L
-  const totalKm         = records.reduce((s,r)=> s + (r.tipoAbastecido !== 'carreta' && r.tipoAbastecido !== 'arla' ? (r.kmPercorrido||0) : 0), 0);
+  const ehCavReg        = r => r.tipoAbastecido !== 'carreta' && r.tipoAbastecido !== 'arla';
+  const totalKm         = records.reduce((s,r)=> s + (ehCavReg(r) ? (r.kmPercorrido||0) : 0), 0);
+  // Média usa só abastecimentos COM km percorrido (litros pareados) — igual ao ranking
+  const kmPar           = records.reduce((s,r)=> s + (ehCavReg(r) && (r.kmPercorrido||0) > 0 && (r.litrosCavalo||0) > 0 ? r.kmPercorrido : 0), 0);
+  const litrosParCav    = records.reduce((s,r)=> s + (ehCavReg(r) && (r.kmPercorrido||0) > 0 && (r.litrosCavalo||0) > 0 ? r.litrosCavalo : 0), 0);
+  const horasParCar     = records.reduce((s,r)=> s + (r.tipoAbastecido === 'carreta' && (r.kmPercorrido||0) > 0 && (r.litrosCarreta||0) > 0 ? r.kmPercorrido : 0), 0);
+  const litrosParCar    = records.reduce((s,r)=> s + (r.tipoAbastecido === 'carreta' && (r.kmPercorrido||0) > 0 && (r.litrosCarreta||0) > 0 ? r.litrosCarreta : 0), 0);
   const totalLitrosCav  = records.reduce((s,r)=>s+(r.litrosCavalo||0),0);
   const totalLitrosCar  = records.reduce((s,r)=>s+(r.litrosCarreta||0),0);
   // Média cavalo: mesma lógica do ranking (totalKm/totalLitros) para consistência
-  const mediaCav  = totalKm > 0 && totalLitrosCav > 0 ? totalKm / totalLitrosCav : 0;
+  const mediaCav  = kmPar > 0 && litrosParCav > 0 ? kmPar / litrosParCav : 0;
   // Média carreta: litros / horas totais (delta horímetro de registros de carreta)
   const totalHorasCarreta = records.reduce((s,r)=> s + (r.tipoAbastecido === 'carreta' ? (r.kmPercorrido||0) : 0), 0);
-  const mediaCar  = totalLitrosCar > 0 && totalHorasCarreta > 0 ? totalLitrosCar / totalHorasCarreta : 0;
+  const mediaCar  = litrosParCar > 0 && horasParCar > 0 ? litrosParCar / horasParCar : 0;
   const totalCustoCav   = records.reduce((s,r)=>s+(r.valorCavalo||0),0);
   const totalCustoCar   = records.reduce((s,r)=>s+(r.valorCarreta||0),0);
   const datasOrdenadas  = records.map(r=>r.data).filter(Boolean).sort((a,b)=>a-b);
@@ -10036,6 +10191,7 @@ async function loadBateriasData() {
     bateriasData = rows;
     currentBateriasFiltered = rows;
     aplicarFiltrosBaterias();
+    try { slideRerenderSe(['bat-single']); } catch(e) {}
   } catch(e) {
     document.getElementById('batLoading').innerHTML = `<span style="color:var(--danger)"><i class="fas fa-exclamation-circle"></i> Erro: ${e.message}</span>`;
     showToast('Erro ao carregar Baterias');
