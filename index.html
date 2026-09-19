@@ -3870,7 +3870,7 @@ function slideBuildSlides(){
   // Resumo de cada categoria de vencimento (Licenciamento/IPVA, ASO, Toxicológico, Defensiva)
   const vencResumo = VENC_CATEGORIAS.map(cat => {
     const c = (typeof vencCounts !== 'undefined' && vencCounts[cat.key]) ? vencCounts[cat.key] : { vencidos:0, proximos:0, ok:0 };
-    return { label: cat.label, icon: cat.icon, ...c };
+    return { key: cat.key, label: cat.label, icon: cat.icon, ...c };
   });
   const totalVencidos = vencResumo.reduce((s,v)=>s+v.vencidos,0);
   const totalProximos = vencResumo.reduce((s,v)=>s+v.proximos,0);
@@ -4293,12 +4293,12 @@ function slideRender(){
         ${d.topOcorrencias.length ? `<div class="slide-status-card" style="max-width:1180px;width:100%;text-align:left;border-left:5px solid var(--danger)">
           <div class="slide-status-card-head"><i class="fas fa-gauge-high" style="color:var(--danger)"></i> Top 5 Maiores Velocidades Registradas</div>
           <div class="slide-status-rows">
-            ${d.topOcorrencias.map((o,i) => `<div class="slide-status-row">
-              <span style="max-width:72%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-                <b>${i+1}º ${escapeHTML(o.placa)}</b> — ${escapeHTML(o.motorista)}
-                <span style="color:var(--text-lt);font-size:.74rem"> · ${escapeHTML(o.data)} · ${escapeHTML(o.local)}</span>
-              </span>
-              <span class="n" style="color:var(--danger)">${o.velocidade.toFixed(0)} km/h</span>
+            ${d.topOcorrencias.map((o,i) => `<div class="slide-status-row" style="align-items:flex-start;flex-direction:column;gap:.15rem;padding:.45rem 0">
+              <div style="display:flex;justify-content:space-between;width:100%;align-items:center">
+                <span style="font-weight:700"><b>${i+1}º ${escapeHTML(o.placa)}</b> — ${escapeHTML(o.motorista)}</span>
+                <span class="n" style="color:var(--danger);white-space:nowrap;margin-left:.8rem">${o.velocidade.toFixed(0)} km/h</span>
+              </div>
+              <span style="color:var(--text-lt);font-size:.74rem;word-break:break-word">${escapeHTML(o.data)} · ${escapeHTML(o.local)}</span>
             </div>`).join('')}
           </div>
         </div>` : ''}`;
@@ -4821,18 +4821,7 @@ const PNEU_DATA = {
     ]
   },
 
-  // ── MLZ0B00 — Tração 4x BRI (nov/2024) ──
-  'MLZ0B00': {
-    posicoes: {
-      'tracao-lef': { marca:'Bridgestone/BRI', tipo:'Radial', status:'novo', kmInstalado:96200 },
-      'tracao-led': { marca:'Bridgestone/BRI', tipo:'Radial', status:'novo', kmInstalado:96200 },
-      'tracao-ldf': { marca:'Bridgestone/BRI', tipo:'Radial', status:'novo', kmInstalado:96200 },
-      'tracao-ldd': { marca:'Bridgestone/BRI', tipo:'Radial', status:'novo', kmInstalado:96200 },
-    },
-    historico: [
-      { data:'10/11/2024', km:'96.200', desc:'4 pneus tração BRI novos (4x BRI). Compra: Brumax / Masscco' },
-    ]
-  },
+  // MLZ0B00 removido dos rankings (veículo vendido/saído da frota ativa)
 
   // ── Registros só com custo (Borracharia Canadá Abril/2026) ──
   'RLB3E46': { historico: [{ data:'Abril/2026', desc:'Borracharia Canadá — serviço/ajuste', custo:190.00 }] },
@@ -9094,9 +9083,10 @@ function fatRenderConsumoTab(dados) {
   });
   const cavArr = Object.values(cavMap).map(v => ({
     ...v,
-    media: v.litros > 0 && v.kmTotal > 0
-      ? v.kmTotal / v.litros
-      : (v.medias.length ? v.medias.reduce((a,b)=>a+b,0)/v.medias.length : 0),
+    // Usa somente o cálculo direto do período filtrado (kmTotal/litros).
+    // O fallback v.medias contém médias pré-calculadas de TODA a história
+    // da placa — usá-lo aqui distorceria o ranking do período selecionado.
+    media: v.litros > 0 && v.kmTotal > 0 ? v.kmTotal / v.litros : 0,
     motorista: [...v.motoristas].join(', ') || '—'
   })).filter(v => v.media > 0).sort((a,b) => b.media - a.media); // cavalo: maior km/L = melhor
 
@@ -9104,15 +9094,20 @@ function fatRenderConsumoTab(dados) {
   const carMap = {};
   dados.forEach(r => {
     const p = normalizaPlaca(r.placaCarreta); if (!p) return;
-    if (!carMap[p]) carMap[p] = { placa:r.placaCarreta, medias:[], litros:0, registros:0, motoristas:new Set() };
+    if (!carMap[p]) carMap[p] = { placa:r.placaCarreta, medias:[], litros:0, horasTotal:0, registros:0, motoristas:new Set() };
     if (r.mediaCarreta > 0) carMap[p].medias.push(r.mediaCarreta);
-    carMap[p].litros += r.litrosCarreta || 0;
+    carMap[p].litros    += r.litrosCarreta || 0;
+    // kmPercorrido nas carretas é delta do horímetro (horas de funcionamento)
+    carMap[p].horasTotal += (r.tipoAbastecido === 'carreta' ? r.kmPercorrido : 0) || 0;
     if (r.mediaCarreta > 0 || r.litrosCarreta > 0) carMap[p].registros++;
     if (r.motorista) carMap[p].motoristas.add(r.motorista);
   });
   const carArr = Object.values(carMap).map(v => ({
     ...v,
-    media: v.medias.length ? v.medias.reduce((a,b)=>a+b,0)/v.medias.length : 0,
+    // Prefere cálculo direto litros/horasTotal (mais preciso que média das médias)
+    media: v.litros > 0 && v.horasTotal > 0
+      ? v.litros / v.horasTotal
+      : (v.medias.length ? v.medias.reduce((a,b)=>a+b,0)/v.medias.length : 0),
     motorista: [...v.motoristas].join(', ') || '—'
   })).filter(v => v.media > 0).sort((a,b) => a.media - b.media); // carreta: menor L/h = melhor
 
@@ -9328,14 +9323,14 @@ function fatcRenderResumoCardTab(records, f) {
     : '—';
 
   const itens = [
-    { lbl:'Registros no Filtro',       val: records.length },
     { lbl:'Motoristas',                val: motoristasSet.size ? [...motoristasSet].join(', ') : '—' },
     { lbl:'Placas Cavalo',             val: placasCavSet.size ? [...placasCavSet].join(', ') : '—' },
     { lbl:'Placas Carreta',            val: placasCarSet.size ? [...placasCarSet].join(', ') : '—' },
     { lbl:'Período dos Registros',     val: periodoTxt },
     { lbl:'Média Cavalo (km/L)',       val: fmtKmL(mediaCav) },
     { lbl:'Média Carreta (L/h)',       val: fmtLH(mediaCar) },
-    { lbl:'Total KM',                  val: fmtNum(totalKm) + ' km' },
+    { lbl:'Total KM Cavalo',           val: fmtNum(totalKm) + ' km' },
+    { lbl:'Total Horas Carreta',       val: fmtNum(records.reduce((s,r)=>s+((r.tipoAbastecido==='carreta'?r.kmPercorrido:0)||0),0)) + ' h' },
     { lbl:'Total Litros Cavalo',       val: fmtNum(totalLitrosCav) + ' L' },
     { lbl:'Total Litros Carreta',      val: fmtNum(totalLitrosCar) + ' L' },
     { lbl:'Custo Abastec. Cavalo',     val: fmtMoney(totalCustoCav) },
@@ -9422,18 +9417,25 @@ function abastPararAutoRefresh() {
 // exatamente "DATA", "PLACA" etc., tolera variações de acento/maiúscula.
 function abastCols(headers) {
   return {
-    data:         findCol(headers, ['data']),
-    hora:         findCol(headers, ['hora']),
-    placa:        findCol(headers, ['placa']),
-    km:           findCol(headers, ['km']),
-    qtd:          findCol(headers, ['quantidade', 'litros', 'qtd']),
-    orig:         findCol(headers, ['original', 'valor original', 'v. total', 'v total', 'vtotal', 'valor']),
-    comb:         findCol(headers, ['combustivel', 'descricao do produto', 'descricao produto', 'descricao', 'produto/servico', 'produto servico', 'desc']),
-    cupom:        findCol(headers, ['cupom']),
-    nf:           findCol(headers, ['nota fiscal', 'nf']),
-    posto:        findCol(headers, ['posto']),
-    nome:         findCol(headers, ['nome_motorista', 'nome motorista', 'motorista', 'nome']),
-    cpf:          findCol(headers, ['cpf_motorista', 'cpf motorista', 'cpf'])
+    data:         findCol(headers, ['data', 'data emissao', 'data emissão', 'dt emissao', 'emissao']),
+    hora:         findCol(headers, ['hora', 'horario', 'horário']),
+    // Placa: verifica campo direto, mas também adicionais/complementares da nota
+    placa:        findCol(headers, ['placa', 'placa veiculo', 'placa veículo', 'veiculo', 'veículo']),
+    // KM/Horímetro: notas de posto costumam lançar em "adicionais", "complementares",
+    // "informações complementares" ou "observação" — mapear todos os aliases comuns.
+    km:           findCol(headers, ['km', 'odometro', 'odômetro', 'quilometragem', 'horimetro', 'horímetro', 'km odometro', 'km odômetro', 'leitura', 'odo']),
+    qtd:          findCol(headers, ['quantidade', 'litros', 'qtd', 'qtde', 'volume', 'vol']),
+    orig:         findCol(headers, ['original', 'valor original', 'v. total', 'v total', 'vtotal', 'valor', 'valor total', 'total nf', 'total nota', 'vl total']),
+    // Combustível: "descrição do produto" em DANFe, mas alguns postos colocam em "adicionais"
+    comb:         findCol(headers, ['combustivel', 'descricao do produto', 'descricao produto', 'descricao', 'produto/servico', 'produto servico', 'desc', 'produto', 'servico', 'tipo combustivel', 'tipo comb']),
+    cupom:        findCol(headers, ['cupom', 'cupom fiscal', 'numero cupom', 'num cupom']),
+    nf:           findCol(headers, ['nota fiscal', 'nf', 'numero nf', 'num nf', 'numero nota', 'chave nfe', 'chave acesso']),
+    posto:        findCol(headers, ['posto', 'fornecedor', 'razao social', 'razão social', 'emitente', 'empresa']),
+    nome:         findCol(headers, ['nome_motorista', 'nome motorista', 'motorista', 'nome', 'condutor']),
+    cpf:          findCol(headers, ['cpf_motorista', 'cpf motorista', 'cpf']),
+    // Campos de informações complementares / adicionais da NF-e
+    // onde km/horímetro frequentemente aparecem quando o campo padrão está vazio
+    complementar: findCol(headers, ['informacoes complementares', 'informações complementares', 'inf complementares', 'dados adicionais', 'adicionais', 'observacao', 'observação', 'obs', 'complemento', 'info adicional'])
   };
 }
 
@@ -9471,7 +9473,16 @@ async function loadAbastecimentos(opts) {
   abastAllRecords = rows.filter(r => r[A.placa]).map(r => {
     const dataObj      = A.data ? parseDate(r[A.data]) : null;
     const litros       = A.qtd ? parseMoney(r[A.qtd]) : 0;
-    const kmBruto      = A.km  ? parseMoney(r[A.km])  : 0;
+    // KM: tenta campo direto; se vazio, extrai de Informações Complementares/Adicionais/Obs
+    // (notas de posto geralmente lançam odômetro nesses campos auxiliares)
+    let kmBruto = A.km ? parseMoney(r[A.km]) : 0;
+    if (!kmBruto && A.complementar && r[A.complementar]) {
+      const txt = String(r[A.complementar]);
+      // Padrões comuns: "KM 123456", "ODOMETRO: 123456", "123456 KM", "KM: 123.456"
+      const mKm = txt.match(/(?:KM|ODO[MÊ]METRO|ODOMETRO|QUILOMETRAGEM|HORIMETRO|HOR[IÍ]METRO)\s*:?\s*([\d.,]+)/i)
+                || txt.match(/([\d.,]+)\s*(?:KM|QUILOMETROS|QUILÔMETROS)/i);
+      if (mKm) kmBruto = parseMoney(mKm[1]);
+    }
     // kmPercorrido e media são calculados pelo dashboard após carregar todos
     // os registros, ordenando por placa + data/hora (ver bloco abaixo do map).
     const kmPercorrido = 0;
@@ -9570,13 +9581,22 @@ async function loadAbastecimentos(opts) {
     };
   });
 
-  // ── Deduplica por NF + placa para evitar que a mesma nota seja contada
-  //    duas vezes quando o Apps Script processa a pasta mais de uma vez.
+  // ── Deduplica para evitar que a mesma nota seja contada mais de uma vez
+  //    (Apps Script que processa a pasta pode gravar a mesma nota em lotes diferentes).
+  //    Chave primária: NF + placa.
+  //    Chave secundária (sem NF): data + placa + litros arredondado — detecta cupons duplicados.
   const seenKey = new Set();
   abastAllRecords = abastAllRecords.filter(r => {
-    if (!r.nf) return true; // sem NF: não filtra (cupom fiscal)
     const placa = normalizaPlaca(r.placaCavalo || r.placaCarreta || '');
-    const k = r.nf + '|' + placa;
+    let k;
+    if (r.nf) {
+      k = 'NF|' + r.nf + '|' + placa;
+    } else {
+      // Sem NF: usa data + placa + litros (arredondado 1 casa) como chave de dedup
+      const lArred = ((r.litrosCavalo||0) + (r.litrosCarreta||0)).toFixed(1);
+      const dStr = r.dataStr || (r.data ? r.data.toISOString().slice(0,10) : '');
+      k = 'CUP|' + dStr + '|' + placa + '|' + lArred;
+    }
     if (seenKey.has(k)) return false;
     seenKey.add(k);
     return true;
@@ -10912,27 +10932,24 @@ function vencRenderCategoria(cat){
   // Nota: a visibilidade do painel de Licenciamento/IPVA é controlada pela
   // aba (.venc-sub-pane.active) — nada a fazer aqui ao renderizar as outras categorias.
 
-  // Organiza as colunas: Nome/Placa e Vencimento primeiro, sem duplicar colunas.
-  const colsPrioritariasPadrao = [colId, colData].filter(Boolean);
-  const headersOrdenados = colsPrioritariasPadrao.concat(
-    headers.filter(h => !colsPrioritariasPadrao.includes(h))
-  );
+  // Mostra apenas as colunas essenciais: ID (placa/nome) + Data de vencimento + Status.
+  // As demais colunas da planilha são omitidas para não poluir o card.
+  const colsEssenciais = [colId, colData].filter(Boolean);
 
-  document.getElementById(`venc-${cat.key}-head`).innerHTML = '<tr>' + [...headersOrdenados, 'Status'].map(h => `<th>${escapeHTML(h)}</th>`).join('') + '</tr>';
+  const labelId   = colId   ? colId   : 'Identificação';
+  const labelData = colData ? colData : 'Vencimento';
+  const thEssenciais = (colId ? `<th>${escapeHTML(labelId)}</th>` : '') +
+                       (colData ? `<th>${escapeHTML(labelData)}</th>` : '') +
+                       '<th>Status</th>';
+
+  document.getElementById(`venc-${cat.key}-head`).innerHTML = `<tr>${thEssenciais}</tr>`;
   document.getElementById(`venc-${cat.key}-body`).innerHTML = filtradas.slice(0, 500).map(({row, d, status}) => {
     const map = { vencido:['⚠ Vencido','badge-danger'], proximo:['⏰ Próx. 30d','badge-warning'], ok:['✓ Em Dia','badge-success'] };
     const [statusLabel, badgeClass] = map[status];
-    const cells = headersOrdenados.map(h => {
-      const val = row[h] || '';
-      const hl = h.toLowerCase();
-      if (hl.includes('data') || hl.includes('venc') || hl.includes('valid')) {
-        const dd = vencParseDataCat(val, cat, formato);
-        return `<td>${dd ? escapeHTML(fmtDate(dd)) : escapeHTML(val)}</td>`;
-      }
-      return `<td>${escapeHTML(val)}</td>`;
-    }).join('');
-    return `<tr>${cells}<td><span class="badge ${badgeClass}">${statusLabel}</span></td></tr>`;
-  }).join('') || `<tr><td colspan="${headers.length+1}" style="text-align:center;color:var(--text-lt)">Nenhum registro com esse filtro.</td></tr>`;
+    const tdId   = colId   ? `<td style="font-weight:600">${escapeHTML(row[colId] || '—')}</td>` : '';
+    const tdData = colData ? `<td>${d ? escapeHTML(fmtDate(d)) : escapeHTML(row[colData] || '—')}</td>` : '';
+    return `<tr>${tdId}${tdData}<td><span class="badge ${badgeClass}">${statusLabel}</span></td></tr>`;
+  }).join('') || `<tr><td colspan="${colsEssenciais.length + 1}" style="text-align:center;color:var(--text-lt)">Nenhum registro com esse filtro.</td></tr>`;
 
   loadingEl.style.display = 'none';
   wrapEl.style.display = 'block';
