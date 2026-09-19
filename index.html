@@ -2161,6 +2161,7 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
           </div>
 
           <!-- ALERTA KM SUSPEITO -->
+          <div id="fatAlertaDuplicatas" style="display:none;gap:.75rem;align-items:flex-start;background:rgba(239,68,68,.08);border:1px solid #fca5a5;border-radius:10px;padding:.85rem 1rem;margin-top:1rem;font-size:.82rem;line-height:1.5;color:#991b1b"></div>
           <div id="fatAlertaKmSuspeito" style="display:none;gap:.75rem;align-items:flex-start;background:rgba(251,191,36,.12);border:1px solid #fbbf24;border-radius:10px;padding:.85rem 1rem;margin-top:1rem;font-size:.82rem;line-height:1.5;color:#78350f"></div>
 
           <!-- TABELA DETALHADA -->
@@ -9579,26 +9580,54 @@ async function loadAbastecimentos(opts) {
     };
   });
 
-  // ── Deduplica para evitar que a mesma nota seja contada mais de uma vez
-  //    (Apps Script que processa a pasta pode gravar a mesma nota em lotes diferentes).
-  //    Chave primária: NF + placa.
-  //    Chave secundária (sem NF): data + placa + litros arredondado — detecta cupons duplicados.
-  const seenKey = new Set();
+  // ── Deduplica para evitar que a mesma nota seja contada mais de uma vez.
+  //    Chave primária  : NF + placa.
+  //    Chave secundária: data + placa + litros (sem NF) — detecta cupons duplicados.
+  //    Registra cada duplicata encontrada para exibir alerta no dashboard.
+  const seenKey   = new Set();
+  const seenFirst = {};      // chave → 1º registro (para mostrar no alerta)
+  const dupLog    = [];      // lista de duplicatas detectadas
   abastAllRecords = abastAllRecords.filter(r => {
     const placa = normalizaPlaca(r.placaCavalo || r.placaCarreta || '');
     let k;
     if (r.nf) {
       k = 'NF|' + r.nf + '|' + placa;
     } else {
-      // Sem NF: usa data + placa + litros (arredondado 1 casa) como chave de dedup
       const lArred = ((r.litrosCavalo||0) + (r.litrosCarreta||0)).toFixed(1);
       const dStr = r.dataStr || (r.data ? r.data.toISOString().slice(0,10) : '');
       k = 'CUP|' + dStr + '|' + placa + '|' + lArred;
     }
-    if (seenKey.has(k)) return false;
+    if (seenKey.has(k)) {
+      dupLog.push({ k, data: r.dataStr, placa: r.placaFisica || placa, nf: r.nf, litros: ((r.litrosCavalo||0)+(r.litrosCarreta||0)) });
+      return false;
+    }
     seenKey.add(k);
+    seenFirst[k] = r;
     return true;
   });
+
+  // Exibe alerta de duplicatas na aba (mesmo se silencioso — dado importante)
+  const elDup = document.getElementById('fatAlertaDuplicatas');
+  if (elDup) {
+    if (dupLog.length > 0) {
+      const linhas = dupLog.slice(0, 10).map(d =>
+        `<div style="margin-top:.25rem;padding-left:.6rem;border-left:3px solid #fca5a5">` +
+        `${d.data || '—'} · <b>${escapeHTML(d.placa || '—')}</b>` +
+        (d.nf ? ` · NF ${escapeHTML(d.nf)}` : '') +
+        ` · ${((d.litros||0).toLocaleString('pt-BR',{maximumFractionDigits:1}))} L` +
+        `</div>`
+      ).join('');
+      const mais = dupLog.length > 10 ? `<div style="margin-top:.3rem;color:#b91c1c">…e mais ${dupLog.length - 10} duplicata(s).</div>` : '';
+      elDup.style.display = 'flex';
+      elDup.innerHTML =
+        `<i class="fas fa-copy" style="font-size:1.1rem;flex-shrink:0;margin-top:.1rem"></i>` +
+        `<div><b>${dupLog.length} registro(s) duplicado(s) removidos automaticamente</b> ao carregar a planilha.` +
+        ` Verifique se o Apps Script gravou a mesma nota mais de uma vez na aba de abastecimentos.` +
+        linhas + mais + `</div>`;
+    } else {
+      elDup.style.display = 'none';
+    }
+  }
 
   // ── Calcula kmPercorrido (delta entre abastecimentos consecutivos da mesma
   //    placa + tipo de combustível) separando as sequências de odômetro:
@@ -9738,7 +9767,10 @@ async function loadAbastecimentos(opts) {
   fatcPopularFiltrosTab();
   fatcApplyFiltersTab();
   const n = abastAllRecords.length;
-  if (!silencioso) showToast(`✅ ${n} abastecimento(s) carregado(s)`, 3000);
+  if (!silencioso) {
+    const dupTxt = dupLog.length > 0 ? ` · ⚠️ ${dupLog.length} duplicata(s) removida(s)` : '';
+    showToast(`✅ ${n} abastecimento(s) carregado(s)${dupTxt}`, dupLog.length > 0 ? 5000 : 3000);
+  }
   if (btn && !silencioso) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar'; }
 }
 
