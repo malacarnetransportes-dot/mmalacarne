@@ -9075,10 +9075,15 @@ function fatRenderConsumoTab(dados) {
     const p = normalizaPlaca(r.placaCavalo); if (!p) return;
     if (!cavMap[p]) cavMap[p] = { placa:r.placaCavalo, medias:[], km:0, litros:0, kmTotal:0, registros:0, motoristas:new Set() };
     if (r.mediaCavalo > 0) cavMap[p].medias.push(r.mediaCavalo);
-    cavMap[p].km += r.km || 0;
-    cavMap[p].litros += r.litrosCavalo || 0;
-    cavMap[p].kmTotal += r.kmPercorrido || 0;
-    if (r.mediaCavalo > 0 || r.litrosCavalo > 0 || r.km > 0) cavMap[p].registros++;
+    // Só acumula km/litros/kmTotal para registros de CAVALO.
+    // Registros de carreta têm placaCavalo preenchido (do cadastro da frota)
+    // mas kmPercorrido é delta de HORÍMETRO — somar aqui distorceria o km/L.
+    if (r.tipoAbastecido !== 'carreta' && r.tipoAbastecido !== 'arla') {
+      cavMap[p].km      += r.km || 0;
+      cavMap[p].litros  += r.litrosCavalo || 0;
+      cavMap[p].kmTotal += r.kmPercorrido || 0;
+    }
+    if (r.mediaCavalo > 0 || r.litrosCavalo > 0) cavMap[p].registros++;
     if (r.motorista) cavMap[p].motoristas.add(r.motorista);
   });
   const cavArr = Object.values(cavMap).map(v => ({
@@ -9302,35 +9307,28 @@ function fatcRenderResumoCardTab(records, f) {
   const fmtLH  = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' L/h' : '—';
   const fmtNum = v => (v || 0).toLocaleString('pt-BR',{maximumFractionDigits:0});
 
-  const mediasCav = records.map(r => r.mediaCavalo).filter(v => v > 0);
-  const mediasCar = records.map(r => r.mediaCarreta).filter(v => v > 0);
-  const mediaCav  = mediasCav.length ? mediasCav.reduce((a,b)=>a+b,0) / mediasCav.length : 0;
-  const mediaCar  = mediasCar.length ? mediasCar.reduce((a,b)=>a+b,0) / mediasCar.length : 0;
-  // r.km é a leitura bruta de odômetro de cada abastecimento, não distância
-  // percorrida — r.kmPercorrido (delta já calculado por abastecimento) é o
-  // valor correto pra somar no "Total KM" do resumo do filtro.
-  const totalKm         = records.reduce((s,r)=>s+(r.kmPercorrido||0),0);
+  // KM e litros: só registros de cavalo para cálculo de km/L
+  const totalKm         = records.reduce((s,r)=> s + (r.tipoAbastecido !== 'carreta' && r.tipoAbastecido !== 'arla' ? (r.kmPercorrido||0) : 0), 0);
   const totalLitrosCav  = records.reduce((s,r)=>s+(r.litrosCavalo||0),0);
   const totalLitrosCar  = records.reduce((s,r)=>s+(r.litrosCarreta||0),0);
+  // Média cavalo: mesma lógica do ranking (totalKm/totalLitros) para consistência
+  const mediaCav  = totalKm > 0 && totalLitrosCav > 0 ? totalKm / totalLitrosCav : 0;
+  // Média carreta: litros / horas totais (delta horímetro de registros de carreta)
+  const totalHorasCarreta = records.reduce((s,r)=> s + (r.tipoAbastecido === 'carreta' ? (r.kmPercorrido||0) : 0), 0);
+  const mediaCar  = totalLitrosCar > 0 && totalHorasCarreta > 0 ? totalLitrosCar / totalHorasCarreta : 0;
   const totalCustoCav   = records.reduce((s,r)=>s+(r.valorCavalo||0),0);
   const totalCustoCar   = records.reduce((s,r)=>s+(r.valorCarreta||0),0);
-  const motoristasSet   = new Set(records.map(r=>r.motorista).filter(Boolean));
-  const placasCavSet    = new Set(records.map(r=>r.placaCavalo).filter(Boolean));
-  const placasCarSet    = new Set(records.map(r=>r.placaCarreta).filter(Boolean));
   const datasOrdenadas  = records.map(r=>r.data).filter(Boolean).sort((a,b)=>a-b);
   const periodoTxt = datasOrdenadas.length
     ? `${datasOrdenadas[0].toLocaleDateString('pt-BR')} — ${datasOrdenadas[datasOrdenadas.length-1].toLocaleDateString('pt-BR')}`
     : '—';
 
   const itens = [
-    { lbl:'Motoristas',                val: motoristasSet.size ? [...motoristasSet].join(', ') : '—' },
-    { lbl:'Placas Cavalo',             val: placasCavSet.size ? [...placasCavSet].join(', ') : '—' },
-    { lbl:'Placas Carreta',            val: placasCarSet.size ? [...placasCarSet].join(', ') : '—' },
     { lbl:'Período dos Registros',     val: periodoTxt },
     { lbl:'Média Cavalo (km/L)',       val: fmtKmL(mediaCav) },
     { lbl:'Média Carreta (L/h)',       val: fmtLH(mediaCar) },
     { lbl:'Total KM Cavalo',           val: fmtNum(totalKm) + ' km' },
-    { lbl:'Total Horas Carreta',       val: fmtNum(records.reduce((s,r)=>s+((r.tipoAbastecido==='carreta'?r.kmPercorrido:0)||0),0)) + ' h' },
+    { lbl:'Total Horas Carreta',       val: fmtNum(totalHorasCarreta) + ' h' },
     { lbl:'Total Litros Cavalo',       val: fmtNum(totalLitrosCav) + ' L' },
     { lbl:'Total Litros Carreta',      val: fmtNum(totalLitrosCar) + ' L' },
     { lbl:'Custo Abastec. Cavalo',     val: fmtMoney(totalCustoCav) },
