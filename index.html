@@ -2117,9 +2117,19 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
               <button class="btn btn-accent" onclick="fatcApplyFiltersTab()"><i class="fas fa-search"></i> Filtrar</button>
               <button class="btn btn-gray" onclick="fatcResetFiltersTab()"><i class="fas fa-times"></i> Limpar</button>
             </div>
+            <!-- Badge de filtro ativo (aparece logo após o botão Filtrar) -->
+            <div id="fatcFiltroAtivoTag" style="display:none;margin-top:.6rem;padding:.4rem .9rem;background:#dbeafe;border:1px solid #93c5fd;border-radius:20px;font-size:.78rem;font-weight:700;color:#1d4ed8;display:none;align-items:center;gap:.5rem">
+              <i class="fas fa-filter"></i>
+              <span>Filtrando por: </span><span id="fatcFiltroAtivoTexto" style="font-weight:800"></span>
+              <button onclick="fatcResetFiltersTab()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#1d4ed8;font-size:.78rem;padding:0" title="Limpar filtro"><i class="fas fa-times-circle"></i></button>
+            </div>
             <!-- Card de resumo do filtro selecionado -->
-            <div id="fatcResumoCardTab" style="display:none;margin-top:1rem;padding:1rem;background:linear-gradient(135deg,#f0f7ff,#e8f4fd);border:1px solid #bfdbfe;border-radius:var(--r12)">
-              <div style="font-size:.72rem;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:.6rem"><i class="fas fa-id-card"></i> <span id="fatcResumoTituloTab">Resumo do Filtro</span></div>
+            <div id="fatcResumoCardTab" style="display:none;margin-top:1rem;padding:1rem;background:linear-gradient(135deg,#f0f7ff,#e8f4fd);border:2px solid #3b82f6;border-radius:var(--r12)">
+              <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.8rem">
+                <i class="fas fa-filter" style="color:#1d4ed8"></i>
+                <span style="font-size:.72rem;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:.8px">Resultados do Filtro:</span>
+                <span id="fatcResumoTituloTab" style="font-size:.82rem;font-weight:800;color:#1e40af;background:#bfdbfe;padding:.15rem .6rem;border-radius:12px">—</span>
+              </div>
               <div id="fatcResumoBodyTab" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.6rem;font-size:.82rem"></div>
             </div>
           </div>
@@ -4171,11 +4181,13 @@ function slideConsumoResumo() {
     }
     if (r.motorista) cavMap[p].motoristas.add(r.motorista);
   });
+  // Placas administrativas/não-operacionais — excluídas do ranking de consumo
+  const PLACAS_NAO_RANKING_SLIDE = new Set(['MLZ0B00']);
   const cavArr = Object.values(cavMap).map(v => ({
     placa:     v.placa,
     media:     v.litrosPar > 0 && v.kmPar > 0 ? v.kmPar / v.litrosPar : 0,
     motorista: [...v.motoristas].join(', ') || '—',
-  })).filter(v => v.media > 0).sort((a, b) => b.media - a.media);
+  })).filter(v => v.media > 0 && !PLACAS_NAO_RANKING_SLIDE.has(normalizaPlaca(v.placa))).sort((a, b) => b.media - a.media);
 
   if (!cavArr.length) return null;
 
@@ -9228,6 +9240,8 @@ function fatRenderConsumoTab(dados) {
     if (r.mediaCavalo > 0 || r.litrosCavalo > 0) cavMap[p].registros++;
     if (r.motorista) cavMap[p].motoristas.add(r.motorista);
   });
+  // Placas administrativas/não-operacionais — excluídas do ranking de consumo
+  const PLACAS_NAO_RANKING_TAB = new Set(['MLZ0B00']);
   const cavArr = Object.values(cavMap).map(v => ({
     ...v,
     // Usa somente o cálculo direto do período filtrado (kmTotal/litros).
@@ -9235,7 +9249,7 @@ function fatRenderConsumoTab(dados) {
     // da placa — usá-lo aqui distorceria o ranking do período selecionado.
     media: v.litrosPar > 0 && v.kmPar > 0 ? v.kmPar / v.litrosPar : 0,
     motorista: [...v.motoristas].join(', ') || '—'
-  })).filter(v => v.media > 0).sort((a,b) => b.media - a.media); // cavalo: maior km/L = melhor
+  })).filter(v => v.media > 0 && !PLACAS_NAO_RANKING_TAB.has(normalizaPlaca(v.placa))).sort((a,b) => b.media - a.media); // cavalo: maior km/L = melhor
 
   // ── Agrupa por placa CARRETA ──
   const carMap = {};
@@ -9244,11 +9258,14 @@ function fatRenderConsumoTab(dados) {
     if (!carMap[p]) carMap[p] = { placa:r.placaCarreta, medias:[], litros:0, horasTotal:0, litrosPar:0, horasPar:0, regsPar:0, registros:0, motoristas:new Set() };
     if (r.mediaCarreta > 0) carMap[p].medias.push(r.mediaCarreta);
     carMap[p].litros    += r.litrosCarreta || 0;
-    // kmPercorrido nas carretas é delta do horímetro (horas de funcionamento)
-    carMap[p].horasTotal += (r.tipoAbastecido === 'carreta' ? r.kmPercorrido : 0) || 0;
-    // Só pareia litros com horas quando o abastecimento TEM delta de horímetro
-    // (mesma correção do cavalo).
-    if (r.tipoAbastecido === 'carreta' && (r.kmPercorrido || 0) > 0 && (r.litrosCarreta || 0) > 0) {
+    // kmPercorrido nas carretas é delta do horímetro (horas de funcionamento).
+    // Considera carreta quando tipoAbastecido='carreta' OU quando há litrosCarreta
+    // (registros importados de DANFe onde o tipo pode vir como 'cavalo' mas os
+    // litros foram corretamente alocados no campo litrosCarreta).
+    const ehAbastCarreta = r.tipoAbastecido === 'carreta' || (r.litrosCarreta || 0) > 0;
+    carMap[p].horasTotal += (ehAbastCarreta ? r.kmPercorrido : 0) || 0;
+    // Só pareia litros com horas quando o abastecimento TEM delta de horímetro.
+    if (ehAbastCarreta && (r.kmPercorrido || 0) > 0 && (r.litrosCarreta || 0) > 0) {
       carMap[p].horasPar  += r.kmPercorrido;
       carMap[p].litrosPar += r.litrosCarreta;
       carMap[p].regsPar++;
@@ -9432,15 +9449,22 @@ function fatRenderConsumoTab(dados) {
 // algum filtro está ativo. Portado da antiga sub-aba de Faturamento
 // (removida em 17/09/2026, já que "Controle de Consumo" virou aba própria).
 function fatcRenderResumoCardTab(records, f) {
-  const card   = document.getElementById('fatcResumoCardTab');
-  const body   = document.getElementById('fatcResumoBodyTab');
-  const titulo = document.getElementById('fatcResumoTituloTab');
+  const card        = document.getElementById('fatcResumoCardTab');
+  const body        = document.getElementById('fatcResumoBodyTab');
+  const titulo      = document.getElementById('fatcResumoTituloTab');
+  const badgeWrap   = document.getElementById('fatcFiltroAtivoTag');
+  const badgeTexto  = document.getElementById('fatcFiltroAtivoTexto');
   if (!card || !body || !titulo) return;
 
   const algumFiltro = !!(f.ano || f.mes || f.mot || f.cav || f.car || f.posto || f.di || f.df);
-  if (!algumFiltro) { card.style.display = 'none'; return; }
+  if (!algumFiltro) {
+    card.style.display = 'none';
+    if (badgeWrap) badgeWrap.style.display = 'none';
+    return;
+  }
 
   card.style.display = 'block';
+  if (badgeWrap) badgeWrap.style.display = 'flex';
 
   const fmtISOtoBR = s => { if (!s) return ''; const [y,m,d] = s.split('-'); return `${d}/${m}/${y}`; };
   const partes = [];
@@ -9451,7 +9475,9 @@ function fatcRenderResumoCardTab(records, f) {
   if (f.mes) partes.push(FAT_MESES_FULL[+f.mes - 1]);
   if (f.ano) partes.push(f.ano);
   if (f.di || f.df) partes.push(`${f.di ? fmtISOtoBR(f.di) : '…'} a ${f.df ? fmtISOtoBR(f.df) : '…'}`);
-  titulo.textContent = partes.length ? partes.join(' · ') : 'Resumo do Filtro';
+  const textoFiltro = partes.length ? partes.join(' · ') : 'Resumo do Filtro';
+  titulo.textContent = textoFiltro;
+  if (badgeTexto) badgeTexto.textContent = textoFiltro;
 
   const fmtKmL = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' km/L' : '—';
   const fmtLH  = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' L/h' : '—';
