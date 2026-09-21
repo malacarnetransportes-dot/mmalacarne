@@ -2191,7 +2191,7 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
           <div id="fatAlertaKmSuspeito" style="display:none;gap:.75rem;align-items:flex-start;background:rgba(251,191,36,.12);border:1px solid #fbbf24;border-radius:10px;padding:.85rem 1rem;margin-top:1rem;font-size:.82rem;line-height:1.5;color:#78350f"></div>
 
           <!-- TABELA DETALHADA -->
-          <div class="dash-card" style="margin-top:1rem;border-left:4px solid var(--accent)">
+          <div class="dash-card" id="fatcTabelaDetalhadaTab" style="margin-top:1rem;border-left:4px solid var(--accent)">
             <div class="dash-card-title" style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">
               <span><i class="fas fa-list-alt" style="color:var(--accent)"></i> Lançamentos de Abastecimento</span>
               <span id="fatcAbastCountTab" style="font-size:.75rem;font-weight:400;color:var(--text-lt)"></span>
@@ -9222,6 +9222,26 @@ function fatcApplyFiltersTab() {
   fatcRenderResumoCardTab(fatcFilteredTab, { ano, mes, mot, cav, car, posto, di, df });
 }
 
+// Chamada ao clicar numa linha do ranking (Melhores/Piores Cavalos/Carretas):
+// filtra a tabela "Lançamentos de Abastecimento" só pela placa clicada e
+// rola a tela até ela, pra auditar nota a nota o KM lido, o delta calculado
+// e o motivo de cada leitura ter ficado fora da média (sem resetar
+// ano/mês/motorista já selecionados — só troca o filtro de placa).
+function fatcVerDetalhePlaca(tipo, placa) {
+  const elCav = document.getElementById('fatcCavaloTab');
+  const elCar = document.getElementById('fatcCarretaTab');
+  if (tipo === 'carreta') {
+    if (elCar) elCar.value = placa;
+    if (elCav) elCav.value = '';
+  } else {
+    if (elCav) elCav.value = placa;
+    if (elCar) elCar.value = '';
+  }
+  fatcApplyFiltersTab();
+  const card = document.getElementById('fatcTabelaDetalhadaTab');
+  if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function fatRenderConsumoTab(dados) {
   if (!document.getElementById('tabConsumoLitro')) return;
   dados = dados || fatcFilteredTab || fatcGetRecords();
@@ -9349,8 +9369,11 @@ function fatRenderConsumoTab(dados) {
     return `<span style="color:var(--text-lt);font-weight:400;font-size:.73rem"> · ${tot} abast. · ${par} no cálculo</span>` +
            `<br><span style="color:#b45309;font-weight:500;font-size:.68rem">${fora} fora do cálculo: ${mot.join(' · ')}</span>`;
   };
-  const liRank = (v, cor) => `<li><span>${v.placa} <span style="color:var(--text-lt);font-weight:400">(${v.motorista.split(',')[0].trim()})</span>${nAbast(v,'KM')}</span><span style="font-weight:700;color:${cor}">${fmtKmL(v.media)}</span></li>`;
-  const liRankCar = (v, cor) => `<li><span>${v.placa} <span style="color:var(--text-lt);font-weight:400">(${v.motorista.split(',')[0].trim()})</span>${nAbast(v,'horímetro')}</span><span style="font-weight:700;color:${cor}">${fmtLH(v.media)}</span></li>`;
+  // Ranking clicável: abre a tabela "Lançamentos de Abastecimento" já filtrada
+  // pela placa clicada, pra quem não confia no "X fora do cálculo" poder
+  // conferir nota a nota (KM lido, delta calculado, motivo de exclusão).
+  const liRank = (v, cor) => `<li style="cursor:pointer" title="Clique para ver os lançamentos desta placa" onclick="fatcVerDetalhePlaca('cavalo','${escapeHTML(v.placa)}')"><span>${v.placa} <span style="color:var(--text-lt);font-weight:400">(${v.motorista.split(',')[0].trim()})</span>${nAbast(v,'KM')}</span><span style="font-weight:700;color:${cor}">${fmtKmL(v.media)}</span></li>`;
+  const liRankCar = (v, cor) => `<li style="cursor:pointer" title="Clique para ver os lançamentos desta placa" onclick="fatcVerDetalhePlaca('carreta','${escapeHTML(v.placa)}')"><span>${v.placa} <span style="color:var(--text-lt);font-weight:400">(${v.motorista.split(',')[0].trim()})</span>${nAbast(v,'horímetro')}</span><span style="font-weight:700;color:${cor}">${fmtLH(v.media)}</span></li>`;
   const top5Cav = cavArr.slice(0,5);
   const top5CavSet = new Set(top5Cav.map(v=>normalizaPlaca(v.placa)));
   const bot5Cav = [...cavArr].reverse().filter(v=>!top5CavSet.has(normalizaPlaca(v.placa))).slice(0,5);
