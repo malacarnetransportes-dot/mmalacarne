@@ -9106,6 +9106,21 @@ function fatApplyFilters() {
 // ═══════════════════════════════════════════════════════════
 let fatcFilteredTab = [];
 
+// Filtros de placa da aba "Controle de Consumo": o filtro CAVALO só enxerga
+// abastecimentos de cavalo e o filtro CARRETA só enxerga abastecimentos de
+// carreta (tipoAbastecido). Antes, o filtro casava também pelo campo cruzado
+// do cadastro da frota (placaCarreta preenchida em nota de cavalo, placaCavalo
+// preenchida em nota de carreta) e a tabela "Lançamentos de Abastecimento"
+// mostrava linhas de cavalo ao selecionar uma carreta, e vice-versa.
+function fatcPlacaCavaloAbast(r) {
+  if (!r.tipoAbastecido) return r.placaCavalo || '';           // registro sem tipo (fallback Faturamento)
+  return r.tipoAbastecido === 'carreta' ? '' : (r.placaCavalo || '');
+}
+function fatcPlacaCarretaAbast(r) {
+  if (!r.tipoAbastecido) return r.placaCarreta || '';
+  return r.tipoAbastecido === 'carreta' ? (r.placaCarreta || '') : '';
+}
+
 function fatcInitTab() {
   // Popula filtros e aplica mês vigente por padrão
   const recs = fatcGetRecords();
@@ -9115,8 +9130,8 @@ function fatcInitTab() {
 
   const motoristas = [...new Set(recs.map(r => r.motorista).filter(Boolean))].sort();
   const anos       = [...new Set(recs.map(r => r.ano).filter(Boolean))].sort((a,b) => b-a);
-  const cavalos    = [...new Set(recs.map(r => r.placaCavalo).filter(Boolean))].sort();
-  const carretas   = [...new Set(recs.map(r => r.placaCarreta).filter(Boolean))].sort();
+  const cavalos    = [...new Set(recs.map(fatcPlacaCavaloAbast).filter(Boolean))].sort();
+  const carretas   = [...new Set(recs.map(fatcPlacaCarretaAbast).filter(Boolean))].sort();
   const postos     = [...new Set(recs.map(r => r.posto).filter(Boolean))].sort();
 
   const fill = (id, opts, blank) => {
@@ -9147,8 +9162,8 @@ function fatcPopularFiltrosTab() {
   const recs = fatcGetRecords();
   const motoristas = [...new Set(recs.map(r => r.motorista).filter(Boolean))].sort();
   const anos       = [...new Set(recs.map(r => r.ano).filter(Boolean))].sort((a,b) => b-a);
-  const cavalos    = [...new Set(recs.map(r => r.placaCavalo).filter(Boolean))].sort();
-  const carretas   = [...new Set(recs.map(r => r.placaCarreta).filter(Boolean))].sort();
+  const cavalos    = [...new Set(recs.map(fatcPlacaCavaloAbast).filter(Boolean))].sort();
+  const carretas   = [...new Set(recs.map(fatcPlacaCarretaAbast).filter(Boolean))].sort();
   const postos     = [...new Set(recs.map(r => r.posto).filter(Boolean))].sort();
 
   const fillPreserve = (id, opts, blank) => {
@@ -9184,13 +9199,19 @@ function fatcApplyFiltersTab() {
   const df    = document.getElementById('fatcDataFimTab')?.value || '';
   const dtIni = di ? new Date(di + 'T00:00:00') : null;
   const dtFim = df ? new Date(df + 'T23:59:59') : null;
+  const cavN  = cav ? normalizaPlaca(cav) : '';
+  const carN  = car ? normalizaPlaca(car) : '';
 
   fatcFilteredTab = fatcGetRecords().filter(r => {
     if (ano && String(r.ano) !== ano) return false;
     if (mes && String(r.mes) !== mes) return false;
     if (mot && r.motorista !== mot) return false;
-    if (cav && normalizaPlaca(r.placaCavalo) !== normalizaPlaca(cav)) return false;
-    if (car && normalizaPlaca(r.placaCarreta) !== normalizaPlaca(car)) return false;
+    if (cavN || carN) {
+      // Cavalo e Carreta selecionados juntos = o conjunto (une os dois lados).
+      const okCav = cavN && normalizaPlaca(fatcPlacaCavaloAbast(r)) === cavN;
+      const okCar = carN && normalizaPlaca(fatcPlacaCarretaAbast(r)) === carN;
+      if (!okCav && !okCar) return false;
+    }
     if (posto && (r.posto||'').toUpperCase() !== posto.toUpperCase()) return false;
     if (dtIni && r.data < dtIni) return false;
     if (dtFim && r.data > dtFim) return false;
@@ -9216,7 +9237,7 @@ function fatRenderConsumoTab(dados) {
   const cavMap = {};
   dados.forEach(r => {
     const p = normalizaPlaca(r.placaCavalo); if (!p) return;
-    if (!cavMap[p]) cavMap[p] = { placa:r.placaCavalo, medias:[], km:0, litros:0, kmTotal:0, kmPar:0, litrosPar:0, regsPar:0, registros:0, motoristas:new Set() };
+    if (!cavMap[p]) cavMap[p] = { placa:r.placaCavalo, medias:[], km:0, litros:0, kmTotal:0, kmPar:0, litrosPar:0, regsPar:0, regsTotal:0, registros:0, motoristas:new Set() };
     if (r.mediaCavalo > 0) cavMap[p].medias.push(r.mediaCavalo);
     // Só acumula km/litros/kmTotal para registros de CAVALO.
     // Registros de carreta têm placaCavalo preenchido (do cadastro da frota)
@@ -9225,6 +9246,7 @@ function fatRenderConsumoTab(dados) {
       cavMap[p].km      += r.km || 0;
       cavMap[p].litros  += r.litrosCavalo || 0;
       cavMap[p].kmTotal += r.kmPercorrido || 0;
+      if ((r.litrosCavalo || 0) > 0) cavMap[p].regsTotal++;   // todas as abastecidas do período
       // CORREÇÃO (19/09/2026): o km/L do ranking só pode usar os litros dos
       // abastecimentos que TÊM km percorrido (delta de odômetro válido).
       // Antes, litros de abastecidas sem leitura de KM (1ª do período, KM
@@ -9255,7 +9277,7 @@ function fatRenderConsumoTab(dados) {
   const carMap = {};
   dados.forEach(r => {
     const p = normalizaPlaca(r.placaCarreta); if (!p) return;
-    if (!carMap[p]) carMap[p] = { placa:r.placaCarreta, medias:[], litros:0, horasTotal:0, litrosPar:0, horasPar:0, regsPar:0, registros:0, motoristas:new Set() };
+    if (!carMap[p]) carMap[p] = { placa:r.placaCarreta, medias:[], litros:0, horasTotal:0, litrosPar:0, horasPar:0, regsPar:0, regsTotal:0, registros:0, motoristas:new Set() };
     if (r.mediaCarreta > 0) carMap[p].medias.push(r.mediaCarreta);
     carMap[p].litros    += r.litrosCarreta || 0;
     // kmPercorrido nas carretas é delta do horímetro (horas de funcionamento).
@@ -9264,6 +9286,7 @@ function fatRenderConsumoTab(dados) {
     // litros foram corretamente alocados no campo litrosCarreta).
     const ehAbastCarreta = r.tipoAbastecido === 'carreta' || (r.litrosCarreta || 0) > 0;
     carMap[p].horasTotal += (ehAbastCarreta ? r.kmPercorrido : 0) || 0;
+    if (ehAbastCarreta && (r.litrosCarreta || 0) > 0) carMap[p].regsTotal++;   // todas as abastecidas do período
     // Só pareia litros com horas quando o abastecimento TEM delta de horímetro.
     if (ehAbastCarreta && (r.kmPercorrido || 0) > 0 && (r.litrosCarreta || 0) > 0) {
       carMap[p].horasPar  += r.kmPercorrido;
@@ -9275,12 +9298,12 @@ function fatRenderConsumoTab(dados) {
   });
   const carArr = Object.values(carMap).map(v => ({
     ...v,
-    // Prefere cálculo direto litros/horasTotal (mais preciso que média das médias)
-    media: v.litrosPar > 0 && v.horasPar > 0
-      ? v.litrosPar / v.horasPar
-      : (v.medias.length ? v.medias.reduce((a,b)=>a+b,0)/v.medias.length : 0),
+    // L/h = litros ÷ horas, somente das abastecidas que TÊM delta de horímetro
+    // (as mesmas contadas em "no cálculo"). Sem o antigo fallback "média das
+    // médias", que misturava histórico fora do período e não batia com a contagem.
+    media: v.litrosPar > 0 && v.horasPar > 0 ? v.litrosPar / v.horasPar : 0,
     motorista: [...v.motoristas].join(', ') || '—'
-  })).filter(v => v.media > 0).sort((a,b) => b.media - a.media); // carreta: maior L/h = piores (mais consumo) — decrescente para top5Car = piores, bot5Car = melhores
+  })).filter(v => v.media > 0).sort((a,b) => a.media - b.media); // carreta: MENOR L/h = melhor (menos litros por hora) — crescente
 
   // ── KPIs ──
   const mediaGeral = arr => arr.length ? arr.reduce((s,v)=>s+v.media,0)/arr.length : 0;
@@ -9300,23 +9323,36 @@ function fatRenderConsumoTab(dados) {
 
   // ── Rankings km/L (cavalo) e L/h (carreta) ──
   const semDados = '<li style="justify-content:center;color:var(--text-lt)">Sem dados.</li>';
-  const nAbast = v => `<span style="color:var(--text-lt);font-weight:400;font-size:.73rem"> · ${v.regsPar||0} abast.</span>`;
+  // "N abast." = abastecidas do período filtrado; "M no cálculo" = as que têm
+  // leitura anterior de KM/horímetro (delta válido) e por isso entram na média.
+  // A 1ª abastecida da sequência só serve de ponto de partida, sem delta.
+  const nAbast = v => {
+    const par = v.regsPar || 0, tot = Math.max(v.regsTotal || 0, par);
+    const txt = tot > par ? `${tot} abast. · ${par} no cálculo` : `${par} abast.`;
+    const tip = tot > par
+      ? `${tot} abastecidas no período; ${par} entram na média (as demais não têm leitura anterior de KM/horímetro para calcular o intervalo).`
+      : `${par} abastecidas no período, todas usadas na média.`;
+    return `<span title="${tip}" style="color:var(--text-lt);font-weight:400;font-size:.73rem"> · ${txt}</span>`;
+  };
   const liRank = (v, cor) => `<li><span>${v.placa} <span style="color:var(--text-lt);font-weight:400">(${v.motorista.split(',')[0].trim()})</span>${nAbast(v)}</span><span style="font-weight:700;color:${cor}">${fmtKmL(v.media)}</span></li>`;
   const liRankCar = (v, cor) => `<li><span>${v.placa} <span style="color:var(--text-lt);font-weight:400">(${v.motorista.split(',')[0].trim()})</span>${nAbast(v)}</span><span style="font-weight:700;color:${cor}">${fmtLH(v.media)}</span></li>`;
   const top5Cav = cavArr.slice(0,5);
   const top5CavSet = new Set(top5Cav.map(v=>normalizaPlaca(v.placa)));
   const bot5Cav = [...cavArr].reverse().filter(v=>!top5CavSet.has(normalizaPlaca(v.placa))).slice(0,5);
-  // carArr está ordenado decrescente (maior L/h primeiro = piores) — top5Car
-  // pega os primeiros (piores) e bot5Car os últimos (melhores, menor L/h).
-  const top5Car = carArr.slice(0,5);
-  const top5CarSet = new Set(top5Car.map(v=>normalizaPlaca(v.placa)));
-  const bot5Car = [...carArr].reverse().filter(v=>!top5CarSet.has(normalizaPlaca(v.placa))).slice(0,5);
+  // carArr está em ordem CRESCENTE de L/h (menor = melhor). A lista é dividida
+  // ao meio, sem sobreposição: MELHORES pega os menores L/h e PIORES os maiores.
+  // Antes, PIORES era preenchida primeiro (5 maiores) e MELHORES ficava só com o
+  // que sobrava — com 5 carretas ou menos, todas caíam em PIORES (inclusive a
+  // mais econômica) e MELHORES ficava vazia.
+  const nCarTot = carArr.length;
+  const top5Car = carArr.slice(0, Math.min(5, Math.ceil(nCarTot / 2)));                 // melhores: menor L/h primeiro
+  const bot5Car = [...carArr].reverse().slice(0, Math.min(5, Math.floor(nCarTot / 2))); // piores: maior L/h primeiro
 
   const setList = (id,items,fb) => { const el=document.getElementById(id); if(el) el.innerHTML = items.length ? items : fb; };
   setList('fatRankMelhoresCavaloTab', top5Cav.map(v=>liRank(v,'var(--success)')).join(''), semDados);
   setList('fatRankPioresCavaloTab',   bot5Cav.map(v=>liRank(v,'var(--danger)')).join(''),  '<li style="justify-content:center;color:var(--text-lt)">Sem dados suficientes.</li>');
-  setList('fatRankMelhoresCarretaTab',bot5Car.map(v=>liRankCar(v,'var(--success)')).join(''), semDados);
-  setList('fatRankPioresCarretaTab',  top5Car.map(v=>liRankCar(v,'var(--danger)')).join(''),  '<li style="justify-content:center;color:var(--text-lt)">Sem dados suficientes.</li>');
+  setList('fatRankMelhoresCarretaTab',top5Car.map(v=>liRankCar(v,'var(--success)')).join(''), semDados);
+  setList('fatRankPioresCarretaTab',  bot5Car.map(v=>liRankCar(v,'var(--danger)')).join(''),  '<li style="justify-content:center;color:var(--text-lt)">Sem dados suficientes.</li>');
 
   // ── Ranking preço por litro por POSTO ──
   // Calcula preço médio (R$/L) por posto usando registros com valor e litros válidos
