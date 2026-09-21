@@ -9280,7 +9280,7 @@ function fatRenderConsumoTab(dados) {
       ? v.litrosPar / v.horasPar
       : (v.medias.length ? v.medias.reduce((a,b)=>a+b,0)/v.medias.length : 0),
     motorista: [...v.motoristas].join(', ') || '—'
-  })).filter(v => v.media > 0).sort((a,b) => a.media - b.media); // carreta: menor L/h = melhor
+  })).filter(v => v.media > 0).sort((a,b) => b.media - a.media); // carreta: maior L/h = piores (mais consumo) — decrescente para top5Car = piores, bot5Car = melhores
 
   // ── KPIs ──
   const mediaGeral = arr => arr.length ? arr.reduce((s,v)=>s+v.media,0)/arr.length : 0;
@@ -9306,8 +9306,8 @@ function fatRenderConsumoTab(dados) {
   const top5Cav = cavArr.slice(0,5);
   const top5CavSet = new Set(top5Cav.map(v=>normalizaPlaca(v.placa)));
   const bot5Cav = [...cavArr].reverse().filter(v=>!top5CavSet.has(normalizaPlaca(v.placa))).slice(0,5);
-  // carArr já está ordenado do menor L/h (melhor) pro maior (pior) — top5Car
-  // pega os primeiros (melhores) e bot5Car os últimos (piores), sem inverter.
+  // carArr está ordenado decrescente (maior L/h primeiro = piores) — top5Car
+  // pega os primeiros (piores) e bot5Car os últimos (melhores, menor L/h).
   const top5Car = carArr.slice(0,5);
   const top5CarSet = new Set(top5Car.map(v=>normalizaPlaca(v.placa)));
   const bot5Car = [...carArr].reverse().filter(v=>!top5CarSet.has(normalizaPlaca(v.placa))).slice(0,5);
@@ -9315,8 +9315,8 @@ function fatRenderConsumoTab(dados) {
   const setList = (id,items,fb) => { const el=document.getElementById(id); if(el) el.innerHTML = items.length ? items : fb; };
   setList('fatRankMelhoresCavaloTab', top5Cav.map(v=>liRank(v,'var(--success)')).join(''), semDados);
   setList('fatRankPioresCavaloTab',   bot5Cav.map(v=>liRank(v,'var(--danger)')).join(''),  '<li style="justify-content:center;color:var(--text-lt)">Sem dados suficientes.</li>');
-  setList('fatRankMelhoresCarretaTab',top5Car.map(v=>liRankCar(v,'var(--success)')).join(''), semDados);
-  setList('fatRankPioresCarretaTab',  bot5Car.map(v=>liRankCar(v,'var(--danger)')).join(''),  '<li style="justify-content:center;color:var(--text-lt)">Sem dados suficientes.</li>');
+  setList('fatRankMelhoresCarretaTab',bot5Car.map(v=>liRankCar(v,'var(--success)')).join(''), semDados);
+  setList('fatRankPioresCarretaTab',  top5Car.map(v=>liRankCar(v,'var(--danger)')).join(''),  '<li style="justify-content:center;color:var(--text-lt)">Sem dados suficientes.</li>');
 
   // ── Ranking preço por litro por POSTO ──
   // Calcula preço médio (R$/L) por posto usando registros com valor e litros válidos
