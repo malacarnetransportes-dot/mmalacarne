@@ -9237,7 +9237,7 @@ function fatRenderConsumoTab(dados) {
   const cavMap = {};
   dados.forEach(r => {
     const p = normalizaPlaca(r.placaCavalo); if (!p) return;
-    if (!cavMap[p]) cavMap[p] = { placa:r.placaCavalo, medias:[], km:0, litros:0, kmTotal:0, kmPar:0, litrosPar:0, regsPar:0, regsTotal:0, registros:0, motoristas:new Set() };
+    if (!cavMap[p]) cavMap[p] = { placa:r.placaCavalo, medias:[], km:0, litros:0, kmTotal:0, kmPar:0, litrosPar:0, regsPar:0, regsTotal:0, semLeitura:0, foraSeq:0, inicio:0, registros:0, motoristas:new Set() };
     if (r.mediaCavalo > 0) cavMap[p].medias.push(r.mediaCavalo);
     // Só acumula km/litros/kmTotal para registros de CAVALO.
     // Registros de carreta têm placaCavalo preenchido (do cadastro da frota)
@@ -9246,7 +9246,12 @@ function fatRenderConsumoTab(dados) {
       cavMap[p].km      += r.km || 0;
       cavMap[p].litros  += r.litrosCavalo || 0;
       cavMap[p].kmTotal += r.kmPercorrido || 0;
-      if ((r.litrosCavalo || 0) > 0) cavMap[p].regsTotal++;   // todas as abastecidas do período
+      if ((r.litrosCavalo || 0) > 0) {                          // todas as abastecidas do período
+        cavMap[p].regsTotal++;
+        if (r.statusCalc === 'sem-leitura') cavMap[p].semLeitura++;
+        else if (r.statusCalc === 'fora')   cavMap[p].foraSeq++;
+        else if (r.statusCalc === 'inicio') cavMap[p].inicio++;
+      }
       // CORREÇÃO (19/09/2026): o km/L do ranking só pode usar os litros dos
       // abastecimentos que TÊM km percorrido (delta de odômetro válido).
       // Antes, litros de abastecidas sem leitura de KM (1ª do período, KM
@@ -9277,7 +9282,7 @@ function fatRenderConsumoTab(dados) {
   const carMap = {};
   dados.forEach(r => {
     const p = normalizaPlaca(r.placaCarreta); if (!p) return;
-    if (!carMap[p]) carMap[p] = { placa:r.placaCarreta, medias:[], litros:0, horasTotal:0, litrosPar:0, horasPar:0, regsPar:0, regsTotal:0, registros:0, motoristas:new Set() };
+    if (!carMap[p]) carMap[p] = { placa:r.placaCarreta, medias:[], litros:0, horasTotal:0, litrosPar:0, horasPar:0, regsPar:0, regsTotal:0, semLeitura:0, foraSeq:0, inicio:0, registros:0, motoristas:new Set() };
     if (r.mediaCarreta > 0) carMap[p].medias.push(r.mediaCarreta);
     carMap[p].litros    += r.litrosCarreta || 0;
     // kmPercorrido nas carretas é delta do horímetro (horas de funcionamento).
@@ -9286,7 +9291,12 @@ function fatRenderConsumoTab(dados) {
     // litros foram corretamente alocados no campo litrosCarreta).
     const ehAbastCarreta = r.tipoAbastecido === 'carreta' || (r.litrosCarreta || 0) > 0;
     carMap[p].horasTotal += (ehAbastCarreta ? r.kmPercorrido : 0) || 0;
-    if (ehAbastCarreta && (r.litrosCarreta || 0) > 0) carMap[p].regsTotal++;   // todas as abastecidas do período
+    if (ehAbastCarreta && (r.litrosCarreta || 0) > 0) {                          // todas as abastecidas do período
+      carMap[p].regsTotal++;
+      if (r.statusCalc === 'sem-leitura') carMap[p].semLeitura++;
+      else if (r.statusCalc === 'fora')   carMap[p].foraSeq++;
+      else if (r.statusCalc === 'inicio') carMap[p].inicio++;
+    }
     // Só pareia litros com horas quando o abastecimento TEM delta de horímetro.
     if (ehAbastCarreta && (r.kmPercorrido || 0) > 0 && (r.litrosCarreta || 0) > 0) {
       carMap[p].horasPar  += r.kmPercorrido;
@@ -9325,17 +9335,22 @@ function fatRenderConsumoTab(dados) {
   const semDados = '<li style="justify-content:center;color:var(--text-lt)">Sem dados.</li>';
   // "N abast." = abastecidas do período filtrado; "M no cálculo" = as que têm
   // leitura anterior de KM/horímetro (delta válido) e por isso entram na média.
-  // A 1ª abastecida da sequência só serve de ponto de partida, sem delta.
-  const nAbast = v => {
+  // As demais aparecem numa 2ª linha com o MOTIVO de cada uma estar fora.
+  const nAbast = (v, un) => {
     const par = v.regsPar || 0, tot = Math.max(v.regsTotal || 0, par);
-    const txt = tot > par ? `${tot} abast. · ${par} no cálculo` : `${par} abast.`;
-    const tip = tot > par
-      ? `${tot} abastecidas no período; ${par} entram na média (as demais não têm leitura anterior de KM/horímetro para calcular o intervalo).`
-      : `${par} abastecidas no período, todas usadas na média.`;
-    return `<span title="${tip}" style="color:var(--text-lt);font-weight:400;font-size:.73rem"> · ${txt}</span>`;
+    const fora = tot - par;
+    if (fora <= 0) return `<span style="color:var(--text-lt);font-weight:400;font-size:.73rem"> · ${par} abast.</span>`;
+    const mot = [];
+    if (v.semLeitura) mot.push(`${v.semLeitura} sem ${un}`);
+    if (v.foraSeq)    mot.push(`${v.foraSeq} ${un} fora da sequência ⚠️`);
+    if (v.inicio)     mot.push(`${v.inicio} 1ª leitura (sem anterior)`);
+    const outros = fora - (v.semLeitura||0) - (v.foraSeq||0) - (v.inicio||0);
+    if (outros > 0)   mot.push(`${outros} outros`);
+    return `<span style="color:var(--text-lt);font-weight:400;font-size:.73rem"> · ${tot} abast. · ${par} no cálculo</span>` +
+           `<br><span style="color:#b45309;font-weight:500;font-size:.68rem">${fora} fora do cálculo: ${mot.join(' · ')}</span>`;
   };
-  const liRank = (v, cor) => `<li><span>${v.placa} <span style="color:var(--text-lt);font-weight:400">(${v.motorista.split(',')[0].trim()})</span>${nAbast(v)}</span><span style="font-weight:700;color:${cor}">${fmtKmL(v.media)}</span></li>`;
-  const liRankCar = (v, cor) => `<li><span>${v.placa} <span style="color:var(--text-lt);font-weight:400">(${v.motorista.split(',')[0].trim()})</span>${nAbast(v)}</span><span style="font-weight:700;color:${cor}">${fmtLH(v.media)}</span></li>`;
+  const liRank = (v, cor) => `<li><span>${v.placa} <span style="color:var(--text-lt);font-weight:400">(${v.motorista.split(',')[0].trim()})</span>${nAbast(v,'KM')}</span><span style="font-weight:700;color:${cor}">${fmtKmL(v.media)}</span></li>`;
+  const liRankCar = (v, cor) => `<li><span>${v.placa} <span style="color:var(--text-lt);font-weight:400">(${v.motorista.split(',')[0].trim()})</span>${nAbast(v,'horímetro')}</span><span style="font-weight:700;color:${cor}">${fmtLH(v.media)}</span></li>`;
   const top5Cav = cavArr.slice(0,5);
   const top5CavSet = new Set(top5Cav.map(v=>normalizaPlaca(v.placa)));
   const bot5Cav = [...cavArr].reverse().filter(v=>!top5CavSet.has(normalizaPlaca(v.placa))).slice(0,5);
@@ -9453,7 +9468,11 @@ function fatRenderConsumoTab(dados) {
         : '';
       const kmPercorridoCell = r.kmDeltaSuspeito
         ? `<span style="color:#b45309;font-weight:700" title="Delta implausível (${r.kmDeltaSuspeito.toLocaleString('pt-BR')}) — verifique se a placa da CARRETA foi lançada como odômetro do cavalo">⚠️ ${r.kmDeltaSuspeito.toLocaleString('pt-BR')}?</span>`
-        : fmtKm(r.kmPercorrido) + (r.kmPercorrido ? (ehCarretaLinha ? ' h' : ' km') : '');
+        : (r.kmPercorrido
+            ? fmtKm(r.kmPercorrido) + (ehCarretaLinha ? ' h' : ' km')
+            : (r.statusCalc === 'sem-leitura' ? `<span style="color:#b45309;font-size:.72rem">sem ${ehCarretaLinha ? 'horímetro' : 'KM'}</span>`
+             : r.statusCalc === 'inicio'      ? '<span style="color:var(--text-lt);font-size:.72rem">1ª leitura</span>'
+             : '—'));
       const trStyle = r.kmDeltaSuspeito ? ' style="background:rgba(251,191,36,.08)"' : '';
       const tipoBadge = r.tipoAbastecido === 'carreta'
         ? '<span style="font-size:.7rem;font-weight:700;color:#0369a1;background:#e0f2fe;padding:.15rem .5rem;border-radius:6px"><i class="fas fa-snowflake"></i> Carreta</span>'
@@ -9781,6 +9800,11 @@ async function loadAbastecimentos(opts) {
       mediaCavalo:  0,
       mediaCarreta: 0,
       ehArla:       ehArla,
+      // Situação da abastecida no cálculo de consumo (preenchida na cadeia de
+      // KM/horímetro abaixo): 'ok' = entra na média · 'inicio' = 1ª leitura da
+      // sequência (sem leitura anterior) · 'sem-leitura' = nota sem KM/horímetro
+      // · 'fora' = leitura fora da sequência (⚠️) · 'arla' = não é diesel.
+      statusCalc:   ehArla ? 'arla' : '',
       frete: 0, comissao: 0, diaria: 0, bonus: 0,
       valesManobra: 0, empConsignado: 0, depFolha: 0, valorReceber: 0,
       // campos específicos de abastecimento
@@ -9904,6 +9928,10 @@ async function loadAbastecimentos(opts) {
     // específica esteja corrompida (seja a primeira, uma do meio, ou várias
     // intercaladas), e ainda permite "pular" uma leitura ruim no meio da
     // cadeia sem perder o restante da sequência válida.
+    indices.forEach(idx => {
+      const r0 = abastAllRecords[idx];
+      r0.statusCalc = (r0.km || 0) > 0 ? 'fora' : 'sem-leitura';   // 'fora' vira 'inicio'/'ok' se entrar na cadeia
+    });
     const validIdx = indices.filter(idx => (abastAllRecords[idx].km || 0) > 0);
     const n = validIdx.length;
     if (n > 0) {
@@ -9931,8 +9959,9 @@ async function loadAbastecimentos(opts) {
       for (let i = 0; i < n; i++) {
         if (!chainSet.has(i)) continue;
         const p = prev[i];
-        if (p === -1) continue; // 1º elo da cadeia: só define o início, sem delta
+        if (p === -1) { abastAllRecords[validIdx[i]].statusCalc = 'inicio'; continue; } // 1º elo da cadeia: só define o início, sem delta
         const rec   = abastAllRecords[validIdx[i]];
+        rec.statusCalc = 'ok';
         const delta = abastAllRecords[validIdx[i]].km - abastAllRecords[validIdx[p]].km;
         rec.kmPercorrido = delta;
         const litros = (ehGrupoCarreta ? rec.litrosCarreta : rec.litrosCavalo) ||
