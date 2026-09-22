@@ -9504,9 +9504,16 @@ function fatRenderConsumoTab(dados) {
   const tbody = document.getElementById('fatcAbastTbodyTab');
   const count = document.getElementById('fatcAbastCountTab');
   if (tbody) {
+    // Ordem cronológica (mais antigo → mais recente): assim o usuário
+    // enxerga a sequência de KM/Hora do período na ordem em que ela
+    // realmente aconteceu, terminando no lançamento mais atual.
     const sorted = [...dados].sort((a,b) => {
-      if (a.data && b.data) return b.data - a.data;
-      return (b.dataStr||'').localeCompare(a.dataStr||'');
+      if (a.data && b.data) {
+        const diff = a.data - b.data;
+        if (diff !== 0) return diff;
+        return String(a.hora||'').localeCompare(String(b.hora||''));
+      }
+      return (a.dataStr||'').localeCompare(b.dataStr||'');
     });
     tbody.innerHTML = sorted.length ? sorted.map(r => {
       const fmtL  = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' L' : '—';
@@ -9623,8 +9630,52 @@ function fatcRenderResumoCardTab(records, f) {
     ? `${datasOrdenadas[0].toLocaleDateString('pt-BR')} — ${datasOrdenadas[datasOrdenadas.length-1].toLocaleDateString('pt-BR')}`
     : '—';
 
+  // ── Ordena os registros do filtro cronologicamente para achar o
+  //    lançamento mais antigo e o mais recente do período. ──
+  const porDataAsc = [...records].sort((a,b) => {
+    const da = a.data ? a.data.getTime() : 0, db = b.data ? b.data.getTime() : 0;
+    if (da !== db) return da - db;
+    return String(a.hora||'').localeCompare(String(b.hora||''));
+  });
+
+  // Hora inicial/final do período filtrado (primeiro e último lançamento
+  // com hora registrada).
+  const comHora   = porDataAsc.filter(r => r.hora);
+  const horaInicial = comHora.length ? comHora[0].hora : '—';
+  const horaFinal    = comHora.length ? comHora[comHora.length-1].hora : '—';
+
+  // KM inicial/final (Cavalo) e Horímetro inicial/final (Carreta): o KM/hora
+  // "inicial" do período NÃO é simplesmente o valor do 1º lançamento do
+  // filtro — quando o filtro é por mês, ele usa o kmPercorrido (delta) desse
+  // 1º lançamento, que já foi calculado contra a ÚLTIMA leitura do MÊS
+  // ANTERIOR (a cadeia de odômetro roda sobre TODOS os abastecimentos, não
+  // só os do filtro). Assim o "Total do Período" bate: KM Final − KM Inicial
+  // = soma dos deltas dentro do mês, e a média sai correta mesmo no 1º
+  // lançamento do mês vigente.
+  const limitesSeq = (filtroFn) => {
+    const regs = porDataAsc.filter(r => filtroFn(r) && (r.km||0) > 0);
+    if (!regs.length) return null;
+    const primeiro = regs[0], ultimo = regs[regs.length-1];
+    const inicial = (primeiro.kmPercorrido > 0) ? (primeiro.km - primeiro.kmPercorrido) : primeiro.km;
+    return { inicial, final: ultimo.km };
+  };
+  const limCav = limitesSeq(ehCavReg);
+  const limCar = limitesSeq(r => r.tipoAbastecido === 'carreta');
+  const kmInicialTxt  = limCav ? fmtNum(limCav.inicial) + ' km' : '—';
+  const kmFinalTxt    = limCav ? fmtNum(limCav.final)   + ' km' : '—';
+  const horInicialTxt = limCar ? fmtNum(limCar.inicial) + ' h'  : '—';
+  const horFinalTxt   = limCar ? fmtNum(limCar.final)   + ' h'  : '—';
+
   const itens = [
     { lbl:'Período dos Registros',     val: periodoTxt },
+    { lbl:'Hora Inicial',              val: horaInicial },
+    { lbl:'Hora Final',                val: horaFinal },
+    { lbl:'KM Inicial (Cavalo)',       val: kmInicialTxt },
+    { lbl:'KM Final (Cavalo)',         val: kmFinalTxt },
+    ...(limCar ? [
+      { lbl:'Horímetro Inicial (Carreta)', val: horInicialTxt },
+      { lbl:'Horímetro Final (Carreta)',   val: horFinalTxt },
+    ] : []),
     { lbl:'Média Cavalo (km/L)',       val: fmtKmL(mediaCav) },
     { lbl:'Média Carreta (L/h)',       val: fmtLH(mediaCar) },
     { lbl:'Total KM Cavalo',           val: fmtNum(totalKm) + ' km' },
