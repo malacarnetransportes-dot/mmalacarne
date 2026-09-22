@@ -2099,6 +2099,7 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
               <button id="btnLimparRelerTab" class="btn btn-gray btn-sm" style="margin-left:.5rem" onclick="abastLimparEReler()"><i class="fas fa-broom"></i> Limpar e reler</button>
             </div>
             <div id="webAppStatusTab" style="display:none;margin-top:.5rem;font-size:.8rem;padding:.5rem .8rem;border-radius:8px;background:var(--gray-100)"></div>
+            <div id="abastDiagnostico" style="display:none;margin-top:.5rem;font-size:.78rem;padding:.5rem .9rem;border-radius:8px;border:1px solid #fca5a5;background:#fff5f5;color:#991b1b;line-height:1.6"></div>
             <div style="font-size:.78rem;color:var(--text-lt);margin-top:.4rem">Abastecimentos extraídos automaticamente das DANFes da pasta do Drive. Use os filtros abaixo para refinar.</div>
           </div>
 
@@ -2142,6 +2143,8 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
             <div class="kpi-card"><div class="kpi-icon brown"><i class="fas fa-road"></i></div><div><div class="kpi-val" id="fatct-km">—</div><div class="kpi-lbl">Total KM Rodado</div></div></div>
             <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-thumbs-up"></i></div><div><div class="kpi-val" id="fatct-melhorcv" style="font-size:1rem">—</div><div class="kpi-lbl">Cavalo Mais Econômico</div></div></div>
             <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-triangle-exclamation"></i></div><div><div class="kpi-val" id="fatct-piorcv" style="font-size:1rem">—</div><div class="kpi-lbl">Cavalo Menos Econômico</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon yellow" style="background:linear-gradient(135deg,#fef3c7,#fde68a)"><i class="fas fa-flask" style="color:#78350f"></i></div><div><div class="kpi-val" id="fatct-litrosarla" style="color:#78350f">—</div><div class="kpi-lbl">Total Litros Arla 32</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon yellow" style="background:linear-gradient(135deg,#fef3c7,#fde68a)"><i class="fas fa-dollar-sign" style="color:#78350f"></i></div><div><div class="kpi-val" id="fatct-custoarla" style="color:#78350f">—</div><div class="kpi-lbl">Custo Total Arla 32</div></div></div>
           </div>
 
           <!-- RANKINGS 2x2 -->
@@ -2163,6 +2166,14 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
             <div class="dash-card">
               <div class="dash-card-title"><i class="fas fa-triangle-exclamation" style="color:var(--danger)"></i> Piores Carretas (L/h)</div>
               <ul class="rank-list" id="fatRankPioresCarretaTab"></ul>
+            </div>
+          </div>
+
+          <!-- RANKING ARLA 32 POR PLACA -->
+          <div class="charts-grid" style="margin-top:1rem">
+            <div class="dash-card" style="grid-column:1/-1;border-left:4px solid #d97706">
+              <div class="dash-card-title"><i class="fas fa-flask" style="color:#78350f"></i> Arla 32 — Consumo por Placa (litros)</div>
+              <ul class="rank-list" id="fatRankArlaPlacaTab"></ul>
             </div>
           </div>
 
@@ -9343,6 +9354,10 @@ function fatRenderConsumoTab(dados) {
   // v.kmTotal (soma dos deltas entre abastecimentos) é o valor correto.
   const totalKm = cavArr.reduce((s,v)=>s+v.kmTotal,0);
 
+  // ── KPI Arla ──
+  const totalLitrosArla = dados.reduce((s,r)=>s+(r.litrosArla||0),0);
+  const totalCustoArla  = dados.reduce((s,r)=>s+(r.valorArla||0),0);
+
   const setV = (id,val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
   setV('fatct-mediacv', fmtKmL(mediaGeral(cavArr)));
   setV('fatct-mediacr', fmtLH(mediaGeral(carArr)));
@@ -9350,6 +9365,8 @@ function fatRenderConsumoTab(dados) {
   setV('fatct-km',      fmtNum(totalKm) + ' km');
   setV('fatct-melhorcv', cavArr.length ? `${cavArr[0].placa} — ${fmtKmL(cavArr[0].media)}` : '—');
   setV('fatct-piorcv',   cavArr.length ? `${cavArr[cavArr.length-1].placa} — ${fmtKmL(cavArr[cavArr.length-1].media)}` : '—');
+  setV('fatct-litrosarla', totalLitrosArla > 0 ? fmtNum(totalLitrosArla) + ' L' : '—');
+  setV('fatct-custoarla',  totalCustoArla  > 0 ? fmtR(totalCustoArla)        : '—');
 
   // ── Rankings km/L (cavalo) e L/h (carreta) ──
   const semDados = '<li style="justify-content:center;color:var(--text-lt)">Sem dados.</li>';
@@ -9444,6 +9461,27 @@ function fatRenderConsumoTab(dados) {
     return `<li><span><b style="margin-right:.3rem;color:${cor}">${pos}º</b>${v.nome.length>28 ? v.nome.slice(0,28)+'…':v.nome} <span style="color:var(--text-lt);font-weight:400;font-size:.73rem">(${regs})</span></span><span style="font-weight:700;color:${cor}">${lTxt} <span style="color:var(--text-lt);font-size:.75rem;font-weight:400">· ${vTxt}</span></span></li>`;
   };
   setList('fatRankPostoVolume', postoVolArr.slice(0,8).map((v,i)=>liPostoVol(v,i+1)).join(''), semDados);
+
+  // ── Ranking Arla 32 por placa ──
+  const arlaMap = {};
+  dados.forEach(r => {
+    if (!r.ehArla) return;
+    const p = (r.placaFisica || r.placaCavalo || '').trim(); if (!p) return;
+    if (!arlaMap[p]) arlaMap[p] = { placa:p, litros:0, valor:0, regs:0 };
+    arlaMap[p].litros += r.litrosArla || 0;
+    arlaMap[p].valor  += r.valorArla  || 0;
+    arlaMap[p].regs++;
+  });
+  const arlaArr = Object.values(arlaMap).filter(v=>v.litros>0).sort((a,b)=>b.litros-a.litros);
+  const liArla = (v, pos) => {
+    const cores = ['#d97706','#6366f1','#0369a1','#059669','#dc2626'];
+    const cor = cores[pos-1] || 'var(--text)';
+    const lTxt = v.litros.toLocaleString('pt-BR',{maximumFractionDigits:1}) + ' L';
+    const vTxt = v.valor > 0 ? ' · R$ ' + v.valor.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '';
+    const regs = v.regs === 1 ? '1 abast.' : v.regs + ' abast.';
+    return `<li><span><b style="margin-right:.3rem;color:${cor}">${pos}º</b>${escapeHTML(v.placa)} <span style="color:var(--text-lt);font-weight:400;font-size:.73rem">(${regs})</span></span><span style="font-weight:700;color:${cor}">${lTxt}<span style="color:var(--text-lt);font-size:.75rem;font-weight:400">${escapeHTML(vTxt)}</span></span></li>`;
+  };
+  setList('fatRankArlaPlacaTab', arlaArr.map((v,i)=>liArla(v,i+1)).join(''), '<li style="justify-content:center;color:var(--text-lt)">Sem dados de Arla 32.</li>');
 
   // ── Alerta de KM suspeito ──
   const suspeitos = dados.filter(r => r.kmDeltaSuspeito);
@@ -9578,6 +9616,8 @@ function fatcRenderResumoCardTab(records, f) {
   const mediaCar  = litrosParCar > 0 && horasParCar > 0 ? litrosParCar / horasParCar : 0;
   const totalCustoCav   = records.reduce((s,r)=>s+(r.valorCavalo||0),0);
   const totalCustoCar   = records.reduce((s,r)=>s+(r.valorCarreta||0),0);
+  const totalLitrosArlaF = records.reduce((s,r)=>s+(r.litrosArla||0),0);
+  const totalCustoArlaF  = records.reduce((s,r)=>s+(r.valorArla||0),0);
   const datasOrdenadas  = records.map(r=>r.data).filter(Boolean).sort((a,b)=>a-b);
   const periodoTxt = datasOrdenadas.length
     ? `${datasOrdenadas[0].toLocaleDateString('pt-BR')} — ${datasOrdenadas[datasOrdenadas.length-1].toLocaleDateString('pt-BR')}`
@@ -9593,7 +9633,11 @@ function fatcRenderResumoCardTab(records, f) {
     { lbl:'Total Litros Carreta',      val: fmtNum(totalLitrosCar) + ' L' },
     { lbl:'Custo Abastec. Cavalo',     val: fmtMoney(totalCustoCav) },
     { lbl:'Custo Abastec. Carreta',    val: fmtMoney(totalCustoCar) },
-    { lbl:'Custo Total (Cavalo+Carreta)', val: fmtMoney(totalCustoCav + totalCustoCar) }
+    { lbl:'Custo Total (Cavalo+Carreta)', val: fmtMoney(totalCustoCav + totalCustoCar) },
+    ...(totalLitrosArlaF > 0 ? [
+      { lbl:'Total Litros Arla 32',  val: fmtNum(totalLitrosArlaF) + ' L' },
+      { lbl:'Custo Arla 32',         val: fmtMoney(totalCustoArlaF) }
+    ] : [])
   ];
 
   body.innerHTML = itens.map(it => `
@@ -9606,16 +9650,15 @@ function fatcRenderResumoCardTab(records, f) {
 function fatcExportarAbastTab() {
   const dados = fatcFilteredTab.length ? fatcFilteredTab : fatcGetRecords();
   if (!dados.length) { showToast('Nenhum dado para exportar.', 3000); return; }
-  const labels = ['Data','Hora','Placa','Tipo','Motorista','KM/Horas','Percorrido','Litros','Valor (R$)','Combustível','Posto','Cupom','NF','Média'];
+  const labels = ['Data','Hora','Placa','Tipo','Motorista','KM/Horas','Percorrido','Litros Diesel','Litros Arla 32','Valor (R$)','Combustível','Posto','Cupom','NF','Média'];
   exportCSV(dados.map(r => {
     const ehCar  = r.tipoAbastecido === 'carreta';
     const tipo   = ehCar ? 'Carreta' : (r.tipoAbastecido === 'arla' ? 'Arla' : 'Cavalo');
     const mediaN = ehCar ? r.mediaCarreta : r.mediaCavalo;
-    // Unidade explícita no texto, já que a coluna mistura km/L (cavalo) e
-    // L/h (carreta) — sem isso, o número sozinho fica ambíguo no CSV.
     const media  = mediaN > 0 ? mediaN.toLocaleString('pt-BR',{maximumFractionDigits:2}) + (ehCar ? ' L/h' : ' km/L') : '';
-    const litros = (r.litrosCavalo||0) + (r.litrosCarreta||0);
-    const vals   = [r.dataStr, r.hora, (r.placaFisica || r.placaCavalo), tipo, r.motorista, r.km, r.kmPercorrido, litros, r.valorOriginal, r.combustivel, r.posto, r.cupom, r.nf, media];
+    const litrosDiesel = (r.litrosCavalo||0) + (r.litrosCarreta||0);
+    const litrosArla   = r.litrosArla || 0;
+    const vals   = [r.dataStr, r.hora, (r.placaFisica || r.placaCavalo), tipo, r.motorista, r.km, r.kmPercorrido, litrosDiesel || '', litrosArla || '', r.valorOriginal, r.combustivel, r.posto, r.cupom, r.nf, media];
     const row = {}; labels.forEach((l,i) => { row[l] = vals[i] ?? ''; }); return row;
   }), 'abastecimentos_consumo');
 }
@@ -9707,6 +9750,17 @@ async function loadAbastecimentos(opts) {
     fatcPopularFiltrosTab(); fatcApplyFiltersTab();
     if (!silencioso) showToast(msg, 6000);
     if (btn && !silencioso) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar'; }
+    const diagEl = document.getElementById('abastDiagnostico');
+    if (diagEl) {
+      diagEl.style.display = 'block';
+      diagEl.innerHTML = `<b><i class="fas fa-triangle-exclamation"></i> Falha ao carregar planilha de abastecimentos</b><br>
+        <span style="color:#7f1d1d">${escapeHTML(msg)}</span><br><br>
+        <b>Verifique:</b><br>
+        1. A planilha está <b>Publicada na Web</b>? (Arquivo → Compartilhar → Publicar na Web → CSV → Publicar)<br>
+        2. A URL salva no botão ⚙️ <b>Configurações</b> está correta e aponta para a aba certa?<br>
+        3. Os proxies CORS públicos estão instáveis — tente novamente em alguns segundos.<br><br>
+        <span style="color:#b45309">URL em uso: <code style="font-size:.75rem;word-break:break-all">${escapeHTML(ABASTECIMENTOS_CSV_URL)}</code></span>`;
+    }
   };
 
   // Usa o mesmo motor de busca (fetchCSV) usado por Financeiro/Contas a
@@ -10036,6 +10090,9 @@ async function loadAbastecimentos(opts) {
       }
     }
   });
+
+  const diagEl2 = document.getElementById('abastDiagnostico');
+  if (diagEl2) diagEl2.style.display = 'none';
 
   fatcPopularFiltrosTab();
   fatcApplyFiltersTab();
