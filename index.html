@@ -2135,16 +2135,16 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
             </div>
           </div>
 
-          <!-- KPIs -->
+          <!-- KPIs — adaptativos por contexto de filtro -->
           <div class="kpi-grid" id="fatConsumoKpisTab">
-            <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-truck"></i></div><div><div class="kpi-val" id="fatct-mediacv">—</div><div class="kpi-lbl">Média Geral Cavalos (km/L)</div></div></div>
-            <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-trailer"></i></div><div><div class="kpi-val" id="fatct-mediacr">—</div><div class="kpi-lbl">Média Geral Carretas (L/h)</div></div></div>
-            <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-gas-pump"></i></div><div><div class="kpi-val" id="fatct-litros">—</div><div class="kpi-lbl">Total Litros Consumidos</div></div></div>
-            <div class="kpi-card"><div class="kpi-icon brown"><i class="fas fa-road"></i></div><div><div class="kpi-val" id="fatct-km">—</div><div class="kpi-lbl">Total KM Rodado</div></div></div>
-            <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-thumbs-up"></i></div><div><div class="kpi-val" id="fatct-melhorcv" style="font-size:1rem">—</div><div class="kpi-lbl">Cavalo Mais Econômico</div></div></div>
-            <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-triangle-exclamation"></i></div><div><div class="kpi-val" id="fatct-piorcv" style="font-size:1rem">—</div><div class="kpi-lbl">Cavalo Menos Econômico</div></div></div>
-            <div class="kpi-card"><div class="kpi-icon yellow" style="background:linear-gradient(135deg,#fef3c7,#fde68a)"><i class="fas fa-flask" style="color:#78350f"></i></div><div><div class="kpi-val" id="fatct-litrosarla" style="color:#78350f">—</div><div class="kpi-lbl">Total Litros Arla 32</div></div></div>
-            <div class="kpi-card"><div class="kpi-icon yellow" style="background:linear-gradient(135deg,#fef3c7,#fde68a)"><i class="fas fa-dollar-sign" style="color:#78350f"></i></div><div><div class="kpi-val" id="fatct-custoarla" style="color:#78350f">—</div><div class="kpi-lbl">Custo Total Arla 32</div></div></div>
+            <div class="kpi-card" id="fatct-card-mediacv"><div class="kpi-icon green"><i class="fas fa-truck"></i></div><div><div class="kpi-val" id="fatct-mediacv">—</div><div class="kpi-lbl" id="fatct-lbl-mediacv">Média Geral Cavalos (km/L)</div></div></div>
+            <div class="kpi-card" id="fatct-card-mediacr"><div class="kpi-icon blue"><i class="fas fa-trailer"></i></div><div><div class="kpi-val" id="fatct-mediacr">—</div><div class="kpi-lbl" id="fatct-lbl-mediacr">Média Geral Carretas (L/h)</div></div></div>
+            <div class="kpi-card" id="fatct-card-litros"><div class="kpi-icon yellow"><i class="fas fa-gas-pump"></i></div><div><div class="kpi-val" id="fatct-litros">—</div><div class="kpi-lbl" id="fatct-lbl-litros">Total Litros Consumidos</div></div></div>
+            <div class="kpi-card" id="fatct-card-km"><div class="kpi-icon brown"><i class="fas fa-road"></i></div><div><div class="kpi-val" id="fatct-km">—</div><div class="kpi-lbl" id="fatct-lbl-km">Total KM Rodado</div></div></div>
+            <div class="kpi-card" id="fatct-card-melhorcv"><div class="kpi-icon green"><i class="fas fa-thumbs-up"></i></div><div><div class="kpi-val" id="fatct-melhorcv" style="font-size:1rem">—</div><div class="kpi-lbl" id="fatct-lbl-melhorcv">Cavalo Mais Econômico</div></div></div>
+            <div class="kpi-card" id="fatct-card-piorcv"><div class="kpi-icon red"><i class="fas fa-triangle-exclamation"></i></div><div><div class="kpi-val" id="fatct-piorcv" style="font-size:1rem">—</div><div class="kpi-lbl" id="fatct-lbl-piorcv">Cavalo Menos Econômico</div></div></div>
+            <div class="kpi-card" id="fatct-card-litrosarla" style="background:linear-gradient(135deg,#fffbeb,#fef9ee)"><div class="kpi-icon yellow" style="background:linear-gradient(135deg,#fef3c7,#fde68a)"><i class="fas fa-flask" style="color:#78350f"></i></div><div><div class="kpi-val" id="fatct-litrosarla" style="color:#78350f">—</div><div class="kpi-lbl">Total Litros Arla 32</div></div></div>
+            <div class="kpi-card" id="fatct-card-custoarla" style="background:linear-gradient(135deg,#fffbeb,#fef9ee)"><div class="kpi-icon yellow" style="background:linear-gradient(135deg,#fef3c7,#fde68a)"><i class="fas fa-dollar-sign" style="color:#78350f"></i></div><div><div class="kpi-val" id="fatct-custoarla" style="color:#78350f">—</div><div class="kpi-lbl">Custo Total Arla 32</div></div></div>
           </div>
 
           <!-- RANKINGS 2x2 -->
@@ -9368,6 +9368,76 @@ function fatRenderConsumoTab(dados) {
   setV('fatct-litrosarla', totalLitrosArla > 0 ? fmtNum(totalLitrosArla) + ' L' : '—');
   setV('fatct-custoarla',  totalCustoArla  > 0 ? fmtR(totalCustoArla)        : '—');
 
+  // ── KPI cards adaptativos por contexto de filtro ──
+  // Detecta contexto a partir dos selects ativos
+  const _fatcCtxCav   = (document.getElementById('fatcCavaloTab')?.value   || '').trim();
+  const _fatcCtxCar   = (document.getElementById('fatcCarretaTab')?.value  || '').trim();
+  const _fatcCtxMot   = (document.getElementById('fatcMotoristaTab')?.value|| '').trim();
+  const _soCarreta    = !!(_fatcCtxCar && !_fatcCtxCav && !_fatcCtxMot);
+  const _soCavalo     = !!(_fatcCtxCav && !_fatcCtxCar && !_fatcCtxMot);
+  const _comMotorista = !!_fatcCtxMot;
+
+  // Visibilidade e rótulos adaptativos
+  const _kpiShow = (id, vis) => { const el = document.getElementById(id); if (el) el.style.display = vis ? '' : 'none'; };
+  const _kpiLbl  = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+
+  if (_soCarreta) {
+    // Filtro CARRETA pura: esconde KPIs de cavalo, renomeia pertinentes
+    _kpiShow('fatct-card-mediacv',  false);
+    _kpiShow('fatct-card-km',       false);
+    _kpiShow('fatct-card-melhorcv', false);
+    _kpiShow('fatct-card-piorcv',   false);
+    _kpiShow('fatct-card-mediacr',  true);
+    _kpiShow('fatct-card-litros',   true);
+    _kpiLbl('fatct-lbl-mediacr', `Média da Carreta ${_fatcCtxCar} (L/h)`);
+    _kpiLbl('fatct-lbl-litros',  'Total Litros Carreta');
+    // Sobrescreve valor de litros só com o da carreta
+    const _litrosSoCar = dados.reduce((s,r)=>s+(r.litrosCarreta||0),0);
+    setV('fatct-litros', fmtNum(_litrosSoCar) + ' L');
+  } else if (_soCavalo) {
+    // Filtro CAVALO puro: esconde KPIs de carreta
+    _kpiShow('fatct-card-mediacr',  false);
+    _kpiShow('fatct-card-mediacv',  true);
+    _kpiShow('fatct-card-km',       true);
+    _kpiShow('fatct-card-melhorcv', false); // não faz sentido mostrar ranking com 1 placa
+    _kpiShow('fatct-card-piorcv',   false);
+    _kpiLbl('fatct-lbl-mediacv', `Média do Cavalo ${_fatcCtxCav} (km/L)`);
+    _kpiLbl('fatct-lbl-litros',  'Total Litros Cavalo');
+    _kpiLbl('fatct-lbl-km',     'Total KM Percorrido');
+    // Sobrescreve valor de litros só com o do cavalo
+    const _litrosSoCav = dados.reduce((s,r)=>s+(r.litrosCavalo||0),0);
+    setV('fatct-litros', fmtNum(_litrosSoCav) + ' L');
+  } else if (_comMotorista) {
+    // Filtro MOTORISTA: renomeia para contextualizar e esconde ranking (conjunto é 1 motorista)
+    _kpiShow('fatct-card-mediacv',  true);
+    _kpiShow('fatct-card-mediacr',  carArr.length > 0);
+    _kpiShow('fatct-card-km',       true);
+    _kpiShow('fatct-card-melhorcv', false);
+    _kpiShow('fatct-card-piorcv',   false);
+    _kpiLbl('fatct-lbl-mediacv', `Média Cavalo — ${_fatcCtxMot}`);
+    _kpiLbl('fatct-lbl-mediacr', `Média Carreta — ${_fatcCtxMot}`);
+    _kpiLbl('fatct-lbl-km',     'Total KM — Período');
+    _kpiLbl('fatct-lbl-litros', 'Total Litros — Período');
+  } else {
+    // SEM filtro de placa/motorista: modo geral — mostra tudo
+    _kpiShow('fatct-card-mediacv',  true);
+    _kpiShow('fatct-card-mediacr',  true);
+    _kpiShow('fatct-card-litros',   true);
+    _kpiShow('fatct-card-km',       true);
+    _kpiShow('fatct-card-melhorcv', true);
+    _kpiShow('fatct-card-piorcv',   true);
+    _kpiLbl('fatct-lbl-mediacv', 'Média Geral Cavalos (km/L)');
+    _kpiLbl('fatct-lbl-mediacr', 'Média Geral Carretas (L/h)');
+    _kpiLbl('fatct-lbl-litros',  'Total Litros Consumidos');
+    _kpiLbl('fatct-lbl-km',     'Total KM Rodado');
+    _kpiLbl('fatct-lbl-melhorcv','Cavalo Mais Econômico');
+    _kpiLbl('fatct-lbl-piorcv',  'Cavalo Menos Econômico');
+  }
+
+  // Arla: só exibe se houver dados
+  _kpiShow('fatct-card-litrosarla', totalLitrosArla > 0);
+  _kpiShow('fatct-card-custoarla',  totalCustoArla  > 0);
+
   // ── Rankings km/L (cavalo) e L/h (carreta) ──
   const semDados = '<li style="justify-content:center;color:var(--text-lt)">Sem dados.</li>';
   // "N abast." = abastecidas do período filtrado; "M no cálculo" = as que têm
@@ -9583,11 +9653,23 @@ function fatcRenderResumoCardTab(records, f) {
   if (!algumFiltro) {
     card.style.display = 'none';
     if (badgeWrap) badgeWrap.style.display = 'none';
+    // Esconde também o card de análise
+    const cardAnalise = document.getElementById('fatcAnaliseContextualCard');
+    if (cardAnalise) cardAnalise.style.display = 'none';
     return;
   }
 
   card.style.display = 'block';
   if (badgeWrap) badgeWrap.style.display = 'flex';
+
+  // ── Detecta CONTEXTO do filtro para exibição adaptativa ──
+  // Contexto: 'motorista' | 'cavalo' | 'carreta' | 'conjunto' | 'geral'
+  const ctxMotorista = !!(f.mot && !f.cav && !f.car);
+  const ctxSoCavalo  = !!(f.cav && !f.car && !f.mot);
+  const ctxSoCarreta = !!(f.car && !f.cav && !f.mot);
+  const ctxConjunto  = !!((f.cav && f.car) || (f.mot && (f.cav || f.car)));
+  // 'geral' = só filtros de período/posto, sem placa nem motorista
+  const ctxGeral     = !ctxMotorista && !ctxSoCavalo && !ctxSoCarreta && !ctxConjunto;
 
   const fmtISOtoBR = s => { if (!s) return ''; const [y,m,d] = s.split('-'); return `${d}/${m}/${y}`; };
   const partes = [];
@@ -9606,41 +9688,28 @@ function fatcRenderResumoCardTab(records, f) {
   const fmtLH  = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' L/h' : '—';
   const fmtNum = v => (v || 0).toLocaleString('pt-BR',{maximumFractionDigits:0});
 
-  // KM e litros: só registros de cavalo para cálculo de km/L
-  const ehCavReg        = r => r.tipoAbastecido !== 'carreta' && r.tipoAbastecido !== 'arla';
-  const totalLitrosCav  = records.reduce((s,r)=>s+(r.litrosCavalo||0),0);
-  const totalLitrosCar  = records.reduce((s,r)=>s+(r.litrosCarreta||0),0);
-  const totalCustoCav   = records.reduce((s,r)=>s+(r.valorCavalo||0),0);
-  const totalCustoCar   = records.reduce((s,r)=>s+(r.valorCarreta||0),0);
+  const ehCavReg = r => r.tipoAbastecido !== 'carreta' && r.tipoAbastecido !== 'arla';
+  const totalLitrosCav   = records.reduce((s,r)=>s+(r.litrosCavalo||0),0);
+  const totalLitrosCar   = records.reduce((s,r)=>s+(r.litrosCarreta||0),0);
+  const totalCustoCav    = records.reduce((s,r)=>s+(r.valorCavalo||0),0);
+  const totalCustoCar    = records.reduce((s,r)=>s+(r.valorCarreta||0),0);
   const totalLitrosArlaF = records.reduce((s,r)=>s+(r.litrosArla||0),0);
   const totalCustoArlaF  = records.reduce((s,r)=>s+(r.valorArla||0),0);
-  const datasOrdenadas  = records.map(r=>r.data).filter(Boolean).sort((a,b)=>a-b);
+  const datasOrdenadas   = records.map(r=>r.data).filter(Boolean).sort((a,b)=>a-b);
   const periodoTxt = datasOrdenadas.length
     ? `${datasOrdenadas[0].toLocaleDateString('pt-BR')} — ${datasOrdenadas[datasOrdenadas.length-1].toLocaleDateString('pt-BR')}`
     : '—';
 
-  // ── Ordena os registros do filtro cronologicamente para achar o
-  //    lançamento mais antigo e o mais recente do período. ──
   const porDataAsc = [...records].sort((a,b) => {
     const da = a.data ? a.data.getTime() : 0, db = b.data ? b.data.getTime() : 0;
     if (da !== db) return da - db;
     return String(a.hora||'').localeCompare(String(b.hora||''));
   });
 
-  // Hora inicial/final do período filtrado (primeiro e último lançamento
-  // com hora registrada).
-  const comHora   = porDataAsc.filter(r => r.hora);
+  const comHora     = porDataAsc.filter(r => r.hora);
   const horaInicial = comHora.length ? comHora[0].hora : '—';
-  const horaFinal    = comHora.length ? comHora[comHora.length-1].hora : '—';
+  const horaFinal   = comHora.length ? comHora[comHora.length-1].hora : '—';
 
-  // KM inicial/final (Cavalo) e Horímetro inicial/final (Carreta): o KM/hora
-  // "inicial" do período NÃO é simplesmente o valor do 1º lançamento do
-  // filtro — quando o filtro é por mês, ele usa o kmPercorrido (delta) desse
-  // 1º lançamento, que já foi calculado contra a ÚLTIMA leitura do MÊS
-  // ANTERIOR (a cadeia de odômetro roda sobre TODOS os abastecimentos, não
-  // só os do filtro). Assim o "Total do Período" bate: KM Final − KM Inicial
-  // = distância real percorrida, e a média sai correta mesmo no 1º
-  // lançamento do mês vigente.
   const limitesSeq = (filtroFn) => {
     const regs = porDataAsc.filter(r => filtroFn(r) && (r.km||0) > 0);
     if (!regs.length) return null;
@@ -9650,59 +9719,262 @@ function fatcRenderResumoCardTab(records, f) {
   };
   const limCav = limitesSeq(ehCavReg);
   const limCar = limitesSeq(r => r.tipoAbastecido === 'carreta');
-  const kmInicialTxt  = limCav ? fmtNum(limCav.inicial) + ' km' : '—';
-  const kmFinalTxt    = limCav ? fmtNum(limCav.final)   + ' km' : '—';
-  const horInicialTxt = limCar ? fmtNum(limCar.inicial) + ' h'  : '—';
-  const horFinalTxt   = limCar ? fmtNum(limCar.final)   + ' h'  : '—';
 
-  // Total do período e média: usa SEMPRE o KM/hora INICIAL e FINAL
-  // disponíveis (KM Final − KM Inicial), não a soma de deltas "pareados"
-  // registro a registro. Isso evita que a média fique subestimada quando
-  // algum lançamento no meio da cadeia tem litros zerados/ausentes (o delta
-  // dele ainda conta pra distância percorrida, mas antes ficava de fora da
-  // soma "pareada"). Só cai no somatório de deltas (fallback) se não houver
-  // nenhuma leitura de KM/horímetro válida no período.
   const totalKm = limCav ? (limCav.final - limCav.inicial)
     : records.reduce((s,r)=> s + (ehCavReg(r) ? (r.kmPercorrido||0) : 0), 0);
   const totalHorasCarreta = limCar ? (limCar.final - limCar.inicial)
     : records.reduce((s,r)=> s + (r.tipoAbastecido === 'carreta' ? (r.kmPercorrido||0) : 0), 0);
-  // Média cavalo: distância entre o KM inicial e o KM final disponíveis ÷
-  // total de litros abastecidos no período (não só os litros "pareados").
   const mediaCav = totalKm > 0 && totalLitrosCav > 0 ? totalKm / totalLitrosCav : 0;
-  // Média carreta: litros ÷ horas entre o horímetro inicial e final — L/h
-  // (litros consumidos por hora de funcionamento; menor = melhor).
   const mediaCar = totalLitrosCar > 0 && totalHorasCarreta > 0 ? totalLitrosCar / totalHorasCarreta : 0;
 
-  const itens = [
-    { lbl:'Período dos Registros',     val: periodoTxt },
-    { lbl:'Hora Inicial',              val: horaInicial },
-    { lbl:'Hora Final',                val: horaFinal },
-    { lbl:'KM Inicial (Cavalo)',       val: kmInicialTxt },
-    { lbl:'KM Final (Cavalo)',         val: kmFinalTxt },
-    ...(limCar ? [
-      { lbl:'Horímetro Inicial (Carreta)', val: horInicialTxt },
-      { lbl:'Horímetro Final (Carreta)',   val: horFinalTxt },
-    ] : []),
-    { lbl:'Média Cavalo (km/L)',       val: fmtKmL(mediaCav) },
-    { lbl:'Média Carreta (L/h)',       val: fmtLH(mediaCar) },
-    { lbl:'Total KM Cavalo',           val: fmtNum(totalKm) + ' km' },
-    { lbl:'Total Horas Carreta',       val: fmtNum(totalHorasCarreta) + ' h' },
-    { lbl:'Total Litros Cavalo',       val: fmtNum(totalLitrosCav) + ' L' },
-    { lbl:'Total Litros Carreta',      val: fmtNum(totalLitrosCar) + ' L' },
-    { lbl:'Custo Abastec. Cavalo',     val: fmtMoney(totalCustoCav) },
-    { lbl:'Custo Abastec. Carreta',    val: fmtMoney(totalCustoCar) },
-    { lbl:'Custo Total (Cavalo+Carreta)', val: fmtMoney(totalCustoCav + totalCustoCar) },
-    ...(totalLitrosArlaF > 0 ? [
-      { lbl:'Total Litros Arla 32',  val: fmtNum(totalLitrosArlaF) + ' L' },
-      { lbl:'Custo Arla 32',         val: fmtMoney(totalCustoArlaF) }
-    ] : [])
-  ];
+  // ── Monta itens adaptativos por contexto ──
+  let itens = [];
 
-  body.innerHTML = itens.map(it => `
-    <div>
-      <div style="font-weight:700;color:var(--primary)">${escapeHTML(String(it.val))}</div>
-      <div style="color:var(--text-lt);font-size:.72rem">${it.lbl}</div>
+  // Cabeçalho de contexto — ícone + rótulo acima dos dados
+  let ctxIcone = '📊', ctxRotulo = 'Conjunto Cavalo + Carreta';
+  if (ctxMotorista)  { ctxIcone = '👤'; ctxRotulo = `Motorista: ${f.mot}`; }
+  else if (ctxSoCavalo) { ctxIcone = '🚛'; ctxRotulo = `Cavalo: ${f.cav}`; }
+  else if (ctxSoCarreta){ ctxIcone = '❄️'; ctxRotulo = `Carreta: ${f.car}`; }
+  else if (ctxConjunto) { ctxIcone = '🚛❄️'; ctxRotulo = `Conjunto: ${[f.cav,f.car,f.mot].filter(Boolean).join(' + ')}`; }
+
+  // BLOCO COMUM: período sempre aparece
+  itens.push({ lbl:'Período dos Registros', val: periodoTxt, icone:'📅' });
+  itens.push({ lbl:'Hora Inicial', val: horaInicial, icone:'🕐' });
+  itens.push({ lbl:'Hora Final',   val: horaFinal,   icone:'🕔' });
+
+  // CONTEXTO CARRETA PURA — oculta tudo de KM/Cavalo que não se aplica
+  if (ctxSoCarreta) {
+    itens.push({ lbl:'Horímetro Inicial', val: limCar ? fmtNum(limCar.inicial) + ' h' : '—', icone:'⏱️' });
+    itens.push({ lbl:'Horímetro Final',   val: limCar ? fmtNum(limCar.final)   + ' h' : '—', icone:'⏱️' });
+    itens.push({ lbl:'Total Horas de Uso',  val: fmtNum(totalHorasCarreta) + ' h', icone:'🕐' });
+    itens.push({ lbl:'Média de Consumo (L/h)', val: fmtLH(mediaCar), icone:'🌡️' });
+    itens.push({ lbl:'Total Litros Carreta',   val: fmtNum(totalLitrosCar) + ' L', icone:'⛽' });
+    itens.push({ lbl:'Custo Abastec. Carreta', val: fmtMoney(totalCustoCar), icone:'💰' });
+    if (totalLitrosArlaF > 0) {
+      itens.push({ lbl:'Total Litros Arla 32', val: fmtNum(totalLitrosArlaF) + ' L', icone:'🧪' });
+      itens.push({ lbl:'Custo Arla 32',        val: fmtMoney(totalCustoArlaF), icone:'💰' });
+    }
+
+  // CONTEXTO CAVALO PURO — oculta horímetro/carreta
+  } else if (ctxSoCavalo) {
+    itens.push({ lbl:'KM Inicial (Odômetro)',  val: limCav ? fmtNum(limCav.inicial) + ' km' : '—', icone:'📍' });
+    itens.push({ lbl:'KM Final (Odômetro)',    val: limCav ? fmtNum(limCav.final)   + ' km' : '—', icone:'📍' });
+    itens.push({ lbl:'Total KM Percorrido',    val: fmtNum(totalKm) + ' km', icone:'🛣️' });
+    itens.push({ lbl:'Média de Consumo (km/L)',val: fmtKmL(mediaCav), icone:'⚡' });
+    itens.push({ lbl:'Total Litros Cavalo',    val: fmtNum(totalLitrosCav) + ' L', icone:'⛽' });
+    itens.push({ lbl:'Custo Abastec. Cavalo',  val: fmtMoney(totalCustoCav), icone:'💰' });
+    if (totalLitrosArlaF > 0) {
+      itens.push({ lbl:'Total Litros Arla 32', val: fmtNum(totalLitrosArlaF) + ' L', icone:'🧪' });
+      itens.push({ lbl:'Custo Arla 32',        val: fmtMoney(totalCustoArlaF), icone:'💰' });
+    }
+
+  // CONTEXTO MOTORISTA ou CONJUNTO — exibe tudo do conjunto
+  } else {
+    itens.push({ lbl:'KM Inicial (Cavalo)',   val: limCav ? fmtNum(limCav.inicial) + ' km' : '—', icone:'📍' });
+    itens.push({ lbl:'KM Final (Cavalo)',     val: limCav ? fmtNum(limCav.final)   + ' km' : '—', icone:'📍' });
+    if (limCar) {
+      itens.push({ lbl:'Horímetro Inicial (Carreta)', val: fmtNum(limCar.inicial) + ' h', icone:'⏱️' });
+      itens.push({ lbl:'Horímetro Final (Carreta)',   val: fmtNum(limCar.final)   + ' h', icone:'⏱️' });
+    }
+    itens.push({ lbl:'Média Cavalo (km/L)',       val: fmtKmL(mediaCav), icone:'⚡' });
+    if (totalLitrosCar > 0)
+      itens.push({ lbl:'Média Carreta (L/h)',     val: fmtLH(mediaCar), icone:'🌡️' });
+    itens.push({ lbl:'Total KM Cavalo',           val: fmtNum(totalKm) + ' km', icone:'🛣️' });
+    if (totalHorasCarreta > 0)
+      itens.push({ lbl:'Total Horas Carreta',     val: fmtNum(totalHorasCarreta) + ' h', icone:'🕐' });
+    itens.push({ lbl:'Total Litros Cavalo',       val: fmtNum(totalLitrosCav) + ' L', icone:'⛽' });
+    if (totalLitrosCar > 0)
+      itens.push({ lbl:'Total Litros Carreta',    val: fmtNum(totalLitrosCar) + ' L', icone:'⛽' });
+    itens.push({ lbl:'Custo Abastec. Cavalo',     val: fmtMoney(totalCustoCav), icone:'💰' });
+    if (totalLitrosCar > 0)
+      itens.push({ lbl:'Custo Abastec. Carreta',  val: fmtMoney(totalCustoCar), icone:'💰' });
+    itens.push({ lbl:'Custo Total (Cavalo+Carreta)', val: fmtMoney(totalCustoCav + totalCustoCar), icone:'💵' });
+    if (totalLitrosArlaF > 0) {
+      itens.push({ lbl:'Total Litros Arla 32', val: fmtNum(totalLitrosArlaF) + ' L', icone:'🧪' });
+      itens.push({ lbl:'Custo Arla 32',        val: fmtMoney(totalCustoArlaF), icone:'💰' });
+    }
+  }
+
+  // ── Render do card de resumo ──
+  // Adiciona cabeçalho de contexto antes dos dados
+  const headerCtx = `<div style="grid-column:1/-1;display:flex;align-items:center;gap:.6rem;padding-bottom:.6rem;margin-bottom:.2rem;border-bottom:1px solid rgba(59,130,246,.2)">
+    <span style="font-size:1.2rem">${ctxIcone}</span>
+    <span style="font-size:.78rem;font-weight:800;color:#1e40af;text-transform:uppercase;letter-spacing:.8px">${escapeHTML(ctxRotulo)}</span>
+  </div>`;
+
+  body.innerHTML = headerCtx + itens.map(it => `
+    <div style="display:flex;flex-direction:column;gap:.15rem">
+      <div style="font-weight:700;color:var(--primary);font-size:.9rem">${escapeHTML(String(it.val))}</div>
+      <div style="color:var(--text-lt);font-size:.72rem;display:flex;align-items:center;gap:.25rem"><span>${it.icone||''}</span>${it.lbl}</div>
     </div>`).join('');
+
+  // ── Card de Análise Inteligente ──
+  fatcRenderAnaliseContextual({
+    f, ctxMotorista, ctxSoCavalo, ctxSoCarreta, ctxConjunto, ctxGeral,
+    mediaCav, mediaCar, totalKm, totalHorasCarreta,
+    totalLitrosCav, totalLitrosCar, totalCustoCav, totalCustoCar,
+    totalLitrosArlaF, totalCustoArlaF, records, porDataAsc, limCav, limCar
+  });
+}
+
+// ── Análise Inteligente Contextual ──
+// Gera insights automáticos baseados no contexto do filtro ativo.
+function fatcRenderAnaliseContextual(ctx) {
+  // Garante que o card de análise existe no DOM; cria se necessário
+  let cardAnalise = document.getElementById('fatcAnaliseContextualCard');
+  if (!cardAnalise) {
+    // Injeta após o card de resumo
+    const cardResumo = document.getElementById('fatcResumoCardTab');
+    if (!cardResumo) return;
+    cardAnalise = document.createElement('div');
+    cardAnalise.id = 'fatcAnaliseContextualCard';
+    cardResumo.parentNode.insertBefore(cardAnalise, cardResumo.nextSibling);
+  }
+
+  const { f, ctxMotorista, ctxSoCavalo, ctxSoCarreta, ctxConjunto,
+          mediaCav, mediaCar, totalKm, totalHorasCarreta,
+          totalLitrosCav, totalLitrosCar, totalCustoCav, totalCustoCar,
+          totalLitrosArlaF, totalCustoArlaF, records, limCav, limCar } = ctx;
+
+  // Benchmarks operacionais M. Malacarne
+  const BM_KML_OTIMO   = 3.20;  // km/L ótimo para cavalo refrigerado
+  const BM_KML_BOM     = 2.80;  // km/L bom
+  const BM_KML_ATENCAO = 2.40;  // km/L merece atenção
+  const BM_LH_OTIMO    = 4.50;  // L/h ótimo para carreta refrigerada
+  const BM_LH_BOM      = 5.50;  // L/h bom
+  const BM_LH_ATENCAO  = 7.00;  // L/h merece atenção
+
+  const fmtKmL = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' km/L' : '—';
+  const fmtLH  = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' L/h' : '—';
+  const fmtNum = v => (v || 0).toLocaleString('pt-BR',{maximumFractionDigits:0});
+  const fmtMon = v => v ? 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
+
+  const insights = []; // { tipo: 'ok'|'aviso'|'alerta'|'info', msg }
+
+  // ── Análise Cavalo ──
+  if (mediaCav > 0) {
+    let statusCav, corCav, iconeCav;
+    if (mediaCav >= BM_KML_OTIMO)        { statusCav='Excelente'; corCav='#059669'; iconeCav='✅'; }
+    else if (mediaCav >= BM_KML_BOM)     { statusCav='Bom'; corCav='#16a34a'; iconeCav='👍'; }
+    else if (mediaCav >= BM_KML_ATENCAO) { statusCav='Regular — atenção'; corCav='#d97706'; iconeCav='⚠️'; }
+    else                                  { statusCav='Abaixo do esperado'; corCav='#dc2626'; iconeCav='🔴'; }
+
+    const refCav = ctxSoCavalo ? `Cavalo ${f.cav}` : (ctxMotorista ? `Motorista ${f.mot}` : 'Conjunto');
+    insights.push({
+      tipo: mediaCav >= BM_KML_BOM ? 'ok' : (mediaCav >= BM_KML_ATENCAO ? 'aviso' : 'alerta'),
+      titulo: `${iconeCav} Consumo do Cavalo — ${statusCav}`,
+      msg: `Média de <b>${fmtKmL(mediaCav)}</b> no período. Referência: ótimo ≥${BM_KML_OTIMO} km/L · bom ≥${BM_KML_BOM} km/L · atenção <${BM_KML_ATENCAO} km/L.`,
+      cor: corCav
+    });
+
+    if (totalKm > 0 && totalLitrosCav > 0) {
+      const custoPorKm = totalCustoCav / totalKm;
+      insights.push({
+        tipo: 'info',
+        titulo: '💵 Custo por km rodado',
+        msg: `<b>${fmtMon(custoPorKm)}/km</b> · Total percorrido: <b>${fmtNum(totalKm)} km</b> · Total gasto: <b>${fmtMon(totalCustoCav)}</b>.`
+      });
+    }
+  }
+
+  // ── Análise Carreta ──
+  if (mediaCar > 0) {
+    let statusCar, corCar, iconeCar;
+    if (mediaCar <= BM_LH_OTIMO)        { statusCar='Excelente'; corCar='#059669'; iconeCar='✅'; }
+    else if (mediaCar <= BM_LH_BOM)     { statusCar='Bom'; corCar='#16a34a'; iconeCar='👍'; }
+    else if (mediaCar <= BM_LH_ATENCAO) { statusCar='Regular — atenção'; corCar='#d97706'; iconeCar='⚠️'; }
+    else                                  { statusCar='Alto consumo'; corCar='#dc2626'; iconeCar='🔴'; }
+
+    insights.push({
+      tipo: mediaCar <= BM_LH_BOM ? 'ok' : (mediaCar <= BM_LH_ATENCAO ? 'aviso' : 'alerta'),
+      titulo: `${iconeCar} Consumo da Carreta — ${statusCar}`,
+      msg: `Média de <b>${fmtLH(mediaCar)}</b> no período. Referência: ótimo ≤${BM_LH_OTIMO} L/h · bom ≤${BM_LH_BOM} L/h · atenção >${BM_LH_ATENCAO} L/h.`,
+      cor: corCar
+    });
+
+    if (totalHorasCarreta > 0 && totalLitrosCar > 0) {
+      const custoPorHora = totalCustoCar / totalHorasCarreta;
+      insights.push({
+        tipo: 'info',
+        titulo: '⏱️ Custo por hora de refrigeração',
+        msg: `<b>${fmtMon(custoPorHora)}/h</b> · Total funcionando: <b>${fmtNum(totalHorasCarreta)} h</b> · Total gasto: <b>${fmtMon(totalCustoCar)}</b>.`
+      });
+    }
+  }
+
+  // ── Análise Arla 32 ──
+  if (totalLitrosArlaF > 0 && totalLitrosCav > 0) {
+    const percArla = (totalLitrosArlaF / totalLitrosCav) * 100;
+    const percOk = percArla >= 4.0 && percArla <= 7.0;
+    insights.push({
+      tipo: percOk ? 'ok' : 'aviso',
+      titulo: percOk ? '🧪 Arla 32 — Proporção normal' : '🧪 Arla 32 — Verificar proporção',
+      msg: `<b>${fmtNum(totalLitrosArlaF)} L</b> de Arla 32 para <b>${fmtNum(totalLitrosCav)} L</b> de diesel → <b>${percArla.toFixed(1)}%</b>. Proporção esperada: 4–7% do diesel. Custo: <b>${fmtMon(totalCustoArlaF)}</b>.`
+    });
+  }
+
+  // ── Análise de variação de consumo (apenas motorista ou cavalo) ──
+  if ((ctxMotorista || ctxSoCavalo) && records.length >= 3) {
+    const rCav = records.filter(r => r.tipoAbastecido !== 'carreta' && r.tipoAbastecido !== 'arla' && r.mediaCavalo > 0);
+    if (rCav.length >= 3) {
+      const medias = rCav.map(r => r.mediaCavalo);
+      const mediaMedia = medias.reduce((a,b)=>a+b,0)/medias.length;
+      const maxMedia = Math.max(...medias), minMedia = Math.min(...medias);
+      const variacao = ((maxMedia - minMedia) / mediaMedia) * 100;
+      if (variacao > 30) {
+        insights.push({
+          tipo: 'aviso',
+          titulo: '📈 Variação elevada de consumo',
+          msg: `Oscilação de <b>${variacao.toFixed(0)}%</b> entre abastecimentos (mín. ${fmtKmL(minMedia)} · máx. ${fmtKmL(maxMedia)}). Possíveis causas: troca de rota, variação de carga, condição mecânica ou erro de digitação de KM.`
+        });
+      }
+    }
+  }
+
+  // ── Alertas de dados suspeitos ──
+  const nSuspeitos = records.filter(r => r.kmDeltaSuspeito).length;
+  if (nSuspeitos > 0) {
+    insights.push({
+      tipo: 'alerta',
+      titulo: '⚠️ Lançamentos com KM implausível',
+      msg: `<b>${nSuspeitos} registro${nSuspeitos>1?'s':''}</b> com delta de KM acima de 4.000 km. Verifique se o odômetro foi digitado incorretamente. Esses lançamentos estão marcados na tabela abaixo.`
+    });
+  }
+
+  // ── Custo total do conjunto (apenas se tiver os dois) ──
+  if (!ctxSoCavalo && !ctxSoCarreta && (totalCustoCav + totalCustoCar) > 0) {
+    const custoTotal = totalCustoCav + totalCustoCar + totalCustoArlaF;
+    insights.push({
+      tipo: 'info',
+      titulo: '💵 Custo total do período',
+      msg: `Cavalo: <b>${fmtMon(totalCustoCav)}</b> · Carreta: <b>${fmtMon(totalCustoCar)}</b>${totalCustoArlaF>0?' · Arla: <b>'+fmtMon(totalCustoArlaF)+'</b>':''} → <b>Total: ${fmtMon(custoTotal)}</b>.`
+    });
+  }
+
+  if (!insights.length) {
+    cardAnalise.style.display = 'none';
+    return;
+  }
+
+  const corBg   = { ok:'#f0fdf4', aviso:'#fffbeb', alerta:'#fff1f2', info:'#eff6ff' };
+  const corBord = { ok:'#86efac', aviso:'#fde68a', alerta:'#fca5a5', info:'#bfdbfe' };
+  const corTxt  = { ok:'#15803d', aviso:'#92400e', alerta:'#991b1b', info:'#1e40af' };
+
+  cardAnalise.style.cssText = 'margin-top:.8rem;display:block';
+  cardAnalise.innerHTML = `
+    <div style="background:linear-gradient(135deg,rgba(99,102,241,.07),rgba(99,102,241,.02));border:1.5px solid rgba(99,102,241,.25);border-radius:var(--r12);padding:1rem 1.1rem">
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.85rem">
+        <span style="font-size:1rem">🔍</span>
+        <span style="font-size:.78rem;font-weight:800;color:#4338ca;text-transform:uppercase;letter-spacing:.8px">Análise Automática do Período</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.6rem">
+        ${insights.map(ins => `
+          <div style="background:${corBg[ins.tipo]};border:1px solid ${corBord[ins.tipo]};border-radius:8px;padding:.65rem .9rem">
+            <div style="font-size:.78rem;font-weight:800;color:${corTxt[ins.tipo]};margin-bottom:.2rem">${ins.titulo}</div>
+            <div style="font-size:.78rem;color:var(--text);line-height:1.5">${ins.msg}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
 }
 
 function fatcExportarAbastTab() {
