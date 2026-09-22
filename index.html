@@ -9710,17 +9710,53 @@ function fatcRenderResumoCardTab(records, f) {
   const horaInicial = comHora.length ? comHora[0].hora : '—';
   const horaFinal   = comHora.length ? comHora[comHora.length-1].hora : '—';
 
+  // ── KM inicial: usa o odômetro mais antigo do período, independente do
+  //    tipo de combustível. Registros de Arla e carreta também trazem a
+  //    leitura de KM do cavalo no campo r.km — ignorá-los fazia o "KM Inicial"
+  //    avançar para o primeiro abastecimento de S10, pulando todos os Arla
+  //    anteriores e deixando o total de km subestimado. ──
   const limitesSeq = (filtroFn) => {
+    // Para calcular km percorrido (delta), usa só registros da sequência (ehCavReg).
+    // Para determinar KM Inicial/Final do display, usa qualquer registro com km.
     const regs = porDataAsc.filter(r => filtroFn(r) && (r.km||0) > 0);
     if (!regs.length) return null;
     const primeiro = regs[0], ultimo = regs[regs.length-1];
+    // KM inicial: se o 1º registro já tem delta calculado (kmPercorrido > 0),
+    // recua para o odômetro anterior (km - delta). Caso contrário usa o km
+    // do próprio registro (1ª leitura do período, sem anterior na cadeia).
     const inicial = (primeiro.kmPercorrido > 0) ? (primeiro.km - primeiro.kmPercorrido) : primeiro.km;
     return { inicial, final: ultimo.km };
   };
-  const limCav = limitesSeq(ehCavReg);
+
+  // Para KM Inicial/Final exibido no card, inclui também registros de Arla
+  // (que têm odômetro do cavalo no campo km mas tipoAbastecido='arla').
+  const limitesSeqComArla = (filtroFn, filtroFnComArla) => {
+    // Usa registros de Arla para encontrar a leitura de KM mais antiga/recente,
+    // mas o delta (totalKm) continua calculado só com registros ehCavReg.
+    const regsComArla = porDataAsc.filter(r => filtroFnComArla(r) && (r.km||0) > 0);
+    if (!regsComArla.length) return limitesSeq(filtroFn);
+    const regs = porDataAsc.filter(r => filtroFn(r) && (r.km||0) > 0);
+    const primeiro = regsComArla[0];
+    const ultimo   = regsComArla[regsComArla.length-1];
+    // KM inicial: recua delta se disponível no 1º da sequência principal
+    const primeiroCav = regs.length ? regs[0] : null;
+    const inicial = (primeiroCav && primeiroCav.kmPercorrido > 0 && primeiroCav === primeiro)
+      ? (primeiroCav.km - primeiroCav.kmPercorrido)
+      : primeiro.km;
+    return { inicial, final: ultimo.km };
+  };
+
+  // "Arla ou Cavalo" — registros que têm odômetro do cavalo (não carreta)
+  const ehCavOuArla = r => r.tipoAbastecido !== 'carreta';
+  const limCav = limitesSeqComArla(ehCavReg, ehCavOuArla);
   const limCar = limitesSeq(r => r.tipoAbastecido === 'carreta');
 
-  const totalKm = limCav ? (limCav.final - limCav.inicial)
+  // totalKm: distância real percorrida = soma dos deltas válidos de S10 (kmPercorrido)
+  // OU diferença entre o KM inicial e final da sequência principal de cavalo (S10).
+  // NÃO usa limCav (que inclui Arla) para evitar inflar o total com km percorrido
+  // antes do 1º abastecimento de S10 do período.
+  const limCavS10 = limitesSeq(ehCavReg); // sequência pura S10, sem Arla
+  const totalKm = limCavS10 ? (limCavS10.final - limCavS10.inicial)
     : records.reduce((s,r)=> s + (ehCavReg(r) ? (r.kmPercorrido||0) : 0), 0);
   const totalHorasCarreta = limCar ? (limCar.final - limCar.inicial)
     : records.reduce((s,r)=> s + (r.tipoAbastecido === 'carreta' ? (r.kmPercorrido||0) : 0), 0);
