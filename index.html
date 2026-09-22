@@ -9845,28 +9845,32 @@ async function loadAbastecimentos(opts) {
   });
 
   // ── Deduplica para evitar que a mesma nota seja contada mais de uma vez.
-  //    Chave primária  : NF + placa.
-  //    Chave secundária: data + placa + litros (sem NF) — detecta cupons duplicados.
+  //    Chave NF        : NF + placa.
+  //    Chave conteúdo  : placa + data + hora + km + litros + valor — pega o
+  //      caso (descoberto 21/09/2026) de um posto emitir DOIS documentos
+  //      fiscais com NF diferente pro MESMO abastecimento (mesma data/hora/
+  //      km/litros/valor). Checada SEMPRE, mesmo quando tem NF — porque
+  //      nesse caso o NF não serve pra identificar duplicata.
+  //    Basta uma das duas chaves já ter sido vista pra contar como duplicata.
   //    Registra cada duplicata encontrada para exibir alerta no dashboard.
   const seenKey   = new Set();
   const seenFirst = {};      // chave → 1º registro (para mostrar no alerta)
   const dupLog    = [];      // lista de duplicatas detectadas
   abastAllRecords = abastAllRecords.filter(r => {
-    const placa = normalizaPlaca(r.placaCavalo || r.placaCarreta || '');
-    let k;
-    if (r.nf) {
-      k = 'NF|' + r.nf + '|' + placa;
-    } else {
-      const lArred = ((r.litrosCavalo||0) + (r.litrosCarreta||0)).toFixed(1);
-      const dStr = r.dataStr || (r.data ? r.data.toISOString().slice(0,10) : '');
-      k = 'CUP|' + dStr + '|' + placa + '|' + lArred;
-    }
-    if (seenKey.has(k)) {
-      dupLog.push({ k, data: r.dataStr, placa: r.placaFisica || placa, nf: r.nf, litros: ((r.litrosCavalo||0)+(r.litrosCarreta||0)) });
+    const placa  = normalizaPlaca(r.placaCavalo || r.placaCarreta || '');
+    const litros = (r.litrosCavalo||0) + (r.litrosCarreta||0);
+    const dStr   = r.dataStr || (r.data ? r.data.toISOString().slice(0,10) : '');
+    const kCont  = 'CONT|' + placa + '|' + dStr + '|' + (r.hora||'') + '|' +
+                   (parseFloat(r.km)||0).toFixed(0) + '|' + litros.toFixed(2) + '|' + (parseFloat(r.valorOriginal)||0).toFixed(2);
+    const kNF    = r.nf ? ('NF|' + r.nf + '|' + placa) : null;
+
+    if ((kNF && seenKey.has(kNF)) || seenKey.has(kCont)) {
+      dupLog.push({ k: kNF || kCont, data: r.dataStr, placa: r.placaFisica || placa, nf: r.nf, litros });
       return false;
     }
-    seenKey.add(k);
-    seenFirst[k] = r;
+    if (kNF) seenKey.add(kNF);
+    seenKey.add(kCont);
+    seenFirst[kNF || kCont] = r;
     return true;
   });
 
