@@ -9141,8 +9141,12 @@ function fatcInitTab() {
 
   const motoristas = [...new Set(recs.map(r => r.motorista).filter(Boolean))].sort();
   const anos       = [...new Set(recs.map(r => r.ano).filter(Boolean))].sort((a,b) => b-a);
-  const cavalos    = [...new Set(recs.map(fatcPlacaCavaloAbast).filter(Boolean))].sort();
-  const carretas   = [...new Set(recs.map(fatcPlacaCarretaAbast).filter(Boolean))].sort();
+  const cavalos    = [...new Set(recs.filter(r => r.tipoAbastecido !== 'carreta' && r.tipoAbastecido !== 'arla').map(fatcPlacaCavaloAbast).filter(Boolean))].sort();
+  // Select de Carreta: só placas que realmente têm abastecimento de carreta
+  // (tipoAbastecido='carreta' ou litrosCarreta>0). Sem esse filtro, qualquer
+  // abastecimento de cavalo trazia sua carreta associada do cadastro, populando
+  // o select com carretas que nunca abasteceram no período.
+  const carretas   = [...new Set(recs.filter(r => r.tipoAbastecido === 'carreta' || (r.litrosCarreta||0) > 0).map(fatcPlacaCarretaAbast).filter(Boolean))].sort();
   const postos     = [...new Set(recs.map(r => r.posto).filter(Boolean))].sort();
 
   const fill = (id, opts, blank) => {
@@ -9173,8 +9177,8 @@ function fatcPopularFiltrosTab() {
   const recs = fatcGetRecords();
   const motoristas = [...new Set(recs.map(r => r.motorista).filter(Boolean))].sort();
   const anos       = [...new Set(recs.map(r => r.ano).filter(Boolean))].sort((a,b) => b-a);
-  const cavalos    = [...new Set(recs.map(fatcPlacaCavaloAbast).filter(Boolean))].sort();
-  const carretas   = [...new Set(recs.map(fatcPlacaCarretaAbast).filter(Boolean))].sort();
+  const cavalos    = [...new Set(recs.filter(r => r.tipoAbastecido !== 'carreta' && r.tipoAbastecido !== 'arla').map(fatcPlacaCavaloAbast).filter(Boolean))].sort();
+  const carretas   = [...new Set(recs.filter(r => r.tipoAbastecido === 'carreta' || (r.litrosCarreta||0) > 0).map(fatcPlacaCarretaAbast).filter(Boolean))].sort();
   const postos     = [...new Set(recs.map(r => r.posto).filter(Boolean))].sort();
 
   const fillPreserve = (id, opts, blank) => {
@@ -9313,14 +9317,19 @@ function fatRenderConsumoTab(dados) {
   const carMap = {};
   dados.forEach(r => {
     const p = normalizaPlaca(r.placaCarreta); if (!p) return;
+    // Guarda antecipada: só entra no carMap quem realmente é carreta.
+    // Cavalos cujo cadastro preenche placaCarreta (todos os cavalos têm
+    // carreta associada no FROTA_DATA) entravam aqui mesmo sem nenhum
+    // litro de carreta, criando entradas fantasma no ranking e nos totais.
+    // A verificação usa tipoAbastecido (definido no parser, não inferido
+    // do cadastro) OU litrosCarreta > 0 (DANFe com tipo ambíguo mas litros
+    // já corretamente alocados pelo parser após LIS).
+    const ehAbastCarreta = r.tipoAbastecido === 'carreta' || (r.litrosCarreta || 0) > 0;
+    if (!ehAbastCarreta) return; // ← CORREÇÃO: cavalo com placaCarreta preenchida não entra
     if (!carMap[p]) carMap[p] = { placa:r.placaCarreta, medias:[], litros:0, horasTotal:0, litrosPar:0, horasPar:0, regsPar:0, regsTotal:0, semLeitura:0, foraSeq:0, inicio:0, registros:0, motoristas:new Set() };
     if (r.mediaCarreta > 0) carMap[p].medias.push(r.mediaCarreta);
     carMap[p].litros    += r.litrosCarreta || 0;
     // kmPercorrido nas carretas é delta do horímetro (horas de funcionamento).
-    // Considera carreta quando tipoAbastecido='carreta' OU quando há litrosCarreta
-    // (registros importados de DANFe onde o tipo pode vir como 'cavalo' mas os
-    // litros foram corretamente alocados no campo litrosCarreta).
-    const ehAbastCarreta = r.tipoAbastecido === 'carreta' || (r.litrosCarreta || 0) > 0;
     carMap[p].horasTotal += (ehAbastCarreta ? r.kmPercorrido : 0) || 0;
     if (ehAbastCarreta && (r.litrosCarreta || 0) > 0) {                          // todas as abastecidas do período
       carMap[p].regsTotal++;
@@ -10287,15 +10296,25 @@ async function loadAbastecimentos(opts) {
   const seenFirst = {};      // chave → 1º registro (para mostrar no alerta)
   const dupLog    = [];      // lista de duplicatas detectadas
   abastAllRecords = abastAllRecords.filter(r => {
-    const placa   = normalizaPlaca(r.placaCavalo || r.placaCarreta || '');
-    const litros  = (r.litrosCavalo||0) + (r.litrosCarreta||0);
+    // Usa a placa FÍSICA (o que estava na bomba) como chave principal de
+    // deduplicação — não a placaCavalo inferida do cadastro, que pode ser
+    // a mesma para cavalo e carreta do mesmo conjunto e causaria falsos
+    // positivos (ex.: Diesel Comum lançado na placa do cavalo tem
+    // placaCavalo = placaCarreta = mesma string após o parser).
+    const placaFis = normalizaPlaca(r.placaFisica || r.placaCavalo || r.placaCarreta || '');
+    const litros  = (r.litrosCavalo||0) + (r.litrosCarreta||0) + (r.litrosArla||0);
     const dStr    = r.dataStr || (r.data ? r.data.toISOString().slice(0,10) : '');
     const horaMin = String(r.hora||'').trim().slice(0,5); // trunca segundos: "14:32:07" → "14:32"
     const kmNum   = parseFloat(r.km) || 0;
-    const kCont   = 'CONT|' + placa + '|' + dStr + '|' + horaMin + '|' +
+    const tipo    = r.tipoAbastecido || 'cavalo'; // inclui tipo para não colidir cavalo vs carreta
+    const kCont   = 'CONT|' + placaFis + '|' + tipo + '|' + dStr + '|' + horaMin + '|' +
                      kmNum.toFixed(0) + '|' + litros.toFixed(2) + '|' + (parseFloat(r.valorOriginal)||0).toFixed(2);
-    const kNF     = r.nf ? ('NF|' + normNf(r.nf) + '|' + placa) : null;
-    const kKmDia  = kmNum > 0 ? ('KMDIA|' + placa + '|' + dStr + '|' + kmNum.toFixed(0)) : null;
+    // NF: inclui tipo para que a mesma NF emitida para cavalo e carreta
+    // do mesmo conjunto (raro mas acontece em postos integrados) não colida.
+    const kNF     = r.nf ? ('NF|' + normNf(r.nf) + '|' + placaFis + '|' + tipo) : null;
+    // KM+dia: usa placa física + tipo para evitar colisão entre cavalo e
+    // carreta do mesmo conjunto que têm km/horímetro diferentes no mesmo dia.
+    const kKmDia  = kmNum > 0 ? ('KMDIA|' + placaFis + '|' + tipo + '|' + dStr + '|' + kmNum.toFixed(0)) : null;
 
     if ((kNF && seenKey.has(kNF)) || seenKey.has(kCont) || (kKmDia && seenKey.has(kKmDia))) {
       dupLog.push({ k: kNF || kKmDia || kCont, data: r.dataStr, placa: r.placaFisica || placa, nf: r.nf, litros });
@@ -10345,11 +10364,21 @@ async function loadAbastecimentos(opts) {
   // demais → usa cavalo (S10, sem info, etc.)
   function _grupoKm(rec) {
     if (rec.ehArla) return null; // Arla: ignora no odômetro
-    // Se o registro foi classificado como carreta (pelo combustível ou pela placa), usa placa carreta
-    if (rec.litrosCarreta > 0 || (rec.litrosCavalo === 0 && rec.placaCarreta && !rec.placaCavalo))
-      return 'CARRETA_' + (rec.placaCarreta || rec.placaCavalo || '').toUpperCase().replace(/[^A-Z0-9]/g,'');
-    const pnorm = (rec.placaCavalo || rec.placaCarreta || '').toUpperCase().replace(/[^A-Z0-9]/g,'');
-    return 'CAVALO_' + pnorm;
+    // Usa sempre a placa FÍSICA (a que estava na bomba) como chave da
+    // sequência de KM/horímetro — não a placa inferida do cadastro.
+    // Quando ehDieselCarreta && !ehCarreta, placaCavalo = placaCarreta =
+    // mesma string (a placa do cavalo), e usar placaCarreta aqui colocaria
+    // o odômetro do cavalo numa sequência de "carreta" com nome errado.
+    const placaChave = (rec.placaFisica || rec.placaCarreta || rec.placaCavalo || '').toUpperCase().replace(/[^A-Z0-9]/g,'');
+    // Decide o grupo (cavalo vs carreta) pelo tipoAbastecido, que é definido
+    // no parser com base no combustível + tipo de placa — mais confiável que
+    // inferir pelo campo de litros, que pode não estar preenchido ainda.
+    if (rec.tipoAbastecido === 'carreta')
+      return 'CARRETA_' + placaChave;
+    // litrosCarreta > 0 como fallback para DANFe com tipo ambíguo
+    if (rec.litrosCarreta > 0)
+      return 'CARRETA_' + placaChave;
+    return 'CAVALO_' + placaChave;
   }
 
   const _porPlaca = {};
