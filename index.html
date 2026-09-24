@@ -3369,7 +3369,7 @@ function fetchComTimeout(url, ms = 9000, externalCtrl) {
   return fetch(url, { cache: 'no-store', signal: ctrl.signal }).finally(() => clearTimeout(timer));
 }
 
-async function fetchCSV(url) {
+async function fetchCSV(url, proxyStartIndex = 0) {
   if (!url) throw new Error('URL não configurada');
   const target = toCsvUrl(url);
   let lastErr;
@@ -3391,8 +3391,17 @@ async function fetchCSV(url) {
     } catch(e) { /* segue para a rota de proxy */ }
   }
 
-  // 1ª tentativa: direto (caso o Sheet permita CORS), depois os proxies em ordem
-  const attempts = [target, ...CORS_PROXIES.map(fn => fn(target))];
+  // 1ª tentativa: direto (caso o Sheet permita CORS), depois os proxies.
+  // A ordem dos proxies gira conforme proxyStartIndex: isso evita que
+  // várias planilhas (Financeiro, Baterias, as 7 de Vencimentos etc.)
+  // disparadas juntas — como acontece ao abrir pelo link da TV — batam
+  // todas no MESMO proxy gratuito ao mesmo tempo, o que faz esse proxy
+  // bloquear por excesso de pedidos simultâneos e todas as planilhas
+  // falharem juntas. Cada chamada ainda cai nos outros proxies em
+  // sequência se o seu 1º escolhido falhar, então a cobertura é igual.
+  const proxiesGirados = CORS_PROXIES.slice(proxyStartIndex % CORS_PROXIES.length)
+    .concat(CORS_PROXIES.slice(0, proxyStartIndex % CORS_PROXIES.length));
+  const attempts = [target, ...proxiesGirados.map(fn => fn(target))];
 
   for (const attemptUrl of attempts) {
     try {
@@ -5934,7 +5943,7 @@ async function loadFinanceiroData() {
   document.getElementById('finLoading').style.display = 'flex';
   document.getElementById('finTableWrap').style.display = 'none';
   try {
-    const rows = await fetchCSV(URL_FIN);
+    const rows = await fetchCSV(URL_FIN, 0);
     financeiroData = rows;
     currentFinanceiroFiltered = rows;
     popularFiltroCategoria(rows);
@@ -10791,7 +10800,7 @@ async function loadBateriasData() {
   document.getElementById('batLoading').style.display = 'flex';
   document.getElementById('batTableWrap').style.display = 'none';
   try {
-    const rows = await fetchCSV(URL_BAT);
+    const rows = await fetchCSV(URL_BAT, 1);
     bateriasData = rows;
     currentBateriasFiltered = rows;
     aplicarFiltrosBaterias();
@@ -11429,7 +11438,15 @@ async function vencCarregarCategoria(cat){
   loadingEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...';
   if (countEl) { countEl.textContent = '…'; countEl.classList.remove('is-error'); countEl.removeAttribute('title'); }
   try {
-    vencData[cat.key] = await fetchCSV(vencGetUrl(cat));
+    // Cada categoria começa por um proxy diferente (índice dela na lista)
+    // pra não bater todas no mesmo proxy ao mesmo tempo — ver comentário
+    // em fetchCSV. É isto que resolve o "Carregando vencimentos..." preso
+    // ao abrir pelo link da TV, quando as 7 categorias somem ao mesmo
+    // tempo que Financeiro/Baterias.
+    const catIndex = VENC_CATEGORIAS.findIndex(c => c.key === cat.key);
+    // +2 de deslocamento pra não repetir o proxy usado por Financeiro (0)
+    // e Baterias (1), que carregam junto no login e no boot da TV.
+    vencData[cat.key] = await fetchCSV(vencGetUrl(cat), (catIndex >= 0 ? catIndex : 0) + 2);
     vencRenderCategoria(cat);
     if (countEl) countEl.textContent = String(vencData[cat.key].length);
   } catch(e) {
@@ -11829,7 +11846,13 @@ function slideRecalcularVencCounts(){
 async function vencCarregarTudo(){
   // Carrega todas as categorias em paralelo (antes era uma por vez, o que
   // deixava a aba "travada" por muito tempo quando algum proxy estava lento).
-  await Promise.allSettled(VENC_CATEGORIAS.map(cat => vencCarregarCategoria(cat)));
+  // Um pequeno espaçamento (150ms * posição) entre o DISPARO de cada uma,
+  // além do rodízio de proxy em vencCarregarCategoria, reduz ainda mais a
+  // chance de rajada — que é o que trava "Carregando vencimentos..." no
+  // modo TV, quando as 7 categorias saem juntas com Financeiro/Baterias.
+  await Promise.allSettled(VENC_CATEGORIAS.map((cat, i) =>
+    new Promise(r => setTimeout(r, i * 150)).then(() => vencCarregarCategoria(cat))
+  ));
   vencRecalcularTodosOsAlertas();
   vencAtualizarResumoEAlerta();
 }
