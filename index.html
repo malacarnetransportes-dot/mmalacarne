@@ -4193,8 +4193,8 @@ function slideConsumoResumo() {
     if (r.motorista) cavMap[p].motoristas.add(r.motorista);
   });
   // Placas administrativas/não-operacionais — excluídas do ranking de consumo
-  // MLZ0B00: vendido/saído da frota. QTL0H52: não pertence à frota cadastrada.
-  const PLACAS_NAO_RANKING_SLIDE = new Set(['MLZ0B00','QTL0H52']);
+  // MLZ0B00: vendido/saído da frota.
+  const PLACAS_NAO_RANKING_SLIDE = new Set(['MLZ0B00']);
   const _slideCavalosFrota = new Set(FROTA_DATA.map(f => normalizaPlaca(f.placa || '')).filter(Boolean));
   const cavArr = Object.values(cavMap).map(v => ({
     placa:     v.placa,
@@ -9309,12 +9309,12 @@ function fatRenderConsumoTab(dados) {
     if (r.mediaCavalo > 0 || r.litrosCavalo > 0) cavMap[p].registros++;
     if (r.motorista) cavMap[p].motoristas.add(r.motorista);
   });
-  // Placas excluídas do ranking: vendidas/fora de operação e não cadastradas.
-  // MLZ0B00: vendido/saído da frota. QTL0H52: não pertence à frota cadastrada.
+  // Placas excluídas do ranking: vendidas/fora de operação.
+  // MLZ0B00: vendido/saído da frota.
   // Qualquer placa que não conste no FROTA_DATA como cavalo também é excluída
   // automaticamente — evita que abastecimentos de veículos de terceiros ou
   // locados temporariamente distorçam os rankings da frota própria.
-  const PLACAS_NAO_RANKING_TAB = new Set(['MLZ0B00','QTL0H52']);
+  const PLACAS_NAO_RANKING_TAB = new Set(['MLZ0B00']);
   const _placasCavaloFrota = new Set(FROTA_DATA.map(f => normalizaPlaca(f.placa || '')).filter(Boolean));
   const _placasCarretaFrota = new Set(
     FROTA_DATA.map(f => normalizaPlaca((f.carreta||'').split(/\s/)[0])).filter(Boolean)
