@@ -14,6 +14,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
   --primary:#8B7355;--primary-dk:#6B533A;--primary-lt:#A88F6E;
@@ -2117,6 +2118,8 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
               <div class="flt-grp"><label>Data Fim</label><input type="date" id="fatcDataFimTab"></div>
               <button class="btn btn-accent" onclick="fatcApplyFiltersTab()"><i class="fas fa-search"></i> Filtrar</button>
               <button class="btn btn-gray" onclick="fatcResetFiltersTab()"><i class="fas fa-times"></i> Limpar</button>
+              <button class="btn btn-success" onclick="fatcExportarAbastTab()" title="Baixa os dados filtrados em .csv"><i class="fas fa-file-csv"></i> Baixar CSV</button>
+              <button class="btn btn-accent" onclick="fatcExportarAbastExcelTab()" title="Baixa os dados filtrados em .xlsx"><i class="fas fa-file-excel"></i> Baixar Excel</button>
             </div>
             <!-- Badge de filtro ativo (aparece logo após o botão Filtrar) -->
             <div id="fatcFiltroAtivoTag" style="display:none;margin-top:.6rem;padding:.4rem .9rem;background:#dbeafe;border:1px solid #93c5fd;border-radius:20px;font-size:.78rem;font-weight:700;color:#1d4ed8;display:none;align-items:center;gap:.5rem">
@@ -2206,7 +2209,10 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
             <div class="dash-card-title" style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">
               <span><i class="fas fa-list-alt" style="color:var(--accent)"></i> Lançamentos de Abastecimento</span>
               <span id="fatcAbastCountTab" style="font-size:.75rem;font-weight:400;color:var(--text-lt)"></span>
-              <button class="btn btn-success btn-sm" style="margin-left:auto" onclick="fatcExportarAbastTab()"><i class="fas fa-download"></i> CSV</button>
+              <span style="margin-left:auto;display:flex;gap:.5rem">
+                <button class="btn btn-success btn-sm" onclick="fatcExportarAbastTab()" title="Baixa os dados filtrados acima em .csv"><i class="fas fa-file-csv"></i> CSV</button>
+                <button class="btn btn-accent btn-sm" onclick="fatcExportarAbastExcelTab()" title="Baixa os dados filtrados acima em .xlsx"><i class="fas fa-file-excel"></i> Excel</button>
+              </span>
             </div>
             <div class="tbl-wrap">
               <table class="data-table">
@@ -3314,6 +3320,19 @@ function exportCSV(data, name) {
   a.href = URL.createObjectURL(blob);
   a.download = `${name}_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
+}
+
+// Exporta os mesmos dados em .xlsx (Excel de verdade, com colunas já
+// largas o bastante pra não cortar texto). Usa a biblioteca SheetJS.
+function exportXLSX(data, name, sheetName = 'Dados') {
+  if (!data || !data.length) { showToast('Sem dados para exportar.'); return; }
+  if (typeof XLSX === 'undefined') { showToast('Biblioteca de Excel não carregou — tente novamente.'); return; }
+  const headers = Object.keys(data[0]);
+  const ws = XLSX.utils.json_to_sheet(data, { header: headers });
+  ws['!cols'] = headers.map(h => ({ wch: Math.max(10, Math.min(30, h.length + 4)) }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName.slice(0, 31));
+  XLSX.writeFile(wb, `${name}_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 
 // Muitas planilhas do usuário têm uma linha de título (ex.: "CRONOGRAMA
@@ -10053,11 +10072,11 @@ function fatcRenderAnaliseContextual(ctx) {
     </div>`;
 }
 
-function fatcExportarAbastTab() {
+function fatcMontarLinhasExportacao() {
   const dados = fatcFilteredTab.length ? fatcFilteredTab : fatcGetRecords();
-  if (!dados.length) { showToast('Nenhum dado para exportar.', 3000); return; }
+  if (!dados.length) return null;
   const labels = ['Data','Hora','Placa','Tipo','Motorista','KM/Horas','Percorrido','Litros Diesel','Litros Arla 32','Valor (R$)','Combustível','Posto','Cupom','NF','Média'];
-  exportCSV(dados.map(r => {
+  return dados.map(r => {
     const ehCar  = r.tipoAbastecido === 'carreta';
     const tipo   = ehCar ? 'Carreta' : (r.tipoAbastecido === 'arla' ? 'Arla' : 'Cavalo');
     const mediaN = ehCar ? r.mediaCarreta : r.mediaCavalo;
@@ -10066,7 +10085,19 @@ function fatcExportarAbastTab() {
     const litrosArla   = r.litrosArla || 0;
     const vals   = [r.dataStr, r.hora, (r.placaFisica || r.placaCavalo), tipo, r.motorista, r.km, r.kmPercorrido, litrosDiesel || '', litrosArla || '', r.valorOriginal, r.combustivel, r.posto, r.cupom, r.nf, media];
     const row = {}; labels.forEach((l,i) => { row[l] = vals[i] ?? ''; }); return row;
-  }), 'abastecimentos_consumo');
+  });
+}
+
+function fatcExportarAbastTab() {
+  const linhas = fatcMontarLinhasExportacao();
+  if (!linhas) { showToast('Nenhum dado para exportar.', 3000); return; }
+  exportCSV(linhas, 'abastecimentos_consumo');
+}
+
+function fatcExportarAbastExcelTab() {
+  const linhas = fatcMontarLinhasExportacao();
+  if (!linhas) { showToast('Nenhum dado para exportar.', 3000); return; }
+  exportXLSX(linhas, 'abastecimentos_consumo', 'Consumo');
 }
 
 function fatResetFilters() {
