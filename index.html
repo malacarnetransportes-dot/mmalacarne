@@ -13,6 +13,7 @@
      tipografia do restante do site. -->
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
 :root{
@@ -547,6 +548,42 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
 .fin-empresa-card .valor{font-weight:800;font-size:.95rem;color:var(--accent-dk);margin-top:.25rem;}
 .fin-empresa-cards-empty{grid-column:1/-1;text-align:center;color:var(--text-lt);font-size:.8rem;padding:1rem;}
 
+/* Multi-seleção de Empresas + Grupos (Financeiro) */
+.fin-ms{position:relative;}
+.fin-ms-btn{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.45rem .75rem;border-radius:var(--r8);border:1.5px solid var(--gray-200);font-size:.82rem;min-width:190px;max-width:230px;background:#fff;cursor:pointer;height:34px;color:var(--text);transition:.2s;}
+.fin-ms-btn:hover{border-color:var(--primary-lt);}
+.fin-ms-btn.has-sel{border-color:var(--accent);background:rgba(212,175,55,.08);color:var(--accent-dk);font-weight:700;}
+.fin-ms-btn span.txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;text-align:left;}
+.fin-ms-btn i{color:var(--text-lt);font-size:.68rem;flex:none;}
+.fin-ms-panel{position:absolute;top:calc(100% + 4px);left:0;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r12);box-shadow:var(--shadow-lg);width:300px;max-height:340px;display:none;flex-direction:column;z-index:200;}
+.fin-ms-panel.open{display:flex;}
+.fin-ms-panel-search{padding:.55rem .55rem 0;}
+.fin-ms-panel-search input{width:100%;padding:.4rem .6rem;border-radius:6px;border:1px solid var(--gray-200);font-size:.78rem;}
+.fin-ms-panel-search input:focus{outline:none;border-color:var(--accent);}
+.fin-ms-panel-list{overflow-y:auto;padding:.4rem .55rem;flex:1;}
+.fin-ms-opt{display:flex;align-items:center;gap:.55rem;padding:.4rem .35rem;border-radius:6px;cursor:pointer;font-size:.8rem;}
+.fin-ms-opt:hover{background:var(--gray-100);}
+.fin-ms-opt input{cursor:pointer;flex:none;}
+.fin-ms-opt .nome{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fin-ms-opt .valor{color:var(--text-lt);font-size:.7rem;flex:none;}
+.fin-ms-panel-ftr{display:flex;justify-content:space-between;gap:.4rem;padding:.5rem .55rem;border-top:1px solid var(--gray-200);}
+.fin-ms-panel-ftr button{flex:1;font-size:.7rem;padding:.35rem .5rem;border-radius:6px;border:1px solid var(--gray-200);background:#fff;cursor:pointer;font-weight:700;color:var(--text-lt);}
+.fin-ms-panel-ftr button:hover{border-color:var(--accent);color:var(--accent-dk);}
+.fin-ms-panel-empty{padding:1rem;text-align:center;color:var(--text-lt);font-size:.78rem;}
+.fin-grupo-manage-btn{background:#fff;border:1.5px dashed var(--gray-200);border-radius:var(--r8);height:34px;width:34px;display:flex;align-items:center;justify-content:center;color:var(--text-lt);cursor:pointer;transition:.2s;flex:none;}
+.fin-grupo-manage-btn:hover{border-color:var(--accent);color:var(--accent-dk);border-style:solid;}
+.fin-grupo-item{display:flex;align-items:center;gap:.6rem;padding:.6rem .7rem;background:var(--gray-100);border-radius:var(--r8);margin-bottom:.5rem;}
+.fin-grupo-item .nome{font-weight:700;font-size:.85rem;flex:1;color:var(--text);}
+.fin-grupo-item .count{font-size:.72rem;color:var(--text-lt);white-space:nowrap;}
+.fin-grupo-item button{background:none;border:none;color:var(--danger);cursor:pointer;font-size:.9rem;padding:.2rem .4rem;flex:none;}
+.fin-grupo-item button:hover{color:#b91c1c;}
+.fin-grupo-form{border-top:1px solid var(--gray-200);margin-top:.9rem;padding-top:.9rem;}
+.fin-grupo-form label{font-size:.72rem;font-weight:700;color:var(--text-lt);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:.3rem;}
+.fin-grupo-empresas-list{max-height:220px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:var(--r8);padding:.4rem;margin-bottom:.8rem;}
+.fin-grupo-empresas-list label{display:flex;align-items:center;gap:.5rem;padding:.32rem .3rem;font-weight:400;text-transform:none;letter-spacing:0;font-size:.8rem;color:var(--text);cursor:pointer;margin:0;}
+.fin-grupo-empresas-list label:hover{background:var(--gray-100);border-radius:6px;}
+.fin-grupo-empresas-list input{cursor:pointer;flex:none;}
+
 /* Charts */
 .charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.4rem;margin-bottom:1.4rem;}
 .fin-charts-row{display:flex;flex-wrap:wrap;gap:1.4rem;margin-bottom:1.4rem;align-items:stretch;min-width:0;}
@@ -963,6 +1000,23 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
   <div id="crDetalheBody"></div>
   <div style="display:flex;gap:.6rem;margin-top:1rem">
     <button class="btn btn-gray" onclick="crCloseDetalhe()">Fechar</button>
+  </div>
+</div>
+
+<div id="finGrupoModalBackdrop" class="url-modal-backdrop" onclick="finCloseGrupoModal()"></div>
+<div id="finGrupoModal" class="url-modal" style="max-width:480px">
+  <h3 style="margin-bottom:.3rem"><i class="fas fa-layer-group" style="color:var(--accent)"></i> Grupos de Empresas</h3>
+  <p style="font-size:.8rem;color:var(--text-lt);margin-bottom:1rem">Agrupe empresas/postos para filtrar o Financeiro de uma vez só, em vez de selecioná-los manualmente toda vez.</p>
+  <div id="finGrupoListaExistente"></div>
+  <div class="fin-grupo-form">
+    <label>Nome do Grupo</label>
+    <input type="text" id="finGrupoNomeInput" placeholder="Ex: RAVANELLO">
+    <label>Empresas do Grupo</label>
+    <div class="fin-grupo-empresas-list" id="finGrupoEmpresasCheck"></div>
+    <div style="display:flex;gap:.6rem">
+      <button class="btn btn-accent" style="flex:1" onclick="finSalvarGrupo()"><i class="fas fa-save"></i> Salvar Grupo</button>
+      <button class="btn btn-gray" onclick="finCloseGrupoModal()">Fechar</button>
+    </div>
   </div>
 </div>
 
@@ -1388,7 +1442,20 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
               <div class="flt-grp"><label>Ano</label><select id="finAno"><option value="">Todos</option></select></div>
               <div class="flt-grp"><label>Tipo</label><select id="finTipo"><option value="">Todos</option><option value="receita">Receita</option><option value="despesa">Despesa</option></select></div>
               <div class="flt-grp"><label>Categoria</label><select id="finCategoria" onchange="applyFinFilters()"><option value="">Todas</option></select></div>
-              <div class="flt-grp"><label>Empresa</label><select id="finEmpresa" onchange="applyFinFilters()"><option value="">Todas</option></select></div>
+              <div class="flt-grp fin-ms" id="finEmpresaMsWrap">
+                <label>Empresa</label>
+                <button type="button" class="fin-ms-btn" id="finEmpresaMsBtn" onclick="finToggleEmpresaPanel(event)"><span class="txt">Todas</span><i class="fas fa-chevron-down"></i></button>
+                <div class="fin-ms-panel" id="finEmpresaMsPanel">
+                  <div class="fin-ms-panel-search"><input type="text" id="finEmpresaMsSearch" placeholder="Buscar empresa..." oninput="finRenderEmpresaOptions()"></div>
+                  <div class="fin-ms-panel-list" id="finEmpresaMsList"></div>
+                  <div class="fin-ms-panel-ftr">
+                    <button type="button" onclick="finEmpresaMsSelectAll()"><i class="fas fa-check-double"></i> Todas</button>
+                    <button type="button" onclick="finEmpresaMsClear()"><i class="fas fa-times"></i> Limpar</button>
+                  </div>
+                </div>
+              </div>
+              <div class="flt-grp"><label>Grupo</label><select id="finGrupo" onchange="finAplicarGrupo()"><option value="">Nenhum</option></select></div>
+              <div class="flt-grp"><label>&nbsp;</label><button type="button" class="fin-grupo-manage-btn" onclick="finOpenGrupoModal()" title="Gerenciar Grupos de Empresas"><i class="fas fa-layer-group"></i></button></div>
               <button class="btn btn-accent" onclick="applyFinFilters()"><i class="fas fa-search"></i> Filtrar</button>
               <button class="btn btn-gray" onclick="resetFinFilters()"><i class="fas fa-times"></i> Limpar</button>
               <button class="btn btn-success btn-sm" onclick="exportCSV(currentFinanceiroFiltered,'financeiro')"><i class="fas fa-download"></i> CSV</button>
@@ -1403,8 +1470,8 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
               <div class="dash-card"><div class="dash-card-title"><i class="fas fa-layer-group"></i> Ranking por Tipo de Contas</div><ol class="rank-list" id="finRankTipoContas"><li style="justify-content:center;color:var(--text-lt);font-size:.8rem">Sem dados</li></ol></div>
             </div>
             <div class="fin-pie-col">
-              <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-pie"></i> Por Tipo de Contas</div><div class="chart-box" style="height:260px"><canvas id="finPieChart" height="220"></canvas></div></div>
-              <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-pie"></i> Top 10 Locais por Valor<button type="button" class="fin-col-cfg-btn" onclick="finConfigLocalCol(event)" title="Selecionar qual coluna da planilha representa o Local"><i class="fas fa-cog"></i></button></div><div class="chart-box" style="height:260px"><canvas id="finBarLocalChart" height="220"></canvas></div></div>
+              <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-pie"></i> Por Tipo de Contas</div><div class="chart-box" style="height:320px"><canvas id="finPieChart" height="220"></canvas></div></div>
+              <div class="dash-card"><div class="dash-card-title"><i class="fas fa-chart-pie"></i> Locais por Valor<button type="button" class="fin-col-cfg-btn" onclick="finConfigLocalCol(event)" title="Selecionar qual coluna da planilha representa o Local"><i class="fas fa-cog"></i></button></div><div class="chart-box" style="height:320px"><canvas id="finBarLocalChart" height="220"></canvas></div></div>
             </div>
           </div>
           <div class="dash-card">
@@ -2965,6 +3032,80 @@ let calcHistoricoArr = [];
 
 // charts
 let finPieChartObj = null, finBarLocalChartObj = null, fatLineChart = null;
+let finMesPadraoAplicado = false; // controla se já aplicamos o mês corrente como padrão do Financeiro
+
+// O plugin de datalabels (usado só nos 2 gráficos de pizza do Financeiro,
+// pra mostrar o valor/percentual direto na fatia) se auto-registra
+// globalmente ao ser carregado via <script>. Desregistra aqui pra não
+// afetar os outros ~15 gráficos do painel — ele é reativado só nos
+// gráficos específicos abaixo via "plugins: [ChartDataLabels]".
+if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+  try { Chart.unregister(ChartDataLabels); } catch (e) {}
+}
+
+// Trunca um texto de legenda mantendo o nome completo disponível no
+// tooltip (usado nos gráficos de pizza do Financeiro).
+function finTruncLabel(s, max) {
+  s = String(s || '');
+  return s.length > max ? s.slice(0, max - 1) + '…' : s;
+}
+// Agrupa os itens além dos top N numa fatia "Outros", pra pizza não ficar
+// poluída com muitas fatias/legendas minúsculas.
+function finTopMaisOutros(ranking, topN) {
+  if (ranking.length <= topN) return ranking;
+  const top = ranking.slice(0, topN);
+  const outros = ranking.slice(topN).reduce((s, [, v]) => s + v, 0);
+  return outros > 0 ? [...top, ['Outros', outros]] : top;
+}
+// Config compartilhada de legenda/tooltip/datalabels pros 2 gráficos de
+// pizza do Financeiro — mostra nome truncado + % na legenda, nome
+// completo + valor + % no tooltip, e o % direto na fatia (quando >= 5%).
+function finPizzaPlugins() {
+  return {
+    legend: {
+      position: 'bottom',
+      labels: {
+        boxWidth: 10,
+        boxHeight: 10,
+        padding: 8,
+        font: { size: 10.5 },
+        generateLabels: function (chart) {
+          const ds = chart.data.datasets[0];
+          const total = ds.data.reduce((a, b) => a + b, 0);
+          return chart.data.labels.map((lbl, i) => {
+            const pct = total ? (ds.data[i] / total * 100).toFixed(1) : '0.0';
+            return {
+              text: `${finTruncLabel(lbl, 15)} (${pct}%)`,
+              fillStyle: ds.backgroundColor[i],
+              strokeStyle: ds.backgroundColor[i],
+              index: i
+            };
+          });
+        }
+      }
+    },
+    tooltip: {
+      callbacks: {
+        label: function (ctx) {
+          const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+          const pct = total ? (ctx.raw / total * 100).toFixed(1) : '0.0';
+          return ` ${ctx.label}: ${fmtMoney(ctx.raw)} (${pct}%)`;
+        }
+      }
+    },
+    datalabels: {
+      color: '#fff',
+      font: { weight: '700', size: 10.5 },
+      textShadowColor: 'rgba(0,0,0,.4)',
+      textShadowBlur: 3,
+      formatter: function (value, ctx) {
+        const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+        const pct = total ? (value / total * 100) : 0;
+        return pct >= 5 ? pct.toFixed(0) + '%' : '';
+      }
+    }
+  };
+}
 
 // ═══════════════════════════════════════════════════════════
 // UTILITÁRIOS
@@ -4682,6 +4823,7 @@ function openSlideMode(){
   }
 
   // Liga o rádio automaticamente ao abrir a Gestão à Vista
+  slideRadioAutoRetryAtivo = true; // habilita o religa-sozinho em segundo plano enquanto o painel estiver aberto
   if (typeof slideRadioLigar === 'function' && !slideRadioLigado) {
     slideRadioLigar();
   }
@@ -4713,22 +4855,33 @@ function openSlideMode(){
 // iframe pequeno (ele resolve a URL sozinho, só exige 1 clique).
 // A URL pode ser fixada manualmente em localStorage['urlRadioAtualFM'].
 // STREAMS da Rádio Atual FM 103.5 (Itajaí/SC).
-// A porta 8038 ficou inacessível externamente (timeout confirmado em 25/09/2026).
-// Quando nenhum stream direto responder, slideRadioLigar() exibe o botão
-// "Abrir player" que abre o player oficial em nova aba — sem iframe (bloqueado
-// pelo proxy do GitHub Pages). Quando a rádio atualizar o servidor/porta, basta
-// atualizar RADIO_ATUAL_STREAMS abaixo; o restante do código não muda.
+// A porta 8038 https chegou a ficar inacessível externamente num teste
+// anterior — por isso a lista abaixo também tenta a mesma porta em HTTP
+// puro e outros caminhos comuns de servidor Icecast/Shoutcast antes de
+// desistir. Quando a rádio atualizar o servidor/porta, basta atualizar
+// RADIO_ATUAL_STREAMS abaixo; o restante do código não muda.
+// Além disso, dois problemas de autoplay do navegador (que impediam o
+// áudio de tocar sozinho) foram tratados: (1) quando o navegador bloqueia
+// play() com som por falta de "gesto do usuário", tentamos tocar mudo
+// (sempre permitido) e desmutar assim que iniciar; (2) se nenhuma URL
+// responder, ficamos tentando de novo sozinhos em segundo plano — assim
+// que o servidor da rádio voltar, o áudio entra sem precisar de clique.
 const RADIO_ATUAL_STREAMS = [
   'https://radio02.logicahost.com.br:8038/stream',
+  'http://radio02.logicahost.com.br:8038/stream',
   'https://radio02.logicahost.com.br:8038/live',
   'https://radio02.logicahost.com.br:8038/;stream.mp3',
+  'https://radio02.logicahost.com.br:8038/;',
   'https://radio02.logicahost.com.br/stream/8038'
 ];
 const RADIO_ATUAL_WIDGET = 'https://radio02.logicahost.com.br/cp/widgets/player/single/?p=8038';
 const RADIO_ATUAL_SITE   = 'https://atualfm.com.br/ouca-ao-vivo/';
+const RADIO_RETRY_MS     = 45000; // religa sozinho a cada 45s enquanto a Gestão à Vista estiver aberta
 
 let slideRadioAudio = null;
 let slideRadioLigado = false;
+let slideRadioRetryTimer = null;
+let slideRadioAutoRetryAtivo = false; // controla se o painel está aberto (retry só roda com ele aberto)
 
 function slideRadioUI(estado, texto){
   const icon  = document.getElementById('slideRadioIcon');
@@ -4760,16 +4913,22 @@ function slideRadioUI(estado, texto){
 }
 
 // Tenta tocar uma URL com limite de tempo — sem isso, uma URL morta
-// deixaria o botão travado em "sintonizando" pra sempre.
+// deixaria o botão travado em "sintonizando" pra sempre. Se o navegador
+// recusar o play() com som (autoplay bloqueado por falta de gesto do
+// usuário — comum quando a TV abre a Gestão à Vista sozinha), tenta de
+// novo mudo (sempre permitido) e desmuta assim que o áudio começar a
+// tocar, pra não depender de clique manual.
 function slideRadioTentar(url, timeoutMs){
   return new Promise((resolve, reject) => {
     const a = new Audio();
     a.preload = 'none';
     a.crossOrigin = 'anonymous';
     const volEl = document.getElementById('slideRadioVol');
-    a.volume = volEl ? (parseInt(volEl.value, 10) / 100) : 0.6;
+    const volAlvo = volEl ? (parseInt(volEl.value, 10) / 100) : 0.6;
+    a.volume = volAlvo;
     a.src = url;
     let resolvido = false;
+    let tentouMudo = false;
     const limpar = () => { clearTimeout(t); a.oncanplay = a.onplaying = a.onerror = null; };
     const t = setTimeout(() => {
       if (resolvido) return;
@@ -4777,9 +4936,27 @@ function slideRadioTentar(url, timeoutMs){
       try { a.pause(); a.src = ''; } catch(e){}
       reject(new Error('timeout'));
     }, timeoutMs || 6000);
-    a.onplaying = () => { if (resolvido) return; resolvido = true; limpar(); resolve(a); };
-    a.onerror   = () => { if (resolvido) return; resolvido = true; limpar(); reject(new Error('erro de stream')); };
-    a.play().catch(err => { if (resolvido) return; resolvido = true; limpar(); reject(err); });
+    a.onplaying = () => {
+      if (resolvido) return;
+      resolvido = true; limpar();
+      if (a.muted) {
+        // Tocou mudo (autoplay com som bloqueado) — desmuta agora que já
+        // está tocando; navegadores permitem alterar o volume/mute de uma
+        // mídia que já iniciou, mesmo sem gesto do usuário.
+        try { a.muted = false; a.volume = volAlvo; } catch(e){}
+      }
+      resolve(a);
+    };
+    const tentarMudo = () => {
+      if (tentouMudo || resolvido) return;
+      tentouMudo = true;
+      try {
+        a.muted = true;
+        a.play().catch(err => { if (resolvido) return; resolvido = true; limpar(); reject(err); });
+      } catch (err) { if (!resolvido) { resolvido = true; limpar(); reject(err); } }
+    };
+    a.onerror = () => { if (resolvido) return; resolvido = true; limpar(); reject(new Error('erro de stream')); };
+    a.play().catch(() => tentarMudo());
   });
 }
 
@@ -4795,13 +4972,17 @@ async function slideRadioLigar(){
       slideRadioLigado = true;
       localStorage.setItem('urlRadioAtualFM', url); // acerta de primeira na próxima vez
       slideRadioUI('on');
+      // Conectou de verdade — cancela qualquer retry automático pendente.
+      if (slideRadioRetryTimer) { clearTimeout(slideRadioRetryTimer); slideRadioRetryTimer = null; }
       return;
     } catch (e) { /* tenta a próxima */ }
   }
 
   // Nenhuma URL direta funcionou — a porta do servidor da rádio pode estar
   // temporariamente fora ou bloqueada. Exibe botão para abrir o player
-  // oficial em nova aba (iframe é bloqueado pelo proxy do GitHub Pages).
+  // oficial em nova aba (iframe é bloqueado pelo proxy do GitHub Pages) e
+  // agenda uma nova tentativa silenciosa em segundo plano — se o servidor
+  // da rádio voltar, o áudio passa a tocar sozinho, sem precisar de clique.
   const fb = document.getElementById('slideRadioFallback');
   if (fb) {
     fb.innerHTML = `
@@ -4816,10 +4997,24 @@ async function slideRadioLigar(){
     fb.style.display = 'block';
     slideRadioLigado = true;
     slideRadioUI('on', 'ATUAL FM — PLAYER EXTERNO');
-    showToast('Stream direto indisponível — clique em "ABRIR PLAYER" para ouvir no player oficial da Atual FM.', 8000);
+    showToast('Stream direto indisponível — tentando religar sozinho em segundo plano (ou clique em "ABRIR PLAYER").', 8000);
   } else {
     slideRadioUI('off', 'RÁDIO INDISPONÍVEL');
   }
+  slideRadioAgendarRetry();
+}
+
+// Tenta religar o rádio sozinho, sem precisar de clique — só enquanto a
+// Gestão à Vista estiver aberta e o rádio não tiver sido desligado
+// manualmente. Evita empilhar timers repetindo a chamada.
+function slideRadioAgendarRetry(){
+  if (slideRadioRetryTimer) return;
+  slideRadioRetryTimer = setTimeout(function () {
+    slideRadioRetryTimer = null;
+    if (slideRadioAutoRetryAtivo && slideRadioLigado && !slideRadioAudio) {
+      slideRadioLigar();
+    }
+  }, RADIO_RETRY_MS);
 }
 
 function slideRadioDesligar(){
@@ -4830,6 +5025,7 @@ function slideRadioDesligar(){
   const fb = document.getElementById('slideRadioFallback');
   if (fb) { fb.innerHTML = ''; fb.style.display = 'none'; }
   slideRadioLigado = false;
+  if (slideRadioRetryTimer) { clearTimeout(slideRadioRetryTimer); slideRadioRetryTimer = null; }
   slideRadioUI('off');
 }
 
@@ -4865,6 +5061,7 @@ function closeSlideMode(){
   clearInterval(slideClockTimer);
   if (slideFinChartInstance) { slideFinChartInstance.destroy(); slideFinChartInstance = null; }
   // Rádio não fica tocando depois que o painel é fechado
+  slideRadioAutoRetryAtivo = false;
   if (typeof slideRadioDesligar === 'function') slideRadioDesligar();
   if (document.fullscreenElement) {
     document.exitFullscreen().catch(()=>{});
@@ -5989,6 +6186,238 @@ function popularFiltroCategoria(rows) {
     [...anos].sort((a, b) => b - a).forEach(a => { const o = document.createElement('option'); o.value = a; o.textContent = a; anoSel.appendChild(o); });
     if ([...anos].some(a => String(a) === anoAtual)) anoSel.value = anoAtual;
   }
+
+  // O Financeiro abre sempre já filtrado no mês corrente (só na primeira
+  // carga — se o usuário já escolheu Mês/Ano manualmente, ou se os dados
+  // forem recarregados depois, não mexe mais na escolha dele).
+  if (!finMesPadraoAplicado) {
+    finMesPadraoAplicado = true;
+    const hoje = new Date();
+    const mesSel = document.getElementById('finMes');
+    if (mesSel && !mesSel.value) mesSel.value = String(hoje.getMonth());
+    if (anoSel && !anoSel.value && [...anos].some(a => a === hoje.getFullYear())) anoSel.value = String(hoje.getFullYear());
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// FINANCEIRO — Filtro de Empresa (multi-seleção) + Grupos de Empresas
+// Seleção múltipla de empresas/postos no filtro do Financeiro, mais um
+// filtro por "Grupo" (conjunto salvo de empresas), pra ver os cards de
+// soma somados de várias empresas de uma vez em vez de uma por uma.
+// ═══════════════════════════════════════════════════════════
+let finEmpresasSelecionadas = [];   // empresas atualmente marcadas no filtro (array de strings)
+let finLocaisDisponiveis = [];      // [[nome, valor], ...] — última lista de empresas com dados (pro painel/modal)
+let finGruposEmpresas = {};         // {"NOME DO GRUPO": ["Empresa A", "Empresa B", ...]}
+let finGrupoEditando = null;        // nome do grupo em edição no modal (null = criando novo)
+
+const FIN_GRUPOS_STORAGE_KEY = 'finGruposEmpresas';
+
+function finCarregarGrupos() {
+  try {
+    const raw = localStorage.getItem(FIN_GRUPOS_STORAGE_KEY);
+    if (raw) {
+      finGruposEmpresas = JSON.parse(raw) || {};
+    } else {
+      // Grupo padrão já vem criado, com o posto RAVANELLO.
+      finGruposEmpresas = { 'RAVANELLO': ['RAVANELLO - (QJA0E90)'] };
+      finSalvarGruposStorage();
+    }
+  } catch (e) {
+    finGruposEmpresas = { 'RAVANELLO': ['RAVANELLO - (QJA0E90)'] };
+  }
+}
+function finSalvarGruposStorage() {
+  localStorage.setItem(FIN_GRUPOS_STORAGE_KEY, JSON.stringify(finGruposEmpresas));
+}
+finCarregarGrupos();
+finPopularSelectGrupo();
+
+function finPopularSelectGrupo() {
+  const sel = document.getElementById('finGrupo');
+  if (!sel) return;
+  const atual = sel.value;
+  const nomes = Object.keys(finGruposEmpresas).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  sel.innerHTML = '<option value="">Nenhum</option>' +
+    nomes.map(n => `<option value="${escapeHTML(n)}">${escapeHTML(n)} (${finGruposEmpresas[n].length})</option>`).join('');
+  if (nomes.includes(atual)) sel.value = atual;
+}
+
+// Selecionar um Grupo no filtro marca automaticamente todas as empresas
+// daquele grupo no multi-select de Empresa e reaplica o filtro.
+function finAplicarGrupo() {
+  const sel = document.getElementById('finGrupo');
+  const nome = sel ? sel.value : '';
+  if (nome && finGruposEmpresas[nome]) {
+    finEmpresasSelecionadas = [...finGruposEmpresas[nome]];
+  } else {
+    finEmpresasSelecionadas = [];
+  }
+  finRenderEmpresaOptions();
+  finAtualizarBotaoEmpresa();
+  applyFinFilters();
+}
+
+// ── Painel (dropdown) de seleção múltipla de Empresa ──
+function finToggleEmpresaPanel(ev) {
+  if (ev) ev.stopPropagation();
+  const panel = document.getElementById('finEmpresaMsPanel');
+  if (!panel) return;
+  const abrindo = !panel.classList.contains('open');
+  document.querySelectorAll('.fin-ms-panel.open').forEach(p => p.classList.remove('open'));
+  if (abrindo) {
+    panel.classList.add('open');
+    finRenderEmpresaOptions();
+    const search = document.getElementById('finEmpresaMsSearch');
+    if (search) { search.value = ''; setTimeout(() => search.focus(), 0); }
+  }
+}
+document.addEventListener('click', function(e) {
+  const wrap = document.getElementById('finEmpresaMsWrap');
+  if (wrap && !wrap.contains(e.target)) {
+    const panel = document.getElementById('finEmpresaMsPanel');
+    if (panel) panel.classList.remove('open');
+  }
+});
+
+function finRenderEmpresaOptions() {
+  const listEl = document.getElementById('finEmpresaMsList');
+  if (!listEl) return;
+  const buscaEl = document.getElementById('finEmpresaMsSearch');
+  const busca = buscaEl ? buscaEl.value.trim().toLowerCase() : '';
+  const opcoes = finLocaisDisponiveis.filter(([nome]) => !busca || nome.toLowerCase().includes(busca));
+  if (!opcoes.length) {
+    listEl.innerHTML = '<div class="fin-ms-panel-empty">Nenhuma empresa encontrada</div>';
+    return;
+  }
+  listEl.innerHTML = opcoes.map(([nome, valor]) => {
+    const marcado = finEmpresasSelecionadas.includes(nome);
+    return `<label class="fin-ms-opt"><input type="checkbox" ${marcado ? 'checked' : ''} onchange="finToggleEmpresaSel('${nome.replace(/'/g, "\\'")}')"><span class="nome" title="${escapeHTML(nome)}">${escapeHTML(nome)}</span><span class="valor">${fmtMoney(valor)}</span></label>`;
+  }).join('');
+}
+
+function finToggleEmpresaSel(nome) {
+  const i = finEmpresasSelecionadas.indexOf(nome);
+  if (i === -1) finEmpresasSelecionadas.push(nome);
+  else finEmpresasSelecionadas.splice(i, 1);
+  // Selecionar/desmarcar empresa manualmente sai do "modo grupo" — o
+  // select de Grupo volta pra "Nenhum" pra não sugerir uma combinação que
+  // não é mais exatamente aquele grupo salvo.
+  const grpSel = document.getElementById('finGrupo');
+  if (grpSel) grpSel.value = '';
+  finAtualizarBotaoEmpresa();
+  applyFinFilters();
+}
+
+function finEmpresaMsSelectAll() {
+  finEmpresasSelecionadas = finLocaisDisponiveis.map(([nome]) => nome);
+  const grpSel = document.getElementById('finGrupo');
+  if (grpSel) grpSel.value = '';
+  finRenderEmpresaOptions();
+  finAtualizarBotaoEmpresa();
+  applyFinFilters();
+}
+function finEmpresaMsClear() {
+  finEmpresasSelecionadas = [];
+  const grpSel = document.getElementById('finGrupo');
+  if (grpSel) grpSel.value = '';
+  finRenderEmpresaOptions();
+  finAtualizarBotaoEmpresa();
+  applyFinFilters();
+}
+
+function finAtualizarBotaoEmpresa() {
+  const btn = document.getElementById('finEmpresaMsBtn');
+  if (!btn) return;
+  const txt = btn.querySelector('.txt');
+  const n = finEmpresasSelecionadas.length;
+  if (!n) {
+    txt.textContent = 'Todas';
+    btn.classList.remove('has-sel');
+  } else if (n === 1) {
+    txt.textContent = finEmpresasSelecionadas[0];
+    btn.classList.add('has-sel');
+  } else {
+    txt.textContent = n + ' empresas selecionadas';
+    btn.classList.add('has-sel');
+  }
+}
+
+// ── Modal "Gerenciar Grupos" ──
+function finOpenGrupoModal() {
+  document.getElementById('finEmpresaMsPanel')?.classList.remove('open');
+  finGrupoEditando = null;
+  document.getElementById('finGrupoNomeInput').value = '';
+  finRenderGrupoLista();
+  finRenderGrupoEmpresasCheck([]);
+  document.getElementById('finGrupoModalBackdrop').classList.add('active');
+  document.getElementById('finGrupoModal').classList.add('active');
+}
+function finCloseGrupoModal() {
+  document.getElementById('finGrupoModalBackdrop').classList.remove('active');
+  document.getElementById('finGrupoModal').classList.remove('active');
+}
+function finRenderGrupoLista() {
+  const el = document.getElementById('finGrupoListaExistente');
+  if (!el) return;
+  const nomes = Object.keys(finGruposEmpresas).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  el.innerHTML = nomes.length ? nomes.map(n => `
+    <div class="fin-grupo-item">
+      <span class="nome">${escapeHTML(n)}</span>
+      <span class="count">${finGruposEmpresas[n].length} empresa(s)</span>
+      <button type="button" onclick="finEditarGrupo('${n.replace(/'/g, "\\'")}')" title="Editar" style="color:var(--accent-dk)"><i class="fas fa-pen"></i></button>
+      <button type="button" onclick="finExcluirGrupo('${n.replace(/'/g, "\\'")}')" title="Excluir"><i class="fas fa-trash"></i></button>
+    </div>`).join('') : '<p style="font-size:.8rem;color:var(--text-lt);margin-bottom:.5rem">Nenhum grupo criado ainda.</p>';
+}
+function finRenderGrupoEmpresasCheck(selecionadas) {
+  const el = document.getElementById('finGrupoEmpresasCheck');
+  if (!el) return;
+  // Usa a lista completa de empresas já vistas nos dados (não só a filtrada
+  // no momento), pra poder montar um grupo mesmo com outros filtros ativos.
+  const todas = finTodasEmpresas();
+  if (!todas.length) {
+    el.innerHTML = '<p style="font-size:.78rem;color:var(--text-lt);margin:0">Carregue o Financeiro primeiro pra ver as empresas disponíveis.</p>';
+    return;
+  }
+  el.innerHTML = todas.map(nome => `<label><input type="checkbox" value="${escapeHTML(nome)}" ${selecionadas.includes(nome) ? 'checked' : ''}><span>${escapeHTML(nome)}</span></label>`).join('');
+}
+function finTodasEmpresas() {
+  if (!financeiroData.length) return [];
+  const headers = Object.keys(financeiroData[0]);
+  const colLocal = finColLocal(headers);
+  if (!colLocal) return [];
+  const set = new Set();
+  financeiroData.forEach(row => { const v = String(row[colLocal] || '').trim(); if (v) set.add(v); });
+  return [...set].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+}
+function finEditarGrupo(nome) {
+  finGrupoEditando = nome;
+  document.getElementById('finGrupoNomeInput').value = nome;
+  finRenderGrupoEmpresasCheck(finGruposEmpresas[nome] || []);
+}
+function finExcluirGrupo(nome) {
+  if (!confirm(`Excluir o grupo "${nome}"?`)) return;
+  delete finGruposEmpresas[nome];
+  finSalvarGruposStorage();
+  finRenderGrupoLista();
+  finPopularSelectGrupo();
+  if (finGrupoEditando === nome) { finGrupoEditando = null; document.getElementById('finGrupoNomeInput').value = ''; finRenderGrupoEmpresasCheck([]); }
+  showToast('Grupo excluído');
+}
+function finSalvarGrupo() {
+  const nome = document.getElementById('finGrupoNomeInput').value.trim();
+  if (!nome) { showToast('Digite um nome para o grupo'); return; }
+  const marcadas = [...document.querySelectorAll('#finGrupoEmpresasCheck input:checked')].map(cb => cb.value);
+  if (!marcadas.length) { showToast('Selecione ao menos uma empresa'); return; }
+  // Se o nome mudou durante uma edição, remove a chave antiga.
+  if (finGrupoEditando && finGrupoEditando !== nome) delete finGruposEmpresas[finGrupoEditando];
+  finGruposEmpresas[nome] = marcadas;
+  finSalvarGruposStorage();
+  finGrupoEditando = null;
+  document.getElementById('finGrupoNomeInput').value = '';
+  finRenderGrupoEmpresasCheck([]);
+  finRenderGrupoLista();
+  finPopularSelectGrupo();
+  showToast('Grupo salvo!');
 }
 
 function applyFinFilters() {
@@ -6013,8 +6442,10 @@ function applyFinFilters() {
   const ano   = anoEl ? anoEl.value : '';
   const tipo  = document.getElementById('finTipo').value.toLowerCase();
   const cat   = document.getElementById('finCategoria').value;
-  const empresaEl = document.getElementById('finEmpresa');
-  const empresa = empresaEl ? empresaEl.value : '';
+  // Empresa agora é multi-seleção: `empresas` é o array marcado no painel
+  // (ou vindo de um Grupo selecionado); vazio = "Todas".
+  const empresas = finEmpresasSelecionadas;
+  const empresa = empresas.length === 1 ? empresas[0] : ''; // mantém compat. com telas que só destacam 1 empresa ativa
 
   function passaFiltros(row, opts) {
     opts = opts || {};
@@ -6050,20 +6481,22 @@ function applyFinFilters() {
       const checkCol = colCat || colTipo;
       if (checkCol && row[checkCol] !== cat) return false;
     }
-    // Filtro empresa — mesma lógica: quando ignorado, serve pra listar as
-    // empresas disponíveis (dropdown) e montar os cards de soma por
-    // empresa dentro da categoria escolhida, sem colapsar pra 1 empresa só.
-    if (!opts.ignorarEmpresa && empresa) {
-      if (colLocal && String(row[colLocal] || '').trim() !== empresa) return false;
+    // Filtro empresa (multi-seleção) — mesma lógica de antes: quando
+    // ignorado, serve pra listar as empresas disponíveis (painel/dropdown)
+    // e montar os cards de soma por empresa dentro da categoria escolhida,
+    // sem colapsar pra apenas as empresas marcadas. Quando ativo, a linha
+    // passa se a Empresa dela estiver entre as selecionadas (OR).
+    if (!opts.ignorarEmpresa && empresas.length) {
+      if (!colLocal || !empresas.includes(String(row[colLocal] || '').trim())) return false;
     }
     return true;
   }
 
   let filtered = financeiroData.filter(row => passaFiltros(row, {}));
-  let filteredPeriodo = (cat || empresa) ? financeiroData.filter(row => passaFiltros(row, { ignorarCategoria: true, ignorarEmpresa: true })) : filtered;
+  let filteredPeriodo = (cat || empresas.length) ? financeiroData.filter(row => passaFiltros(row, { ignorarCategoria: true, ignorarEmpresa: true })) : filtered;
   // Respeita a Categoria selecionada, mas ignora a Empresa — é a base pra
-  // popular o filtro de Empresa e montar os cards de soma por empresa.
-  let filteredParaEmpresa = empresa ? financeiroData.filter(row => passaFiltros(row, { ignorarEmpresa: true })) : filtered;
+  // popular o painel de Empresa e montar os cards de soma por empresa.
+  let filteredParaEmpresa = empresas.length ? financeiroData.filter(row => passaFiltros(row, { ignorarEmpresa: true })) : filtered;
 
   currentFinanceiroFiltered = filtered;
 
@@ -6103,7 +6536,7 @@ function applyFinFilters() {
   // Tabela — respeita o filtro de Categoria e Empresa normalmente
   renderFinTable(filtered, headers, colData, colDesc, colValor, colTipo, colCat);
   // Gráficos/Rankings — sempre a distribuição inteira do período (data/tipo), ignorando Categoria/Empresa selecionadas
-  renderFinCharts(filteredPeriodo, colValor, colCat, colDesc, colTipoContas, colLocal, filteredParaEmpresa, cat, empresa);
+  renderFinCharts(filteredPeriodo, colValor, colCat, colDesc, colTipoContas, colLocal, filteredParaEmpresa, cat, empresas);
 
   document.getElementById('finLoading').style.display = 'none';
   document.getElementById('finTableWrap').style.display = 'block';
@@ -7201,7 +7634,8 @@ function renderFinTable(data, headers, colData, colDesc, colValor, colTipo, colC
 // aqui usa classificação por palavra-chave: tudo vem direto das colunas
 // reais da planilha (TIPO DE CONTA / EMPRESA), conforme o valor digitado
 // nelas.
-function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLocal, dataFiltrada, catAtual, empresaAtual) {
+function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLocal, dataFiltrada, catAtual, empresasAtivas) {
+  empresasAtivas = empresasAtivas || [];
   const cats = {};
   const tiposContas = {};
   const locais = {};
@@ -7228,23 +7662,28 @@ function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLoca
   });
   const rankingLocaisFiltro = Object.entries(locaisFiltro).sort((a, b) => b[1] - a[1]);
 
-  // Atualiza o <select> Empresa: só mostra as empresas presentes na
-  // Categoria (e demais filtros) selecionados, preservando a seleção atual
-  // se ela ainda for válida.
-  const empresaSel = document.getElementById('finEmpresa');
-  if (empresaSel) {
-    empresaSel.innerHTML = '<option value="">Todas</option>' +
-      rankingLocaisFiltro.map(([nome]) => `<option value="${escapeHTML(nome)}">${escapeHTML(nome)}</option>`).join('');
-    if (rankingLocaisFiltro.some(([nome]) => nome === empresaAtual)) empresaSel.value = empresaAtual;
-  }
+  // Guarda a lista de empresas com dados no período/categoria atual, pra
+  // alimentar o painel de multi-seleção de Empresa e o modal de Grupos.
+  finLocaisDisponiveis = rankingLocaisFiltro;
+  finRenderEmpresaOptions();
+  finAtualizarBotaoEmpresa();
+  finPopularSelectGrupo();
 
-  // Cards de soma por Empresa
+  // Cards de soma por Empresa — quando mais de uma empresa está marcada,
+  // mostra também o total somado das selecionadas no subtítulo.
   const cardsEl = document.getElementById('finRankTipoLocal');
   const subEl = document.getElementById('finEmpresaCardsSub');
-  if (subEl) subEl.textContent = catAtual ? `— categoria: ${catAtual}` : '— todas as categorias';
+  if (subEl) {
+    let sub = catAtual ? `— categoria: ${catAtual}` : '— todas as categorias';
+    if (empresasAtivas.length > 1) {
+      const totalSel = rankingLocaisFiltro.filter(([nome]) => empresasAtivas.includes(nome)).reduce((s, [, v]) => s + v, 0);
+      sub += ` · ${empresasAtivas.length} empresas selecionadas: ${fmtMoney(totalSel)}`;
+    }
+    subEl.textContent = sub;
+  }
   if (cardsEl) {
     cardsEl.innerHTML = rankingLocaisFiltro.length
-      ? rankingLocaisFiltro.map(([nome, valor]) => `<div class="fin-empresa-card${nome === empresaAtual ? ' active' : ''}" data-empresa="${escapeHTML(nome)}" title="${escapeHTML(nome)}"><div class="nome">${escapeHTML(nome)}</div><div class="valor">${fmtMoney(valor)}</div></div>`).join('')
+      ? rankingLocaisFiltro.map(([nome, valor]) => `<div class="fin-empresa-card${empresasAtivas.includes(nome) ? ' active' : ''}" data-empresa="${escapeHTML(nome)}" title="${escapeHTML(nome)}"><div class="nome">${escapeHTML(nome)}</div><div class="valor">${fmtMoney(valor)}</div></div>`).join('')
       : '<div class="fin-empresa-cards-empty">Sem dados</div>';
   }
 
@@ -7259,46 +7698,51 @@ function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLoca
   }
 
   // Pie "Por Categoria" — distribuição real por Tipo de Contas (coluna da
-  // planilha), período inteiro
+  // planilha), período inteiro. Top 6 + "Outros" pra não poluir a legenda.
   if (finPieChartObj) finPieChartObj.destroy();
-  const top10TipoContas = rankingTc.slice(0, 10);
+  const top10TipoContas = finTopMaisOutros(rankingTc, 6);
   const ctxPie = document.getElementById('finPieChart').getContext('2d');
   finPieChartObj = new Chart(ctxPie, {
     type: 'doughnut',
     data: {
       labels: top10TipoContas.map(([nome]) => nome),
-      datasets: [{data: top10TipoContas.map(([, valor]) => valor), backgroundColor:['#d4af37','#8B7355','#10b981','#ef4444','#3b82f6','#f59e0b','#8b5cf6','#06b6d4','#84cc16','#f97316']}]
+      datasets: [{data: top10TipoContas.map(([, valor]) => valor), backgroundColor:['#d4af37','#8B7355','#10b981','#ef4444','#3b82f6','#f59e0b','#94a3b8']}]
     },
-    options: {responsive:true, plugins:{legend:{position:'right'}}}
+    plugins: [ChartDataLabels],
+    options: {responsive:true, maintainAspectRatio:false, plugins: finPizzaPlugins()}
   });
 
-  // Pizza — Top 10 Locais (fornecedores/praças) por valor, período inteiro
+  // Pizza — Locais (fornecedores/praças) por valor, período inteiro.
+  // Top 6 + "Outros" pelo mesmo motivo.
   if (finBarLocalChartObj) finBarLocalChartObj.destroy();
   const barLocalEl = document.getElementById('finBarLocalChart');
   if (barLocalEl) {
-    const top10Locais = Object.entries(locais).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    const rankingLocais = Object.entries(locais).sort((a, b) => b[1] - a[1]);
+    const top10Locais = finTopMaisOutros(rankingLocais, 6);
     finBarLocalChartObj = new Chart(barLocalEl.getContext('2d'), {
       type: 'pie',
       data: {
         labels: top10Locais.map(([nome]) => nome),
-        datasets: [{ data: top10Locais.map(([, valor]) => valor), backgroundColor: ['#d4af37','#8B7355','#10b981','#ef4444','#3b82f6','#f59e0b','#8b5cf6','#06b6d4','#84cc16','#f97316'] }]
+        datasets: [{ data: top10Locais.map(([, valor]) => valor), backgroundColor: ['#d4af37','#8B7355','#10b981','#ef4444','#3b82f6','#f59e0b','#94a3b8'] }]
       },
-      options: {
-        responsive: true,
-        plugins: { legend: { position: 'right' }, tooltip: { callbacks: { label: c => `${c.label}: ${fmtMoney(c.raw)}` } } }
-      }
+      plugins: [ChartDataLabels],
+      options: { responsive: true, maintainAspectRatio:false, plugins: finPizzaPlugins() }
     });
   }
 }
 
 function resetFinFilters() {
   ['finDataInicio','finDataFim'].forEach(id => document.getElementById(id).value = '');
-  ['finTipo','finCategoria','finMes','finAno','finEmpresa'].forEach(id => { const el = document.getElementById(id); if (el) el.selectedIndex = 0; });
+  ['finTipo','finCategoria','finMes','finAno'].forEach(id => { const el = document.getElementById(id); if (el) el.selectedIndex = 0; });
+  finEmpresasSelecionadas = [];
+  const grpSel = document.getElementById('finGrupo');
+  if (grpSel) grpSel.value = '';
+  finAtualizarBotaoEmpresa();
   applyFinFilters();
 }
 
-// Clique num card de Empresa seleciona (ou desmarca, se já ativo) aquela
-// empresa no filtro e reaplica — forma rápida de filtrar sem abrir o select.
+// Clique num card de Empresa marca/desmarca aquela empresa no filtro
+// (multi-seleção) e reaplica — forma rápida de filtrar sem abrir o painel.
 (function initFinEmpresaCards(){
   const wrap = document.getElementById('finRankTipoLocal');
   if (!wrap) return;
@@ -7306,10 +7750,8 @@ function resetFinFilters() {
     const card = e.target.closest('.fin-empresa-card');
     if (!card) return;
     const nome = card.dataset.empresa || '';
-    const sel = document.getElementById('finEmpresa');
-    if (!sel) return;
-    sel.value = (sel.value === nome) ? '' : nome;
-    applyFinFilters();
+    if (!nome) return;
+    finToggleEmpresaSel(nome);
   });
 })();
 
@@ -17368,17 +17810,47 @@ document.getElementById('tvBtnOpen').addEventListener('click', function() {
   if (params.get('fat'))   { try { URL_FAT    = params.get('fat');   } catch(e){} }
   if (params.get('agenda')){ try { URL_AGENDA = params.get('agenda');} catch(e){} }
 
-  // Ocultar cursor após 5s de inatividade
+  // Ocultar cursor após 5s de inatividade — e aproveita o primeiro gesto
+  // real do usuário (clique/toque/tecla) pra tentar de novo a tela cheia e
+  // o rádio com som: como a Gestão à Vista abre sozinha nesse modo TV, sem
+  // clique nenhum, o navegador bloqueia por padrão tanto o Fullscreen API
+  // quanto áudio com som iniciados sem gesto — na prática, batia o próprio
+  // problema relatado ("a rádio não toca" / painel não fica em tela
+  // cheia). O primeiro toque/clique na tela destrava os dois.
   var cursorTimer;
+  var tvDestravado = false;
+  function tvDestravar() {
+    if (tvDestravado) return;
+    tvDestravado = true;
+    if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(function(){});
+    }
+    if (typeof slideRadioLigado !== 'undefined' && slideRadioLigado && !slideRadioAudio && typeof slideRadioLigar === 'function') {
+      slideRadioLigar();
+    }
+  }
   function tvResetCursor() {
     document.body.classList.remove('tv-hide-cursor');
     clearTimeout(cursorTimer);
     cursorTimer = setTimeout(function(){ document.body.classList.add('tv-hide-cursor'); }, 5000);
   }
+  ['mousedown','keydown','touchstart'].forEach(function(ev) {
+    document.addEventListener(ev, tvDestravar, {passive:true});
+  });
   ['mousemove','mousedown','keydown','touchstart'].forEach(function(ev) {
     document.addEventListener(ev, tvResetCursor, {passive:true});
   });
   tvResetCursor();
+  // Se a tela cheia cair por qualquer motivo (ex.: alguém apertou Esc antes
+  // do listener de bloqueio pegar, ou o navegador soltou sozinho), tenta
+  // reentrar automaticamente assim que houver um novo gesto — o listener
+  // tvDestravar acima já cobre isso a cada novo clique/toque, já que ele
+  // roda de novo toda vez que a tela cheia não estiver ativa.
+  document.addEventListener('fullscreenchange', function () {
+    if (!document.fullscreenElement && document.body.classList.contains('tv-kiosk-mode')) {
+      tvDestravado = false; // libera pra tentar de novo no próximo gesto
+    }
+  });
 
   // Iniciar slideshow: aguarda dados carregarem antes de abrir
   function tvLaunch() {
