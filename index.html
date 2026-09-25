@@ -9925,33 +9925,40 @@ function fatcRenderAnaliseContextual(ctx) {
           totalLitrosArlaF, totalCustoArlaF, records, limCav, limCar } = ctx;
 
   // Benchmarks operacionais M. Malacarne
-  const BM_KML_OTIMO   = 3.20;  // km/L ótimo para cavalo refrigerado
-  const BM_KML_BOM     = 2.80;  // km/L bom
-  const BM_KML_ATENCAO = 2.40;  // km/L merece atenção
-  const BM_LH_OTIMO    = 4.50;  // L/h ótimo para carreta refrigerada
-  const BM_LH_BOM      = 5.50;  // L/h bom
-  const BM_LH_ATENCAO  = 7.00;  // L/h merece atenção
+  // Cavalo (km/L) — quanto MAIOR, melhor
+  const BM_KML_OTIMO     = 3.00;  // ótimo ≥3,0
+  const BM_KML_BOM       = 2.50;  // bom ≥2,5
+  const BM_KML_ACEITAVEL = 2.30;  // aceitável ≥2,3
+  const BM_KML_ATENCAO   = 2.15;  // atenção ≥2,15
+  const BM_KML_RUIM      = 2.00;  // ruim ≥2,0 · abaixo disso = urgente
+  // Carreta (L/h) — quanto MENOR, melhor
+  const BM_LH_OTIMO    = 2.00;  // ótimo <2,0
+  const BM_LH_BOM      = 2.50;  // bom ≤2,5
+  const BM_LH_REGULAR  = 3.00;  // regular ≤3,0 · atenção a partir de 3,0
 
   const fmtKmL = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' km/L' : '—';
   const fmtLH  = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' L/h' : '—';
   const fmtNum = v => (v || 0).toLocaleString('pt-BR',{maximumFractionDigits:0});
   const fmtMon = v => v ? 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
 
-  const insights = []; // { tipo: 'ok'|'aviso'|'alerta'|'info', msg }
+  const insights = []; // { tipo, titulo, msg, valor, cor }
 
   // ── Análise Cavalo ──
   if (mediaCav > 0) {
-    let statusCav, corCav, iconeCav;
-    if (mediaCav >= BM_KML_OTIMO)        { statusCav='Excelente'; corCav='#059669'; iconeCav='✅'; }
-    else if (mediaCav >= BM_KML_BOM)     { statusCav='Bom'; corCav='#16a34a'; iconeCav='👍'; }
-    else if (mediaCav >= BM_KML_ATENCAO) { statusCav='Regular — atenção'; corCav='#d97706'; iconeCav='⚠️'; }
-    else                                  { statusCav='Abaixo do esperado'; corCav='#dc2626'; iconeCav='🔴'; }
+    let statusCav, tipoCav, corCav, iconeCav;
+    if (mediaCav >= BM_KML_OTIMO)          { statusCav='Ótimo';      tipoCav='otimo';     corCav='#059669'; iconeCav='✅'; }
+    else if (mediaCav >= BM_KML_BOM)       { statusCav='Bom';        tipoCav='bom';       corCav='#16a34a'; iconeCav='👍'; }
+    else if (mediaCav >= BM_KML_ACEITAVEL) { statusCav='Aceitável';  tipoCav='aceitavel'; corCav='#84a318'; iconeCav='🙂'; }
+    else if (mediaCav >= BM_KML_ATENCAO)   { statusCav='Atenção';    tipoCav='atencao';   corCav='#d97706'; iconeCav='⚠️'; }
+    else if (mediaCav >= BM_KML_RUIM)      { statusCav='Ruim';       tipoCav='ruim';      corCav='#ea580c'; iconeCav='🟠'; }
+    else                                    { statusCav='Urgente';    tipoCav='urgente';   corCav='#dc2626'; iconeCav='🔴'; }
 
     const refCav = ctxSoCavalo ? `Cavalo ${f.cav}` : (ctxMotorista ? `Motorista ${f.mot}` : 'Conjunto');
     insights.push({
-      tipo: mediaCav >= BM_KML_BOM ? 'ok' : (mediaCav >= BM_KML_ATENCAO ? 'aviso' : 'alerta'),
+      tipo: tipoCav,
       titulo: `${iconeCav} Consumo do Cavalo — ${statusCav}`,
-      msg: `Média de <b>${fmtKmL(mediaCav)}</b> no período. Referência: ótimo ≥${BM_KML_OTIMO} km/L · bom ≥${BM_KML_BOM} km/L · atenção <${BM_KML_ATENCAO} km/L.`,
+      valor: fmtKmL(mediaCav),
+      msg: `Referência: ótimo ≥${BM_KML_OTIMO.toFixed(2)} · bom ≥${BM_KML_BOM.toFixed(2)} · aceitável ≥${BM_KML_ACEITAVEL.toFixed(2)} · atenção ≥${BM_KML_ATENCAO.toFixed(2)} · ruim ≥${BM_KML_RUIM.toFixed(2)} · urgente <${BM_KML_RUIM.toFixed(2)} km/L.`,
       cor: corCav
     });
 
@@ -9967,16 +9974,17 @@ function fatcRenderAnaliseContextual(ctx) {
 
   // ── Análise Carreta ──
   if (mediaCar > 0) {
-    let statusCar, corCar, iconeCar;
-    if (mediaCar <= BM_LH_OTIMO)        { statusCar='Excelente'; corCar='#059669'; iconeCar='✅'; }
-    else if (mediaCar <= BM_LH_BOM)     { statusCar='Bom'; corCar='#16a34a'; iconeCar='👍'; }
-    else if (mediaCar <= BM_LH_ATENCAO) { statusCar='Regular — atenção'; corCar='#d97706'; iconeCar='⚠️'; }
-    else                                  { statusCar='Alto consumo'; corCar='#dc2626'; iconeCar='🔴'; }
+    let statusCar, tipoCar, corCar, iconeCar;
+    if (mediaCar < BM_LH_OTIMO)          { statusCar='Ótimo';   tipoCar='otimo';   corCar='#059669'; iconeCar='✅'; }
+    else if (mediaCar <= BM_LH_BOM)      { statusCar='Bom';     tipoCar='bom';     corCar='#16a34a'; iconeCar='👍'; }
+    else if (mediaCar <= BM_LH_REGULAR)  { statusCar='Regular'; tipoCar='ruim';    corCar='#d97706'; iconeCar='⚠️'; }
+    else                                  { statusCar='Atenção'; tipoCar='urgente'; corCar='#dc2626'; iconeCar='🔴'; }
 
     insights.push({
-      tipo: mediaCar <= BM_LH_BOM ? 'ok' : (mediaCar <= BM_LH_ATENCAO ? 'aviso' : 'alerta'),
+      tipo: tipoCar,
       titulo: `${iconeCar} Consumo da Carreta — ${statusCar}`,
-      msg: `Média de <b>${fmtLH(mediaCar)}</b> no período. Referência: ótimo ≤${BM_LH_OTIMO} L/h · bom ≤${BM_LH_BOM} L/h · atenção >${BM_LH_ATENCAO} L/h.`,
+      valor: fmtLH(mediaCar),
+      msg: `Referência: ótimo <${BM_LH_OTIMO.toFixed(2)} · bom ≤${BM_LH_BOM.toFixed(2)} · regular ≤${BM_LH_REGULAR.toFixed(2)} · atenção ≥${BM_LH_REGULAR.toFixed(2)} L/h.`,
       cor: corCar
     });
 
@@ -10044,9 +10052,12 @@ function fatcRenderAnaliseContextual(ctx) {
     return;
   }
 
-  const corBg   = { ok:'#f0fdf4', aviso:'#fffbeb', alerta:'#fff1f2', info:'#eff6ff' };
-  const corBord = { ok:'#86efac', aviso:'#fde68a', alerta:'#fca5a5', info:'#bfdbfe' };
-  const corTxt  = { ok:'#15803d', aviso:'#92400e', alerta:'#991b1b', info:'#1e40af' };
+  const corBg   = { ok:'#f0fdf4', aviso:'#fffbeb', alerta:'#fff1f2', info:'#eff6ff',
+                     otimo:'#ecfdf5', bom:'#f0fdf4', aceitavel:'#f7fee7', atencao:'#fffbeb', ruim:'#fff7ed', urgente:'#fef2f2' };
+  const corBord = { ok:'#86efac', aviso:'#fde68a', alerta:'#fca5a5', info:'#bfdbfe',
+                     otimo:'#6ee7b7', bom:'#86efac', aceitavel:'#bef264', atencao:'#fde68a', ruim:'#fdba74', urgente:'#fca5a5' };
+  const corTxt  = { ok:'#15803d', aviso:'#92400e', alerta:'#991b1b', info:'#1e40af',
+                     otimo:'#047857', bom:'#15803d', aceitavel:'#4d7c0f', atencao:'#92400e', ruim:'#c2410c', urgente:'#991b1b' };
 
   cardAnalise.style.cssText = 'margin-top:.8rem;display:block';
   cardAnalise.innerHTML = `
@@ -10056,7 +10067,14 @@ function fatcRenderAnaliseContextual(ctx) {
         <span style="font-size:.78rem;font-weight:800;color:#4338ca;text-transform:uppercase;letter-spacing:.8px">Análise Automática do Período</span>
       </div>
       <div style="display:flex;flex-direction:column;gap:.6rem">
-        ${insights.map(ins => `
+        ${insights.map(ins => ins.valor ? `
+          <div style="display:flex;align-items:center;gap:.9rem;background:${corBg[ins.tipo]};border:1.5px solid ${corBord[ins.tipo]};border-radius:8px;padding:.65rem .9rem">
+            <div style="flex:0 0 auto;font-size:1.5rem;font-weight:900;color:${corTxt[ins.tipo]};line-height:1;white-space:nowrap">${ins.valor}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:.78rem;font-weight:800;color:${corTxt[ins.tipo]};margin-bottom:.2rem">${ins.titulo}</div>
+              <div style="font-size:.72rem;color:var(--text);line-height:1.5;opacity:.85">${ins.msg}</div>
+            </div>
+          </div>` : `
           <div style="background:${corBg[ins.tipo]};border:1px solid ${corBord[ins.tipo]};border-radius:8px;padding:.65rem .9rem">
             <div style="font-size:.78rem;font-weight:800;color:${corTxt[ins.tipo]};margin-bottom:.2rem">${ins.titulo}</div>
             <div style="font-size:.78rem;color:var(--text);line-height:1.5">${ins.msg}</div>
