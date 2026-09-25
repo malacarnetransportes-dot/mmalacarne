@@ -4681,6 +4681,11 @@ function openSlideMode(){
     document.documentElement.requestFullscreen().catch(()=>{});
   }
 
+  // Liga o rádio automaticamente ao abrir a Gestão à Vista
+  if (typeof slideRadioLigar === 'function' && !slideRadioLigado) {
+    slideRadioLigar();
+  }
+
   // Garante que vencimentos estejam carregados e vencCounts atualizado.
   // Se vencData ainda está vazio (aba nunca aberta), dispara vencInit();
   // quando terminar chama slideRecalcularVencCounts() e re-renderiza o
