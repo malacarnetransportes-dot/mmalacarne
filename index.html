@@ -1258,12 +1258,13 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
             <div class="dash-card" style="margin-bottom:1rem">
               <div class="dash-card-title" style="margin-bottom:.6rem"><i class="fas fa-satellite-dish"></i> Painel em Tempo Real</div>
               <div class="kpi-grid" id="fcxKpisReal">
-                <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-vault"></i></div><div><div class="kpi-val" id="fcx-caixa">R$ —</div><div class="kpi-lbl">Saldo em Caixa (Realizado)</div></div></div>
-                <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-arrow-trend-up"></i></div><div><div class="kpi-val" id="fcx-lucro">R$ —</div><div class="kpi-lbl">Lucro do Período (Rec. − Desp.)</div></div></div>
-                <div class="kpi-card"><div class="kpi-icon" style="background:rgba(212,175,55,.15);color:var(--accent-dk)"><i class="fas fa-percent"></i></div><div><div class="kpi-val" id="fcx-margem">—</div><div class="kpi-lbl">Margem Líquida</div></div></div>
-                <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-hand-holding-dollar"></i></div><div><div class="kpi-val" id="fcx-recebido">R$ —</div><div class="kpi-lbl">Recebido (já no caixa)</div></div></div>
-                <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-file-invoice-dollar"></i></div><div><div class="kpi-val" id="fcx-despesas-periodo">R$ —</div><div class="kpi-lbl">Despesas do Período</div></div></div>
-                <div class="kpi-card"><div class="kpi-icon" style="background:rgba(239,68,68,.1);color:var(--danger)"><i class="fas fa-clock"></i></div><div><div class="kpi-val" id="fcx-apagar">R$ —</div><div class="kpi-lbl">A Pagar em Aberto</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-hand-holding-dollar"></i></div><div><div class="kpi-val" id="fcx-recebido">R$ —</div><div class="kpi-lbl">✅ Entrou (vencido ≤ hoje)</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-file-invoice-dollar"></i></div><div><div class="kpi-val" id="fcx-despesas-periodo">R$ —</div><div class="kpi-lbl">💸 Despesas do Período</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon" style="background:rgba(239,68,68,.1);color:var(--danger)"><i class="fas fa-clock"></i></div><div><div class="kpi-val" id="fcx-apagar">R$ —</div><div class="kpi-lbl">⏳ Falta Pagar (vencimento futuro)</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-vault"></i></div><div><div class="kpi-val" id="fcx-caixa">R$ —</div><div class="kpi-lbl">🏦 Saldo Caixa (entrou − pago)</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon" style="background:rgba(59,130,246,.12);color:#1d4ed8"><i class="fas fa-calculator"></i></div><div><div class="kpi-val" id="fcx-saldo-projetado">R$ —</div><div class="kpi-lbl">📊 Saldo Projetado (a receber − a pagar)</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-arrow-trend-up"></i></div><div><div class="kpi-val" id="fcx-lucro">R$ —</div><div class="kpi-lbl">💰 Lucro / Prejuízo do Período</div></div></div>
+                <div class="kpi-card"><div class="kpi-icon" style="background:rgba(212,175,55,.15);color:var(--accent-dk)"><i class="fas fa-percent"></i></div><div><div class="kpi-val" id="fcx-margem">—</div><div class="kpi-lbl">📈 Margem Líquida</div></div></div>
                 <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-calendar-day"></i></div><div><div class="kpi-val" id="fcx-fechamento26">R$ —</div><div class="kpi-lbl">Previsto até Fechamento (dia 26)</div></div></div>
                 <div class="kpi-card"><div class="kpi-icon" style="background:rgba(139,115,85,.15);color:var(--primary-dk)"><i class="fas fa-list"></i></div><div><div class="kpi-val" id="fcx-registros">—</div><div class="kpi-lbl">Registros (filtro atual)</div></div></div>
               </div>
@@ -7140,6 +7141,7 @@ function fcxDespesasFinanceiro(dIniObj, dFimObj) {
   financeiroData.forEach(row => {
     const d = parseDate(row[colData]);
     if (!d) return;
+    // Respeita o período filtrado — só considera despesas dentro do intervalo
     if (dIniObj && d < dIniObj) return;
     if (dFimObj && d > dFimObj) return;
     const v = finValorLinha(row, colValor, colCat, colDesc);
@@ -7148,10 +7150,17 @@ function fcxDespesasFinanceiro(dIniObj, dFimObj) {
     if (!isDespesa) return;
     const valor = Math.abs(v);
     const chave = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    if (!resultado.porMes[chave]) resultado.porMes[chave] = { total: 0 };
+    if (!resultado.porMes[chave]) resultado.porMes[chave] = { total: 0, pago: 0, aberto: 0 };
     resultado.porMes[chave].total += valor;
     resultado.totalGeral += valor;
-    if (d <= hoje) resultado.totalPago += valor; else resultado.totalAberto += valor;
+    // Vencimento <= hoje = já pago; vencimento > hoje = falta pagar
+    if (d <= hoje) {
+      resultado.totalPago += valor;
+      resultado.porMes[chave].pago += valor;
+    } else {
+      resultado.totalAberto += valor;
+      resultado.porMes[chave].aberto += valor;
+    }
   });
   return resultado;
 }
@@ -7369,9 +7378,22 @@ function fcxRender() {
 
   // ── PAINEL EM TEMPO REAL ──
   const despesasPeriodo = fcxDespesasFinanceiro(dIniObj, dFimObj);
+  // Receita total do período vs despesa total do período = lucro/prejuízo
   const lucro = totalGeral - despesasPeriodo.totalGeral;
   const margemPct = totalGeral > 0 ? (lucro / totalGeral * 100) : null;
+
+  // Caixa realizado = receitas já vencidas − despesas já vencidas (ambas <= hoje)
   const caixa = recebido - despesasPeriodo.totalPago;
+
+  // Falta pagar = despesas com vencimento > hoje dentro do período filtrado
+  const faltaPagar = despesasPeriodo.totalAberto;
+
+  // Receitas ainda a receber no período (vencimento > hoje)
+  const aReceber = rows.filter(x => x.d > hoje).reduce((s, x) => s + x.valor, 0);
+
+  // Saldo projetado = o que ainda vai entrar − o que ainda falta pagar
+  const saldoProjetado = aReceber - faltaPagar;
+
   const fechamento26 = fcxProximoFechamento26(hoje);
   const entradasAteFechamento = rows.filter(x => x.d > hoje && x.d <= fechamento26).reduce((s, x) => s + x.valor, 0);
   const despesasAteFechamento = fcxDespesasFinanceiro(new Date(hoje.getTime() + 86400000), fechamento26).totalGeral;
@@ -7385,7 +7407,21 @@ function fcxRender() {
   document.getElementById('fcx-margem').style.color = margemPct === null ? '' : (margemPct >= 0 ? 'var(--success)' : 'var(--danger)');
   document.getElementById('fcx-recebido').textContent = fmtMoney(recebido);
   document.getElementById('fcx-despesas-periodo').textContent = fmtMoney(despesasPeriodo.totalGeral);
-  document.getElementById('fcx-apagar').textContent = fmtMoney(despesasPeriodo.totalAberto);
+
+  // Falta pagar — despesas futuras do período
+  const faltaEl = document.getElementById('fcx-apagar');
+  if (faltaEl) {
+    faltaEl.textContent = fmtMoney(faltaPagar);
+    faltaEl.style.color = faltaPagar > 0 ? 'var(--danger)' : 'var(--success)';
+  }
+
+  // Saldo projetado — o que sobra depois de pagar o que falta
+  const saldoProjEl = document.getElementById('fcx-saldo-projetado');
+  if (saldoProjEl) {
+    saldoProjEl.textContent = fmtMoney(saldoProjetado);
+    saldoProjEl.style.color = saldoProjetado >= 0 ? 'var(--success)' : 'var(--danger)';
+  }
+
   document.getElementById('fcx-fechamento26').textContent = fmtMoney(previstoFechamento) + ` (até ${fmtDate(fechamento26)})`;
   document.getElementById('fcx-fechamento26').style.color = previstoFechamento >= 0 ? 'var(--success)' : 'var(--danger)';
 
@@ -8671,6 +8707,17 @@ document.querySelectorAll('.cr-subtab-btn[data-crsub]').forEach(btn => {
     btn.classList.add('active');
     document.getElementById(btn.dataset.crsub).classList.add('active');
     if (btn.dataset.crsub === 'crSubFluxoCaixa') {
+      // Pré-preenche o período com o mês atual se os filtros estiverem vazios
+      const dIniEl = document.getElementById('fcxDataIni');
+      const dFimEl = document.getElementById('fcxDataFim');
+      if (dIniEl && dFimEl && !dIniEl.value && !dFimEl.value) {
+        const hoje = new Date();
+        const ano = hoje.getFullYear();
+        const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+        const ultimoDia = new Date(ano, hoje.getMonth() + 1, 0).getDate();
+        dIniEl.value = `${ano}-${mes}-01`;
+        dFimEl.value = `${ano}-${mes}-${String(ultimoDia).padStart(2, '0')}`;
+      }
       setTimeout(fcxRender, 50);
       if (typeof fatAllRecords !== 'undefined' && !fatAllRecords.length) loadFaturamentoData();
     }
