@@ -223,6 +223,24 @@ footer a{color:var(--accent);text-decoration:none;}
 .slide-venc-tag{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:.05rem .4rem;border-radius:6px;background:rgba(139,115,85,.14);color:#6b5a3f;}
 .slide-venc-data{font-weight:700;font-size:.85rem;white-space:nowrap;color:var(--warning);}
 .slide-venc-row.is-vencido .slide-venc-data{color:var(--danger);}
+/* ── Infográfico (Gestão à Vista): número grande + ícone + faixa de status ── */
+.slide-kpi-card{border-top:5px solid var(--accent);}
+.slide-kpi-card.is-danger{border-top-color:var(--danger);background:linear-gradient(180deg,rgba(239,68,68,.07),#fff 60%);}
+.slide-kpi-card.is-warning{border-top-color:var(--warning);background:linear-gradient(180deg,rgba(245,158,11,.08),#fff 60%);}
+.slide-kpi-card.is-ok{border-top-color:var(--success);background:linear-gradient(180deg,rgba(16,185,129,.07),#fff 60%);}
+.ig-ico{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto .5rem;background:rgba(139,115,85,.12);color:var(--accent-dk);font-size:1rem;}
+.is-danger .ig-ico{background:rgba(239,68,68,.14);color:var(--danger);}
+.is-warning .ig-ico{background:rgba(245,158,11,.16);color:var(--warning);}
+.is-ok .ig-ico{background:rgba(16,185,129,.14);color:var(--success);}
+.slide-kpi-val{font-size:clamp(1.6rem,3.2vw,2.8rem)!important;font-weight:800!important;}
+.ig-exec{display:grid;grid-template-columns:repeat(4,1fr);gap:1.1rem;max-width:1180px;width:100%;margin-bottom:1.4rem;}
+.ig-bars{max-width:1180px;width:100%;background:#fff;border:1px solid rgba(139,115,85,.18);border-radius:20px;padding:1.1rem 1.4rem;text-align:left;box-shadow:0 8px 24px rgba(30,42,58,.06);}
+.ig-bars-head{font-family:'Poppins',sans-serif;font-weight:600;font-size:1rem;color:#1c2333;margin-bottom:.8rem;}
+.ig-bar-row{display:grid;grid-template-columns:200px 1fr 150px;align-items:center;gap:.9rem;margin-bottom:.6rem;font-size:.85rem;font-weight:600;color:#1c2333;}
+.ig-bar{display:flex;height:16px;border-radius:9px;overflow:hidden;background:var(--gray-100);}
+.ig-bar span{display:block;height:100%;}
+.ig-legend{font-size:.75rem;color:var(--text-lt);text-align:right;white-space:nowrap;}
+.ig-legend b.d{color:var(--danger)}.ig-legend b.w{color:var(--warning)}.ig-legend b.o{color:var(--success)}
 .slide-links-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.2rem;max-width:1000px;width:100%;}
 .slide-dots{display:flex;gap:.5rem;justify-content:center;padding:1.4rem 0;}
 .slide-dot{width:9px;height:9px;border-radius:50%;background:rgba(139,115,85,.18);transition:.2s;}
@@ -1011,6 +1029,8 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
   <div class="fin-grupo-form">
     <label>Nome do Grupo</label>
     <input type="text" id="finGrupoNomeInput" placeholder="Ex: RAVANELLO">
+    <label>Palavras-chave (opcional, separe por vírgula)</label>
+    <input type="text" id="finGrupoKeywordsInput" placeholder="Ex: RAVANELLO — pega todo posto que contenha essa palavra" style="margin-bottom:.8rem">
     <label>Empresas do Grupo</label>
     <div class="fin-grupo-empresas-list" id="finGrupoEmpresasCheck"></div>
     <div style="display:flex;gap:.6rem">
@@ -4231,6 +4251,9 @@ function slideBuildSlides(){
   return [
     // 1) Previsão do Tempo — Concórdia SC (semana)
     { title: '<i class="fas fa-cloud-sun"></i> Previsão do Tempo — Concórdia/SC', type: 'weather-concordia' },
+    // 1b) Painel Executivo (infográfico): números-chave + barras por categoria
+    { title: '<i class="fas fa-chart-pie"></i> Painel Executivo — Visão do Dia', type: 'exec-painel',
+      vencResumo, totalVencidos, totalProximos, conjuntos: conjuntos.length },
     // 2) Baterias — destaca em vermelho se houver vencidas
     { title: '<i class="fas fa-battery-three-quarters"></i> Baterias', type: 'bat-single', kpis: [
         { val: slideText('bat-total','—'), lbl: 'Total Baterias' },
@@ -4418,7 +4441,9 @@ function slideKpiClass(k){
   return '';
 }
 function slideKpiCard(k){
-  return `<div class="slide-kpi-card${slideKpiClass(k)}"><div class="slide-kpi-val">${k.val}</div><div class="slide-kpi-lbl">${k.lbl}</div></div>`;
+  const cls = slideKpiClass(k);
+  const ico = cls.includes('danger') ? 'fa-triangle-exclamation' : cls.includes('warning') ? 'fa-clock' : cls.includes('ok') ? 'fa-circle-check' : 'fa-chart-simple';
+  return `<div class="slide-kpi-card${cls}"><div class="ig-ico"><i class="fas ${k.icon || ico}"></i></div><div class="slide-kpi-val">${k.val}</div><div class="slide-kpi-lbl">${k.lbl}</div></div>`;
 }
 
 function slideRender(){
@@ -4434,6 +4459,29 @@ function slideRender(){
   setTimeout(() => {
     if (s.type === 'weather-concordia') {
       slideRenderWeather(body, s, slides, idx);
+      return;
+    }
+    if (s.type === 'exec-painel') {
+      let mesTxt = '—';
+      try { mesTxt = fmtMoney(slideFinResumo().totalMes); } catch(e) {}
+      const bat = { v: parseInt(slideText('bat-vencidas','0'))||0 };
+      const cards = [
+        { val: s.totalVencidos + bat.v, lbl: 'Vencidos (Venc. + Baterias)', danger: true, icon: 'fa-triangle-exclamation' },
+        { val: s.totalProximos, lbl: 'A vencer em 30 dias', warning: true, icon: 'fa-clock' },
+        { val: mesTxt, lbl: 'Despesas do Mês', icon: 'fa-wallet' },
+        { val: s.conjuntos, lbl: 'Conjuntos em Operação', ok: true, icon: 'fa-truck' }
+      ];
+      const linhas = s.vencResumo.map(c => {
+        const t = (c.vencidos + c.proximos + c.ok) || 1;
+        return `<div class="ig-bar-row"><span><i class="fas ${c.icon}" style="color:var(--accent-dk);margin-right:.4rem"></i>${c.label}</span>
+          <div class="ig-bar"><span style="width:${c.vencidos/t*100}%;background:var(--danger)"></span><span style="width:${c.proximos/t*100}%;background:var(--warning)"></span><span style="width:${c.ok/t*100}%;background:var(--success)"></span></div>
+          <div class="ig-legend"><b class="d">${c.vencidos}</b> venc. · <b class="w">${c.proximos}</b> próx. · <b class="o">${c.ok}</b> ok</div></div>`;
+      }).join('');
+      body.innerHTML = `<div class="slide-section-title">${s.title}</div>
+        <div class="ig-exec">${cards.map(slideKpiCard).join('')}</div>
+        <div class="ig-bars"><div class="ig-bars-head"><i class="fas fa-calendar-check" style="color:var(--accent-dk)"></i> Situação dos Vencimentos por Categoria</div>${linhas}</div>`;
+      requestAnimationFrame(() => body.classList.add('show'));
+      slideRenderDots(slides, idx);
       return;
     }
     if (s.type === 'fin-resumo') {
@@ -6263,19 +6311,34 @@ let finGrupoEditando = null;        // nome do grupo em edição no modal (null 
 
 const FIN_GRUPOS_STORAGE_KEY = 'finGruposEmpresas';
 
+// Membros do grupo: nome exato da empresa OU palavra-chave iniciada por "*"
+// (ex.: "*RAVANELLO" pega TODA empresa/posto cujo nome contenha RAVANELLO).
+const finNormNome = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+function finNomeNoGrupo(nome, membros) {
+  const n = finNormNome(nome);
+  if (!n) return false;
+  return (membros || []).some(m => {
+    const mm = String(m || '');
+    if (mm.charAt(0) === '*') { const k = finNormNome(mm.slice(1)); return k && n.includes(k); }
+    return finNormNome(mm) === n;
+  });
+}
 function finCarregarGrupos() {
   try {
     const raw = localStorage.getItem(FIN_GRUPOS_STORAGE_KEY);
-    if (raw) {
-      finGruposEmpresas = JSON.parse(raw) || {};
-    } else {
-      // Grupo padrão já vem criado, com o posto RAVANELLO.
-      finGruposEmpresas = { 'RAVANELLO': ['RAVANELLO - (QJA0E90)'] };
-      finSalvarGruposStorage();
-    }
-  } catch (e) {
-    finGruposEmpresas = { 'RAVANELLO': ['RAVANELLO - (QJA0E90)'] };
+    finGruposEmpresas = raw ? (JSON.parse(raw) || {}) : {};
+  } catch (e) { finGruposEmpresas = {}; }
+  // Grupo RAVANELLO = conjunto de postos/empresas (NÃO é só a empresa RAVANELLO).
+  // Casa por trecho do nome (o print mostra nomes cortados com "...").
+  const RAV_PADROES = ['*RAVANELLO - (QJA0E90)', '*COMERCIO DE COMBUST', '*AUTO POSTO NORTE SUL', '*POSTO NORTE SUL - (RL', '*CARRETÃO - (RAC4780)'];
+  if (!localStorage.getItem('finGruposMigV2')) {
+    const atual = (finGruposEmpresas['RAVANELLO'] || []).filter(m => m !== '*RAVANELLO' && m !== 'RAVANELLO - (QJA0E90)');
+    finGruposEmpresas['RAVANELLO'] = [...new Set([...atual, ...RAV_PADROES])];
+    localStorage.setItem('finGruposMigV2', '1');
+  } else if (!finGruposEmpresas['RAVANELLO']) {
+    finGruposEmpresas['RAVANELLO'] = RAV_PADROES.slice();
   }
+  finSalvarGruposStorage();
 }
 function finSalvarGruposStorage() {
   localStorage.setItem(FIN_GRUPOS_STORAGE_KEY, JSON.stringify(finGruposEmpresas));
@@ -6289,7 +6352,7 @@ function finPopularSelectGrupo() {
   const atual = sel.value;
   const nomes = Object.keys(finGruposEmpresas).sort((a, b) => a.localeCompare(b, 'pt-BR'));
   sel.innerHTML = '<option value="">Nenhum</option>' +
-    nomes.map(n => `<option value="${escapeHTML(n)}">${escapeHTML(n)} (${finGruposEmpresas[n].length})</option>`).join('');
+    nomes.map(n => `<option value="${escapeHTML(n)}">${escapeHTML(n)}</option>`).join('');
   if (nomes.includes(atual)) sel.value = atual;
 }
 
@@ -6394,6 +6457,7 @@ function finOpenGrupoModal() {
   document.getElementById('finEmpresaMsPanel')?.classList.remove('open');
   finGrupoEditando = null;
   document.getElementById('finGrupoNomeInput').value = '';
+  document.getElementById('finGrupoKeywordsInput').value = '';
   finRenderGrupoLista();
   finRenderGrupoEmpresasCheck([]);
   document.getElementById('finGrupoModalBackdrop').classList.add('active');
@@ -6410,7 +6474,7 @@ function finRenderGrupoLista() {
   el.innerHTML = nomes.length ? nomes.map(n => `
     <div class="fin-grupo-item">
       <span class="nome">${escapeHTML(n)}</span>
-      <span class="count">${finGruposEmpresas[n].length} empresa(s)</span>
+      <span class="count">${finGruposEmpresas[n].filter(m => String(m).charAt(0) !== '*').length} empresa(s)${finGruposEmpresas[n].some(m => String(m).charAt(0) === '*') ? ' + palavra-chave' : ''}</span>
       <button type="button" onclick="finEditarGrupo('${n.replace(/'/g, "\\'")}')" title="Editar" style="color:var(--accent-dk)"><i class="fas fa-pen"></i></button>
       <button type="button" onclick="finExcluirGrupo('${n.replace(/'/g, "\\'")}')" title="Excluir"><i class="fas fa-trash"></i></button>
     </div>`).join('') : '<p style="font-size:.8rem;color:var(--text-lt);margin-bottom:.5rem">Nenhum grupo criado ainda.</p>';
@@ -6439,7 +6503,9 @@ function finTodasEmpresas() {
 function finEditarGrupo(nome) {
   finGrupoEditando = nome;
   document.getElementById('finGrupoNomeInput').value = nome;
-  finRenderGrupoEmpresasCheck(finGruposEmpresas[nome] || []);
+  const mem = finGruposEmpresas[nome] || [];
+  document.getElementById('finGrupoKeywordsInput').value = mem.filter(m => String(m).charAt(0) === '*').map(m => m.slice(1)).join(', ');
+  finRenderGrupoEmpresasCheck(mem);
 }
 function finExcluirGrupo(nome) {
   if (!confirm(`Excluir o grupo "${nome}"?`)) return;
@@ -6454,13 +6520,16 @@ function finSalvarGrupo() {
   const nome = document.getElementById('finGrupoNomeInput').value.trim();
   if (!nome) { showToast('Digite um nome para o grupo'); return; }
   const marcadas = [...document.querySelectorAll('#finGrupoEmpresasCheck input:checked')].map(cb => cb.value);
-  if (!marcadas.length) { showToast('Selecione ao menos uma empresa'); return; }
+  const kws = (document.getElementById('finGrupoKeywordsInput').value || '').split(',').map(x => x.trim()).filter(Boolean).map(x => '*' + x);
+  marcadas.push(...kws);
+  if (!marcadas.length) { showToast('Selecione ao menos uma empresa ou palavra-chave'); return; }
   // Se o nome mudou durante uma edição, remove a chave antiga.
   if (finGrupoEditando && finGrupoEditando !== nome) delete finGruposEmpresas[finGrupoEditando];
   finGruposEmpresas[nome] = marcadas;
   finSalvarGruposStorage();
   finGrupoEditando = null;
   document.getElementById('finGrupoNomeInput').value = '';
+  document.getElementById('finGrupoKeywordsInput').value = '';
   finRenderGrupoEmpresasCheck([]);
   finRenderGrupoLista();
   finPopularSelectGrupo();
@@ -6567,7 +6636,10 @@ function applyFinFilters() {
     // sem colapsar pra apenas as empresas marcadas. Quando ativo, a linha
     // passa se a Empresa dela estiver entre as selecionadas (OR).
     if (!opts.ignorarEmpresa && empresas.length) {
-      if (!colLocal || !empresas.includes(String(row[colLocal] || '').trim())) return false;
+      if (!colLocal) return false;
+      const nomeEmp = String(row[colLocal] || '').trim();
+      if (finEmpresasSelecionadas.length) { if (!finEmpresasSelecionadas.includes(nomeEmp)) return false; }
+      else if (!finNomeNoGrupo(nomeEmp, empresasGrupo)) return false;
     }
     return true;
   }
@@ -6617,7 +6689,7 @@ function applyFinFilters() {
   // Tabela — respeita o filtro de Categoria e Empresa normalmente
   renderFinTable(filtered, headers, colData, colDesc, colValor, colTipo, colCat);
   // Gráficos/Rankings — sempre a distribuição inteira do período (data/tipo), ignorando Categoria/Empresa selecionadas
-  renderFinCharts(filteredPeriodo, colValor, colCat, colDesc, colTipoContas, colLocal, filteredParaEmpresa, cat, empresas, empresasGrupo, grupoAtivo);
+  renderFinCharts(filteredPeriodo, colValor, colCat, colDesc, colTipoContas, colLocal, filteredParaEmpresa, cat, finEmpresasSelecionadas.slice(), empresasGrupo, grupoAtivo);
 
   document.getElementById('finLoading').style.display = 'none';
   document.getElementById('finTableWrap').style.display = 'block';
@@ -8077,7 +8149,7 @@ function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLoca
   let rankingLocaisFiltro = Object.entries(locaisFiltro).sort((a, b) => b[1] - a[1]);
   // Grupo selecionado: painel de Empresa e cards mostram SOMENTE as empresas
   // do grupo (respeitando data/tipo/categoria já aplicados).
-  if (empresasGrupo) rankingLocaisFiltro = rankingLocaisFiltro.filter(([nome]) => empresasGrupo.includes(nome));
+  if (empresasGrupo) rankingLocaisFiltro = rankingLocaisFiltro.filter(([nome]) => finNomeNoGrupo(nome, empresasGrupo));
 
   // Guarda a lista de empresas com dados no período/categoria atual, pra
   // alimentar o painel de multi-seleção de Empresa e o modal de Grupos.
