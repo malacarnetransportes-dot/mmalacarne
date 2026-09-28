@@ -1254,6 +1254,48 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
               <div style="font-size:.78rem;color:var(--text-lt);margin-top:.4rem">Visão em tempo real de caixa, lucro, despesas, recebimentos, saldos, margens e custos por placa/motorista. As datas de recebimento são <b>calculadas automaticamente</b> a partir da data do frete e da regra de prazo de cada cliente (configurável abaixo) — cruzadas com as despesas do Financeiro (Contas a Pagar).</div>
             </div>
 
+            <!-- ── VEREDITO: LUCRO OU PREJUÍZO ── -->
+            <div class="dash-card" id="fcxVeredito" style="margin-bottom:1rem;padding:0;overflow:hidden;border:2px solid var(--gray-200)">
+              <div id="fcxVerBanner" style="padding:1.1rem 1.4rem;display:flex;flex-wrap:wrap;align-items:center;gap:1rem 2rem;background:var(--gray-100)">
+                <div style="flex:1;min-width:230px">
+                  <div style="font-size:.7rem;font-weight:800;letter-spacing:.8px;text-transform:uppercase;opacity:.8">Resultado do período</div>
+                  <div id="fcxVerTitulo" style="font-size:1.9rem;font-weight:900;line-height:1.1;margin-top:.15rem">—</div>
+                  <div id="fcxVerPeriodo" style="font-size:.74rem;opacity:.85;margin-top:.25rem"></div>
+                </div>
+                <div style="text-align:right">
+                  <div id="fcxVerValor" style="font-size:2.1rem;font-weight:900;line-height:1.1">R$ —</div>
+                  <div id="fcxVerMargem" style="font-size:.85rem;font-weight:700;margin-top:.2rem"></div>
+                </div>
+              </div>
+              <div style="padding:1rem 1.4rem">
+                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:.6rem;font-size:.85rem;margin-bottom:.9rem">
+                  <div class="fcx-ver-box"><span>Receita (fretes)</span><b id="fcxVerReceita" style="color:var(--success)">R$ —</b></div>
+                  <span style="font-size:1.3rem;font-weight:800;color:var(--text-lt)">−</span>
+                  <div class="fcx-ver-box"><span>Despesas</span><b id="fcxVerDespesa" style="color:var(--danger)">R$ —</b></div>
+                  <span style="font-size:1.3rem;font-weight:800;color:var(--text-lt)">=</span>
+                  <div class="fcx-ver-box" id="fcxVerBoxRes"><span>Resultado</span><b id="fcxVerRes">R$ —</b></div>
+                </div>
+                <div style="font-size:.72rem;font-weight:700;color:var(--text-lt);text-transform:uppercase;margin-bottom:.3rem">Para cada R$ 1,00 de receita, quanto vai para despesas?</div>
+                <div style="position:relative;height:22px;background:var(--gray-200);border-radius:11px;overflow:hidden">
+                  <div id="fcxVerBarra" style="height:100%;width:0;border-radius:11px;transition:width .5s"></div>
+                  <div style="position:absolute;top:0;bottom:0;left:100%;margin-left:-2px;width:2px;background:#0004"></div>
+                </div>
+                <div id="fcxVerBarraTxt" style="font-size:.78rem;margin-top:.35rem;font-weight:700"></div>
+                <div id="fcxVerLeitura" style="margin-top:.9rem;padding:.8rem 1rem;border-radius:8px;font-size:.84rem;line-height:1.5;background:var(--gray-100)"></div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:.7rem;margin-top:.9rem">
+                  <div class="fcx-ver-box" style="display:block"><span>🏦 Caixa hoje (já entrou − já pago)</span><b id="fcxVerCaixa">R$ —</b><small id="fcxVerCaixaTxt"></small></div>
+                  <div class="fcx-ver-box" style="display:block"><span>📊 Ainda a entrar − ainda a pagar</span><b id="fcxVerProj">R$ —</b><small id="fcxVerProjTxt"></small></div>
+                </div>
+                <div style="font-size:.68rem;color:var(--text-lt);margin-top:.8rem">Como ler: <b>lucro</b> = receita maior que despesas; <b>prejuízo</b> = despesas maiores que a receita. Margem = quanto sobra de cada R$ 100 recebidos. Referência: até 5% apertada · 5% a 15% saudável · acima de 15% excelente.</div>
+              </div>
+            </div>
+            <style>
+              .fcx-ver-box{background:var(--gray-100);border-radius:8px;padding:.55rem .9rem;display:flex;flex-direction:column;gap:.1rem;min-width:150px}
+              .fcx-ver-box span{font-size:.68rem;font-weight:700;text-transform:uppercase;color:var(--text-lt)}
+              .fcx-ver-box b{font-size:1.15rem;font-weight:900}
+              .fcx-ver-box small{font-size:.72rem;color:var(--text-lt)}
+            </style>
+
             <!-- ── PAINEL EM TEMPO REAL ── -->
             <div class="dash-card" style="margin-bottom:1rem">
               <div class="dash-card-title" style="margin-bottom:.6rem"><i class="fas fa-satellite-dish"></i> Painel em Tempo Real</div>
@@ -6248,11 +6290,9 @@ function finPopularSelectGrupo() {
 function finAplicarGrupo() {
   const sel = document.getElementById('finGrupo');
   const nome = sel ? sel.value : '';
-  if (nome && finGruposEmpresas[nome]) {
-    finEmpresasSelecionadas = [...finGruposEmpresas[nome]];
-  } else {
-    finEmpresasSelecionadas = [];
-  }
+  // Grupo ativo = "modo grupo": a seleção fica vazia (= todas as empresas do
+  // grupo) e o painel/cards passam a listar SÓ as empresas do grupo.
+  finEmpresasSelecionadas = [];
   finRenderEmpresaOptions();
   finAtualizarBotaoEmpresa();
   applyFinFilters();
@@ -6300,27 +6340,20 @@ function finToggleEmpresaSel(nome) {
   const i = finEmpresasSelecionadas.indexOf(nome);
   if (i === -1) finEmpresasSelecionadas.push(nome);
   else finEmpresasSelecionadas.splice(i, 1);
-  // Selecionar/desmarcar empresa manualmente sai do "modo grupo" — o
-  // select de Grupo volta pra "Nenhum" pra não sugerir uma combinação que
-  // não é mais exatamente aquele grupo salvo.
-  const grpSel = document.getElementById('finGrupo');
-  if (grpSel) grpSel.value = '';
+  // Dentro de um Grupo, marcar/desmarcar empresa só refina dentro do grupo
+  // (o select de Grupo é mantido; "Nenhum" nele sai do modo grupo).
   finAtualizarBotaoEmpresa();
   applyFinFilters();
 }
 
 function finEmpresaMsSelectAll() {
   finEmpresasSelecionadas = finLocaisDisponiveis.map(([nome]) => nome);
-  const grpSel = document.getElementById('finGrupo');
-  if (grpSel) grpSel.value = '';
   finRenderEmpresaOptions();
   finAtualizarBotaoEmpresa();
   applyFinFilters();
 }
 function finEmpresaMsClear() {
   finEmpresasSelecionadas = [];
-  const grpSel = document.getElementById('finGrupo');
-  if (grpSel) grpSel.value = '';
   finRenderEmpresaOptions();
   finAtualizarBotaoEmpresa();
   applyFinFilters();
@@ -6331,7 +6364,12 @@ function finAtualizarBotaoEmpresa() {
   if (!btn) return;
   const txt = btn.querySelector('.txt');
   const n = finEmpresasSelecionadas.length;
-  if (!n) {
+  const grpSel = document.getElementById('finGrupo');
+  const grp = grpSel ? grpSel.value : '';
+  if (!n && grp && finGruposEmpresas[grp]) {
+    txt.textContent = 'Grupo: ' + grp;
+    btn.classList.add('has-sel');
+  } else if (!n) {
     txt.textContent = 'Todas';
     btn.classList.remove('has-sel');
   } else if (n === 1) {
@@ -6421,6 +6459,35 @@ function finSalvarGrupo() {
   showToast('Grupo salvo!');
 }
 
+// Receita do período: soma o Frete Valor de Contas a Receber usando a Data de
+// Emissão e os mesmos filtros de data/mês/ano da aba Financeiro.
+function finReceitaPeriodo(dIni, dFim, mes, ano) {
+  if (typeof contasReceberData === 'undefined' || !contasReceberData.length) return 0;
+  const headers = Object.keys(contasReceberData[0]);
+  const C = crCols(headers);
+  if (!C.freteValor) return 0;
+  const temFiltro = dIni || dFim || mes !== '' || ano !== '';
+  const ini = dIni ? new Date(dIni + 'T00:00:00') : null;
+  const fim = dFim ? new Date(dFim + 'T23:59:59') : null;
+  // Receita = Frete Valor dos lançamentos do tipo FRETE (mesma base do KPI
+  // "Frete Valor (Receita)"); se a planilha não tiver tipo Frete, soma tudo.
+  const soFrete = !!C.descr && contasReceberData.some(r => crEhFrete(r[C.descr]));
+  let total = 0;
+  contasReceberData.forEach(row => {
+    if (soFrete && !crEhFrete(row[C.descr])) return;
+    if (temFiltro) {
+      const d = C.dataEmissao ? parseDate(row[C.dataEmissao]) : null;
+      if (!d) return;
+      if (ini && d < ini) return;
+      if (fim && d > fim) return;
+      if (mes !== '' && d.getMonth() !== Number(mes)) return;
+      if (ano !== '' && d.getFullYear() !== Number(ano)) return;
+    }
+    total += parseMoney(row[C.freteValor]);
+  });
+  return total;
+}
+
 function applyFinFilters() {
   if (!financeiroData.length) return;
   const headers = Object.keys(financeiroData[0]);
@@ -6445,7 +6512,11 @@ function applyFinFilters() {
   const cat   = document.getElementById('finCategoria').value;
   // Empresa agora é multi-seleção: `empresas` é o array marcado no painel
   // (ou vindo de um Grupo selecionado); vazio = "Todas".
-  const empresas = finEmpresasSelecionadas;
+  const grupoSelFin = document.getElementById('finGrupo');
+  const grupoAtivo = grupoSelFin ? grupoSelFin.value : '';
+  const empresasGrupo = (grupoAtivo && finGruposEmpresas[grupoAtivo]) ? finGruposEmpresas[grupoAtivo] : null;
+  // Seleção manual dentro do grupo tem prioridade; senão vale o grupo inteiro.
+  const empresas = finEmpresasSelecionadas.length ? finEmpresasSelecionadas : (empresasGrupo || []);
   const empresa = empresas.length === 1 ? empresas[0] : ''; // mantém compat. com telas que só destacam 1 empresa ativa
 
   function passaFiltros(row, opts) {
@@ -6497,7 +6568,7 @@ function applyFinFilters() {
   let filteredPeriodo = (cat || empresas.length) ? financeiroData.filter(row => passaFiltros(row, { ignorarCategoria: true, ignorarEmpresa: true })) : filtered;
   // Respeita a Categoria selecionada, mas ignora a Empresa — é a base pra
   // popular o painel de Empresa e montar os cards de soma por empresa.
-  let filteredParaEmpresa = empresas.length ? financeiroData.filter(row => passaFiltros(row, { ignorarEmpresa: true })) : filtered;
+  let filteredParaEmpresa = (empresas.length || empresasGrupo) ? financeiroData.filter(row => passaFiltros(row, { ignorarEmpresa: true })) : filtered;
 
   currentFinanceiroFiltered = filtered;
 
@@ -6509,9 +6580,10 @@ function applyFinFilters() {
     if (t.includes('receita') || t.includes('entrada') || t.includes('credito')) receita += Math.abs(v);
     else despesa += Math.abs(v); // sem indicação explícita de receita, conta como despesa (esta planilha só tem custos)
   });
-  // Receita real da empresa vem do módulo Contas a Receber (soma de Frete Valor);
-  // esta planilha do Financeiro só registra despesas por padrão.
-  receita += (window.crReceitaTotal || 0);
+  // Receita real da empresa vem do módulo Contas a Receber (soma de Frete Valor),
+  // agora respeitando o MESMO período do filtro do Financeiro (data início/fim,
+  // mês e ano). Esta planilha do Financeiro só registra despesas por padrão.
+  receita += finReceitaPeriodo(dIni, dFim, mes, ano);
 
   document.getElementById('fin-receita').textContent = fmtMoney(receita);
   document.getElementById('fin-despesa').textContent = fmtMoney(despesa);
@@ -6537,7 +6609,7 @@ function applyFinFilters() {
   // Tabela — respeita o filtro de Categoria e Empresa normalmente
   renderFinTable(filtered, headers, colData, colDesc, colValor, colTipo, colCat);
   // Gráficos/Rankings — sempre a distribuição inteira do período (data/tipo), ignorando Categoria/Empresa selecionadas
-  renderFinCharts(filteredPeriodo, colValor, colCat, colDesc, colTipoContas, colLocal, filteredParaEmpresa, cat, empresas);
+  renderFinCharts(filteredPeriodo, colValor, colCat, colDesc, colTipoContas, colLocal, filteredParaEmpresa, cat, empresas, empresasGrupo, grupoAtivo);
 
   document.getElementById('finLoading').style.display = 'none';
   document.getElementById('finTableWrap').style.display = 'block';
@@ -6605,6 +6677,10 @@ async function loadContasReceberData(silencioso) {
   }
 }
 
+// Normaliza texto (sem acento, minúsculo) e identifica o tipo "Frete".
+function crNorm(v) { return String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase(); }
+function crEhFrete(v) { return crNorm(v).includes('fret'); }
+
 function crPopularFiltros(rows) {
   if (!rows.length) return;
   const headers = Object.keys(rows[0]);
@@ -6629,6 +6705,22 @@ function crPopularFiltros(rows) {
   fill('crMotorista', motoristas);
   fill('crCliente', clientes);
   fill('crTipo', tipos);
+
+  // Padrão inicial: Tipo = FRETE (Frete Valor e Frete a Receber abrem só com
+  // fretes, sem diárias etc.). Só na primeira carga; se o usuário mudar ou
+  // clicar em Limpar, a escolha dele é respeitada.
+  const tipoSel = document.getElementById('crTipo');
+  if (tipoSel) {
+    if (!tipoSel.dataset.bound) {
+      tipoSel.addEventListener('change', () => { tipoSel.dataset.userSet = '1'; });
+      tipoSel.dataset.bound = '1';
+    }
+    if (tipoSel.dataset.userSet !== '1') {
+      const opts = [...tipos];
+      const alvo = opts.find(t => crNorm(t) === 'frete') || opts.find(t => crEhFrete(t));
+      if (alvo) tipoSel.value = alvo;
+    }
+  }
 
   // Filtro de Mês: sempre garante o mês corrente como opção (mesmo sem
   // lançamentos ainda) e, na primeira carga, deixa o mês corrente
@@ -6950,6 +7042,8 @@ function resetCRFilters() {
   // "Limpar" volta o filtro de Mês para "Todos os Meses" (visão geral).
   const mesSel = document.getElementById('crMes');
   if (mesSel) { mesSel.value = ''; mesSel.dataset.userSet = '1'; }
+  const tipoSelR = document.getElementById('crTipo');
+  if (tipoSelR) tipoSelR.dataset.userSet = '1';
   applyCRFilters();
 }
 
@@ -7255,6 +7349,62 @@ function fcxComputeMargemMotorista(rows, C) {
   }).filter(x => x.receita > 0 || x.custo > 0).sort((a, b) => b.receita - a.receita);
 }
 
+function fcxRenderVeredito(o) {
+  const $ = id => document.getElementById(id);
+  if (!$('fcxVerTitulo')) return;
+  const { receita, despesa, lucro, margemPct, caixa, saldoProjetado, aReceber, faltaPagar } = o;
+  const semDados = receita <= 0 && despesa <= 0;
+  let cor, bg, titulo, nivel;
+  if (semDados) { cor = 'var(--text-lt)'; bg = 'var(--gray-100)'; titulo = 'SEM DADOS NO PERÍODO'; nivel = ''; }
+  else if (lucro < 0) { cor = '#991b1b'; bg = '#fee2e2'; titulo = '🔻 PREJUÍZO'; nivel = 'prejuizo'; }
+  else if (margemPct !== null && margemPct < 5) { cor = '#92400e'; bg = '#fef3c7'; titulo = '⚠️ LUCRO APERTADO'; nivel = 'apertado'; }
+  else if (margemPct !== null && margemPct < 15) { cor = '#166534'; bg = '#dcfce7'; titulo = '✅ LUCRO SAUDÁVEL'; nivel = 'saudavel'; }
+  else { cor = '#14532d'; bg = '#bbf7d0'; titulo = '🏆 LUCRO EXCELENTE'; nivel = 'excelente'; }
+
+  const ban = $('fcxVerBanner');
+  ban.style.background = bg; ban.style.color = cor;
+  $('fcxVeredito').style.borderColor = semDados ? 'var(--gray-200)' : cor;
+  $('fcxVerTitulo').textContent = titulo;
+  $('fcxVerPeriodo').textContent = 'Período: ' + o.periodo;
+  $('fcxVerValor').textContent = semDados ? 'R$ —' : (lucro < 0 ? '− ' : '+ ') + fmtMoney(Math.abs(lucro));
+  $('fcxVerMargem').textContent = margemPct === null ? '' : `Margem líquida: ${margemPct.toFixed(1)}%`;
+  $('fcxVerReceita').textContent = fmtMoney(receita);
+  $('fcxVerDespesa').textContent = fmtMoney(despesa);
+  const resEl = $('fcxVerRes');
+  resEl.textContent = (lucro < 0 ? '− ' : '') + fmtMoney(Math.abs(lucro));
+  resEl.style.color = lucro >= 0 ? 'var(--success)' : 'var(--danger)';
+
+  // Barra: despesa / receita
+  const pctDesp = receita > 0 ? (despesa / receita * 100) : (despesa > 0 ? 999 : 0);
+  const barra = $('fcxVerBarra');
+  barra.style.width = Math.min(pctDesp, 100) + '%';
+  barra.style.background = pctDesp > 100 ? '#ef4444' : (pctDesp > 95 ? '#f59e0b' : '#10b981');
+  $('fcxVerBarraTxt').innerHTML = receita > 0
+    ? `De cada R$ 1,00 recebido, <span style="color:${pctDesp > 100 ? 'var(--danger)' : 'var(--text)'}">R$ ${(pctDesp / 100).toFixed(2).replace('.', ',')}</span> vão para despesas` +
+      (pctDesp <= 100 ? ` e <span style="color:var(--success)">R$ ${((100 - pctDesp) / 100).toFixed(2).replace('.', ',')}</span> sobram.` : ` — passa de R$ 1,00: falta dinheiro.`)
+    : '';
+
+  // Leitura em linguagem simples
+  let txt;
+  if (semDados) txt = 'Não há receita nem despesa lançadas neste período/filtro.';
+  else if (lucro < 0) txt = `No período, a empresa <b>faturou ${fmtMoney(receita)}</b> e <b>gastou ${fmtMoney(despesa)}</b>. As despesas superam a receita em <b style="color:var(--danger)">${fmtMoney(-lucro)}</b>: a operação está <b>dando prejuízo</b>. Para empatar, seria preciso faturar mais ${fmtMoney(-lucro)} ou cortar esse valor em despesas.`;
+  else txt = `No período, a empresa <b>faturou ${fmtMoney(receita)}</b> e <b>gastou ${fmtMoney(despesa)}</b>. Sobraram <b style="color:var(--success)">${fmtMoney(lucro)}</b> (margem de ${margemPct.toFixed(1)}%). ` +
+    (nivel === 'apertado' ? 'A margem é baixa: um aumento pequeno de custo (diesel, pneus, manutenção) pode virar prejuízo.' :
+     nivel === 'saudavel' ? 'A operação está saudável e com folga razoável.' : 'Margem acima da referência: operação muito rentável no período.');
+  $('fcxVerLeitura').innerHTML = txt;
+  $('fcxVerLeitura').style.background = bg; $('fcxVerLeitura').style.color = semDados ? 'var(--text)' : cor;
+
+  // Caixa hoje e projeção
+  const cx = $('fcxVerCaixa');
+  cx.textContent = (caixa < 0 ? '− ' : '') + fmtMoney(Math.abs(caixa));
+  cx.style.color = caixa >= 0 ? 'var(--success)' : 'var(--danger)';
+  $('fcxVerCaixaTxt').textContent = caixa >= 0 ? 'Até hoje entrou mais do que saiu.' : 'Até hoje saiu mais do que entrou.';
+  const pj = $('fcxVerProj');
+  pj.textContent = (saldoProjetado < 0 ? '− ' : '') + fmtMoney(Math.abs(saldoProjetado));
+  pj.style.color = saldoProjetado >= 0 ? 'var(--success)' : 'var(--danger)';
+  $('fcxVerProjTxt').textContent = `A receber ${fmtMoney(aReceber)} · a pagar ${fmtMoney(faltaPagar)} → ` + (saldoProjetado >= 0 ? 'sobra prevista.' : 'falta prevista.');
+}
+
 function fcxRender() {
   const tbody = document.getElementById('fcxTableMensalBody');
   if (!contasReceberData.length) {
@@ -7424,6 +7574,15 @@ function fcxRender() {
 
   document.getElementById('fcx-fechamento26').textContent = fmtMoney(previstoFechamento) + ` (até ${fmtDate(fechamento26)})`;
   document.getElementById('fcx-fechamento26').style.color = previstoFechamento >= 0 ? 'var(--success)' : 'var(--danger)';
+
+  // ── VEREDITO: LUCRO OU PREJUÍZO ──
+  fcxRenderVeredito({
+    receita: totalGeral, despesa: despesasPeriodo.totalGeral, lucro, margemPct,
+    caixa, saldoProjetado, aReceber, faltaPagar,
+    periodo: (dIniObj || dFimObj)
+      ? `${dIniObj ? fmtDate(dIniObj) : 'início'} a ${dFimObj ? fmtDate(dFimObj) : 'hoje'}`
+      : 'todo o período disponível'
+  });
 
   // Aging — faixas de vencimento
   const faixas = [
@@ -7670,7 +7829,7 @@ function renderFinTable(data, headers, colData, colDesc, colValor, colTipo, colC
 // aqui usa classificação por palavra-chave: tudo vem direto das colunas
 // reais da planilha (TIPO DE CONTA / EMPRESA), conforme o valor digitado
 // nelas.
-function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLocal, dataFiltrada, catAtual, empresasAtivas) {
+function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLocal, dataFiltrada, catAtual, empresasAtivas, empresasGrupo, grupoAtivo) {
   empresasAtivas = empresasAtivas || [];
   const cats = {};
   const tiposContas = {};
@@ -7696,7 +7855,10 @@ function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLoca
     const lc = colLocal ? String(row[colLocal] || '').trim() : '';
     if (lc) locaisFiltro[lc] = (locaisFiltro[lc] || 0) + Math.abs(v);
   });
-  const rankingLocaisFiltro = Object.entries(locaisFiltro).sort((a, b) => b[1] - a[1]);
+  let rankingLocaisFiltro = Object.entries(locaisFiltro).sort((a, b) => b[1] - a[1]);
+  // Grupo selecionado: painel de Empresa e cards mostram SOMENTE as empresas
+  // do grupo (respeitando data/tipo/categoria já aplicados).
+  if (empresasGrupo) rankingLocaisFiltro = rankingLocaisFiltro.filter(([nome]) => empresasGrupo.includes(nome));
 
   // Guarda a lista de empresas com dados no período/categoria atual, pra
   // alimentar o painel de multi-seleção de Empresa e o modal de Grupos.
@@ -7711,6 +7873,7 @@ function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLoca
   const subEl = document.getElementById('finEmpresaCardsSub');
   if (subEl) {
     let sub = catAtual ? `— categoria: ${catAtual}` : '— todas as categorias';
+    if (empresasGrupo && grupoAtivo) sub = `— grupo: ${grupoAtivo} · ` + sub.replace('— ', '');
     if (empresasAtivas.length > 1) {
       const totalSel = rankingLocaisFiltro.filter(([nome]) => empresasAtivas.includes(nome)).reduce((s, [, v]) => s + v, 0);
       sub += ` · ${empresasAtivas.length} empresas selecionadas: ${fmtMoney(totalSel)}`;
