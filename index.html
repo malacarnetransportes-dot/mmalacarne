@@ -575,6 +575,11 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
 .fin-ms-btn i{color:var(--text-lt);font-size:.68rem;flex:none;}
 .fin-ms-panel{position:absolute;top:calc(100% + 4px);left:0;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r12);box-shadow:var(--shadow-lg);width:300px;max-height:340px;display:none;flex-direction:column;z-index:200;}
 .fin-ms-panel.open{display:flex;}
+.dash-card:has(#finEmpresaMsWrap){overflow:visible!important;position:relative;z-index:5;}
+.fin-ms-panel{z-index:1000!important;}
+.fin-empresa-card .nome{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;word-break:break-word;line-height:1.25;}
+.fin-empresa-card.zero{opacity:.55;cursor:default;border:1.5px dashed var(--gray-200);}
+.fin-empresa-card.zero:hover{transform:none;box-shadow:none;}
 .fin-ms-panel-search{padding:.55rem .55rem 0;}
 .fin-ms-panel-search input{width:100%;padding:.4rem .6rem;border-radius:6px;border:1px solid var(--gray-200);font-size:.78rem;}
 .fin-ms-panel-search input:focus{outline:none;border-color:var(--accent);}
@@ -8154,6 +8159,8 @@ function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLoca
   // Guarda a lista de empresas com dados no período/categoria atual, pra
   // alimentar o painel de multi-seleção de Empresa e o modal de Grupos.
   finLocaisDisponiveis = rankingLocaisFiltro;
+  // Membros do grupo sem lançamento no período aparecem zerados (pra ver quem falta)
+  const membrosSemDados = empresasGrupo ? empresasGrupo.filter(m => !rankingLocaisFiltro.some(([nome]) => finNomeNoGrupo(nome, [m]))).map(m => String(m).replace(/^\*/, '')) : [];
   finRenderEmpresaOptions();
   finAtualizarBotaoEmpresa();
   finPopularSelectGrupo();
@@ -8175,6 +8182,7 @@ function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLoca
     cardsEl.innerHTML = rankingLocaisFiltro.length
       ? rankingLocaisFiltro.map(([nome, valor]) => `<div class="fin-empresa-card${empresasAtivas.includes(nome) ? ' active' : ''}" data-empresa="${escapeHTML(nome)}" title="${escapeHTML(nome)}"><div class="nome">${escapeHTML(nome)}</div><div class="valor">${fmtMoney(valor)}</div></div>`).join('')
       : '<div class="fin-empresa-cards-empty">Sem dados</div>';
+    if (membrosSemDados.length) cardsEl.innerHTML += membrosSemDados.map(n => `<div class="fin-empresa-card zero" title="Sem lançamentos no período/filtros"><div class="nome">${escapeHTML(n)}</div><div class="valor">R$ 0,00</div></div>`).join('');
   }
 
   // Ranking por Tipo de Contas — lista ordenada da maior para a menor,
