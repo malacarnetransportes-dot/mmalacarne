@@ -4239,6 +4239,22 @@ function slideJornadaResumo(){
   return { competenciaLabel: jorCompetenciaLabel(ultimaComp), funcionarios: funcionarios.length, totalVenc, totalDesc, totalLiq, ranking };
 }
 
+// Vencimentos individuais: cada pessoa/veículo vira um card grande (6 por tela),
+// vencidos primeiro e depois próximos a vencer — sem rolagem, legível de longe.
+function slideVencPages(c){
+  const base = { title: `<i class="fas ${c.icon}"></i> Vencimentos — ${c.label}`, categoria: c };
+  const semDados = !(typeof vencData !== 'undefined' && Array.isArray(vencData[c.key]) && vencData[c.key].length);
+  if (semDados) return [{ ...base, type: 'venc-single' }];
+  const det = slideVencDetalhe(c.key), PER = 6, pages = [];
+  const add = (itens, tipo) => {
+    const n = Math.ceil(itens.length / PER);
+    for (let i = 0; i < n; i++) pages.push({ ...base, type: 'venc-page', tipo, itens: itens.slice(i*PER, i*PER+PER),
+      pag: i+1, pags: n, totalItens: itens.length, sao30: det.proximosSao30 });
+  };
+  add(det.vencidos, 'vencido'); add(det.proximos, 'proximo');
+  return pages.length ? pages : [{ ...base, type: 'venc-single' }];
+}
+
 function slideBuildSlides(){
   // Conjunto completo: motorista + placa (cavalo) + carreta, sem cortar em 8 —
   // a tela cheia tem espaço de sobra e o pedido foi mostrar tudo de uma vez.
@@ -4273,10 +4289,7 @@ function slideBuildSlides(){
       lista: conjuntos
     },
     // 4) Vencimentos — separado em um slide por categoria
-    ...vencResumo.map(c => ({
-      title: `<i class="fas ${c.icon}"></i> Vencimentos — ${c.label}`,
-      type: 'venc-single', categoria: c
-    })),
+    ...vencResumo.flatMap(c => slideVencPages(c)),
     // 5) Controle de Velocidade — dividido em 2 partes para dar a ideia completa
     { title: '<i class="fas fa-gauge-high"></i> Controle de Velocidade (1/2) — Visão Geral', type: 'vel-resumo' },
     { title: '<i class="fas fa-gauge-high"></i> Controle de Velocidade (2/2) — Rankings e Ocorrências', type: 'vel-resumo-2' },
@@ -4544,6 +4557,25 @@ function slideRender(){
       requestAnimationFrame(() => body.classList.add('show'));
       slideRenderDots(slides, idx);
       slideAutoScroll(body);
+      return;
+    }
+    if (s.type === 'venc-page') {
+      const v = s.tipo === 'vencido', cor = v ? '#b91c1c' : '#b45309';
+      const fmtD = d => new Date(d).toLocaleDateString('pt-BR');
+      const cards = s.itens.map(a => {
+        const q = v ? `Vencido há ${Math.abs(a.dias)} dia(s)` : (a.dias <= 0 ? 'Vence hoje' : `Vence em ${a.dias} dia(s)`);
+        return `<div class="vx-card ${v ? 'is-vencido' : 'is-proximo'}">
+          <div class="vx-nome">${escapeHTML(a.nome || a.id || '—')}</div>
+          <div class="vx-placa"><i class="fas fa-truck"></i> ${escapeHTML(a.placa || '—')}${a.tipo === 'carreta' ? ' <span class="vx-tag">carreta</span>' : ''}</div>
+          <div class="vx-foot"><span class="vx-quando">${q}</span><span class="vx-data">${fmtD(a.data)}</span></div></div>`;
+      }).join('');
+      body.innerHTML = `<div class="slide-section-title">${s.title}</div>
+        <div class="vx-head" style="color:${cor}"><i class="fas ${v ? 'fa-exclamation-triangle' : 'fa-clock'}"></i>
+          ${v ? 'VENCIDOS — REGULARIZAR IMEDIATAMENTE' : (s.sao30 ? 'PRÓXIMOS A VENCER — 30 DIAS' : 'PRÓXIMOS A VENCER')}
+          <b>${s.totalItens}</b>${s.pags > 1 ? `<span class="vx-pag">${s.pag}/${s.pags}</span>` : ''}</div>
+        <div class="vx-grid">${cards}</div>`;
+      requestAnimationFrame(() => body.classList.add('show'));
+      slideRenderDots(slides, idx);
       return;
     }
     if (s.type === 'venc-single') {
@@ -18445,13 +18477,49 @@ document.getElementById('tvBtnOpen').addEventListener('click', function() {
 .mg-wipe.go i{animation:mgSweep 1s cubic-bezier(.7,0,.25,1) both;}
 .mg-wipe.go i:nth-child(2){animation-delay:.09s}
 @keyframes mgSweep{0%{opacity:1;transform:translateX(-55vw) skewX(-16deg)}100%{opacity:1;transform:translateX(112vw) skewX(-16deg)}}
+
+/* ── Legibilidade à distância: textos escuros, maiores e mais pesados ── */
+.slide-overlay{--text-lt:#334155;--accent-dk:#8a6508;color:#0b1220;}
+.slide-body{color:#0b1220;}
+.slide-kpi-lbl{font-size:1rem!important;font-weight:700!important;color:#1e293b!important;}
+.slide-kpi-card.is-danger .slide-kpi-val{color:#b91c1c!important}
+.slide-kpi-card.is-warning .slide-kpi-val{color:#b45309!important}
+.slide-kpi-card.is-ok .slide-kpi-val{color:#047857!important}
+.slide-venc-data,.slide-status-row.warning .n{color:#b45309}
+.slide-venc-row.is-vencido .slide-venc-data,.slide-status-row.danger .n{color:#b91c1c}
+.slide-status-row.ok .n{color:#047857}
+.slide-status-row,.slide-venc-sub{font-size:1rem!important;color:#1e293b!important;}
+.slide-venc-nome{font-size:1.25rem!important;color:#0b1220;}
+.slide-status-card-head{font-size:1.2rem!important;color:#0b1220!important;}
+.slide-db-year,.slide-brand .brand-sub{color:#1e293b!important;}
+.slide-db-weekday{color:#7a5806!important;}
+.slide-section-title{color:#0b1220!important;font-weight:700!important;font-size:1.9rem!important;}
+/* ── Vencimentos individuais ── */
+.vx-head{display:flex;align-items:center;justify-content:center;gap:.8rem;font-family:'Poppins',sans-serif;font-weight:800;font-size:1.6rem;letter-spacing:.5px;margin-bottom:1.1rem;}
+.vx-head b{color:#fff;background:#b45309;border-radius:40px;padding:0 1rem;line-height:1.5;}
+.vx-pag{font-family:'Inter',sans-serif;font-size:1.1rem;font-weight:700;color:#334155;}
+.vx-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;width:100%;max-width:1500px;}
+.vx-card{background:#fff;border-radius:20px;padding:1.4rem 1.5rem;text-align:left;border:2px solid rgba(180,83,9,.35);border-left:12px solid #d97706;box-shadow:0 10px 28px rgba(30,42,58,.10);display:flex;flex-direction:column;gap:.6rem;min-width:0;}
+.vx-card.is-vencido{border-color:rgba(185,28,28,.4);border-left-color:#dc2626;background:#fff7f7;}
+.vx-nome{font-family:'Poppins',sans-serif;font-weight:800;font-size:clamp(1.4rem,2.2vw,2.2rem);line-height:1.15;color:#0b1220;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.vx-placa{font-family:'Poppins',sans-serif;font-weight:700;font-size:clamp(1.2rem,1.8vw,1.7rem);letter-spacing:1px;color:#1e293b;}
+.vx-placa i{color:#8a6508;margin-right:.35rem}
+.vx-tag{font-size:.8rem;font-weight:800;text-transform:uppercase;padding:.1rem .5rem;border-radius:6px;background:#e2e8f0;color:#0b1220;letter-spacing:.6px;vertical-align:middle}
+.vx-foot{display:flex;justify-content:space-between;align-items:baseline;gap:.8rem;flex-wrap:wrap;margin-top:auto;padding-top:.6rem;border-top:2px solid rgba(15,23,42,.10);}
+.vx-quando{font-weight:800;font-size:clamp(1rem,1.4vw,1.35rem);color:#1e293b;}
+.vx-data{font-family:'Poppins',sans-serif;font-weight:800;font-size:clamp(1.3rem,2vw,2rem);color:#b45309;font-variant-numeric:tabular-nums;}
+.vx-card.is-vencido .vx-data,.vx-card.is-vencido .vx-quando{color:#b91c1c;}
+@media(max-width:1100px){.vx-grid{grid-template-columns:repeat(2,1fr)}}
+
 @media (prefers-reduced-motion:reduce){.slide-overlay *,.slide-overlay::before{animation:none!important}}
+.slide-body:has(.vx-card.is-vencido) .vx-head b{background:#b91c1c}
+:is(.slide-body.show .vx-card){animation:mgCard .85s cubic-bezier(.16,1,.3,1) both;animation-delay:calc(var(--i,0)*90ms + 250ms)}
 </style>
 <script id="mg-motion-js">
 (function(){
   var ov=document.getElementById('slideOverlay'),body=document.getElementById('slideBody');
   if(!ov||!body)return;
-  var SEL='.slide-kpi-card,.slide-status-card,.ig-bar-row,.slide-venc-row,.slide-hero-banner';
+  var SEL='.vx-card,.slide-kpi-card,.slide-status-card,.ig-bar-row,.slide-venc-row,.slide-hero-banner';
   var wipe=document.createElement('div');wipe.className='mg-wipe';wipe.innerHTML='<i></i><i></i>';ov.appendChild(wipe);
   function go(){wipe.classList.remove('go');void wipe.offsetWidth;wipe.classList.add('go');}
   // Dispara a varredura só quando o slide realmente troca (não em re-renders de dados)
