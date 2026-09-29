@@ -4255,6 +4255,102 @@ function slideVencPages(c){
   return pages.length ? pages : [{ ...base, type: 'venc-single' }];
 }
 
+// ── Banda de vencimentos: mostra vencidos + próximos de todas as categorias ──
+// Usada em cada slide individual (frota, baterias, velocidade, pneus etc.)
+// para manter o operador sempre informado sobre o status dos documentos.
+function slideVencBandaHTML(){
+  if (typeof VENC_CATEGORIAS === 'undefined' || typeof slideVencDetalhe !== 'function') return '';
+
+  const fmtD = d => new Date(d).toLocaleDateString('pt-BR');
+  const now = new Date(); now.setHours(0,0,0,0);
+
+  // Coleta todos vencidos e próximos de todas as categorias
+  const todosVencidos = [];
+  const todosProximos = [];
+
+  VENC_CATEGORIAS.forEach(cat => {
+    const det = slideVencDetalhe(cat.key);
+    det.vencidos.forEach(a => todosVencidos.push({ ...a, catLabel: cat.label, catIcon: cat.icon }));
+    det.proximos.forEach(a => todosProximos.push({ ...a, catLabel: cat.label, catIcon: cat.icon }));
+  });
+
+  // Inclui baterias vencidas como vencidos
+  const batDet = (typeof slideBateriasDetalhe === 'function') ? slideBateriasDetalhe() : null;
+  if (batDet) {
+    batDet.vencidos.forEach(a => todosVencidos.push({ ...a, catLabel: 'Bateria', catIcon: 'fa-battery-quarter' }));
+    batDet.proximos.forEach(a => todosProximos.push({ ...a, catLabel: 'Bateria', catIcon: 'fa-battery-quarter' }));
+  }
+
+  // Ordena: vencidos pelo mais antigo; próximos pelo mais urgente
+  todosVencidos.sort((a,b) => a.data - b.data);
+  todosProximos.sort((a,b) => a.data - b.data);
+
+  // Limita para caber na banda (TV 1080p)
+  const vList = todosVencidos.slice(0, 8);
+  const pList = todosProximos.slice(0, 8);
+
+  const renderItem = (a, tipo) => {
+    const cls = tipo === 'vencido' ? 'sv-vencido' : 'sv-proximo';
+    const diasTxt = tipo === 'vencido'
+      ? `Vencido há ${Math.abs(a.dias)} dia(s)`
+      : (a.dias <= 0 ? 'Vence hoje' : `Vence em ${a.dias} dia(s)`);
+    return `<div class="sv-item ${cls}">
+      <div class="sv-item-txt">
+        <div class="sv-item-nome">${escapeHTML(a.nome || a.id || '—')}</div>
+        <div class="sv-item-sub">
+          <i class="fas fa-truck" style="color:var(--accent-dk)"></i>
+          <span>${escapeHTML(a.placa || '—')}</span>
+          <span class="sv-item-cat"><i class="fas ${a.catIcon || 'fa-file'}"></i> ${escapeHTML(a.catLabel || '')}</span>
+          <span>${diasTxt}</span>
+        </div>
+      </div>
+      <span class="sv-item-data">${fmtD(a.data)}</span>
+    </div>`;
+  };
+
+  const totalV = todosVencidos.length, totalP = todosProximos.length;
+
+  // Se tudo em dia
+  if (!totalV && !totalP) {
+    return `<div class="sv-banda">
+      <div class="sv-banda-hd"><i class="fas fa-shield-check"></i> VENCIMENTOS
+        <span class="sv-hd-tip">Todas as categorias monitoradas</span>
+      </div>
+      <div class="sv-banda-empty"><i class="fas fa-circle-check" style="color:#10b981;font-size:1.1rem"></i>
+        Todos os documentos estão em dia — nenhum vencido ou a vencer em 30 dias.
+      </div>
+    </div>`;
+  }
+
+  const colVenc = totalV ? `<div class="sv-banda-col col-vencido">
+    <div class="sv-banda-col-hd">
+      <i class="fas fa-exclamation-triangle"></i> VENCIDOS
+      <span class="sv-cnt cnt-v">${totalV}</span>
+    </div>
+    ${vList.map(a => renderItem(a,'vencido')).join('')}
+    ${totalV > 8 ? `<div style="font-size:.7rem;font-weight:700;color:#991b1b;padding:.2rem .3rem">+ ${totalV - 8} item(ns) adicionais</div>` : ''}
+  </div>` : '';
+
+  const colProx = totalP ? `<div class="sv-banda-col col-proximo">
+    <div class="sv-banda-col-hd">
+      <i class="fas fa-clock"></i> PRÓXIMOS 30 DIAS
+      <span class="sv-cnt cnt-p">${totalP}</span>
+    </div>
+    ${pList.map(a => renderItem(a,'proximo')).join('')}
+    ${totalP > 8 ? `<div style="font-size:.7rem;font-weight:700;color:#92400e;padding:.2rem .3rem">+ ${totalP - 8} item(ns) adicionais</div>` : ''}
+  </div>` : '';
+
+  return `<div class="sv-banda">
+    <div class="sv-banda-hd">
+      <i class="fas fa-calendar-exclamation"></i> VENCIMENTOS
+      <span class="sv-hd-tip">Monitoramento em tempo real · Todas as categorias</span>
+    </div>
+    <div class="sv-banda-body">
+      ${colVenc}${colProx}
+    </div>
+  </div>`;
+}
+
 function slideBuildSlides(){
   // Conjunto completo: motorista + placa (cavalo) + carreta, sem cortar em 8 —
   // a tela cheia tem espaço de sobra e o pedido foi mostrar tudo de uma vez.
@@ -4497,9 +4593,11 @@ function slideRender(){
       }).join('');
       body.innerHTML = `<div class="slide-section-title">${s.title}</div>
         <div class="ig-exec">${cards.map(slideKpiCard).join('')}</div>
-        <div class="ig-bars"><div class="ig-bars-head"><i class="fas fa-calendar-check" style="color:var(--accent-dk)"></i> Situação dos Vencimentos por Categoria</div>${linhas}</div>`;
+        <div class="ig-bars"><div class="ig-bars-head"><i class="fas fa-calendar-check" style="color:var(--accent-dk)"></i> Situação dos Vencimentos por Categoria</div>${linhas}</div>
+        ${slideVencBandaHTML()}`;
       requestAnimationFrame(() => body.classList.add('show'));
       slideRenderDots(slides, idx);
+      slideAutoScroll(body);
       return;
     }
     if (s.type === 'fin-resumo') {
@@ -4525,7 +4623,7 @@ function slideRender(){
     if (s.type === 'frota-list') {
       const totalConj = (s.lista||[]).length;
       body.innerHTML = `<div class="slide-section-title">${s.title} <span style="font-size:1rem;font-weight:500;color:var(--text-lt);margin-left:.5rem">${totalConj} conjunto${totalConj!==1?'s':''}</span></div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:.65rem;max-width:1280px;width:100%;overflow-y:auto;max-height:calc(100vh - 320px);padding-right:.4rem">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:.65rem;max-width:1280px;width:100%;overflow-y:auto;max-height:calc(100vh - 440px);padding-right:.4rem">
           ${(s.lista||[]).map(c=>`<div style="background:#fffefb;border:1px solid rgba(139,115,85,.14);border-radius:14px;padding:.75rem 1rem;text-align:left;box-shadow:0 4px 14px rgba(30,42,58,.04)">
             <div style="font-family:'Poppins',system-ui,sans-serif;font-weight:700;font-size:.88rem;color:#1c2333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:.3rem">${c.motorista}</div>
             <div style="font-family:'Inter',sans-serif;font-size:.76rem;color:var(--text-lt);display:flex;gap:.9rem;flex-wrap:wrap">
@@ -4533,7 +4631,8 @@ function slideRender(){
               <span><i class="fas fa-truck-ramp-box" style="color:var(--accent-dk)"></i> ${c.carreta}</span>
             </div>
           </div>`).join('')}
-        </div>`;
+        </div>
+        ${slideVencBandaHTML()}`;
       requestAnimationFrame(() => body.classList.add('show'));
       slideRenderDots(slides, idx);
       return;
@@ -4546,13 +4645,15 @@ function slideRender(){
           <div class="slide-status-card" style="max-width:520px;width:100%;text-align:center;color:var(--text-lt)">
             <i class="fas fa-spinner fa-spin" style="font-size:1.4rem;margin-bottom:.6rem;display:block"></i>
             Carregando baterias...
-          </div>`;
+          </div>
+          ${slideVencBandaHTML()}`;
       } else {
         body.innerHTML = `<div class="slide-section-title">${s.title}</div>${kpiHTML}
           <div style="max-width:1180px;width:100%;display:flex;flex-direction:column;gap:1rem">
             ${slideVencCardHTML({ tipo:'vencido', titulo:'Vencidas — Trocar Imediatamente', itens: det.vencidos, vazio:'Nenhuma bateria vencida' })}
             ${slideVencCardHTML({ tipo:'proximo', titulo:'Próximas a Vencer — até 3 meses', itens: det.proximos, vazio:'Nenhuma bateria vencendo nos próximos 3 meses.' })}
-          </div>`;
+          </div>
+          ${slideVencBandaHTML()}`;
       }
       requestAnimationFrame(() => body.classList.add('show'));
       slideRenderDots(slides, idx);
@@ -4576,6 +4677,7 @@ function slideRender(){
         <div class="vx-grid">${cards}</div>`;
       requestAnimationFrame(() => body.classList.add('show'));
       slideRenderDots(slides, idx);
+      slideAutoScroll(body);
       return;
     }
     if (s.type === 'venc-single') {
@@ -4653,9 +4755,11 @@ function slideRender(){
           <div class="slide-status-rows">
             ${d.rankingMotivos.map(([motivo,qtd]) => `<div class="slide-status-row"><span>${escapeHTML(motivo)}</span><span class="n">${qtd}</span></div>`).join('')}
           </div>
-        </div>` : `<div class="slide-status-card" style="max-width:520px;width:100%;text-align:center;color:var(--text-lt)">Sem desligamentos nos últimos 12 meses.</div>`}`;
+        </div>` : `<div class="slide-status-card" style="max-width:520px;width:100%;text-align:center;color:var(--text-lt)">Sem desligamentos nos últimos 12 meses.</div>`}
+        ${slideVencBandaHTML()}`;
       requestAnimationFrame(() => body.classList.add('show'));
       slideRenderDots(slides, idx);
+      slideAutoScroll(body);
       return;
     }
     if (s.type === 'vel-resumo' || s.type === 'vel-resumo-2') {
@@ -4703,9 +4807,11 @@ function slideRender(){
           </div>
           <div style="margin-top:1rem;font-family:'Inter',sans-serif;font-size:.8rem;color:var(--text-lt)">
             <i class="fas fa-arrow-right" style="color:var(--accent-dk)"></i> Continua no próximo slide: rankings de motoristas, placas e maiores velocidades
-          </div>`;
+          </div>
+          ${slideVencBandaHTML()}`;
         requestAnimationFrame(() => body.classList.add('show'));
         slideRenderDots(slides, idx);
+        slideAutoScroll(body);
         return;
       }
 
@@ -4738,9 +4844,11 @@ function slideRender(){
               <span style="color:var(--text-lt);font-size:.74rem;word-break:break-word">${escapeHTML(o.data)} · ${escapeHTML(o.local)}</span>
             </div>`).join('')}
           </div>
-        </div>` : ''}`;
+        </div>` : ''}
+        ${slideVencBandaHTML()}`;
       requestAnimationFrame(() => body.classList.add('show'));
       slideRenderDots(slides, idx);
+      slideAutoScroll(body);
       return;
     }
     if (s.type === 'pneu-resumo') {
@@ -4778,16 +4886,19 @@ function slideRender(){
               <div class="slide-status-row"><span>Marca</span><span class="n">${escapeHTML(d.pior.marca)}</span></div>
             </div>
           </div>` : ''}
-        </div>`;
+        </div>
+        ${slideVencBandaHTML()}`;
       requestAnimationFrame(() => body.classList.add('show'));
       slideRenderDots(slides, idx);
+      slideAutoScroll(body);
       return;
     }
     if (s.type === 'jornada-resumo') {
       const d = slideJornadaResumo();
       if (!d) {
         body.innerHTML = `<div class="slide-section-title">${s.title}</div>
-          <div class="slide-status-card" style="max-width:520px;width:100%;text-align:center;color:var(--text-lt)">Sem dados de folha importados ainda.</div>`;
+          <div class="slide-status-card" style="max-width:520px;width:100%;text-align:center;color:var(--text-lt)">Sem dados de folha importados ainda.</div>
+          ${slideVencBandaHTML()}`;
         requestAnimationFrame(() => body.classList.add('show'));
         slideRenderDots(slides, idx);
         return;
@@ -4804,9 +4915,11 @@ function slideRender(){
           <div class="slide-status-rows">
             ${d.ranking.map(([nome,valor]) => `<div class="slide-status-row"><span style="max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHTML(nome)}">${escapeHTML(nome)}</span><span class="n" style="color:var(--accent-dk)">${fmtMoney(valor)}</span></div>`).join('')}
           </div>
-        </div>` : ''}`;
+        </div>` : ''}
+        ${slideVencBandaHTML()}`;
       requestAnimationFrame(() => body.classList.add('show'));
       slideRenderDots(slides, idx);
+      slideAutoScroll(body);
       return;
     }
     if (s.type === 'consumo-melhores' || s.type === 'consumo-piores') {
@@ -4869,9 +4982,11 @@ function slideRender(){
               </div>
               <div style="font-family:'Poppins',sans-serif;font-size:1.45rem;font-weight:800;color:${corValor};white-space:nowrap">${escapeHTML(item.valor)}</div>
             </div>`).join('')}
-        </div>`;
+        </div>
+        ${slideVencBandaHTML()}`;
       requestAnimationFrame(() => body.classList.add('show'));
       slideRenderDots(slides, idx);
+      slideAutoScroll(body);
       return;
     }
     body.innerHTML = `<div class="slide-section-title">${s.title}</div>
@@ -18510,6 +18625,87 @@ document.getElementById('tvBtnOpen').addEventListener('click', function() {
 .vx-data{font-family:'Poppins',sans-serif;font-weight:800;font-size:clamp(1.3rem,2vw,2rem);color:#b45309;font-variant-numeric:tabular-nums;}
 .vx-card.is-vencido .vx-data,.vx-card.is-vencido .vx-quando{color:#b91c1c;}
 @media(max-width:1100px){.vx-grid{grid-template-columns:repeat(2,1fr)}}
+
+/* ── BANDA DE VENCIMENTOS — exibida em cada slide individual ── */
+.sv-banda{
+  width:100%;max-width:1500px;margin-top:.9rem;
+  background:#fff;border:2px solid rgba(139,115,85,.18);
+  border-radius:18px;overflow:hidden;
+  box-shadow:0 6px 22px rgba(30,42,58,.09);
+  flex-shrink:0;
+}
+.sv-banda-hd{
+  display:flex;align-items:center;gap:.55rem;
+  padding:.55rem 1.1rem;
+  background:linear-gradient(90deg,#1e2a3a,#2d3748);
+  font-family:'Poppins',sans-serif;font-weight:700;font-size:.8rem;
+  color:#fff;letter-spacing:.8px;text-transform:uppercase;
+}
+.sv-banda-hd i{color:var(--accent);font-size:.95rem;}
+.sv-banda-hd .sv-hd-tip{margin-left:auto;font-family:'Inter',sans-serif;font-size:.7rem;font-weight:600;color:rgba(255,255,255,.6);letter-spacing:.4px;text-transform:none;}
+.sv-banda-body{
+  display:flex;flex-wrap:wrap;gap:0;
+  border-top:2px solid rgba(139,115,85,.12);
+}
+.sv-banda-col{
+  flex:1;min-width:240px;padding:.6rem .85rem;
+  display:flex;flex-direction:column;gap:.35rem;
+  border-right:1px solid rgba(139,115,85,.12);
+}
+.sv-banda-col:last-child{border-right:none;}
+.sv-banda-col-hd{
+  font-family:'Poppins',sans-serif;font-weight:800;font-size:.72rem;
+  letter-spacing:1px;text-transform:uppercase;margin-bottom:.1rem;
+  display:flex;align-items:center;gap:.35rem;
+}
+.sv-banda-col.col-vencido .sv-banda-col-hd{color:#991b1b;}
+.sv-banda-col.col-proximo .sv-banda-col-hd{color:#92400e;}
+.sv-banda-col.col-ok .sv-banda-col-hd{color:#065f46;}
+.sv-item{
+  display:flex;align-items:center;gap:.5rem;
+  padding:.3rem .5rem;border-radius:9px;min-width:0;
+  border-left:4px solid transparent;
+}
+.sv-item.sv-vencido{
+  background:#fef2f2;border-left-color:#dc2626;
+}
+.sv-item.sv-proximo{
+  background:#fffbeb;border-left-color:#d97706;
+}
+.sv-item-txt{flex:1;min-width:0;}
+.sv-item-nome{
+  font-family:'Poppins',sans-serif;font-weight:800;font-size:.8rem;
+  color:#0b1220;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.sv-item.sv-vencido .sv-item-nome{color:#7f1d1d;}
+.sv-item-sub{
+  font-family:'Inter',sans-serif;font-size:.68rem;font-weight:600;
+  color:#374151;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;
+}
+.sv-item-cat{
+  font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;
+  padding:.05rem .35rem;border-radius:5px;
+  background:rgba(139,115,85,.15);color:#5a3e1b;
+}
+.sv-item-data{
+  font-family:'Poppins',sans-serif;font-weight:800;font-size:.78rem;
+  white-space:nowrap;flex-shrink:0;
+}
+.sv-item.sv-vencido .sv-item-data{color:#b91c1c;}
+.sv-item.sv-proximo .sv-item-data{color:#b45309;}
+.sv-banda-empty{
+  width:100%;padding:.55rem 1rem;font-family:'Inter',sans-serif;
+  font-size:.78rem;font-weight:700;color:#065f46;
+  display:flex;align-items:center;gap:.5rem;
+}
+.sv-cnt{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:20px;height:20px;border-radius:10px;padding:0 6px;
+  font-size:.68rem;font-weight:800;margin-left:auto;
+}
+.sv-cnt.cnt-v{background:#fee2e2;color:#991b1b;}
+.sv-cnt.cnt-p{background:#fef3c7;color:#92400e;}
+.sv-cnt.cnt-ok{background:#d1fae5;color:#065f46;}
 
 @media (prefers-reduced-motion:reduce){.slide-overlay *,.slide-overlay::before{animation:none!important}}
 .slide-body:has(.vx-card.is-vencido) .vx-head b{background:#b91c1c}
