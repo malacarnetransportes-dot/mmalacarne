@@ -4674,7 +4674,8 @@ function slideRender(){
         <div class="vx-head" style="color:${cor}"><i class="fas ${v ? 'fa-exclamation-triangle' : 'fa-clock'}"></i>
           ${v ? 'VENCIDOS — REGULARIZAR IMEDIATAMENTE' : (s.sao30 ? 'PRÓXIMOS A VENCER — 30 DIAS' : 'PRÓXIMOS A VENCER')}
           <b>${s.totalItens}</b>${s.pags > 1 ? `<span class="vx-pag">${s.pag}/${s.pags}</span>` : ''}</div>
-        <div class="vx-grid">${cards}</div>`;
+        <div class="vx-grid">${cards}</div>
+        ${slideVencBandaHTML()}`;
       requestAnimationFrame(() => body.classList.add('show'));
       slideRenderDots(slides, idx);
       slideAutoScroll(body);
@@ -13453,29 +13454,29 @@ function copiarSenha(senha, sistema) {
 // FROTA / MOTORISTAS
 // ═══════════════════════════════════════════════════════════
 const FROTA_DATA = [
-  // ── MOTORISTAS ATIVOS (conjunto vigente desde 01/09/2026 — ver
+  // ── MOTORISTAS ATIVOS (conjunto vigente desde 29/09/2026 — ver
   // HISTORICO_CONJUNTOS abaixo pro que valia antes disso) ──
   // Campos cavaloMarca/cavaloModelo/cavaloAno e carretaMarca/carretaAno/refrigMarca/refrigModelo/refrigAno
   // seguem a PLACA (são do veículo físico), não do motorista — por isso não mudam quando só o motorista troca.
   {motorista:'ADRIANO VAZ DOS SANTOS',     placa:'RYE7J26', carreta:'QJH0591',                  paletes:'28', celular:'46 - 99983-7772', cpf:'023.114.919-03',
     cavaloMarca:'SCANIA', cavaloModelo:'SCANIA/R450 A6X2', cavaloAno:2022, carretaMarca:'RANDON', carretaAno:2018, refrigMarca:'THERMOKING', refrigModelo:'SLX 400i', refrigAno:2018},
-  {motorista:'ANDERSON PANDOLFO',          placa:'QJC0B40', carreta:'MLB0J76',                  paletes:'28', celular:'', cpf:'',
+  {motorista:'ANDERSON PANDOLFO',          placa:'QJC0B40', carreta:'MLB0J76',                  paletes:'28', celular:'49 - 99180-7327', cpf:'105.041.329-62',
     cavaloMarca:'SCANIA', cavaloModelo:'SCANIA / RH 400 A6X2', cavaloAno:2018, carretaMarca:'FACCHINI', carretaAno:2013, refrigMarca:'THERMOKING', refrigModelo:'SB210', refrigAno:2014},
   {motorista:'ANDERSON VEIGA SANTOS',       placa:'QTM0G30', carreta:'RYQ7I03 — 30 pal. Van',    paletes:'30', celular:'42 - 99832-0501', cpf:'012.273.449-10',
     cavaloMarca:'VOLVO', cavaloModelo:'VOLVO / FH 460 6X2T', cavaloAno:'2019/2020', carretaMarca:'RANDON', carretaAno:2023, refrigMarca:'CARRIER', refrigModelo:'X4 7500', refrigAno:2023},
-  {motorista:'ANDRE ALEXSANDRO DE ARAUJO', placa:'QIG7598', carreta:'RXQ4H32',                  paletes:'28', celular:'', cpf:'',
+  {motorista:'ANDRE ALEXSANDRO DE ARAUJO', placa:'QIG7598', carreta:'RXQ4H32',                  paletes:'28', celular:'41 - 99671-1003', cpf:'077.067.029-60',
     cavaloMarca:'IVECO', cavaloModelo:'IVECO / HI WAY STRALIS 600 S44T', cavaloAno:2018, carretaMarca:'RANDON', carretaAno:2018, refrigMarca:'THERMOKING', refrigModelo:'SB200', refrigAno:null},
   {motorista:'CRISTIANO DE ALMEIDA',        placa:'QJA0E90', carreta:'OKD8A19',                  paletes:'28', celular:'49 - 99110-7517', cpf:'029.395.799-11',
     cavaloMarca:'SCANIA', cavaloModelo:'SCANIA / RH 400 A6X2', cavaloAno:2018, carretaMarca:'', carretaAno:null, refrigMarca:'', refrigModelo:'', refrigAno:null}, // OKD8A19: specs da carreta ainda não cadastradas
-  {motorista:'DIRCEU LOPES VIEIRA',         placa:'RAC4780', carreta:'MGG7C96 — 30 pal. Van',    paletes:'30', celular:'', cpf:'',
+  {motorista:'DIRCEU LOPES VIEIRA',         placa:'RAC4780', carreta:'MGG7C96 — 30 pal. Van',    paletes:'30', celular:'46 - 98809-7586', cpf:'773.528.909-04',
     cavaloMarca:'VOLVO', cavaloModelo:'VOLVO / FH 460 6X2T', cavaloAno:'2019/2020', carretaMarca:'RANDON', carretaAno:2010, refrigMarca:'CARRIER', refrigModelo:'X 1800', refrigAno:2010},
   {motorista:'ERI ORLANDO ROMERO',          placa:'RLB3E46', carreta:'IWV8B19',                  paletes:'28', celular:'92 - 99220-9993', cpf:'706.920.112-50',
     cavaloMarca:'SCANIA', cavaloModelo:'SCANIA/R450 A6X2', cavaloAno:2021, carretaMarca:'NOMA', carretaAno:2016, refrigMarca:'CARRIER', refrigModelo:'X 2100', refrigAno:2016},
-  {motorista:'ERNANI PAULO HEPP',           placa:'RLB3C26', carreta:'MKB0A39 — 30 pal. Van',    paletes:'30', celular:'', cpf:'',
+  {motorista:'ERNANI PAULO HEPP',           placa:'RLB3C26', carreta:'MKB0A39 — 30 pal. Van',    paletes:'30', celular:'49 - 99976-0882', cpf:'500.801.800-00',
     cavaloMarca:'SCANIA', cavaloModelo:'SCANIA/R450 A6X2', cavaloAno:2021, carretaMarca:'RANDON', carretaAno:2011, refrigMarca:'THERMOKING', refrigModelo:'SB210', refrigAno:2012},
   {motorista:'HILDO ANTONIO ALMEIDA',       placa:'QJY0640', carreta:'QHI5B08',                  paletes:'28', celular:'49 - 99913-6578', cpf:'394.955.669-91',
     cavaloMarca:'IVECO', cavaloModelo:'IVECO / HI WAY STRALIS 600 S44T', cavaloAno:2019, carretaMarca:'FACCHINI', carretaAno:2016, refrigMarca:'THERMOKING', refrigModelo:'SB300', refrigAno:2016},
-  {motorista:'JOSIAS FERREIRA DOS SANTOS',  placa:'QTM0E20', carreta:'QIW2885',                  paletes:'28', celular:'41 - 99782-7246', cpf:'035.686.699-86',
+  {motorista:'JOSIAS FERREIRA DOS SANTOS',  placa:'QTM0E20', carreta:'RDS9G71',                  paletes:'28', celular:'41 - 99782-7246', cpf:'035.686.699-86',
     cavaloMarca:'VOLVO', cavaloModelo:'VOLVO / FH 460 6X2T', cavaloAno:'2019/2020', carretaMarca:'RANDON', carretaAno:2018, refrigMarca:'THERMOKING', refrigModelo:'SLX 400i', refrigAno:2018},
   {motorista:'LEANDRO L KLEE',              placa:'RYE7J76', carreta:'RLO9G15',                  paletes:'28', celular:'49 - 99910-0398', cpf:'038.197.969-59',
     cavaloMarca:'SCANIA', cavaloModelo:'SCANIA/R450 A6X2', cavaloAno:2022, carretaMarca:'RANDON', carretaAno:2021, refrigMarca:'CARRIER', refrigModelo:'X4 7500', refrigAno:2021},
@@ -13483,10 +13484,12 @@ const FROTA_DATA = [
     cavaloMarca:'SCANIA', cavaloModelo:'SCANIA/R450 A6X2', cavaloAno:2021, carretaMarca:'RANDON', carretaAno:2014, refrigMarca:'THERMOKING', refrigModelo:'SB300', refrigAno:2014},
   {motorista:'RODRIGO DA ROSA',             placa:'RYE7J36', carreta:'RDS9H31',                  paletes:'30', celular:'49 - 99922-8442', cpf:'944.742.309-49',
     cavaloMarca:'SCANIA', cavaloModelo:'SCANIA/R450 A6X2', cavaloAno:2022, carretaMarca:'RANDON', carretaAno:2020, refrigMarca:'CARRIER', refrigModelo:'X4 7500', refrigAno:2020},
+  {motorista:'WALDEVINO SOARES DE LIMA',    placa:'QJM1350', carreta:'QIW2885',                  paletes:'28', celular:'41 - 99928-6914', cpf:'054.582.649-75',
+    cavaloMarca:'', cavaloModelo:'', cavaloAno:null, carretaMarca:'', carretaAno:null, refrigMarca:'', refrigModelo:'', refrigAno:null},
   // ── VEÍCULOS PARADOS ──
   {motorista:'—',                           placa:'QJL8F70', carreta:'RXS3D84',                  paletes:'28', celular:'49 - 99927-1817', cpf:'560.043.389-15',
     cavaloMarca:'IVECO', cavaloModelo:'IVECO / HI WAY STRALIS 600 S44T', cavaloAno:2019, carretaMarca:'FACCHINI', carretaAno:2022, refrigMarca:'THERMOKING', refrigModelo:'SB 190', refrigAno:2022},
-  {motorista:'—',                           placa:'RAC4760', carreta:'RDS9G71',                  paletes:'28', celular:'',               cpf:'',
+  {motorista:'—',                           placa:'RAC4760', carreta:'QIW2885',                  paletes:'28', celular:'',               cpf:'',
     cavaloMarca:'VOLVO', cavaloModelo:'VOLVO / FH 460 6X2T', cavaloAno:'2019/2020', carretaMarca:'RANDON', carretaAno:2020, refrigMarca:'CARRIER', refrigModelo:'X4 7500', refrigAno:2020},
   {motorista:'—',                           placa:'MKQ1A80', carreta:'MME7C92',                  paletes:'28', celular:'',               cpf:'',
     cavaloMarca:'SCANIA', cavaloModelo:'SCANIA / G 400 A6X2', cavaloAno:2012, carretaMarca:'FACCHINI', carretaAno:2019, refrigMarca:'THERMOKING', refrigModelo:'SB190', refrigAno:2018},
@@ -13517,6 +13520,14 @@ const HISTORICO_CONJUNTOS = [
       { motorista:'CRISTIANO DE ALMEIDA', cavaloAntes:'QIG7598', carretaAntes:'RXQ4H32', cavaloDepois:'QJA0E90', carretaDepois:'OKD8A19' } // conjunto novo inteiro
     ],
     observacao: 'RAFAEL DE FRANÇA RAMOS, GILSON MARGOTTI e JORGE ODAIR LOPES saem da lista de motoristas ativos nesta data.'
+  },
+  {
+    vigenciaDesde: '2026-09-29',
+    trocas: [
+      { motorista:'JOSIAS FERREIRA DOS SANTOS', cavalo:'QTM0E20', carretaAntes:'QIW2885', carretaDepois:'RDS9G71' },
+      { motorista:'WALDEVINO SOARES DE LIMA',   cavalo:'QJM1350', carreta:'QIW2885', motoristaAntes:'—', motoristaDepois:'WALDEVINO SOARES DE LIMA' }
+    ],
+    observacao: 'WALDEVINO entra com QJM1350+QIW2885. JOSIAS troca carreta QIW2885 → RDS9G71. Celular e CPF preenchidos: ANDERSON PANDOLFO, ANDRE ALEXSANDRO, DIRCEU, ERNANI.'
   }
 ];
 
