@@ -4124,7 +4124,7 @@ function slideBateriasDetalhe(){
   const colData    = findCol(headers, ['vencimento','data','validade','troca','substituicao','proxima']);
   if (!colData) return { vencidos: [], proximos: [] };
   const now = new Date(); now.setHours(0,0,0,0);
-  const em90 = new Date(now); em90.setDate(em90.getDate() + 90);
+  const em90 = new Date(now); em90.setDate(em90.getDate() + (GV_SOMENTE_VENCIMENTOS ? 30 : 90));
   const vencidos = [], proximos = [];
   dedupePorPlaca(bateriasData, colVeiculo, colData).forEach(row => {
     const d = parseDate(row[colData]);
@@ -4182,8 +4182,8 @@ function slideVencDetalhe(catKey){
   futuros.sort((a,b) => a.data - b.data);
 
   // Se não há nada vencendo em 30 dias, mostra os 5 próximos a vencer
-  const proximos = prox30.length ? prox30 : futuros.slice(0,5);
-  return { vencidos, proximos, proximosSao30: prox30.length > 0 };
+  const proximos = GV_SOMENTE_VENCIMENTOS ? prox30 : (prox30.length ? prox30 : futuros.slice(0,5));
+  return { vencidos, proximos, proximosSao30: GV_SOMENTE_VENCIMENTOS ? true : prox30.length > 0 };
 }
 
 // Resumo de Pneus: varre PNEU_DATA (+ ajustes salvos no localStorage)
@@ -4244,7 +4244,7 @@ function slideJornadaResumo(){
 function slideVencPages(c){
   const base = { title: `<i class="fas ${c.icon}"></i> Vencimentos — ${c.label}`, categoria: c };
   const semDados = !(typeof vencData !== 'undefined' && Array.isArray(vencData[c.key]) && vencData[c.key].length);
-  if (semDados) return [{ ...base, type: 'venc-single' }];
+  if (semDados) return GV_SOMENTE_VENCIMENTOS ? [] : [{ ...base, type: 'venc-single' }];
   const det = slideVencDetalhe(c.key), PER = 6, pages = [];
   const add = (itens, tipo) => {
     const n = Math.ceil(itens.length / PER);
@@ -4252,13 +4252,18 @@ function slideVencPages(c){
       pag: i+1, pags: n, totalItens: itens.length, sao30: det.proximosSao30 });
   };
   add(det.vencidos, 'vencido'); add(det.proximos, 'proximo');
-  return pages.length ? pages : [{ ...base, type: 'venc-single' }];
+  return pages.length ? pages : (GV_SOMENTE_VENCIMENTOS ? [] : [{ ...base, type: 'venc-single' }]);
 }
 
 // ── Banda de vencimentos: mostra vencidos + próximos de todas as categorias ──
 // Usada em cada slide individual (frota, baterias, velocidade, pneus etc.)
 // para manter o operador sempre informado sobre o status dos documentos.
+// Gestão à Vista enxuta: só VENCIDOS e PRÓXIMOS 30 DIAS. Para voltar ao painel
+// completo (previsão, frota, velocidade, pneus, consumo + banda), use false.
+const GV_SOMENTE_VENCIMENTOS = true;
+
 function slideVencBandaHTML(){
+  if (GV_SOMENTE_VENCIMENTOS) return '';
   if (typeof VENC_CATEGORIAS === 'undefined' || typeof slideVencDetalhe !== 'function') return '';
 
   const fmtD = d => new Date(d).toLocaleDateString('pt-BR');
@@ -4365,27 +4370,35 @@ function slideBuildSlides(){
   const totalVencidos = vencResumo.reduce((s,v)=>s+v.vencidos,0);
   const totalProximos = vencResumo.reduce((s,v)=>s+v.proximos,0);
 
+  const EX = !GV_SOMENTE_VENCIMENTOS;
+  const vencPages = vencResumo.flatMap(c => slideVencPages(c));
+  const batV = parseInt(slideText('bat-vencidas','0')), batP = parseInt(slideText('bat-proximas','0'));
+  const mostraBat = EX || isNaN(batV) || isNaN(batP) || batV > 0 || batP > 0;
+  const carregando = vencResumo.some(c => !(typeof vencData !== 'undefined' && Array.isArray(vencData[c.key]) && vencData[c.key].length));
   return [
     // 1) Previsão do Tempo — Concórdia SC (semana)
-    { title: '<i class="fas fa-cloud-sun"></i> Previsão do Tempo — Concórdia/SC', type: 'weather-concordia' },
+    ...(EX ? [{ title: '<i class="fas fa-cloud-sun"></i> Previsão do Tempo — Concórdia/SC', type: 'weather-concordia' }] : []),
     // 1b) Painel Executivo (infográfico): números-chave + barras por categoria
     { title: '<i class="fas fa-chart-pie"></i> Painel Executivo — Visão do Dia', type: 'exec-painel',
       vencResumo, totalVencidos, totalProximos, conjuntos: conjuntos.length },
-    // 2) Baterias — destaca em vermelho se houver vencidas
-    { title: '<i class="fas fa-battery-three-quarters"></i> Baterias', type: 'bat-single', kpis: [
+    // 2) Baterias — só vencidas e próximas 30 dias
+    ...(mostraBat ? [{ title: '<i class="fas fa-battery-three-quarters"></i> Baterias', type: 'bat-single', kpis: EX ? [
         { val: slideText('bat-total','—'), lbl: 'Total Baterias' },
         { val: slideText('bat-vencidas','—'), lbl: 'Vencidas', danger: true },
         { val: slideText('bat-proximas','—'), lbl: 'Próx. 30 dias', warning: true },
         { val: slideText('bat-proximas60','—'), lbl: 'Próx. 2 meses', warning: true },
         { val: slideText('bat-proximas90','—'), lbl: 'Próx. 3 meses', warning: true },
         { val: slideText('bat-ok','—'), lbl: 'Em Dia', ok: true },
-    ]},
+      ] : [
+        { val: slideText('bat-vencidas','—'), lbl: 'Vencidas', danger: true },
+        { val: slideText('bat-proximas','—'), lbl: 'Próx. 30 dias', warning: true },
+      ]}] : []),
     // 3) Frota / Motoristas — apenas conjuntos (cavalo + carreta) por motorista
-    { title: '<i class="fas fa-id-card"></i> Frota / Motoristas', type: 'frota-list',
-      lista: conjuntos
-    },
+    ...(EX ? [{ title: '<i class="fas fa-id-card"></i> Frota / Motoristas', type: 'frota-list', lista: conjuntos }] : []),
     // 4) Vencimentos — separado em um slide por categoria
-    ...vencResumo.flatMap(c => slideVencPages(c)),
+    ...vencPages,
+    ...((!EX && !vencPages.length && !mostraBat) || (!vencPages.length && !mostraBat) ? [{ title: '<i class="fas fa-calendar-check"></i> Vencimentos', type: 'venc-ok', carregando }] : []),
+    ...(EX ? [
     // 5) Controle de Velocidade — dividido em 2 partes para dar a ideia completa
     { title: '<i class="fas fa-gauge-high"></i> Controle de Velocidade (1/2) — Visão Geral', type: 'vel-resumo' },
     { title: '<i class="fas fa-gauge-high"></i> Controle de Velocidade (2/2) — Rankings e Ocorrências', type: 'vel-resumo-2' },
@@ -4395,6 +4408,7 @@ function slideBuildSlides(){
     { title: '<i class="fas fa-gas-pump"></i> Consumo de Combustível — Melhores Médias (km/L) · Mês Vigente', type: 'consumo-melhores' },
     // 8) Ranking de Consumo de COMBUSTÍVEL — Piores Cavalos
     { title: '<i class="fas fa-gas-pump"></i> Consumo de Combustível — Piores Médias (km/L) · Mês Vigente', type: 'consumo-piores' },
+    ] : []),
   ];
 }
 
@@ -4578,25 +4592,23 @@ function slideRender(){
       return;
     }
     if (s.type === 'exec-painel') {
-      let mesTxt = '—';
-      try { mesTxt = fmtMoney(slideFinResumo().totalMes); } catch(e) {}
-      const bat = { v: parseInt(slideText('bat-vencidas','0'))||0 };
+      const bat = { v: parseInt(slideText('bat-vencidas','0'))||0, p: parseInt(slideText('bat-proximas','0'))||0 };
       const cards = [
-        { val: s.totalVencidos + bat.v, lbl: 'Vencidos (Venc. + Baterias)', danger: true, icon: 'fa-triangle-exclamation' },
-        { val: s.totalProximos, lbl: 'A vencer em 30 dias', warning: true, icon: 'fa-clock' },
-        { val: mesTxt, lbl: 'Despesas do Mês', icon: 'fa-wallet' },
-        { val: s.conjuntos, lbl: 'Conjuntos em Operação', ok: true, icon: 'fa-truck' }
+        { val: s.totalVencidos + bat.v, lbl: 'Vencidos', danger: true, icon: 'fa-triangle-exclamation' },
+        { val: s.totalProximos + bat.p, lbl: 'A vencer em 30 dias', warning: true, icon: 'fa-clock' }
       ];
-      const linhas = s.vencResumo.map(c => {
-        const t = (c.vencidos + c.proximos + c.ok) || 1;
+      const cats = s.vencResumo.filter(c => c.vencidos + c.proximos > 0);
+      const linhas = cats.map(c => {
+        const t = (c.vencidos + c.proximos) || 1;
         return `<div class="ig-bar-row"><span><i class="fas ${c.icon}" style="color:var(--accent-dk);margin-right:.4rem"></i>${c.label}</span>
-          <div class="ig-bar"><span style="width:${c.vencidos/t*100}%;background:var(--danger)"></span><span style="width:${c.proximos/t*100}%;background:var(--warning)"></span><span style="width:${c.ok/t*100}%;background:var(--success)"></span></div>
-          <div class="ig-legend"><b class="d">${c.vencidos}</b> venc. · <b class="w">${c.proximos}</b> próx. · <b class="o">${c.ok}</b> ok</div></div>`;
+          <div class="ig-bar"><span style="width:${c.vencidos/t*100}%;background:var(--danger)"></span><span style="width:${c.proximos/t*100}%;background:var(--warning)"></span></div>
+          <div class="ig-legend"><b class="d">${c.vencidos}</b> vencidos · <b class="w">${c.proximos}</b> em 30 dias</div></div>`;
       }).join('');
+      const tudoOk = (s.totalVencidos + bat.v + s.totalProximos + bat.p) === 0;
       body.innerHTML = `<div class="slide-section-title">${s.title}</div>
-        <div class="ig-exec">${cards.map(slideKpiCard).join('')}</div>
-        <div class="ig-bars"><div class="ig-bars-head"><i class="fas fa-calendar-check" style="color:var(--accent-dk)"></i> Situação dos Vencimentos por Categoria</div>${linhas}</div>
-        ${slideVencBandaHTML()}`;
+        <div class="ig-exec" style="grid-template-columns:repeat(2,1fr);max-width:760px">${cards.map(slideKpiCard).join('')}</div>
+        ${tudoOk ? `<div class="slide-hero-banner is-ok"><i class="fas fa-check-circle"></i> Tudo em dia — nenhum vencido e nada a vencer em 30 dias</div>`
+          : (linhas ? `<div class="ig-bars"><div class="ig-bars-head"><i class="fas fa-calendar-check" style="color:var(--accent-dk)"></i> Onde estão os vencimentos</div>${linhas}</div>` : '')}`;
       requestAnimationFrame(() => body.classList.add('show'));
       slideRenderDots(slides, idx);
       slideAutoScroll(body);
@@ -4653,7 +4665,7 @@ function slideRender(){
         body.innerHTML = `<div class="slide-section-title">${s.title}</div>${kpiHTML}
           <div style="max-width:1180px;width:100%;display:flex;flex-direction:column;gap:1rem">
             ${slideVencCardHTML({ tipo:'vencido', titulo:'Vencidas — Trocar Imediatamente', itens: det.vencidos, vazio:'Nenhuma bateria vencida' })}
-            ${slideVencCardHTML({ tipo:'proximo', titulo:'Próximas a Vencer — até 3 meses', itens: det.proximos, vazio:'Nenhuma bateria vencendo nos próximos 3 meses.' })}
+            ${slideVencCardHTML({ tipo:'proximo', titulo: GV_SOMENTE_VENCIMENTOS ? 'Próximas a Vencer — 30 dias' : 'Próximas a Vencer — até 3 meses', itens: det.proximos, vazio: GV_SOMENTE_VENCIMENTOS ? 'Nenhuma bateria vencendo nos próximos 30 dias.' : 'Nenhuma bateria vencendo nos próximos 3 meses.' })}
           </div>
           ${slideVencBandaHTML()}`;
       }
@@ -4681,6 +4693,14 @@ function slideRender(){
       requestAnimationFrame(() => body.classList.add('show'));
       slideRenderDots(slides, idx);
       slideAutoScroll(body);
+      return;
+    }
+    if (s.type === 'venc-ok') {
+      body.innerHTML = `<div class="slide-section-title">${s.title}</div>` + (s.carregando
+        ? `<div class="slide-status-card" style="max-width:520px;width:100%;text-align:center;color:var(--text-lt)"><i class="fas fa-spinner fa-spin" style="font-size:1.4rem;margin-bottom:.6rem;display:block"></i>Carregando vencimentos...</div>`
+        : `<div class="slide-hero-banner is-ok"><i class="fas fa-check-circle"></i> Tudo em dia — nenhum vencido e nada a vencer em 30 dias</div>`);
+      requestAnimationFrame(() => body.classList.add('show'));
+      slideRenderDots(slides, idx);
       return;
     }
     if (s.type === 'venc-single') {
