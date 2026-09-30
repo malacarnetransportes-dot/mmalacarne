@@ -4515,7 +4515,9 @@ function slideConsumoResumo() {
     if (!cavMap[p]) cavMap[p] = { placa: r.placaCavalo, kmPar: 0, litrosPar: 0, motoristas: new Set() };
     // Mesma regra da aba Controle de Consumo: Σ km percorrido ÷ Σ litros dos
     // abastecimentos que têm km percorrido (cavalo, sem carreta/arla).
-    if (r.tipoAbastecido !== 'carreta' && r.tipoAbastecido !== 'arla' && (r.kmPercorrido || 0) > 0 && (r.litrosCavalo || 0) > 0) {
+    // Limiar mínimo de 0,3 km/L: deltas menores indicam erro de odômetro
+    // (ex.: carro parado no pátio abasteceu cheio mas delta foi 1 km).
+    if (r.tipoAbastecido !== 'carreta' && r.tipoAbastecido !== 'arla' && (r.kmPercorrido || 0) > 0 && (r.litrosCavalo || 0) > 0 && (r.kmPercorrido / r.litrosCavalo) >= 0.3) {
       cavMap[p].kmPar += r.kmPercorrido;
       cavMap[p].litrosPar += r.litrosCavalo;
     }
@@ -10435,7 +10437,10 @@ function fatRenderConsumoTab(dados) {
       // faltando, leitura fora da cadeia) entravam no divisor mas seus km
       // não entravam no dividendo — a média despencava (ex.: 0,83 km/L) e o
       // ranking não batia com a coluna "Média" das linhas da tabela.
-      if ((r.kmPercorrido || 0) > 0 && (r.litrosCavalo || 0) > 0) {
+      // CORREÇÃO (30/09/2026): limiar mínimo de 0,3 km/L — deltas menores
+      // indicam erro de odômetro (veículo parado/pátio com delta ínfimo mas
+      // abastecimento cheio), distorcendo a média geral do período.
+      if ((r.kmPercorrido || 0) > 0 && (r.litrosCavalo || 0) > 0 && (r.kmPercorrido / r.litrosCavalo) >= 0.3) {
         cavMap[p].kmPar     += r.kmPercorrido;
         cavMap[p].litrosPar += r.litrosCavalo;
         cavMap[p].regsPar++;
