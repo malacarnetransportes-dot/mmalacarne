@@ -865,6 +865,7 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
     <p>Excelência em Transporte e Logística Frigorífica desde 1982</p>
     <a href="#contato" class="cta-btn"><i class="fas fa-phone"></i> Fale Conosco</a>
     <a href="#infraestrutura" class="cta-btn outline"><i class="fas fa-truck"></i> Nossa Frota</a>
+    <a href="https://portaldotransportador.mbrf.com/" target="_blank" rel="noopener noreferrer" class="cta-btn outline"><i class="fas fa-truck-ramp-box"></i> Portal do Transportador</a>
   </div>
 </section>
 
@@ -877,15 +878,12 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
 
 <div class="section" id="portal-mbrf" style="margin-top:2rem;">
   <h2 class="section-title" style="text-align:center">🚛 Portal do Transportador</h2>
-  <p style="color:var(--text-lt);max-width:520px;margin:0 auto 1.2rem;font-size:.9rem;text-align:center">Acesso ao Portal do Transportador MBRF — agendamentos, cargas e informações do parceiro</p>
+  <p style="color:var(--text-lt);max-width:520px;margin:0 auto 1.2rem;font-size:.9rem;text-align:center">Acesso direto ao Portal do Transportador MBRF</p>
   <div style="max-width:640px;margin:0 auto;background:#fff;border-radius:var(--r16);box-shadow:var(--shadow-md);padding:1.6rem;text-align:center;border:2px solid rgba(212,175,55,.15)">
     <div style="font-size:2.6rem;margin-bottom:.4rem">🌐</div>
     <h3 style="margin-bottom:.4rem">Portal do Transportador MBRF</h3>
-    <p style="color:var(--text-lt);font-size:.85rem;margin-bottom:1rem">Abra o portal sem sair do nosso site, ou em uma nova aba do navegador</p>
-    <div style="display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap">
-      <a href="#" id="btnAbrirPortalMbrf" class="cta-btn"><i class="fas fa-window-maximize"></i> Abrir Portal Aqui</a>
-      <a href="https://portaldotransportador.mbrf.com/" target="_blank" rel="noopener noreferrer" class="cta-btn" style="background:#1a1a1a;color:#fff"><i class="fas fa-arrow-up-right-from-square"></i> Nova Aba</a>
-    </div>
+    <p style="color:var(--text-lt);font-size:.85rem;margin-bottom:1rem">Acesso direto ao portal do parceiro</p>
+    <a href="https://portaldotransportador.mbrf.com/" target="_blank" rel="noopener noreferrer" class="cta-btn"><i class="fas fa-arrow-up-right-from-square"></i> Acessar o Portal</a>
   </div>
 </div>
 
@@ -962,18 +960,6 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
     <button id="btnFecharMapaPostos" style="background:var(--accent);border:none;color:#111;font-weight:700;padding:.4rem .9rem;border-radius:8px;cursor:pointer;font-size:.85rem"><i class="fas fa-times"></i> Fechar</button>
   </div>
   <iframe id="mapaPostosIframe" style="flex:1 1 auto;border:0;width:100%;height:100%;background:#fff"></iframe>
-</div>
-
-<div id="portalMbrfOverlay" style="display:none;position:fixed;inset:0;z-index:5000;background:#000;flex-direction:column;">
-  <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap;background:#1a1a1a;padding:.6rem 1rem;flex:none;">
-    <span style="color:#fff;font-weight:700;font-size:.9rem"><i class="fas fa-truck-ramp-box"></i> Portal do Transportador — MBRF</span>
-    <span style="display:flex;gap:.5rem;align-items:center">
-      <a href="https://portaldotransportador.mbrf.com/" target="_blank" rel="noopener noreferrer" style="background:#333;color:#fff;text-decoration:none;font-weight:700;padding:.4rem .8rem;border-radius:8px;font-size:.8rem"><i class="fas fa-arrow-up-right-from-square"></i> Abrir em nova aba</a>
-      <button id="btnFecharPortalMbrf" style="background:var(--accent);border:none;color:#111;font-weight:700;padding:.4rem .9rem;border-radius:8px;cursor:pointer;font-size:.85rem"><i class="fas fa-times"></i> Fechar</button>
-    </span>
-  </div>
-  <div style="background:#fff8e1;color:#7a5a00;font-size:.75rem;padding:.35rem 1rem;flex:none">Se o portal não carregar aqui (alguns sites bloqueiam exibição dentro de outras páginas), use <b>Abrir em nova aba</b>.</div>
-  <iframe id="portalMbrfIframe" style="flex:1 1 auto;border:0;width:100%;height:100%;background:#fff" allow="fullscreen" referrerpolicy="no-referrer-when-downgrade"></iframe>
 </div>
 
 <div id="vagas" class="vagas-section">
@@ -3708,21 +3694,6 @@ function fecharMapaPostos() {
 document.getElementById('navPostosBtn').addEventListener('click', abrirMapaPostos);
 document.getElementById('btnAbrirMapaPostos').addEventListener('click', abrirMapaPostos);
 document.getElementById('btnFecharMapaPostos').addEventListener('click', fecharMapaPostos);
-
-// Portal do Transportador MBRF — abre dentro do site (overlay) com opção de nova aba
-function abrirPortalMbrf(e) {
-  if (e) e.preventDefault();
-  const iframe = document.getElementById('portalMbrfIframe');
-  if (!iframe.dataset.loaded) { iframe.src = 'https://portaldotransportador.mbrf.com/'; iframe.dataset.loaded = '1'; }
-  document.getElementById('portalMbrfOverlay').style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-}
-function fecharPortalMbrf() {
-  document.getElementById('portalMbrfOverlay').style.display = 'none';
-  document.body.style.overflow = '';
-}
-document.getElementById('btnAbrirPortalMbrf').addEventListener('click', abrirPortalMbrf);
-document.getElementById('btnFecharPortalMbrf').addEventListener('click', fecharPortalMbrf);
 
 // ═══════════════════════════════════════════════════════════
 // LOGIN
