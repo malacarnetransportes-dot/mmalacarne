@@ -800,7 +800,10 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
       </div>
     </div>
     <div class="slide-db-sep"></div>
-    <div class="slide-db-clock" id="slideClock">--:--:--</div>
+    <div style="display:flex;align-items:center;gap:.7rem">
+      <div class="slide-db-clock" id="slideClock">--:--:--</div>
+      <div id="slideHeaderTemp" style="display:flex;align-items:center;gap:.25rem;font-family:'Poppins',system-ui,sans-serif;font-size:1.35rem;font-weight:500;color:var(--text-lt);letter-spacing:.2px;border-left:1px solid rgba(44,44,44,.15);padding-left:.7rem"><span id="slideHeaderTempVal">—</span><span style="font-size:1.1rem">°C</span></div>
+    </div>
   </div>
   <div class="slide-body" id="slideBody"></div>
   <div class="slide-dots" id="slideDots"></div>
@@ -4063,14 +4066,17 @@ function slideResolverNomePlaca(o){
 }
 
 // Uma linha "NOME / PLACA / quando / data" (usada em Vencimentos e Baterias)
-function slideVencLinhaHTML(a, vencido){
+// somenteVeiculo=true: mostra só a placa (sem nome do motorista) — para
+// categorias de veículo como Baterias e Licenciamento/IPVA.
+function slideVencLinhaHTML(a, vencido, somenteVeiculo){
   const fmt = d => d ? new Date(d).toLocaleDateString('pt-BR') : '—';
   const quando = vencido ? `Vencido há ${Math.abs(a.dias)} dia(s)` : (a.dias <= 0 ? 'Vence hoje' : `Vence em ${a.dias} dia(s)`);
   const tag = a.tipo === 'carreta' ? '<span class="slide-venc-tag">carreta</span>' : '';
-  if (a.cat === 'licenciamento') {
+  if (a.cat === 'licenciamento' || somenteVeiculo) {
+    // Só placa — sem motorista
     return `<div class="slide-venc-row${vencido ? ' is-vencido' : ''}">
     <div class="slide-venc-main">
-      <span class="slide-venc-nome" title="${escapeHTML(a.placa)}"><i class="fas fa-truck" style="margin-right:.45rem;opacity:.55"></i>${escapeHTML(a.placa)}</span>
+      <span class="slide-venc-nome" title="${escapeHTML(a.placa || a.nome)}"><i class="fas fa-truck" style="margin-right:.45rem;opacity:.55"></i>${escapeHTML(a.placa || a.nome)}</span>
       <span class="slide-venc-sub">${tag}<span>${quando}</span></span>
     </div>
     <span class="slide-venc-data">${fmt(a.data)}</span>
@@ -4101,7 +4107,7 @@ function slideVencCardHTML(o){
     <div class="slide-status-card-head"><i class="fas ${icone}" style="color:${cor}"></i> ${o.titulo}
       <span style="margin-left:auto;font-size:.95rem;color:${cor};font-weight:600">${o.itens.length}</span>
     </div>
-    <div class="slide-venc-list">${o.itens.map(a => slideVencLinhaHTML(a, vencido)).join('')}</div>
+    <div class="slide-venc-list">${o.itens.map(a => slideVencLinhaHTML(a, vencido, o.somenteVeiculo)).join('')}</div>
   </div>`;
 }
 
@@ -4168,6 +4174,7 @@ function slideVencDetalhe(catKey){
 
   const now = new Date(); now.setHours(0,0,0,0);
   const em30 = new Date(now); em30.setDate(em30.getDate() + 30);
+  const em60 = new Date(now); em60.setDate(em60.getDate() + 60);
   const headers = Object.keys(rows[0]);
   const colId = findCol(headers, ['placa','veiculo','motorista','nome','funcionario','colaborador']);
   const colPlaca = findCol(headers, ['placa','veiculo','cavalo']);
@@ -4179,7 +4186,7 @@ function slideVencDetalhe(catKey){
   const colSituacao = cat.key === 'licenciamento' ? findCol(headers, ['situacao','sit.','sit ']) : null;
   const formato = vencDetectarFormato(rows, colData);
 
-  const vencidos = [], prox30 = [], futuros = [];
+  const vencidos = [], prox30 = [], prox60 = [], futuros = [];
   rows.forEach(row => {
     const { d, status } = vencCalcularStatusLinha(row, cat, headers, colId, colData, colSituacao, formato, now, em30);
     if (!d) return;
@@ -4189,16 +4196,31 @@ function slideVencDetalhe(catKey){
                    dias: Math.round((d - now) / 86400000) };
     if (status === 'vencido')      vencidos.push(item);
     else if (status === 'proximo') prox30.push(item);
+    else if (d <= em60)            prox60.push(item); // 31-60 dias
     else                           futuros.push(item);
   });
 
   vencidos.sort((a,b) => a.data - b.data);   // o mais antigo (mais crítico) primeiro
   prox30.sort((a,b) => a.data - b.data);
+  prox60.sort((a,b) => a.data - b.data);
   futuros.sort((a,b) => a.data - b.data);
 
-  // Se não há nada vencendo em 30 dias, mostra os 5 próximos a vencer
-  const proximos = GV_SOMENTE_VENCIMENTOS ? prox30 : (prox30.length ? prox30 : futuros.slice(0,5));
-  return { vencidos, proximos, proximosSao30: GV_SOMENTE_VENCIMENTOS ? true : prox30.length > 0 };
+  // Se não há nada vencendo em 30 dias, tenta mostrar os de 31-60 dias.
+  // Se também não tiver em 60 dias, mostra os 5 próximos a vencer (futuros).
+  let proximos, proximosSao30 = true, proximosSao60 = false;
+  if (GV_SOMENTE_VENCIMENTOS) {
+    proximos = prox30;
+  } else if (prox30.length) {
+    proximos = prox30;
+  } else if (prox60.length) {
+    proximos = prox60;
+    proximosSao30 = false;
+    proximosSao60 = true;
+  } else {
+    proximos = futuros.slice(0, 5);
+    proximosSao30 = false;
+  }
+  return { vencidos, proximos, proximosSao30, proximosSao60 };
 }
 
 // Resumo de Pneus: varre PNEU_DATA (+ ajustes salvos no localStorage)
@@ -4264,7 +4286,7 @@ function slideVencPages(c){
   const add = (itens, tipo) => {
     const n = Math.ceil(itens.length / PER);
     for (let i = 0; i < n; i++) pages.push({ ...base, type: 'venc-page', tipo, itens: itens.slice(i*PER, i*PER+PER),
-      pag: i+1, pags: n, totalItens: itens.length, sao30: det.proximosSao30 });
+      pag: i+1, pags: n, totalItens: itens.length, sao30: det.proximosSao30, sao60: det.proximosSao60 });
   };
   add(det.vencidos, 'vencido'); add(det.proximos, 'proximo');
   return pages.length ? pages : (GV_SOMENTE_VENCIMENTOS ? [] : [{ ...base, type: 'venc-single' }]);
@@ -4720,8 +4742,8 @@ function slideRender(){
       } else {
         body.innerHTML = `<div class="slide-section-title">${s.title}</div>${kpiHTML}
           <div style="max-width:1180px;width:100%;display:flex;flex-direction:column;gap:1rem">
-            ${slideVencCardHTML({ tipo:'vencido', titulo:'Vencidas — Trocar Imediatamente', itens: det.vencidos, vazio:'Nenhuma bateria vencida' })}
-            ${slideVencCardHTML({ tipo:'proximo', titulo: GV_SOMENTE_VENCIMENTOS ? 'Próximas a Vencer — 30 dias' : 'Próximas a Vencer — até 3 meses', itens: det.proximos, vazio: GV_SOMENTE_VENCIMENTOS ? 'Nenhuma bateria vencendo nos próximos 30 dias.' : 'Nenhuma bateria vencendo nos próximos 3 meses.' })}
+            ${slideVencCardHTML({ tipo:'vencido', titulo:'Vencidas — Trocar Imediatamente', itens: det.vencidos, vazio:'Nenhuma bateria vencida', somenteVeiculo: true })}
+            ${slideVencCardHTML({ tipo:'proximo', titulo: GV_SOMENTE_VENCIMENTOS ? 'Próximas a Vencer — 30 dias' : 'Próximas a Vencer — até 3 meses', itens: det.proximos, vazio: GV_SOMENTE_VENCIMENTOS ? 'Nenhuma bateria vencendo nos próximos 30 dias.' : 'Nenhuma bateria vencendo nos próximos 3 meses.', somenteVeiculo: true })}
           </div>
           ${slideVencBandaHTML()}`;
       }
@@ -4733,16 +4755,21 @@ function slideRender(){
     if (s.type === 'venc-page') {
       const v = s.tipo === 'vencido', cor = v ? '#b91c1c' : '#b45309';
       const fmtD = d => new Date(d).toLocaleDateString('pt-BR');
+      // Para categorias de veículo (licenciamento/IPVA): mostra só a placa sem motorista
+      const CATS_VEICULO = new Set(['licenciamento']);
       const cards = s.itens.map(a => {
         const q = v ? `Vencido há ${Math.abs(a.dias)} dia(s)` : (a.dias <= 0 ? 'Vence hoje' : `Vence em ${a.dias} dia(s)`);
+        const somenteVei = CATS_VEICULO.has(a.cat);
+        const displayNome = somenteVei ? (a.placa || a.id || '—') : (a.nome || a.id || '—');
+        const placaExtra = somenteVei ? '' : `<div class="vx-placa"><i class="fas fa-truck"></i> ${escapeHTML(a.placa || '—')}${a.tipo === 'carreta' ? ' <span class="vx-tag">carreta</span>' : ''}</div>`;
         return `<div class="vx-card ${v ? 'is-vencido' : 'is-proximo'}">
-          <div class="vx-nome">${escapeHTML(a.nome || a.id || '—')}</div>
-          <div class="vx-placa"><i class="fas fa-truck"></i> ${escapeHTML(a.placa || '—')}${a.tipo === 'carreta' ? ' <span class="vx-tag">carreta</span>' : ''}</div>
+          <div class="vx-nome">${somenteVei ? `<i class="fas fa-truck" style="opacity:.6;margin-right:.4rem"></i>` : ''}${escapeHTML(displayNome)}</div>
+          ${placaExtra}
           <div class="vx-foot"><span class="vx-quando">${q}</span><span class="vx-data">${fmtD(a.data)}</span></div></div>`;
       }).join('');
       body.innerHTML = `<div class="slide-section-title">${s.title}</div>
         <div class="vx-head" style="color:${cor}"><i class="fas ${v ? 'fa-exclamation-triangle' : 'fa-clock'}"></i>
-          ${v ? 'VENCIDOS — REGULARIZAR IMEDIATAMENTE' : (s.sao30 ? 'PRÓXIMOS A VENCER — 30 DIAS' : 'PRÓXIMOS A VENCER')}
+          ${v ? 'VENCIDOS — REGULARIZAR IMEDIATAMENTE' : (s.sao30 ? 'PRÓXIMOS A VENCER — 30 DIAS' : s.sao60 ? 'PRÓXIMOS A VENCER — 60 DIAS' : 'PRÓXIMOS A VENCER')}
           <b>${s.totalItens}</b>${s.pags > 1 ? `<span class="vx-pag">${s.pag}/${s.pags}</span>` : ''}</div>
         <div class="vx-grid">${cards}</div>
         ${slideVencBandaHTML()}`;
@@ -4794,9 +4821,12 @@ function slideRender(){
         : slideVencCardHTML({ tipo:'vencido', titulo:'Vencido — Regularizar Imediatamente', itens: listaVencidos, vazio:'Nenhum documento vencido nesta categoria' });
 
       // Bloco 2 (embaixo): PRÓXIMOS a vencer — nome + placa
+      const tituloProx = det.proximosSao30 ? 'Próximos a Vencer — 30 dias'
+        : det.proximosSao60 ? 'Próximos a Vencer — 60 dias'
+        : 'Próximos a Vencer';
       const blocoProximos = slideVencCardHTML({
         tipo:'proximo',
-        titulo: det.proximosSao30 ? 'Próximos a Vencer — 30 dias' : 'Próximos a Vencer (nada nos 30 dias)',
+        titulo: tituloProx,
         itens: listaProximos, vazio:'Nenhum vencimento próximo registrado.' });
 
       body.innerHTML = `<div class="slide-section-title">${s.title}</div>
@@ -5124,6 +5154,21 @@ function slideUpdateClock(){
   if (monthEl) monthEl.textContent = now.toLocaleDateString('pt-BR', { month: 'long' });
   const yearEl = document.getElementById('slideYear');
   if (yearEl) yearEl.textContent = String(now.getFullYear());
+  // Atualiza temperatura no header usando cache do weather (sem nova requisição)
+  const tempValEl = document.getElementById('slideHeaderTempVal');
+  if (tempValEl) {
+    if (_weatherCache && _weatherCache.current_weather) {
+      tempValEl.textContent = Math.round(_weatherCache.current_weather.temperature);
+    } else if (_weatherCache === null && (Date.now() - _weatherCacheTs) < 500) {
+      // cache ainda não carregado, dispara fetch silencioso
+      slideFetchWeather().then(d => {
+        if (d && d.current_weather) {
+          const el = document.getElementById('slideHeaderTempVal');
+          if (el) el.textContent = Math.round(d.current_weather.temperature);
+        }
+      });
+    }
+  }
 }
 
 function openSlideMode(){
@@ -5148,6 +5193,24 @@ function openSlideMode(){
   slideUpdateClock();
   slideTimer = setInterval(slideNext, SLIDE_DURATION);
   slideClockTimer = setInterval(slideUpdateClock, 1000);
+  // Garante que a temperatura do header seja carregada ao abrir
+  slideFetchWeather().then(d => {
+    if (d && d.current_weather) {
+      const el = document.getElementById('slideHeaderTempVal');
+      if (el) el.textContent = Math.round(d.current_weather.temperature);
+    }
+  });
+  // Refresca temperatura a cada 10 minutos (weather API retorna cache 30min)
+  if (window._slideTempRefreshTimer) clearInterval(window._slideTempRefreshTimer);
+  window._slideTempRefreshTimer = setInterval(() => {
+    _weatherCache = null; // força novo fetch
+    slideFetchWeather().then(d => {
+      if (d && d.current_weather) {
+        const el = document.getElementById('slideHeaderTempVal');
+        if (el) el.textContent = Math.round(d.current_weather.temperature);
+      }
+    });
+  }, 10 * 60 * 1000);
   if (document.documentElement.requestFullscreen) {
     document.documentElement.requestFullscreen().catch(()=>{});
   }
@@ -18840,19 +18903,19 @@ document.getElementById('tvBtnOpen').addEventListener('click', function() {
 .slide-db-weekday{color:#7a5806!important;}
 .slide-section-title{color:#0b1220!important;font-weight:600!important;font-size:1.9rem!important;}
 /* ── Vencimentos individuais ── */
-.vx-head{display:flex;align-items:center;justify-content:center;gap:.8rem;font-family:'Poppins',sans-serif;font-weight:600;font-size:1.6rem;letter-spacing:.5px;margin-bottom:1.1rem;}
-.vx-head b{color:#fff;background:#b45309;border-radius:40px;padding:0 1rem;line-height:1.5;}
-.vx-pag{font-family:'Inter',sans-serif;font-size:1.1rem;font-weight:600;color:#334155;}
-.vx-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;width:100%;max-width:1500px;}
-.vx-card{background:#fff;border-radius:20px;padding:1.4rem 1.5rem;text-align:left;border:2px solid rgba(180,83,9,.35);border-left:12px solid #d97706;box-shadow:0 10px 28px rgba(30,42,58,.10);display:flex;flex-direction:column;gap:.6rem;min-width:0;}
-.vx-card.is-vencido{border-color:rgba(185,28,28,.4);border-left-color:#dc2626;background:#fff7f7;}
-.vx-nome{font-family:'Poppins',sans-serif;font-weight:600;font-size:clamp(1.4rem,2.2vw,2.2rem);line-height:1.15;color:#0b1220;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
-.vx-placa{font-family:'Poppins',sans-serif;font-weight:600;font-size:clamp(1.2rem,1.8vw,1.7rem);letter-spacing:1px;color:#1e293b;}
-.vx-placa i{color:#8a6508;margin-right:.35rem}
-.vx-tag{font-size:.8rem;font-weight:600;text-transform:uppercase;padding:.1rem .5rem;border-radius:6px;background:#e2e8f0;color:#0b1220;letter-spacing:.6px;vertical-align:middle}
-.vx-foot{display:flex;justify-content:space-between;align-items:baseline;gap:.8rem;flex-wrap:wrap;margin-top:auto;padding-top:.6rem;border-top:2px solid rgba(15,23,42,.10);}
-.vx-quando{font-weight:600;font-size:clamp(1rem,1.4vw,1.35rem);color:#1e293b;}
-.vx-data{font-family:'Poppins',sans-serif;font-weight:600;font-size:clamp(1.3rem,2vw,2rem);color:#b45309;font-variant-numeric:tabular-nums;}
+.vx-head{display:flex;align-items:center;justify-content:center;gap:.7rem;font-family:'Poppins',sans-serif;font-weight:600;font-size:1.25rem;letter-spacing:.5px;margin-bottom:.7rem;}
+.vx-head b{color:#fff;background:#b45309;border-radius:40px;padding:0 .85rem;line-height:1.5;}
+.vx-pag{font-family:'Inter',sans-serif;font-size:.95rem;font-weight:600;color:#334155;}
+.vx-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem;width:100%;max-width:1500px;}
+.vx-card{background:#fff;border-radius:16px;padding:.85rem 1rem;text-align:left;border:2px solid rgba(180,83,9,.3);border-left:10px solid #d97706;box-shadow:0 6px 18px rgba(30,42,58,.08);display:flex;flex-direction:column;gap:.35rem;min-width:0;}
+.vx-card.is-vencido{border-color:rgba(185,28,28,.35);border-left-color:#dc2626;background:#fff7f7;}
+.vx-nome{font-family:'Poppins',sans-serif;font-weight:600;font-size:clamp(1.05rem,1.55vw,1.6rem);line-height:1.18;color:#0b1220;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.vx-placa{font-family:'Poppins',sans-serif;font-weight:600;font-size:clamp(.95rem,1.35vw,1.3rem);letter-spacing:1px;color:#1e293b;}
+.vx-placa i{color:#8a6508;margin-right:.3rem}
+.vx-tag{font-size:.72rem;font-weight:600;text-transform:uppercase;padding:.05rem .45rem;border-radius:6px;background:#e2e8f0;color:#0b1220;letter-spacing:.6px;vertical-align:middle}
+.vx-foot{display:flex;justify-content:space-between;align-items:baseline;gap:.5rem;flex-wrap:wrap;margin-top:auto;padding-top:.4rem;border-top:1.5px solid rgba(15,23,42,.09);}
+.vx-quando{font-weight:600;font-size:clamp(.8rem,1.1vw,1.05rem);color:#1e293b;}
+.vx-data{font-family:'Poppins',sans-serif;font-weight:600;font-size:clamp(1rem,1.5vw,1.55rem);color:#b45309;font-variant-numeric:tabular-nums;}
 .vx-card.is-vencido .vx-data,.vx-card.is-vencido .vx-quando{color:#b91c1c;}
 @media(max-width:1100px){.vx-grid{grid-template-columns:repeat(2,1fr)}}
 
