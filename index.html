@@ -16861,8 +16861,17 @@ function jorInit() {
 
   // Competências
   const competencias = [...new Set(jorTodosFuncionarios().map(f => f.competencia))].sort().reverse();
-  document.getElementById('jorCompetencia').innerHTML = '<option value="">Todas</option>' +
+  const selComp = document.getElementById('jorCompetencia');
+  selComp.innerHTML = '<option value="">Todas</option>' +
     competencias.map(c => `<option value="${c}">${jorCompetenciaLabel(c)}</option>`).join('');
+  // Auto-seleciona a competência mais recente se usuário não escolheu manualmente
+  if (competencias.length > 0 && selComp.dataset.userSet !== '1') {
+    selComp.value = competencias[0];
+  }
+  if (!selComp.dataset.bound) {
+    selComp.dataset.bound = '1';
+    selComp.addEventListener('change', () => { selComp.dataset.userSet = '1'; });
+  }
 
   // Empresas
   const empresas = [...new Set(jorTodosFuncionarios().map(f => f.empresa))].sort();
@@ -16979,11 +16988,13 @@ function trabExportCSV() {
 }
 
 function jorResetFilters() {
-  document.getElementById('jorCompetencia').value = '';
+  const selComp = document.getElementById('jorCompetencia');
+  selComp.dataset.userSet = '0'; // permite auto-select na próxima vez
+  selComp.value = '';
   document.getElementById('jorMotorista').value = '';
   document.getElementById('jorEmpresa').value = '';
   document.getElementById('jorTipo').value = '';
-  jorApplyFilters();
+  jorLoaded = false; jorInit();
 }
 
 function jorApplyFilters() {
