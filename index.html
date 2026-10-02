@@ -846,6 +846,7 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
     <button class="menu-toggle" id="menuToggle">☰</button>
     <ul class="nav-links" id="navLinks">
       <li><a href="#home">Início</a></li>
+      <li><a href="#portal-mbrf">Portal MBRF</a></li>
       <li><a href="#sobre">Sobre</a></li>
       <li><a href="#video-institucional">Vídeo</a></li>
       <li><a href="#infraestrutura">Infraestrutura</a></li>
@@ -872,6 +873,20 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
   <div class="stat-item"><div class="stat-num">100%</div><div class="stat-lbl">Frota Frigorífica</div></div>
   <div class="stat-item"><div class="stat-num">BRF</div><div class="stat-lbl">Parceiro Exclusivo</div></div>
   <div class="stat-item"><div class="stat-num">Sul/SE</div><div class="stat-lbl">Cobertura Sudeste</div></div>
+</div>
+
+<div class="section" id="portal-mbrf" style="margin-top:2rem;">
+  <h2 class="section-title" style="text-align:center">🚛 Portal do Transportador</h2>
+  <p style="color:var(--text-lt);max-width:520px;margin:0 auto 1.2rem;font-size:.9rem;text-align:center">Acesso ao Portal do Transportador MBRF — agendamentos, cargas e informações do parceiro</p>
+  <div style="max-width:640px;margin:0 auto;background:#fff;border-radius:var(--r16);box-shadow:var(--shadow-md);padding:1.6rem;text-align:center;border:2px solid rgba(212,175,55,.15)">
+    <div style="font-size:2.6rem;margin-bottom:.4rem">🌐</div>
+    <h3 style="margin-bottom:.4rem">Portal do Transportador MBRF</h3>
+    <p style="color:var(--text-lt);font-size:.85rem;margin-bottom:1rem">Abra o portal sem sair do nosso site, ou em uma nova aba do navegador</p>
+    <div style="display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap">
+      <a href="#" id="btnAbrirPortalMbrf" class="cta-btn"><i class="fas fa-window-maximize"></i> Abrir Portal Aqui</a>
+      <a href="https://portaldotransportador.mbrf.com/" target="_blank" rel="noopener noreferrer" class="cta-btn" style="background:#1a1a1a;color:#fff"><i class="fas fa-arrow-up-right-from-square"></i> Nova Aba</a>
+    </div>
+  </div>
 </div>
 
 <div class="section" id="sobre" style="margin-top:2rem;">
@@ -947,6 +962,18 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
     <button id="btnFecharMapaPostos" style="background:var(--accent);border:none;color:#111;font-weight:700;padding:.4rem .9rem;border-radius:8px;cursor:pointer;font-size:.85rem"><i class="fas fa-times"></i> Fechar</button>
   </div>
   <iframe id="mapaPostosIframe" style="flex:1 1 auto;border:0;width:100%;height:100%;background:#fff"></iframe>
+</div>
+
+<div id="portalMbrfOverlay" style="display:none;position:fixed;inset:0;z-index:5000;background:#000;flex-direction:column;">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap;background:#1a1a1a;padding:.6rem 1rem;flex:none;">
+    <span style="color:#fff;font-weight:700;font-size:.9rem"><i class="fas fa-truck-ramp-box"></i> Portal do Transportador — MBRF</span>
+    <span style="display:flex;gap:.5rem;align-items:center">
+      <a href="https://portaldotransportador.mbrf.com/" target="_blank" rel="noopener noreferrer" style="background:#333;color:#fff;text-decoration:none;font-weight:700;padding:.4rem .8rem;border-radius:8px;font-size:.8rem"><i class="fas fa-arrow-up-right-from-square"></i> Abrir em nova aba</a>
+      <button id="btnFecharPortalMbrf" style="background:var(--accent);border:none;color:#111;font-weight:700;padding:.4rem .9rem;border-radius:8px;cursor:pointer;font-size:.85rem"><i class="fas fa-times"></i> Fechar</button>
+    </span>
+  </div>
+  <div style="background:#fff8e1;color:#7a5a00;font-size:.75rem;padding:.35rem 1rem;flex:none">Se o portal não carregar aqui (alguns sites bloqueiam exibição dentro de outras páginas), use <b>Abrir em nova aba</b>.</div>
+  <iframe id="portalMbrfIframe" style="flex:1 1 auto;border:0;width:100%;height:100%;background:#fff" allow="fullscreen" referrerpolicy="no-referrer-when-downgrade"></iframe>
 </div>
 
 <div id="vagas" class="vagas-section">
@@ -3682,6 +3709,21 @@ document.getElementById('navPostosBtn').addEventListener('click', abrirMapaPosto
 document.getElementById('btnAbrirMapaPostos').addEventListener('click', abrirMapaPostos);
 document.getElementById('btnFecharMapaPostos').addEventListener('click', fecharMapaPostos);
 
+// Portal do Transportador MBRF — abre dentro do site (overlay) com opção de nova aba
+function abrirPortalMbrf(e) {
+  if (e) e.preventDefault();
+  const iframe = document.getElementById('portalMbrfIframe');
+  if (!iframe.dataset.loaded) { iframe.src = 'https://portaldotransportador.mbrf.com/'; iframe.dataset.loaded = '1'; }
+  document.getElementById('portalMbrfOverlay').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function fecharPortalMbrf() {
+  document.getElementById('portalMbrfOverlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+document.getElementById('btnAbrirPortalMbrf').addEventListener('click', abrirPortalMbrf);
+document.getElementById('btnFecharPortalMbrf').addEventListener('click', fecharPortalMbrf);
+
 // ═══════════════════════════════════════════════════════════
 // LOGIN
 // ═══════════════════════════════════════════════════════════
@@ -4446,6 +4488,10 @@ function slideBuildSlides(){
     // 8) Ranking de Consumo de COMBUSTÍVEL — Piores Cavalos
     { title: '<i class="fas fa-gas-pump"></i> Consumo de Combustível — Piores Médias (km/L) · Mês Vigente', type: 'consumo-piores' },
     ] : []),
+    // Despesas (% por categoria) e ranking de médias — mês passado × corrente
+    { title: '<i class="fas fa-chart-pie"></i> Despesas por Categoria — Mês Passado × Mês Corrente', type: 'gv-despesas' },
+    { title: '<i class="fas fa-truck"></i> Ranking de Médias — Cavalos (km/L)', type: 'gv-medias-cavalo' },
+    { title: '<i class="fas fa-trailer"></i> Ranking de Médias — Carretas (L/h)', type: 'gv-medias-carreta' },
   ];
 }
 
@@ -4639,6 +4685,223 @@ function slideConsumoResumo() {
   return { melhores, piores, labelMes, ehMesVigente: recs.length > 0 };
 }
 
+
+// ═══════════════════════════════════════════════════════════
+// GESTÃO À VISTA — Despesas (% por categoria, SEM valores) e
+// Ranking de médias (cavalo km/L · carreta L/h) — mês passado × corrente
+// ═══════════════════════════════════════════════════════════
+const GV_MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const GV_CORES = ['#8B7355','#d4af37','#3b82f6','#10b981','#ef4444','#8b5cf6','#f59e0b','#06b6d4','#ec4899'];
+const GV_PLACAS_FORA = new Set(['MLZ0B00','QTL0H52']);
+let _gvCharts = [];
+let _gvFinEstado = 0, _gvAbastEstado = 0;   // 0 = não tentou · 1 = carregando · 2 = já tentou
+
+function gvDestroyCharts() { _gvCharts.forEach(c => { try { c.destroy(); } catch (e) {} }); _gvCharts = []; }
+function gvMesesRef() {
+  const h = new Date(), a = new Date(h.getFullYear(), h.getMonth() - 1, 1);
+  return { atu: { ano: h.getFullYear(), mes: h.getMonth() + 1 }, ant: { ano: a.getFullYear(), mes: a.getMonth() + 1 } };
+}
+function gvLbl(r) { return GV_MESES[r.mes - 1] + '/' + r.ano; }
+
+// Despesas do mês agrupadas por "Tipo de Contas" (mesmo agrupamento da pizza do Financeiro)
+function gvDespesasPorMes(ref) {
+  if (!Array.isArray(financeiroData) || !financeiroData.length) return [];
+  const headers = Object.keys(financeiroData[0]);
+  const colData  = findCol(headers, ['data','date','vencimento','competencia','lan']);
+  const colDesc  = findCol(headers, ['descricao','historico','memo','obs','description','lancamento','servico','produto']);
+  const colValor = findCol(headers, ['valor','value','montante','total','vl ','vlr','preco','price']);
+  const colTipo  = findCol(headers, ['tipo','type','natureza','categoria','classificacao']);
+  const colCat   = finColCategoria(headers);
+  const ovr = localStorage.getItem('finColTipoContasOverride');
+  const colTC = (ovr && headers.includes(ovr)) ? ovr : finColTipoContas(headers);
+  const colGrupo = colTC || colCat;
+  if (!colData) return [];
+  const soma = {};
+  financeiroData.forEach(row => {
+    const d = parseDate(row[colData]);
+    if (!d || d.getFullYear() !== ref.ano || d.getMonth() + 1 !== ref.mes) return;
+    const t = colTipo ? String(row[colTipo] || '').toLowerCase() : '';
+    if (t.includes('receita') || t.includes('entrada') || t.includes('credito')) return;
+    const v = Math.abs(finValorLinha(row, colValor, colCat, colDesc));
+    if (!v) return;
+    const nome = colGrupo ? (String(row[colGrupo] || '').trim() || 'Sem categoria') : 'Sem categoria';
+    soma[nome] = (soma[nome] || 0) + v;
+  });
+  return Object.entries(soma).sort((a, b) => b[1] - a[1]);
+}
+
+// Médias do mês — mesma regra do Controle de Consumo
+//  Cavalo : Σ km ÷ Σ litros (km/L, maior = melhor)
+//  Carreta: Σ litros ÷ Σ horas do horímetro (L/h, menor = melhor)
+function gvMediasMes(ref) {
+  const recs = (Array.isArray(abastAllRecords) ? abastAllRecords : []).filter(r => r.ano === ref.ano && r.mes === ref.mes);
+  const frota = (typeof FROTA_DATA !== 'undefined' && Array.isArray(FROTA_DATA)) ? FROTA_DATA : [];
+  const cavFrota = new Set(frota.map(f => normalizaPlaca(f.placa || '')).filter(Boolean));
+  const carFrota = new Set(frota.map(f => normalizaPlaca((f.carreta || '').split(/\s/)[0])).filter(Boolean));
+  const cav = {}, car = {};
+  recs.forEach(r => {
+    const pc = normalizaPlaca(r.placaCavalo);
+    if (pc && r.tipoAbastecido !== 'carreta' && r.tipoAbastecido !== 'arla' &&
+        (r.kmPercorrido || 0) > 0 && (r.litrosCavalo || 0) > 0 && (r.kmPercorrido / r.litrosCavalo) >= 0.3) {
+      const o = cav[pc] || (cav[pc] = { placa: r.placaCavalo, km: 0, lt: 0, mot: new Set() });
+      o.km += r.kmPercorrido; o.lt += r.litrosCavalo; if (r.motorista) o.mot.add(r.motorista);
+    }
+    const pk = normalizaPlaca(r.placaCarreta);
+    const ehCar = r.tipoAbastecido === 'carreta' || (r.litrosCarreta || 0) > 0;
+    if (pk && ehCar && (r.kmPercorrido || 0) > 0 && (r.litrosCarreta || 0) > 0) {
+      const o = car[pk] || (car[pk] = { placa: r.placaCarreta, h: 0, lt: 0, mot: new Set() });
+      o.h += r.kmPercorrido; o.lt += r.litrosCarreta; if (r.motorista) o.mot.add(r.motorista);
+    }
+  });
+  const cavalos = Object.values(cav).map(o => ({ placa: o.placa, media: o.lt > 0 && o.km > 0 ? o.km / o.lt : 0, mot: [...o.mot].join(', ') || '—' }))
+    .filter(o => o.media > 0 && !GV_PLACAS_FORA.has(normalizaPlaca(o.placa)) && cavFrota.has(normalizaPlaca(o.placa)))
+    .sort((a, b) => b.media - a.media);
+  const carretas = Object.values(car).map(o => ({ placa: o.placa, media: o.lt > 0 && o.h > 0 ? o.lt / o.h : 0, mot: [...o.mot].join(', ') || '—' }))
+    .filter(o => o.media > 0 && carFrota.has(normalizaPlaca(o.placa)))
+    .sort((a, b) => a.media - b.media);
+  return { cavalos, carretas };
+}
+
+function gvSpinnerHTML(titulo, msg) {
+  return `<div class="slide-section-title">${titulo}</div>
+    <div class="slide-status-card" style="max-width:560px;width:100%;text-align:center;color:var(--text-lt)">
+      <i class="fas fa-spinner fa-spin" style="font-size:1.4rem;margin-bottom:.6rem;display:block"></i>${msg}
+    </div>`;
+}
+function gvVazioHTML(titulo, msg) {
+  return `<div class="slide-section-title">${titulo}</div>
+    <div class="slide-status-card" style="max-width:560px;width:100%;text-align:center;color:var(--text-lt)">${msg}</div>`;
+}
+
+// ── Slide: gráficos de despesas (nomes + %) ──
+function gvRenderDespesas(body, s, slides, idx) {
+  const mostrar = html => { body.innerHTML = html; requestAnimationFrame(() => body.classList.add('show')); slideRenderDots(slides, idx); };
+  if (!Array.isArray(financeiroData) || !financeiroData.length) {
+    if (_gvFinEstado === 0 && typeof loadFinanceiroData === 'function') {
+      _gvFinEstado = 1;
+      Promise.resolve(loadFinanceiroData()).catch(() => {}).then(() => { _gvFinEstado = 2; slideRerenderSe(['gv-despesas']); });
+    }
+    if (_gvFinEstado !== 2) { mostrar(gvSpinnerHTML(s.title, 'Carregando lançamentos do Financeiro...')); return; }
+    mostrar(gvVazioHTML(s.title, 'Sem dados do Financeiro para exibir.')); return;
+  }
+  const ref = gvMesesRef();
+  const meses = [
+    { rotulo: 'Mês passado', ref: ref.ant, rank: gvDespesasPorMes(ref.ant) },
+    { rotulo: 'Mês corrente', ref: ref.atu, rank: gvDespesasPorMes(ref.atu) }
+  ];
+  // Mesma cor para a mesma categoria nos dois meses
+  const totais = {};
+  meses.forEach(m => m.rank.forEach(([n, v]) => { totais[n] = (totais[n] || 0) + v; }));
+  const corMap = { 'Outros': '#94a3b8' }; let ci = 0;
+  Object.entries(totais).sort((a, b) => b[1] - a[1]).forEach(([n]) => { corMap[n] = GV_CORES[ci++ % GV_CORES.length]; });
+
+  meses.forEach(m => {
+    m.top = finTopMaisOutros(m.rank, 7);
+    const tot = m.top.reduce((a, [, v]) => a + v, 0);
+    m.leg = m.top.map(([n, v]) => ({ nome: n, pct: tot ? v / tot * 100 : 0, cor: corMap[n] || '#94a3b8' }));
+  });
+
+  const card = (m, i) => `<div class="slide-status-card" style="flex:1 1 380px;min-width:0;max-width:640px;text-align:center">
+      <div style="font-family:'Poppins',sans-serif;font-weight:600;font-size:1rem;color:#2c2c2c;margin-bottom:.5rem">${m.rotulo}
+        <span style="display:block;font-size:.8rem;font-weight:500;color:var(--text-lt)">${gvLbl(m.ref)}</span></div>
+      ${m.top.length
+        ? `<div style="position:relative;height:clamp(200px,34vh,340px)"><canvas id="gvPizza${i}"></canvas></div>
+           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.35rem;margin-top:.8rem;text-align:left">
+             ${m.leg.map(l => `<div style="display:flex;align-items:center;gap:.5rem;font-family:'Inter',sans-serif;font-size:.82rem;background:#f6f7f9;border-radius:8px;padding:.3rem .55rem;min-width:0">
+               <span style="width:11px;height:11px;border-radius:3px;background:${l.cor};flex:none"></span>
+               <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600" title="${escapeHTML(l.nome)}">${escapeHTML(l.nome)}</span>
+               <b style="flex:none;color:var(--accent-dk)">${l.pct.toFixed(1).replace('.', ',')}%</b></div>`).join('')}
+           </div>`
+        : `<div style="padding:3rem 0;color:var(--text-lt);font-size:.9rem">Sem despesas lançadas neste mês.</div>`}
+    </div>`;
+
+  mostrar(`<div class="slide-section-title">${s.title}
+      <span style="display:block;font-size:.85rem;font-weight:500;color:var(--text-lt);margin-top:.35rem">Participação percentual por categoria</span></div>
+    <div style="display:flex;gap:1.2rem;flex-wrap:wrap;justify-content:center;width:100%;max-width:1320px">${meses.map(card).join('')}</div>`);
+
+  gvDestroyCharts();
+  meses.forEach((m, i) => {
+    const cv = document.getElementById('gvPizza' + i);
+    if (!cv || !m.top.length) return;
+    _gvCharts.push(new Chart(cv.getContext('2d'), {
+      type: 'doughnut',
+      data: { labels: m.top.map(r => r[0]), datasets: [{ data: m.top.map(r => r[1]), backgroundColor: m.leg.map(l => l.cor), borderColor: '#fff', borderWidth: 2 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '40%',
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => {
+            const t = ctx.dataset.data.reduce((a, b) => a + b, 0);
+            return ` ${ctx.label}: ${t ? (ctx.raw / t * 100).toFixed(1).replace('.', ',') : '0,0'}%`;   // sem valor em R$
+          } } },
+          datalabels: {
+            color: '#fff', font: { weight: '700', size: 12 }, textShadowColor: 'rgba(0,0,0,.45)', textShadowBlur: 3,
+            formatter: (v, c) => { const t = c.chart.data.datasets[0].data.reduce((a, b) => a + b, 0); const p = t ? v / t * 100 : 0; return p >= 4 ? p.toFixed(0) + '%' : ''; }
+          }
+        }
+      },
+      plugins: (typeof ChartDataLabels !== 'undefined') ? [ChartDataLabels] : []
+    }));
+  });
+}
+
+// ── Slide: ranking de médias (cavalo km/L ou carreta L/h), mês passado × corrente ──
+function gvRankColHTML(rotulo, mesLbl, lista, un, comparar, menorMelhor) {
+  const fmt = v => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const med = ['🥇','🥈','🥉'];
+  const linhas = lista.length ? lista.map((o, i) => {
+    let delta = '';
+    if (comparar) {
+      const ant = comparar[normalizaPlaca(o.placa)];
+      if (ant) {
+        const dif = (o.media - ant) / ant * 100;
+        if (Math.abs(dif) >= 0.1) {
+          const bom = menorMelhor ? dif < 0 : dif > 0;
+          delta = `<div style="font-size:.7rem;font-weight:700;color:${bom ? 'var(--success)' : 'var(--danger)'}">${dif > 0 ? '▲' : '▼'} ${Math.abs(dif).toFixed(1).replace('.', ',')}% vs. mês passado</div>`;
+        }
+      }
+    }
+    return `<div style="display:flex;align-items:center;gap:.7rem;background:#fff;border:1px solid rgba(44,44,44,.14);border-left:4px solid ${i === 0 ? 'var(--success)' : 'rgba(44,44,44,.18)'};border-radius:12px;padding:.5rem .85rem;box-shadow:0 3px 12px rgba(30,42,58,.05)">
+      <div style="min-width:2rem;text-align:center;font-size:${i < 3 ? '1.3rem' : '.85rem'};font-weight:700;color:var(--text-lt)">${med[i] || (i + 1) + '°'}</div>
+      <div style="flex:1;min-width:0;text-align:left">
+        <div style="font-family:'Poppins',sans-serif;font-weight:600;font-size:.98rem;color:#2c2c2c">${escapeHTML(o.placa)}</div>
+        <div style="font-family:'Inter',sans-serif;font-size:.74rem;color:var(--text-lt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHTML(o.mot)}</div>
+      </div>
+      <div style="text-align:right;white-space:nowrap">
+        <div style="font-family:'Poppins',sans-serif;font-size:1.15rem;font-weight:600;color:var(--accent-dk)">${fmt(o.media)} <span style="font-size:.7rem;font-weight:500;color:var(--text-lt)">${un}</span></div>${delta}
+      </div></div>`;
+  }).join('') : `<div style="padding:2rem 0;color:var(--text-lt);font-size:.9rem">Sem dados neste mês.</div>`;
+  return `<div style="flex:1 1 340px;min-width:0;max-width:620px">
+    <div style="font-family:'Poppins',sans-serif;font-weight:600;font-size:1rem;color:#2c2c2c;margin-bottom:.6rem">${rotulo}
+      <span style="display:block;font-size:.8rem;font-weight:500;color:var(--text-lt)">${mesLbl}</span></div>
+    <div style="display:flex;flex-direction:column;gap:.45rem">${linhas}</div></div>`;
+}
+
+function gvRenderMedias(body, s, slides, idx) {
+  const tipos = ['gv-medias-cavalo', 'gv-medias-carreta'];
+  const mostrar = (html, scroll) => { body.innerHTML = html; requestAnimationFrame(() => body.classList.add('show')); slideRenderDots(slides, idx); if (scroll) slideAutoScroll(body); };
+  if (!Array.isArray(abastAllRecords) || !abastAllRecords.length) {
+    if (_gvAbastEstado === 0 && typeof loadAbastecimentos === 'function') {
+      _gvAbastEstado = 1;
+      Promise.resolve(loadAbastecimentos({ silencioso: true })).catch(() => {}).then(() => { _gvAbastEstado = 2; slideRerenderSe(tipos); });
+    }
+    if (_gvAbastEstado !== 2) { mostrar(gvSpinnerHTML(s.title, 'Carregando notas de abastecimento...')); return; }
+    mostrar(gvVazioHTML(s.title, 'Sem abastecimentos para calcular as médias.')); return;
+  }
+  const ref = gvMesesRef();
+  const ant = gvMediasMes(ref.ant), atu = gvMediasMes(ref.atu);
+  const ehCav = s.type === 'gv-medias-cavalo';
+  const la = ehCav ? ant.cavalos : ant.carretas, lt = ehCav ? atu.cavalos : atu.carretas;
+  const un = ehCav ? 'km/L' : 'L/h';
+  const mapa = {}; la.forEach(o => { mapa[normalizaPlaca(o.placa)] = o.media; });
+  mostrar(`<div class="slide-section-title">${s.title}
+      <span style="display:block;font-size:.85rem;font-weight:500;color:var(--text-lt);margin-top:.35rem">${ehCav ? 'Média de km por litro de diesel — quanto maior, melhor' : 'Consumo do refrigerado em litros por hora — quanto menor, melhor'}</span></div>
+    <div style="display:flex;gap:1.4rem;flex-wrap:wrap;justify-content:center;width:100%;max-width:1320px">
+      ${gvRankColHTML('Mês passado', gvLbl(ref.ant), la, un, null, !ehCav)}
+      ${gvRankColHTML('Mês corrente', gvLbl(ref.atu), lt, un, mapa, !ehCav)}
+    </div>`, true);
+}
+
 let slideFinChartInstance = null;
 
 // Retorna a classe de destaque do card de KPI conforme o status (vencido/próximo/ok)
@@ -4661,6 +4924,7 @@ function slideRender(){
   const body = document.getElementById('slideBody');
   body.classList.remove('show');
   slideAutoScrollStop();
+  gvDestroyCharts();
   const counterEl = document.getElementById('slideCounter');
   if (counterEl) counterEl.textContent = `${idx + 1} / ${slides.length}`;
 
@@ -5031,6 +5295,8 @@ function slideRender(){
       slideAutoScroll(body);
       return;
     }
+    if (s.type === 'gv-despesas') { gvRenderDespesas(body, s, slides, idx); return; }
+    if (s.type === 'gv-medias-cavalo' || s.type === 'gv-medias-carreta') { gvRenderMedias(body, s, slides, idx); return; }
     if (s.type === 'consumo-melhores' || s.type === 'consumo-piores') {
       const tipo = s.type === 'consumo-melhores' ? 'melhores' : 'piores';
       const d = slideConsumoResumo();
@@ -5041,7 +5307,7 @@ function slideRender(){
         if (typeof loadAbastecimentos === 'function' && !_slideConsumoCarregando) {
           _slideConsumoCarregando = true;
           Promise.resolve(loadAbastecimentos({ silencioso: true }))
-            .then(() => { _slideConsumoCarregando = false; slideRerenderSe(['consumo-melhores','consumo-piores']); })
+            .then(() => { _slideConsumoCarregando = false; slideRerenderSe(['consumo-melhores','consumo-piores','gv-medias-cavalo','gv-medias-carreta']); })
             .catch(() => { _slideConsumoCarregando = false; });
         }
         body.innerHTML = `<div class="slide-section-title">${s.title}</div>
@@ -5173,6 +5439,7 @@ function slideUpdateClock(){
 
 function openSlideMode(){
   slideIdx = 0;
+  _gvFinEstado = 0; _gvAbastEstado = 0;
   // Dispara carregamentos em segundo plano
   if (!velLoaded && typeof velInit === 'function') {
     Promise.resolve(velInit()).then(() => slideRerenderSe(['vel-resumo','vel-resumo-2'])).catch(()=>{});
@@ -5182,7 +5449,7 @@ function openSlideMode(){
   if ((!Array.isArray(abastAllRecords) || !abastAllRecords.length) && typeof loadAbastecimentos === 'function') {
     _slideConsumoCarregando = true;
     Promise.resolve(loadAbastecimentos({ silencioso: true }))
-      .then(() => { _slideConsumoCarregando = false; slideRerenderSe(['consumo-melhores','consumo-piores']); })
+      .then(() => { _slideConsumoCarregando = false; slideRerenderSe(['consumo-melhores','consumo-piores','gv-medias-cavalo','gv-medias-carreta']); })
       .catch(() => { _slideConsumoCarregando = false; });
   }
 
@@ -5453,6 +5720,7 @@ function closeSlideMode(){
   clearInterval(slideProgressTimer);
   clearInterval(slideClockTimer);
   if (slideFinChartInstance) { slideFinChartInstance.destroy(); slideFinChartInstance = null; }
+  gvDestroyCharts();
   // Rádio não fica tocando depois que o painel é fechado
   slideRadioAutoRetryAtivo = false;
   if (typeof slideRadioDesligar === 'function') slideRadioDesligar();
