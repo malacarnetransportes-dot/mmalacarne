@@ -4471,6 +4471,7 @@ function slideBuildSlides(){
     { title: '<i class="fas fa-chart-pie"></i> Despesas por Categoria — Mês Passado × Mês Corrente', type: 'gv-despesas' },
     { title: '<i class="fas fa-truck"></i> Ranking de Médias — Cavalos (km/L)', type: 'gv-medias-cavalo' },
     { title: '<i class="fas fa-trailer"></i> Ranking de Médias — Carretas (L/h)', type: 'gv-medias-carreta' },
+    { title: '<i class="fas fa-user-clock"></i> RH — Turnover (12 meses)', type: 'gv-turnover' },
   ];
 }
 
@@ -4881,6 +4882,64 @@ function gvRenderMedias(body, s, slides, idx) {
     </div>`, true);
 }
 
+// ── Slide: RH Turnover com pizzas (movimentação + motivos de desligamento) ──
+function gvRenderTurnover(body, s, slides, idx) {
+  const d = slideRhResumo();
+  const pct = (v, t) => (t ? v / t * 100 : 0).toFixed(1).replace('.', ',') + '%';
+  const movTot = d.admitidos + d.desligados;
+  const mov = [
+    { nome: 'Admitidos', qtd: d.admitidos, cor: '#10b981' },
+    { nome: 'Desligados', qtd: d.desligados, cor: '#ef4444' }
+  ].filter(x => x.qtd > 0);
+  const motTot = d.rankingMotivos.reduce((a, [, q]) => a + q, 0);
+  const mot = d.rankingMotivos.map(([nome, qtd], i) => ({ nome, qtd, cor: GV_CORES[i % GV_CORES.length] }));
+  const leg = (arr, tot) => `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.35rem;margin-top:.8rem;text-align:left">
+    ${arr.map(l => `<div style="display:flex;align-items:center;gap:.5rem;font-family:'Inter',sans-serif;font-size:.82rem;background:#f6f7f9;border-radius:8px;padding:.3rem .55rem;min-width:0">
+      <span style="width:11px;height:11px;border-radius:3px;background:${l.cor};flex:none"></span>
+      <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600" title="${escapeHTML(l.nome)}">${escapeHTML(l.nome)}</span>
+      <span style="flex:none;color:var(--text-lt)">${l.qtd}</span>
+      <b style="flex:none;color:var(--accent-dk);min-width:3.2rem;text-align:right">${pct(l.qtd, tot)}</b></div>`).join('')}</div>`;
+  const card = (titulo, id, arr, tot, vazio) => `<div class="slide-status-card" style="flex:1 1 380px;min-width:0;max-width:640px;text-align:center">
+    <div style="font-family:'Poppins',sans-serif;font-weight:600;font-size:1rem;color:#2c2c2c;margin-bottom:.5rem">${titulo}</div>
+    ${arr.length ? `<div style="position:relative;height:clamp(180px,30vh,300px)"><canvas id="${id}"></canvas></div>${leg(arr, tot)}`
+                 : `<div style="padding:3rem 0;color:var(--text-lt);font-size:.9rem">${vazio}</div>`}</div>`;
+
+  body.innerHTML = `<div class="slide-section-title">${s.title}</div>
+    <div class="slide-kpi-grid compact" style="margin-bottom:1.2rem;max-width:900px">
+      <div class="slide-kpi-card"><div class="slide-kpi-val">${d.turnover.toFixed(1).replace('.', ',')}%</div><div class="slide-kpi-lbl">Turnover (12 meses)</div></div>
+      <div class="slide-kpi-card"><div class="slide-kpi-val">${d.ativos}</div><div class="slide-kpi-lbl">Quadro Ativo</div></div>
+      <div class="slide-kpi-card"><div class="slide-kpi-val">${d.tempoMedioStr}</div><div class="slide-kpi-lbl">Tempo Médio de Casa</div></div>
+    </div>
+    <div style="display:flex;gap:1.2rem;flex-wrap:wrap;justify-content:center;width:100%;max-width:1320px">
+      ${card('Admissões × Desligamentos (12 meses)', 'gvTurnMov', mov, movTot, 'Sem movimentação nos últimos 12 meses.')}
+      ${card('Motivos de Desligamento (12 meses)', 'gvTurnMot', mot, motTot, 'Sem desligamentos nos últimos 12 meses.')}
+    </div>`;
+  requestAnimationFrame(() => body.classList.add('show'));
+  slideRenderDots(slides, idx);
+
+  gvDestroyCharts();
+  [['gvTurnMov', mov], ['gvTurnMot', mot]].forEach(([id, arr]) => {
+    const cv = document.getElementById(id);
+    if (!cv || !arr.length) return;
+    _gvCharts.push(new Chart(cv.getContext('2d'), {
+      type: 'doughnut',
+      data: { labels: arr.map(x => x.nome), datasets: [{ data: arr.map(x => x.qtd), backgroundColor: arr.map(x => x.cor), borderColor: '#fff', borderWidth: 2 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '40%',
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => { const t = ctx.dataset.data.reduce((a, b) => a + b, 0); return ` ${ctx.label}: ${ctx.raw} (${t ? (ctx.raw / t * 100).toFixed(1).replace('.', ',') : '0,0'}%)`; } } },
+          datalabels: {
+            color: '#fff', font: { weight: '700', size: 13 }, textShadowColor: 'rgba(0,0,0,.45)', textShadowBlur: 3,
+            formatter: (v, c) => { const t = c.chart.data.datasets[0].data.reduce((a, b) => a + b, 0); const p = t ? v / t * 100 : 0; return p >= 5 ? p.toFixed(0) + '%' : ''; }
+          }
+        }
+      },
+      plugins: (typeof ChartDataLabels !== 'undefined') ? [ChartDataLabels] : []
+    }));
+  });
+}
+
 let slideFinChartInstance = null;
 
 // Retorna a classe de destaque do card de KPI conforme o status (vencido/próximo/ok)
@@ -5275,6 +5334,7 @@ function slideRender(){
       return;
     }
     if (s.type === 'gv-despesas') { gvRenderDespesas(body, s, slides, idx); return; }
+    if (s.type === 'gv-turnover') { gvRenderTurnover(body, s, slides, idx); return; }
     if (s.type === 'gv-medias-cavalo' || s.type === 'gv-medias-carreta') { gvRenderMedias(body, s, slides, idx); return; }
     if (s.type === 'consumo-melhores' || s.type === 'consumo-piores') {
       const tipo = s.type === 'consumo-melhores' ? 'melhores' : 'piores';
