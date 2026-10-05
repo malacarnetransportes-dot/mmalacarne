@@ -10892,6 +10892,9 @@ function fatcPopularFiltrosTab() {
     if (opts.map(String).includes(val)) el.value = val;
   };
   fillPreserve('fatcAnoTab',       anos,       '<option value="">Todos</option>');
+  // Ano corrente é o padrão (reflete no ranking); só respeita "Todos" se o usuário escolheu isso
+  { const elA = document.getElementById('fatcAnoTab'), anoCorr = String(new Date().getFullYear());
+    if (elA && !elA.value && !window._fatcAnoManual && anos.map(String).includes(anoCorr)) elA.value = anoCorr; }
   fillPreserve('fatcMotoristaTab', motoristas, '<option value="">Todos</option>');
   fillPreserve('fatcCavaloTab',    cavalos,    '<option value="">Todas</option>');
   fillPreserve('fatcCarretaTab',   carretas,   '<option value="">Todas</option>');
@@ -10902,14 +10905,33 @@ function fatcResetFiltersTab() {
   ['fatcAnoTab','fatcMesTab','fatcMotoristaTab','fatcCavaloTab','fatcCarretaTab','fatcPostoTab'].forEach(id => {
     const el = document.getElementById(id); if (el) el.selectedIndex = 0;
   });
+  // "Limpar" volta ao padrão: ano corrente (não "Todos")
+  { const elA = document.getElementById('fatcAnoTab'), anoCorr = String(new Date().getFullYear());
+    window._fatcAnoManual = false;
+    if (elA && [...elA.options].some(o => o.value === anoCorr)) elA.value = anoCorr; }
   const di = document.getElementById('fatcDataInicioTab'); if (di) di.value = '';
   const df = document.getElementById('fatcDataFimTab');    if (df) df.value = '';
   fatcApplyFiltersTab();
 }
 
 function fatcApplyFiltersTab() {
-  const ano   = document.getElementById('fatcAnoTab')?.value || '';
+  const elAnoSel = document.getElementById('fatcAnoTab');
+  if (elAnoSel && !elAnoSel._gvBound) { elAnoSel._gvBound = true; elAnoSel.addEventListener('change', () => { window._fatcAnoManual = true; }); }
   const mes   = document.getElementById('fatcMesTab')?.value || '';
+  // Mês sem ano ("Todos") juntaria o mesmo mês de anos diferentes (ex.: out/2025 + out/2026):
+  // o km percorrido e os litros ficam de períodos distintos e a média sai distorcida.
+  // Nesse caso usa automaticamente o ano mais recente que tem registros naquele mês.
+  if (mes && elAnoSel && !elAnoSel.value) {
+    const anosDoMes = fatcGetRecords().filter(r => String(r.mes) === mes).map(r => Number(r.ano)).filter(Boolean);
+    if (anosDoMes.length) {
+      const maisRecente = String(Math.max(...anosDoMes));
+      if ([...elAnoSel.options].some(o => o.value === maisRecente)) {
+        elAnoSel.value = maisRecente;
+        if (typeof showToast === 'function') showToast('Ano ajustado para ' + maisRecente + ' — mês sem ano misturaria anos diferentes na média.', 3500);
+      }
+    }
+  }
+  const ano   = elAnoSel?.value || '';
   const mot   = document.getElementById('fatcMotoristaTab')?.value || '';
   const cav   = document.getElementById('fatcCavaloTab')?.value || '';
   const car   = document.getElementById('fatcCarretaTab')?.value || '';
@@ -11419,7 +11441,11 @@ function fatcRenderResumoCardTab(records, f) {
   const fmtLH  = v => v ? v.toLocaleString('pt-BR',{maximumFractionDigits:2}) + ' L/h' : '—';
   const fmtNum = v => (v || 0).toLocaleString('pt-BR',{maximumFractionDigits:0});
 
-  const ehCavReg = r => r.tipoAbastecido !== 'carreta' && r.tipoAbastecido !== 'arla';
+  const _ehArlaReg = r => !!r.ehArla || r.tipoAbastecido === 'arla';
+  // MESMO critério de _grupoKm(): carreta = tipo 'carreta' OU litrosCarreta > 0; resto = cavalo.
+  // (antes, um registro com litros de carreta mas tipo ≠ 'carreta' entrava no km do cavalo com delta de horímetro)
+  const ehCarReg = r => !_ehArlaReg(r) && (r.tipoAbastecido === 'carreta' || (r.litrosCarreta||0) > 0);
+  const ehCavReg = r => !_ehArlaReg(r) && !ehCarReg(r);
   const totalLitrosCav   = records.reduce((s,r)=>s+(r.litrosCavalo||0),0);
   const totalLitrosCar   = records.reduce((s,r)=>s+(r.litrosCarreta||0),0);
   const totalCustoCav    = records.reduce((s,r)=>s+(r.valorCavalo||0),0);
@@ -11464,12 +11490,16 @@ function fatcRenderResumoCardTab(records, f) {
     const inicial = (primeiro.kmPercorrido > 0) ? (primeiro.km - primeiro.kmPercorrido) : primeiro.km;
     return { inicial, final: ultimo.km };
   };
-  const ehCarReg = r => r.tipoAbastecido === 'carreta';
-  const limCav = limitesChain(ehCavReg);
-  const limCar = limitesChain(ehCarReg);
+  // KM/horímetro inicial e final só fazem sentido para UMA placa. Com várias placas
+  // (filtro "Todas") o primeiro e o último registro são de veículos diferentes → "—".
+  const _placaSeq = r => String(r.placaFisica || r.placaCarreta || r.placaCavalo || '').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  const _qtdPlacas = fn => new Set(porDataAsc.filter(r => fn(r) && _leituraValida(r)).map(_placaSeq)).size;
+  const multiCav = _qtdPlacas(ehCavReg) > 1, multiCar = _qtdPlacas(ehCarReg) > 1;
+  const limCav = multiCav ? null : limitesChain(ehCavReg);
+  const limCar = multiCar ? null : limitesChain(ehCarReg);
 
-  const totalKm = records.reduce((s,r)=> s + (ehCavReg(r) ? (r.kmPercorrido||0) : 0), 0);
-  const totalHorasCarreta = records.reduce((s,r)=> s + (ehCarReg(r) ? (r.kmPercorrido||0) : 0), 0);
+  const totalKm = records.reduce((s,r)=> s + (ehCavReg(r) && (r.litrosCavalo||0) > 0 ? (r.kmPercorrido||0) : 0), 0);
+  const totalHorasCarreta = records.reduce((s,r)=> s + (ehCarReg(r) && (r.litrosCarreta||0) > 0 ? (r.kmPercorrido||0) : 0), 0);
 
   // Litros/custo que realmente "geraram" o km medido (ver dentroCadeia)
   const totalLitrosCavMedia = records.reduce((s,r)=> s + (ehCavReg(r) && r.dentroCadeia ? (r.litrosCavalo||0) : 0), 0);
@@ -11480,8 +11510,8 @@ function fatcRenderResumoCardTab(records, f) {
   // Se o filtro pega períodos não contíguos (ex.: Mês=Out com Ano=Todos), KM final − inicial
   // não bate com o total; sinaliza no rótulo.
   const _naoContig = (lim, tot) => lim && Math.abs(tot - (lim.final - lim.inicial)) > 1;
-  const sufKm = _naoContig(limCav, totalKm) ? ' (soma dos períodos)' : '';
-  const sufHr = _naoContig(limCar, totalHorasCarreta) ? ' (soma dos períodos)' : '';
+  const sufKm = multiCav ? ' (soma da frota)' : (_naoContig(limCav, totalKm) ? ' (soma dos períodos)' : '');
+  const sufHr = multiCar ? ' (soma da frota)' : (_naoContig(limCar, totalHorasCarreta) ? ' (soma dos períodos)' : '');
 
   const mediaCav = totalKm > 0 && totalLitrosCavMedia > 0 ? totalKm / totalLitrosCavMedia : 0;
   const mediaCar = totalLitrosCarMedia > 0 && totalHorasCarreta > 0 ? totalLitrosCarMedia / totalHorasCarreta : 0;
@@ -11889,6 +11919,8 @@ async function loadAbastecimentos(opts) {
   const A = abastCols(headers);
   if (!A.placa) { falhar(`Coluna de Placa não encontrada na planilha. Cabeçalhos recebidos: ${headers.join(' | ')}`); return; }
 
+  const _nLinhasPlanilha = rows.length;
+  const _nSemPlaca = rows.filter(r => !r[A.placa]).length;
   abastAllRecords = rows.filter(r => r[A.placa]).map(r => {
     const dataObj      = A.data ? parseDate(r[A.data]) : null;
     const litros       = A.qtd ? parseMoney(r[A.qtd]) : 0;
@@ -11934,6 +11966,10 @@ async function loadAbastecimentos(opts) {
     //   • S10 / sem info  → segue o tipo da placa (ehCarreta já cuida disso)
     const combRaw = A.comb ? String(r[A.comb] || '').trim().toLowerCase().replace(/\s|-/g,'') : '';
     const ehArla        = combRaw.includes('arla');
+    // Itens que NÃO são combustível (peças, cabo de bateria, lubrificante, filtro...) vêm na mesma
+    // planilha. Se a descrição existe e não cita nenhum combustível/arla, não entra no consumo.
+    const _kwComb = ['diesel','s10','s500','s-10','odb','od b','gasolina','etanol','alcool','biodiesel','comb'];
+    const naoCombustivel = !!combRaw && !ehArla && !_kwComb.some(k => combRaw.includes(k.replace(/\s|-/g,'')));
     const ehDieselCarreta = !ehArla && (
       combRaw.includes('s500') ||
       (combRaw.includes('diesel') && !combRaw.includes('s10') && combRaw.includes('comum')) ||
@@ -11984,6 +12020,7 @@ async function loadAbastecimentos(opts) {
       mediaCavalo:  0,
       mediaCarreta: 0,
       ehArla:       ehArla,
+      naoCombustivel: naoCombustivel,
       // Situação da abastecida no cálculo de consumo (preenchida na cadeia de
       // KM/horímetro abaixo): 'ok' = entra na média · 'inicio' = 1ª leitura da
       // sequência (sem leitura anterior) · 'sem-leitura' = nota sem KM/horímetro
@@ -12023,6 +12060,12 @@ async function loadAbastecimentos(opts) {
   //      na tabela E entrando na cadeia de KM, distorcendo o total/média.
   //    Basta uma das três chaves já ter sido vista pra contar como duplicata.
   //    Registra cada duplicata encontrada para exibir alerta no dashboard.
+  // Remove itens que não são combustível/arla (peças, cabos, filtros...) do cálculo de consumo
+  const _removidosNaoComb = abastAllRecords.filter(r => r.naoCombustivel);
+  if (_removidosNaoComb.length) {
+    console.info('[Consumo] Itens ignorados (não são combustível):', _removidosNaoComb.map(r => `${r.dataStr} ${r.placaFisica} — ${r.combustivel}`));
+  }
+  abastAllRecords = abastAllRecords.filter(r => !r.naoCombustivel);
   const normNf = v => String(v||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
   const seenKey   = new Set();
   const seenFirst = {};      // chave → 1º registro (para mostrar no alerta)
@@ -12244,6 +12287,23 @@ async function loadAbastecimentos(opts) {
   const diagEl2 = document.getElementById('abastDiagnostico');
   if (diagEl2) diagEl2.style.display = 'none';
 
+  // ── Conferência: linhas da planilha × registros usados ──
+  {
+    const nArla = abastAllRecords.filter(r => r.ehArla).length;
+    const nSemKm = abastAllRecords.filter(r => !r.ehArla && r.statusCalc === 'sem-leitura').length;
+    const nFora  = abastAllRecords.filter(r => r.statusCalc === 'fora').length;
+    window._abastReconc = { linhas: _nLinhasPlanilha, semPlaca: _nSemPlaca, naoComb: _removidosNaoComb.length, dup: dupLog.length, usados: abastAllRecords.length, arla: nArla, semKm: nSemKm, foraSeq: nFora };
+    let elR = document.getElementById('abastReconc');
+    if (!elR) {
+      const ref = document.getElementById('abastDiagnostico');
+      if (ref && ref.parentNode) { elR = document.createElement('div'); elR.id = 'abastReconc';
+        elR.style.cssText = 'margin-top:.5rem;font-size:.74rem;color:#6b5a3f;line-height:1.6'; ref.parentNode.insertBefore(elR, ref.nextSibling); }
+    }
+    if (elR) elR.innerHTML = `<i class="fas fa-clipboard-check" style="color:var(--accent-dk)"></i> <b>Conferência da planilha:</b> ${_nLinhasPlanilha} linhas lidas`
+      + ` − ${_nSemPlaca} sem placa − ${_removidosNaoComb.length} não combustível − ${dupLog.length} duplicada(s)`
+      + ` = <b>${abastAllRecords.length} abastecimentos usados</b> (${nArla} de Arla, fora do km/L)`
+      + ` · ${nSemKm} sem KM/horímetro · ${nFora} com leitura fora da sequência`;
+  }
   fatcPopularFiltrosTab();
   fatcApplyFiltersTab();
   const n = abastAllRecords.length;
