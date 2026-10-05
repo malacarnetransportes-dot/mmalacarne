@@ -3889,6 +3889,7 @@ let slideTimer = null, slideProgressTimer = null, slideIdx = 0;
 // Evita disparar várias cargas simultâneas da planilha de abastecimentos
 // enquanto o slide de consumo de combustível está esperando os dados.
 let _slideConsumoCarregando = false;
+const GV_BUILD = '05.10-capa';   // identificador da versão (aparece no contador do topo) — confirma que a TV carregou o arquivo novo
 const SLIDE_DURATION = 18000; // ms por slide (8s originais + 10s pedidos)
 
 function slideText(id, fallback){
@@ -4556,6 +4557,8 @@ async function slideRenderWeather(body, s, slides, idx) {
   slideRenderDots(slides, idx);
 
   const data = await slideFetchWeather();
+  // Se a previsão demorou e a rotação já seguiu para outro slide, não sobrescreve a tela atual
+  try { const _cur = slideBuildSlides()[slideIdx % slideBuildSlides().length]; if (!_cur || _cur.type !== 'weather-concordia') return; } catch (e) {}
   if (!data || !data.daily) {
     body.innerHTML = `<div class="slide-section-title">${s.title}</div>
       <div style="color:var(--text-lt);padding:2rem;text-align:center"><i class="fas fa-wifi-slash" style="font-size:2rem;margin-bottom:.5rem;display:block"></i>Sem conexão para carregar a previsão.</div>${feriadosMesHTML()}`;
@@ -4961,7 +4964,7 @@ function slideRender(){
   slideAutoScrollStop();
   gvDestroyCharts();
   const counterEl = document.getElementById('slideCounter');
-  if (counterEl) counterEl.textContent = `${idx + 1} / ${slides.length}`;
+  if (counterEl) counterEl.textContent = `${idx + 1} / ${slides.length} · v${GV_BUILD}`;
 
   setTimeout(() => {
     if (s.type === 'weather-concordia') {
