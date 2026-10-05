@@ -294,6 +294,19 @@ footer a{color:var(--accent);text-decoration:none;}
 body.tv-kiosk-mode>*:not(#slideOverlay){display:none!important;}
 body.tv-kiosk-mode #slideOverlay{display:flex!important;}
 body.tv-kiosk-mode .slide-close{display:none!important;}
+/* ── Gestão à Vista: camada de animação cinematográfica ── */
+.slide-body.show>*{animation:gvIn .75s cubic-bezier(.2,.8,.2,1) both;}
+.slide-body.show>*:nth-child(2){animation-delay:.12s;}
+.slide-body.show>*:nth-child(3){animation-delay:.24s;}
+.slide-body.show>*:nth-child(n+4){animation-delay:.36s;}
+.slide-body.show .slide-kpi-card,.slide-body.show .vx-card,.slide-body.show .slide-status-card{animation:gvIn .65s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*70ms + .25s);}
+@keyframes gvIn{from{opacity:0;transform:translateY(28px) scale(.97);}to{opacity:1;transform:none;}}
+.slide-body.show .ig-bar span{transform-origin:left center;animation:gvGrow 1.2s .55s cubic-bezier(.2,.8,.2,1) both;}
+@keyframes gvGrow{from{transform:scaleX(0);}}
+.slide-kpi-card.is-danger .slide-kpi-val{animation:gvPulse 2.4s ease-in-out 1.4s infinite;}
+@keyframes gvPulse{0%,100%{text-shadow:0 0 0 rgba(239,68,68,0);}50%{text-shadow:0 0 18px rgba(239,68,68,.55);}}
+#slideNarrBtn.on{background:var(--accent)!important;color:#fff!important;border-color:var(--accent-dk)!important;}
+@media (prefers-reduced-motion:reduce){.slide-body.show *{animation:none!important;}}
 /* cursor oculto após 3s de inatividade no modo TV */
 body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
 
@@ -781,6 +794,7 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
                oninput="slideRadioSetVolume(this.value)"
                style="display:none;width:66px;accent-color:var(--accent-dk);cursor:pointer">
       </div>
+      <button id="slideNarrBtn" title="Narração — desligada por padrão" onclick="gvNarrToggle()" style="background:#fff;border:1px solid rgba(139,115,85,.2);color:#1c2333;width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:.9rem;transition:.2s;display:flex;align-items:center;justify-content:center;"><i class="fas fa-microphone-slash" id="slideNarrIcon"></i></button>
       <button id="slideFullscreenBtn" title="Tela Inteira" style="background:#fff;border:1px solid rgba(139,115,85,.2);color:#1c2333;width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:.9rem;transition:.2s;display:flex;align-items:center;justify-content:center;" onclick="slideToggleFullscreen()"><i class="fas fa-expand" id="slideFullscreenIcon"></i></button>
       <button class="slide-close" id="slideCloseBtn" title="Fechar (Esc)"><i class="fas fa-times"></i></button>
     </div>
@@ -5727,6 +5741,50 @@ function slideRadioDesligar(){
   if (slideRadioRetryTimer) { clearTimeout(slideRadioRetryTimer); slideRadioRetryTimer = null; }
   slideRadioUI('off');
 }
+
+// ── Gestão à Vista: animações + narração opcional (desligada por padrão) ──
+let gvNarrOn = false;
+function gvNarrToggle(){
+  gvNarrOn = !gvNarrOn;
+  const btn = document.getElementById('slideNarrBtn'), ic = document.getElementById('slideNarrIcon');
+  if (btn) btn.classList.toggle('on', gvNarrOn);
+  if (ic) ic.className = 'fas ' + (gvNarrOn ? 'fa-microphone' : 'fa-microphone-slash');
+  if (gvNarrOn) gvNarrSpeak(); else if (window.speechSynthesis) speechSynthesis.cancel();
+}
+function gvNarrSpeak(){
+  if (!gvNarrOn || !window.speechSynthesis) return;
+  const ov = document.getElementById('slideOverlay'), b = document.getElementById('slideBody');
+  if (!b || !ov || !ov.classList.contains('active')) return;
+  const clean = x => (x||'').replace(/\s+/g,' ').trim();
+  const parts = [];
+  const t = b.querySelector('.slide-section-title'); if (t) parts.push(clean(t.textContent));
+  b.querySelectorAll('.slide-kpi-card').forEach(c => {
+    const v = c.querySelector('.slide-kpi-val'), l = c.querySelector('.slide-kpi-lbl');
+    if (v && l) parts.push(clean(v.dataset.final || v.textContent) + ' ' + clean(l.textContent));
+  });
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(parts.join('. ').slice(0, 420));
+  u.lang = 'pt-BR'; u.rate = 1;
+  speechSynthesis.speak(u);
+}
+function gvAnimar(){
+  const b = document.getElementById('slideBody'); if (!b) return;
+  b.querySelectorAll('.slide-kpi-card,.vx-card,.slide-status-card').forEach((el,i) => el.style.setProperty('--i', Math.min(i,12)));
+  b.querySelectorAll('.slide-kpi-val').forEach(el => {
+    const txt = el.textContent.trim();
+    if (!/^\d+$/.test(txt) || el.dataset.final) return;
+    const n = parseInt(txt,10), t0 = performance.now(); el.dataset.final = txt;
+    const step = now => { const p = Math.min((now-t0)/1000,1); el.textContent = Math.round(n*(1-Math.pow(1-p,3))); if (p<1) requestAnimationFrame(step); else el.textContent = txt; };
+    el.textContent = '0'; requestAnimationFrame(step);
+  });
+}
+(function(){
+  const b = document.getElementById('slideBody'); let tm = null;
+  if (b) new MutationObserver(() => { clearTimeout(tm); tm = setTimeout(() => { gvAnimar(); gvNarrSpeak(); }, 350); }).observe(b, { childList:true });
+  const stop = () => { if (window.speechSynthesis) speechSynthesis.cancel(); };
+  const cb = document.getElementById('slideCloseBtn'); if (cb) cb.addEventListener('click', stop);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') stop(); });
+})();
 
 function slideRadioToggle(){
   if (slideRadioLigado) slideRadioDesligar();
