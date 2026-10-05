@@ -4429,6 +4429,8 @@ function slideBuildSlides(){
   const mostraBat = EX || isNaN(batV) || isNaN(batP) || batV > 0 || batP > 0;
   const carregando = vencResumo.some(c => !(typeof vencData !== 'undefined' && Array.isArray(vencData[c.key]) && vencData[c.key].length));
   return [
+    // 0) Capa "Gestão à Vista" — identidade do painel, antes da previsão do tempo
+    { title: 'Gestão à Vista', type: 'gv-capa', conjuntos: conjuntos.length, totalVencidos, totalProximos },
     // 1) Previsão do Tempo — Concórdia SC (semana)
     { title: '<i class="fas fa-cloud-sun"></i> Previsão do Tempo — Concórdia/SC', type: 'weather-concordia' },
     // 1b) Painel Executivo (infográfico): números-chave + barras por categoria
@@ -4945,7 +4947,7 @@ function slideKpiClass(k){
   return '';
 }
 function slideKpiCard(k){
-  const cls = slideKpiClass(k);
+  const cls = (k.cls !== undefined) ? k.cls : slideKpiClass(k);
   const ico = cls.includes('danger') ? 'fa-triangle-exclamation' : cls.includes('warning') ? 'fa-clock' : cls.includes('ok') ? 'fa-circle-check' : 'fa-chart-simple';
   return `<div class="slide-kpi-card${cls}"><div class="ig-ico"><i class="fas ${k.icon || ico}"></i></div><div class="slide-kpi-val">${k.val}</div><div class="slide-kpi-lbl">${k.lbl}</div></div>`;
 }
@@ -4966,24 +4968,52 @@ function slideRender(){
       slideRenderWeather(body, s, slides, idx);
       return;
     }
+    if (s.type === 'gv-capa') {
+      const logoEl = document.querySelector('#slideOverlay .slide-logo');
+      const logoSrc = logoEl ? logoEl.getAttribute('src') : '';
+      const agora = new Date();
+      const dataTxt = agora.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+      const batC = { v: parseInt(slideText('bat-vencidas','0'))||0, p: parseInt(slideText('bat-proximas','0'))||0 };
+      const chips = [
+        { ico:'fa-truck-moving',          val: s.conjuntos,                    lbl:'Conjuntos na frota' },
+        { ico:'fa-triangle-exclamation',  val: s.totalVencidos + batC.v,       lbl:'Vencidos' },
+        { ico:'fa-clock',                 val: s.totalProximos + batC.p,       lbl:'A vencer em 30 dias' },
+      ].map((c,i) => `<div class="gvc-chip" style="--i:${i}"><i class="fas ${c.ico}"></i><b>${c.val}</b><span>${c.lbl}</span></div>`).join('');
+      body.innerHTML = `<div class="gv-capa">
+        <div class="gvc-glow"></div><div class="gvc-stripe s1"></div><div class="gvc-stripe s2"></div>
+        <div class="gvc-inner">
+          ${logoSrc ? `<img class="gvc-logo" src="${logoSrc}" alt="" onerror="this.style.display='none'">` : ''}
+          <div class="gvc-empresa">M-MALACARNE</div>
+          <div class="gvc-sub">TRANSPORTE &amp; LOGÍSTICA</div>
+          <div class="gvc-rule"></div>
+          <div class="gvc-titulo">GESTÃO <span>À VISTA</span></div>
+          <div class="gvc-desc">Frota · Vencimentos · Consumo · Financeiro · Pessoas</div>
+          <div class="gvc-chips">${chips}</div>
+          <div class="gvc-data"><i class="far fa-calendar"></i> ${dataTxt}</div>
+        </div>
+      </div>`;
+      requestAnimationFrame(() => body.classList.add('show'));
+      slideRenderDots(slides, idx);
+      return;
+    }
     if (s.type === 'exec-painel') {
       const bat = { v: parseInt(slideText('bat-vencidas','0'))||0, p: parseInt(slideText('bat-proximas','0'))||0 };
       const cards = [
-        { val: s.totalVencidos + bat.v, lbl: 'Vencidos', danger: true, icon: 'fa-triangle-exclamation' },
-        { val: s.totalProximos + bat.p, lbl: 'A vencer em 30 dias', warning: true, icon: 'fa-clock' }
+        { val: s.totalVencidos + bat.v, lbl: 'Vencidos', cls: ' is-pal-dk', icon: 'fa-triangle-exclamation' },
+        { val: s.totalProximos + bat.p, lbl: 'A vencer em 30 dias', cls: ' is-pal-gd', icon: 'fa-clock' }
       ];
       const cats = s.vencResumo.filter(c => c.vencidos + c.proximos > 0);
       const linhas = cats.map(c => {
         const t = (c.vencidos + c.proximos) || 1;
         return `<div class="ig-bar-row"><span><i class="fas ${c.icon}" style="color:var(--accent-dk);margin-right:.4rem"></i>${c.label}</span>
-          <div class="ig-bar"><span style="width:${c.vencidos/t*100}%;background:var(--danger)"></span><span style="width:${c.proximos/t*100}%;background:var(--warning)"></span></div>
+          <div class="ig-bar"><span class="seg-v" style="width:${c.vencidos/t*100}%"></span><span class="seg-p" style="width:${c.proximos/t*100}%"></span></div>
           <div class="ig-legend"><b class="d">${c.vencidos}</b> vencidos · <b class="w">${c.proximos}</b> em 30 dias</div></div>`;
       }).join('');
       const tudoOk = (s.totalVencidos + bat.v + s.totalProximos + bat.p) === 0;
       body.innerHTML = `<div class="slide-section-title">${s.title}</div>
         <div class="ig-exec" style="grid-template-columns:repeat(2,1fr);max-width:760px">${cards.map(slideKpiCard).join('')}</div>
         ${tudoOk ? `<div class="slide-hero-banner is-ok"><i class="fas fa-check-circle"></i> Tudo em dia — nenhum vencido e nada a vencer em 30 dias</div>`
-          : (linhas ? `<div class="ig-bars"><div class="ig-bars-head"><i class="fas fa-calendar-check" style="color:var(--accent-dk)"></i> Onde estão os vencimentos</div>${linhas}</div>` : '')}`;
+          : (linhas ? `<div class="ig-bars"><div class="ig-bars-head"><i class="fas fa-calendar-check" style="color:var(--accent-dk)"></i> Onde estão os vencimentos<span class="ig-key"><i class="k-v"></i>Vencidos<i class="k-p"></i>A vencer em 30 dias</span></div>${linhas}</div>` : '')}`;
       requestAnimationFrame(() => body.classList.add('show'));
       slideRenderDots(slides, idx);
       slideAutoScroll(body);
@@ -5425,13 +5455,23 @@ function slideRerenderSe(tipos){
   if (s && tipos.indexOf(s.type) !== -1) slideRender();
 }
 
+// Duração por slide: a capa "Gestão à Vista" fica menos tempo que os painéis de dados.
+function slideDurFor(i){
+  try { const sl = slideBuildSlides(); const sx = sl[i % sl.length]; if (sx && sx.type === 'gv-capa') return 7000; } catch(e) {}
+  return SLIDE_DURATION;
+}
+function slideAgendar(){
+  clearTimeout(slideTimer);
+  slideTimer = setTimeout(slideNext, slideDurFor(slideIdx));
+}
 function slideStartProgress(){
   clearInterval(slideProgressTimer);
   const bar = document.getElementById('slideProgressBar');
   let pct = 0;
+  const _dur = slideDurFor(slideIdx);
   bar.style.width = '0%';
   slideProgressTimer = setInterval(() => {
-    pct += 100 / (SLIDE_DURATION/100);
+    pct += 100 / (_dur/100);
     bar.style.width = Math.min(pct,100) + '%';
   }, 100);
 }
@@ -5440,6 +5480,7 @@ function slideNext(){
   slideIdx++;
   slideRender();
   slideStartProgress();
+  slideAgendar();
 }
 
 function slideUpdateClock(){
@@ -5492,7 +5533,7 @@ function openSlideMode(){
   slideRender();
   slideStartProgress();
   slideUpdateClock();
-  slideTimer = setInterval(slideNext, SLIDE_DURATION);
+  slideAgendar();
   slideClockTimer = setInterval(slideUpdateClock, 1000);
   // Garante que a temperatura do header seja carregada ao abrir
   slideFetchWeather().then(d => {
@@ -5783,7 +5824,7 @@ document.addEventListener('fullscreenchange', function(){
 
 function closeSlideMode(){
   document.getElementById('slideOverlay').classList.remove('active');
-  clearInterval(slideTimer);
+  clearTimeout(slideTimer);
   clearInterval(slideProgressTimer);
   clearInterval(slideClockTimer);
   if (slideFinChartInstance) { slideFinChartInstance.destroy(); slideFinChartInstance = null; }
@@ -11405,53 +11446,45 @@ function fatcRenderResumoCardTab(records, f) {
   //    leitura de KM do cavalo no campo r.km — ignorá-los fazia o "KM Inicial"
   //    avançar para o primeiro abastecimento de S10, pulando todos os Arla
   //    anteriores e deixando o total de km subestimado. ──
-  const limitesSeq = (filtroFn) => {
-    // Para calcular km percorrido (delta), usa só registros da sequência (ehCavReg).
-    // Para determinar KM Inicial/Final do display, usa qualquer registro com km.
-    const regs = porDataAsc.filter(r => filtroFn(r) && (r.km||0) > 0);
+  // ── NOVA LÓGICA (05/10/2026) ──────────────────────────────────────────
+  // O km percorrido de cada abastecimento (r.kmPercorrido) já é o delta contra a
+  // leitura ANTERIOR da sequência completa da placa (odômetro p/ cavalo,
+  // horímetro p/ carreta), mesmo que essa leitura seja do mês anterior. Logo,
+  // somar os deltas dos registros filtrados = (último km do período) − (último
+  // km do período anterior). Antes o card usava (último km − primeiro km) dos
+  // registros filtrados, o que, com Ano = "Todos" + Mês = "Out", pegava
+  // out/2025 e out/2026 e contava um ano inteiro de km contra só 2 meses de
+  // litros (resultado absurdo: 118 km/L).
+  const _leituraValida = r => (r.km||0) > 0 && (r.statusCalc === 'ok' || r.statusCalc === 'inicio');
+  const limitesChain = (filtroFn) => {
+    const regs = porDataAsc.filter(r => filtroFn(r) && _leituraValida(r));
     if (!regs.length) return null;
     const primeiro = regs[0], ultimo = regs[regs.length-1];
-    // KM inicial: se o 1º registro já tem delta calculado (kmPercorrido > 0),
-    // recua para o odômetro anterior (km - delta). Caso contrário usa o km
-    // do próprio registro (1ª leitura do período, sem anterior na cadeia).
+    // KM/horímetro inicial = leitura anterior ao 1º registro do período (km − delta)
     const inicial = (primeiro.kmPercorrido > 0) ? (primeiro.km - primeiro.kmPercorrido) : primeiro.km;
     return { inicial, final: ultimo.km };
   };
+  const ehCarReg = r => r.tipoAbastecido === 'carreta';
+  const limCav = limitesChain(ehCavReg);
+  const limCar = limitesChain(ehCarReg);
 
-  // Para KM Inicial/Final exibido no card, inclui também registros de Arla
-  // (que têm odômetro do cavalo no campo km mas tipoAbastecido='arla').
-  const limitesSeqComArla = (filtroFn, filtroFnComArla) => {
-    // Usa registros de Arla para encontrar a leitura de KM mais antiga/recente,
-    // mas o delta (totalKm) continua calculado só com registros ehCavReg.
-    const regsComArla = porDataAsc.filter(r => filtroFnComArla(r) && (r.km||0) > 0);
-    if (!regsComArla.length) return limitesSeq(filtroFn);
-    const regs = porDataAsc.filter(r => filtroFn(r) && (r.km||0) > 0);
-    const primeiro = regsComArla[0];
-    const ultimo   = regsComArla[regsComArla.length-1];
-    // KM inicial: recua delta se disponível no 1º da sequência principal
-    const primeiroCav = regs.length ? regs[0] : null;
-    const inicial = (primeiroCav && primeiroCav.kmPercorrido > 0 && primeiroCav === primeiro)
-      ? (primeiroCav.km - primeiroCav.kmPercorrido)
-      : primeiro.km;
-    return { inicial, final: ultimo.km };
-  };
+  const totalKm = records.reduce((s,r)=> s + (ehCavReg(r) ? (r.kmPercorrido||0) : 0), 0);
+  const totalHorasCarreta = records.reduce((s,r)=> s + (ehCarReg(r) ? (r.kmPercorrido||0) : 0), 0);
 
-  // "Arla ou Cavalo" — registros que têm odômetro do cavalo (não carreta)
-  const ehCavOuArla = r => r.tipoAbastecido !== 'carreta';
-  const limCav = limitesSeqComArla(ehCavReg, ehCavOuArla);
-  const limCar = limitesSeq(r => r.tipoAbastecido === 'carreta');
+  // Litros/custo que realmente "geraram" o km medido (ver dentroCadeia)
+  const totalLitrosCavMedia = records.reduce((s,r)=> s + (ehCavReg(r) && r.dentroCadeia ? (r.litrosCavalo||0) : 0), 0);
+  const totalCustoCavMedia  = records.reduce((s,r)=> s + (ehCavReg(r) && r.dentroCadeia ? (r.valorCavalo||0)  : 0), 0);
+  const totalLitrosCarMedia = records.reduce((s,r)=> s + (ehCarReg(r) && r.dentroCadeia ? (r.litrosCarreta||0) : 0), 0);
+  const totalCustoCarMedia  = records.reduce((s,r)=> s + (ehCarReg(r) && r.dentroCadeia ? (r.valorCarreta||0)  : 0), 0);
 
-  // totalKm: distância real percorrida = soma dos deltas válidos de S10 (kmPercorrido)
-  // OU diferença entre o KM inicial e final da sequência principal de cavalo (S10).
-  // NÃO usa limCav (que inclui Arla) para evitar inflar o total com km percorrido
-  // antes do 1º abastecimento de S10 do período.
-  const limCavS10 = limitesSeq(ehCavReg); // sequência pura S10, sem Arla
-  const totalKm = limCavS10 ? (limCavS10.final - limCavS10.inicial)
-    : records.reduce((s,r)=> s + (ehCavReg(r) ? (r.kmPercorrido||0) : 0), 0);
-  const totalHorasCarreta = limCar ? (limCar.final - limCar.inicial)
-    : records.reduce((s,r)=> s + (r.tipoAbastecido === 'carreta' ? (r.kmPercorrido||0) : 0), 0);
-  const mediaCav = totalKm > 0 && totalLitrosCav > 0 ? totalKm / totalLitrosCav : 0;
-  const mediaCar = totalLitrosCar > 0 && totalHorasCarreta > 0 ? totalLitrosCar / totalHorasCarreta : 0;
+  // Se o filtro pega períodos não contíguos (ex.: Mês=Out com Ano=Todos), KM final − inicial
+  // não bate com o total; sinaliza no rótulo.
+  const _naoContig = (lim, tot) => lim && Math.abs(tot - (lim.final - lim.inicial)) > 1;
+  const sufKm = _naoContig(limCav, totalKm) ? ' (soma dos períodos)' : '';
+  const sufHr = _naoContig(limCar, totalHorasCarreta) ? ' (soma dos períodos)' : '';
+
+  const mediaCav = totalKm > 0 && totalLitrosCavMedia > 0 ? totalKm / totalLitrosCavMedia : 0;
+  const mediaCar = totalLitrosCarMedia > 0 && totalHorasCarreta > 0 ? totalLitrosCarMedia / totalHorasCarreta : 0;
 
   // ── Monta itens adaptativos por contexto ──
   let itens = [];
@@ -11472,7 +11505,7 @@ function fatcRenderResumoCardTab(records, f) {
   if (ctxSoCarreta) {
     itens.push({ lbl:'Horímetro Inicial', val: limCar ? fmtNum(limCar.inicial) + ' h' : '—', icone:'⏱️' });
     itens.push({ lbl:'Horímetro Final',   val: limCar ? fmtNum(limCar.final)   + ' h' : '—', icone:'⏱️' });
-    itens.push({ lbl:'Total Horas de Uso',  val: fmtNum(totalHorasCarreta) + ' h', icone:'🕐' });
+    itens.push({ lbl:'Total Horas de Uso' + sufHr,  val: fmtNum(totalHorasCarreta) + ' h', icone:'🕐' });
     itens.push({ lbl:'Média de Consumo (L/h)', val: fmtLH(mediaCar), icone:'🌡️' });
     itens.push({ lbl:'Total Litros Carreta',   val: fmtNum(totalLitrosCar) + ' L', icone:'⛽' });
     itens.push({ lbl:'Custo Abastec. Carreta', val: fmtMoney(totalCustoCar), icone:'💰' });
@@ -11485,7 +11518,7 @@ function fatcRenderResumoCardTab(records, f) {
   } else if (ctxSoCavalo) {
     itens.push({ lbl:'KM Inicial (Odômetro)',  val: limCav ? fmtNum(limCav.inicial) + ' km' : '—', icone:'📍' });
     itens.push({ lbl:'KM Final (Odômetro)',    val: limCav ? fmtNum(limCav.final)   + ' km' : '—', icone:'📍' });
-    itens.push({ lbl:'Total KM Percorrido',    val: fmtNum(totalKm) + ' km', icone:'🛣️' });
+    itens.push({ lbl:'Total KM Percorrido' + sufKm,    val: fmtNum(totalKm) + ' km', icone:'🛣️' });
     itens.push({ lbl:'Média de Consumo (km/L)',val: fmtKmL(mediaCav), icone:'⚡' });
     itens.push({ lbl:'Total Litros Cavalo',    val: fmtNum(totalLitrosCav) + ' L', icone:'⛽' });
     itens.push({ lbl:'Custo Abastec. Cavalo',  val: fmtMoney(totalCustoCav), icone:'💰' });
@@ -11505,9 +11538,9 @@ function fatcRenderResumoCardTab(records, f) {
     itens.push({ lbl:'Média Cavalo (km/L)',       val: fmtKmL(mediaCav), icone:'⚡' });
     if (totalLitrosCar > 0)
       itens.push({ lbl:'Média Carreta (L/h)',     val: fmtLH(mediaCar), icone:'🌡️' });
-    itens.push({ lbl:'Total KM Cavalo',           val: fmtNum(totalKm) + ' km', icone:'🛣️' });
+    itens.push({ lbl:'Total KM Cavalo' + sufKm,           val: fmtNum(totalKm) + ' km', icone:'🛣️' });
     if (totalHorasCarreta > 0)
-      itens.push({ lbl:'Total Horas Carreta',     val: fmtNum(totalHorasCarreta) + ' h', icone:'🕐' });
+      itens.push({ lbl:'Total Horas Carreta' + sufHr,     val: fmtNum(totalHorasCarreta) + ' h', icone:'🕐' });
     itens.push({ lbl:'Total Litros Cavalo',       val: fmtNum(totalLitrosCav) + ' L', icone:'⛽' });
     if (totalLitrosCar > 0)
       itens.push({ lbl:'Total Litros Carreta',    val: fmtNum(totalLitrosCar) + ' L', icone:'⛽' });
@@ -11600,12 +11633,12 @@ function fatcRenderAnaliseContextual(ctx) {
       cor: corCav
     });
 
-    if (totalKm > 0 && totalLitrosCav > 0) {
-      const custoPorKm = totalCustoCav / totalKm;
+    if (totalKm > 0 && totalLitrosCavMedia > 0) {
+      const custoPorKm = totalCustoCavMedia / totalKm;
       insights.push({
         tipo: 'info',
         titulo: '💵 Custo por km rodado',
-        msg: `<b>${fmtMon(custoPorKm)}/km</b> · Total percorrido: <b>${fmtNum(totalKm)} km</b> · Total gasto: <b>${fmtMon(totalCustoCav)}</b>.`
+        msg: `<b>${fmtMon(custoPorKm)}/km</b> · Total percorrido: <b>${fmtNum(totalKm)} km</b> · Total gasto: <b>${fmtMon(totalCustoCavMedia)}</b>.`
       });
     }
   }
@@ -11626,12 +11659,12 @@ function fatcRenderAnaliseContextual(ctx) {
       cor: corCar
     });
 
-    if (totalHorasCarreta > 0 && totalLitrosCar > 0) {
-      const custoPorHora = totalCustoCar / totalHorasCarreta;
+    if (totalHorasCarreta > 0 && totalLitrosCarMedia > 0) {
+      const custoPorHora = totalCustoCarMedia / totalHorasCarreta;
       insights.push({
         tipo: 'info',
         titulo: '⏱️ Custo por hora de refrigeração',
-        msg: `<b>${fmtMon(custoPorHora)}/h</b> · Total funcionando: <b>${fmtNum(totalHorasCarreta)} h</b> · Total gasto: <b>${fmtMon(totalCustoCar)}</b>.`
+        msg: `<b>${fmtMon(custoPorHora)}/h</b> · Total funcionando: <b>${fmtNum(totalHorasCarreta)} h</b> · Total gasto: <b>${fmtMon(totalCustoCarMedia)}</b>.`
       });
     }
   }
@@ -12120,6 +12153,7 @@ async function loadAbastecimentos(opts) {
     indices.forEach(idx => {
       const r0 = abastAllRecords[idx];
       r0.statusCalc = (r0.km || 0) > 0 ? 'fora' : 'sem-leitura';   // 'fora' vira 'inicio'/'ok' se entrar na cadeia
+      r0.dentroCadeia = false;   // vira true se o abastecimento estiver entre o 1º e o último elo da cadeia
     });
     const validIdx = indices.filter(idx => (abastAllRecords[idx].km || 0) > 0);
     const n = validIdx.length;
@@ -12142,6 +12176,16 @@ async function loadAbastecimentos(opts) {
       for (let i = 1; i < n; i++) if (dp[i] > dp[bestEnd]) bestEnd = i;
       const chainSet = new Set();
       for (let i = bestEnd; i !== -1; i = prev[i]) chainSet.add(i);
+
+      // Marca os abastecimentos cujos litros "pertencem" ao km percorrido:
+      // tudo que vem DEPOIS do 1º elo (que só define o ponto de partida) e
+      // até o último elo da cadeia. Litros do 1º elo (sem delta) ou de
+      // abastecimentos posteriores ao último elo (ainda sem km de fechamento)
+      // não podem entrar no divisor da média, senão ela fica distorcida.
+      const _posInd = new Map(indices.map((ix, k) => [ix, k]));
+      const _iniPos = _posInd.get(validIdx[Math.min(...chainSet)]);
+      const _fimPos = _posInd.get(validIdx[Math.max(...chainSet)]);
+      indices.forEach((ix, k) => { abastAllRecords[ix].dentroCadeia = (k > _iniPos && k <= _fimPos); });
 
       // Preenche kmPercorrido/média só para quem está na cadeia (usando o
       // predecessor real dela, que pode "pular" uma leitura ruim no meio).
@@ -19439,6 +19483,61 @@ document.getElementById('tvBtnOpen').addEventListener('click', function() {
 .slide-overlay .slide-kpi-card.is-ok .slide-kpi-val{color:#1f7a5c!important}
 .slide-overlay .ig-legend b.d{color:var(--danger)}
 .slide-overlay .ig-legend b.w{color:#c26a0a}
+
+/* ── Gestão à Vista · Capa + gráficos do Painel Executivo na paleta do layout (dourado / marrom / grafite) ── */
+.slide-kpi-card.is-pal-dk{border-top-color:var(--primary-dk);background-color:#f6f1ea;}
+.slide-kpi-card.is-pal-gd{border-top-color:var(--accent);background-color:#fbf5df;}
+.is-pal-dk .ig-ico{background:rgba(107,83,58,.16);color:var(--primary-dk);}
+.is-pal-gd .ig-ico{background:rgba(212,175,55,.22);color:var(--accent-dk);}
+.slide-overlay .slide-kpi-card.is-pal-dk .slide-kpi-val{color:var(--primary-dk)!important;}
+.slide-overlay .slide-kpi-card.is-pal-gd .slide-kpi-val{color:var(--accent-dk)!important;}
+.slide-body.show .slide-kpi-card.is-pal-dk,.slide-body.show .slide-kpi-card.is-pal-gd{background-image:linear-gradient(110deg,transparent 38%,rgba(212,175,55,.30) 50%,transparent 62%);}
+.ig-bars{border-color:rgba(139,115,85,.28);}
+.ig-bars-head{display:flex;align-items:center;gap:.5rem;}
+.ig-key{margin-left:auto;display:flex;align-items:center;gap:.4rem;font-family:'Inter',sans-serif;font-size:.72rem;font-weight:500;color:var(--text-lt);}
+.ig-key i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-left:.6rem;}
+.ig-key i:first-child{margin-left:0;}
+.ig-key .k-v{background:var(--primary-dk);}.ig-key .k-p{background:var(--accent);}
+.ig-bar{height:18px;background:#f1ede6;box-shadow:inset 0 1px 2px rgba(44,44,44,.08);}
+.ig-bar .seg-v{background:linear-gradient(180deg,#8B7355,#6B533A);}
+.ig-bar .seg-p{background:linear-gradient(180deg,#e2c25a,#d4af37);}
+.slide-overlay .ig-bars .ig-legend b.d{color:var(--primary-dk);}
+.slide-overlay .ig-bars .ig-legend b.w{color:var(--accent-dk);}
+
+/* Capa */
+.gv-capa{position:relative;flex:1;width:100%;max-width:1400px;min-height:0;border-radius:28px;overflow:hidden;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(120% 90% at 18% 0%,#34302a 0%,#232120 45%,#141414 100%);box-shadow:0 24px 60px rgba(20,20,20,.28);color:#fff;}
+.gv-capa::before{content:'';position:absolute;inset:0;opacity:.07;
+  background-image:linear-gradient(rgba(212,175,55,.8) 1px,transparent 1px),linear-gradient(90deg,rgba(212,175,55,.8) 1px,transparent 1px);background-size:56px 56px;
+  -webkit-mask-image:radial-gradient(70% 70% at 50% 50%,#000,transparent 80%);mask-image:radial-gradient(70% 70% at 50% 50%,#000,transparent 80%);}
+.gvc-glow{position:absolute;width:60%;height:60%;left:20%;top:-20%;background:radial-gradient(closest-side,rgba(212,175,55,.28),transparent);filter:blur(30px);}
+.gvc-stripe{position:absolute;top:-10%;bottom:-10%;width:90px;transform:skewX(-16deg);background:linear-gradient(180deg,rgba(212,175,55,.0),rgba(212,175,55,.35),rgba(212,175,55,0));}
+.gvc-stripe.s1{left:7%;}.gvc-stripe.s2{right:9%;width:46px;opacity:.7;}
+.gvc-inner{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;text-align:center;padding:2rem;max-width:960px;}
+.gvc-logo{height:84px;width:84px;object-fit:cover;border-radius:20px;border:2px solid rgba(212,175,55,.6);box-shadow:0 10px 30px rgba(0,0,0,.45);margin-bottom:1.2rem;}
+.gvc-empresa{font-family:'Poppins',system-ui,sans-serif;font-weight:500;font-size:clamp(1.2rem,2.4vw,2rem);letter-spacing:.3em;color:#f3ecdc;}
+.gvc-sub{font-family:'Inter',sans-serif;font-weight:600;font-size:clamp(.7rem,1.1vw,.95rem);letter-spacing:.5em;color:#b8a98a;margin-top:.45rem;}
+.gvc-rule{height:3px;width:min(34vw,380px);margin:1.6rem 0 1.4rem;background:linear-gradient(90deg,transparent,#d4af37,transparent);border-radius:3px;}
+.gvc-titulo{font-family:'Poppins',system-ui,sans-serif;font-weight:700;font-size:clamp(2.4rem,7vw,6rem);line-height:1.02;letter-spacing:.06em;color:#fff;text-shadow:0 6px 30px rgba(0,0,0,.4);}
+.gvc-titulo span{background:linear-gradient(180deg,#f0d77a,#d4af37 55%,#b8941f);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.gvc-desc{font-family:'Inter',sans-serif;font-size:clamp(.8rem,1.3vw,1.1rem);letter-spacing:.18em;text-transform:uppercase;color:#cfc4ad;margin-top:1.1rem;}
+.gvc-chips{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;margin-top:2.2rem;}
+.gvc-chip{display:flex;align-items:center;gap:.65rem;padding:.7rem 1.2rem;border-radius:16px;background:rgba(255,255,255,.06);border:1px solid rgba(212,175,55,.35);backdrop-filter:blur(4px);}
+.gvc-chip i{color:#d4af37;font-size:1.05rem;}
+.gvc-chip b{font-family:'Poppins',sans-serif;font-weight:600;font-size:1.5rem;color:#fff;font-variant-numeric:tabular-nums;}
+.gvc-chip span{font-family:'Inter',sans-serif;font-size:.74rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:#cfc4ad;}
+.gvc-data{margin-top:1.8rem;font-family:'Inter',sans-serif;font-size:.9rem;letter-spacing:.12em;text-transform:uppercase;color:#a89a7e;}
+.gvc-data i{color:#d4af37;margin-right:.4rem;}
+.slide-body.show .gvc-logo{animation:gvcUp .9s .1s cubic-bezier(.16,1,.3,1) both;}
+.slide-body.show .gvc-empresa{animation:gvcUp .9s .25s cubic-bezier(.16,1,.3,1) both;}
+.slide-body.show .gvc-sub{animation:gvcUp .9s .4s cubic-bezier(.16,1,.3,1) both;}
+.slide-body.show .gvc-rule{animation:gvcRule 1.1s .5s cubic-bezier(.16,1,.3,1) both;}
+.slide-body.show .gvc-titulo{animation:gvcUp 1s .7s cubic-bezier(.16,1,.3,1) both;}
+.slide-body.show .gvc-desc{animation:gvcUp .9s 1s cubic-bezier(.16,1,.3,1) both;}
+.slide-body.show .gvc-chip{animation:gvcUp .8s calc(1.2s + var(--i)*120ms) cubic-bezier(.16,1,.3,1) both;}
+.slide-body.show .gvc-data{animation:gvcUp .8s 1.7s ease both;}
+@keyframes gvcUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@keyframes gvcRule{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:1}}
 </style>
 <script id="gv-fx-js">
 (function(){
@@ -19451,7 +19550,7 @@ document.getElementById('tvBtnOpen').addEventListener('click', function() {
   var nm=intro.querySelector('.nm');
   'M. MALACARNE'.split('').forEach(function(ch,i){var s=document.createElement('span');s.className='c';s.style.setProperty('--n',i);s.textContent=ch;nm.appendChild(s);});
   ov.appendChild(intro);
-  function playIntro(){intro.classList.remove('go');void intro.offsetWidth;intro.classList.add('go');setTimeout(function(){intro.classList.remove('go');},4300);}
+  function playIntro(){/* substituída pelo slide de capa 'gv-capa' */}
   var wasA=ov.classList.contains('active');if(wasA)playIntro();
   new MutationObserver(function(){var a=ov.classList.contains('active');if(a&&!wasA)playIntro();wasA=a;}).observe(ov,{attributes:true,attributeFilter:['class']});
   // Título cinético suave: letra por letra
