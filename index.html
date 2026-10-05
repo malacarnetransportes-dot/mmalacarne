@@ -5780,6 +5780,10 @@ function gvNarrSpeak(){
   const clean = x => (x||'').replace(/\s+/g,' ').trim();
   const parts = [];
   const t = b.querySelector('.slide-section-title'); if (t) parts.push(clean(t.textContent));
+  if (b.querySelector('.gv-capa')) {   // capa: "Gestão à Vista" + os números do dia
+    parts.push('Gestão à Vista. M Malacarne Transporte e Logística');
+    b.querySelectorAll('.gvc-chip').forEach(c => parts.push(clean((c.querySelector('b')||{}).textContent) + ' ' + clean((c.querySelector('span')||{}).textContent)));
+  }
   b.querySelectorAll('.slide-kpi-card').forEach(c => {
     const v = c.querySelector('.slide-kpi-val'), l = c.querySelector('.slide-kpi-lbl');
     if (v && l) parts.push(clean(v.textContent) + ' ' + clean(l.textContent));
