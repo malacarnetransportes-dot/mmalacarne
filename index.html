@@ -294,19 +294,7 @@ footer a{color:var(--accent);text-decoration:none;}
 body.tv-kiosk-mode>*:not(#slideOverlay){display:none!important;}
 body.tv-kiosk-mode #slideOverlay{display:flex!important;}
 body.tv-kiosk-mode .slide-close{display:none!important;}
-/* ── Gestão à Vista: camada de animação cinematográfica ── */
-.slide-body.show>*{animation:gvIn .75s cubic-bezier(.2,.8,.2,1) both;}
-.slide-body.show>*:nth-child(2){animation-delay:.12s;}
-.slide-body.show>*:nth-child(3){animation-delay:.24s;}
-.slide-body.show>*:nth-child(n+4){animation-delay:.36s;}
-.slide-body.show .slide-kpi-card,.slide-body.show .vx-card,.slide-body.show .slide-status-card{animation:gvIn .65s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*70ms + .25s);}
-@keyframes gvIn{from{opacity:0;transform:translateY(28px) scale(.97);}to{opacity:1;transform:none;}}
-.slide-body.show .ig-bar span{transform-origin:left center;animation:gvGrow 1.2s .55s cubic-bezier(.2,.8,.2,1) both;}
-@keyframes gvGrow{from{transform:scaleX(0);}}
-.slide-kpi-card.is-danger .slide-kpi-val{animation:gvPulse 2.4s ease-in-out 1.4s infinite;}
-@keyframes gvPulse{0%,100%{text-shadow:0 0 0 rgba(239,68,68,0);}50%{text-shadow:0 0 18px rgba(239,68,68,.55);}}
 #slideNarrBtn.on{background:var(--accent)!important;color:#fff!important;border-color:var(--accent-dk)!important;}
-@media (prefers-reduced-motion:reduce){.slide-body.show *{animation:none!important;}}
 /* cursor oculto após 3s de inatividade no modo TV */
 body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
 
@@ -891,21 +879,14 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
 </div>
 
 <div class="section" id="portal-mbrf" style="margin-top:2rem;">
-  <h2 class="section-title" style="text-align:center">🚛 Portal do Transportador</h2>
-  <div style="max-width:1180px;margin:0 auto;background:#fff;border-radius:var(--r16);box-shadow:var(--shadow-md);border:2px solid rgba(212,175,55,.15);overflow:hidden">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap;padding:.7rem 1rem;border-bottom:1px solid rgba(44,44,44,.1);background:#fafafa">
-      <div style="font-weight:700;font-size:.9rem"><i class="fas fa-truck-ramp-box"></i> Portal do Transportador MBRF</div>
-      <a href="https://portaldotransportador.mbrf.com/" target="_blank" rel="noopener noreferrer" class="cta-btn"><i class="fas fa-arrow-up-right-from-square"></i> Abrir em nova aba</a>
+  <div style="max-width:940px;margin:0 auto;border-radius:var(--r16);overflow:hidden;box-shadow:var(--shadow-lg);background:linear-gradient(135deg,rgba(20,30,46,.96),rgba(26,32,44,.98));border-bottom:4px solid var(--accent);display:flex;align-items:center;gap:1.4rem;flex-wrap:wrap;padding:1.6rem 1.8rem;color:#fff">
+    <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-dk));display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:#111;flex:0 0 auto"><i class="fas fa-truck-ramp-box"></i></div>
+    <div style="flex:1;min-width:240px;text-align:left">
+      <div style="font-size:.7rem;font-weight:700;letter-spacing:.14em;color:var(--accent);margin-bottom:.25rem">PARCEIRO BRF</div>
+      <h2 style="font-size:1.35rem;font-weight:800;letter-spacing:-.01em;margin-bottom:.3rem">Portal do Transportador</h2>
+      <p style="font-size:.85rem;opacity:.8;line-height:1.5">Acesso direto ao portal da MBRF para transportadores parceiros.</p>
     </div>
-    <div style="position:relative;background:#fff">
-      <iframe id="portalMbrfFrame" src="https://portaldotransportador.mbrf.com/" title="Portal do Transportador MBRF"
-        loading="lazy" referrerpolicy="no-referrer-when-downgrade"
-        allow="clipboard-write; fullscreen"
-        style="display:block;width:100%;height:80vh;min-height:560px;border:0;background:#fff"></iframe>
-    </div>
-    <div style="padding:.6rem 1rem;font-size:.78rem;color:var(--text-lt);text-align:center;border-top:1px solid rgba(44,44,44,.1)">
-      Se o portal não carregar nesta tela (bloqueio de segurança do próprio site), use o botão <b>Abrir em nova aba</b>.
-    </div>
+    <a href="https://portaldotransportador.mbrf.com/" target="_blank" rel="noopener noreferrer" class="cta-btn" style="font-size:.85rem;padding:.7rem 1.5rem"><i class="fas fa-arrow-up-right-from-square"></i> Acessar portal</a>
   </div>
 </div>
 
@@ -5760,27 +5741,16 @@ function gvNarrSpeak(){
   const t = b.querySelector('.slide-section-title'); if (t) parts.push(clean(t.textContent));
   b.querySelectorAll('.slide-kpi-card').forEach(c => {
     const v = c.querySelector('.slide-kpi-val'), l = c.querySelector('.slide-kpi-lbl');
-    if (v && l) parts.push(clean(v.dataset.final || v.textContent) + ' ' + clean(l.textContent));
+    if (v && l) parts.push(clean(v.textContent) + ' ' + clean(l.textContent));
   });
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(parts.join('. ').slice(0, 420));
   u.lang = 'pt-BR'; u.rate = 1;
   speechSynthesis.speak(u);
 }
-function gvAnimar(){
-  const b = document.getElementById('slideBody'); if (!b) return;
-  b.querySelectorAll('.slide-kpi-card,.vx-card,.slide-status-card').forEach((el,i) => el.style.setProperty('--i', Math.min(i,12)));
-  b.querySelectorAll('.slide-kpi-val').forEach(el => {
-    const txt = el.textContent.trim();
-    if (!/^\d+$/.test(txt) || el.dataset.final) return;
-    const n = parseInt(txt,10), t0 = performance.now(); el.dataset.final = txt;
-    const step = now => { const p = Math.min((now-t0)/1000,1); el.textContent = Math.round(n*(1-Math.pow(1-p,3))); if (p<1) requestAnimationFrame(step); else el.textContent = txt; };
-    el.textContent = '0'; requestAnimationFrame(step);
-  });
-}
 (function(){
   const b = document.getElementById('slideBody'); let tm = null;
-  if (b) new MutationObserver(() => { clearTimeout(tm); tm = setTimeout(() => { gvAnimar(); gvNarrSpeak(); }, 350); }).observe(b, { childList:true });
+  if (b) new MutationObserver(() => { clearTimeout(tm); tm = setTimeout(gvNarrSpeak, 350); }).observe(b, { childList:true });
   const stop = () => { if (window.speechSynthesis) speechSynthesis.cancel(); };
   const cb = document.getElementById('slideCloseBtn'); if (cb) cb.addEventListener('click', stop);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') stop(); });
@@ -19443,6 +19413,73 @@ document.getElementById('tvBtnOpen').addEventListener('click', function() {
   var was=false;
   new MutationObserver(function(){var on=body.classList.contains('show');if(on&&!was)play();was=on;})
     .observe(body,{attributes:true,attributeFilter:['class']});
+})();
+</script>
+<style id="gv-fx">
+/* Gestão à Vista · efeitos estilo After Effects: abertura, título cinético, transições alternadas, câmera lenta */
+.slide-body.show{animation:gvPush 20s linear both;}
+@keyframes gvPush{from{scale:1}to{scale:1.03}}
+.gv-k .c,#gvIntro .c{display:inline-block;white-space:pre;animation:gvChar .85s cubic-bezier(.16,1,.3,1) both;animation-delay:calc(var(--n)*40ms + .2s);}
+.slide-body.show .slide-section-title.gv-k{animation:none;clip-path:none;}
+@keyframes gvChar{from{opacity:0;transform:perspective(600px) translateY(.7em) rotateX(-70deg) scale(1.15);filter:blur(10px)}to{opacity:1;transform:none;filter:blur(0)}}
+#gvIntro{position:absolute;inset:0;z-index:60;pointer-events:none;display:none;}
+#gvIntro.go{display:block;}
+#gvIntro .h{position:absolute;left:0;right:0;height:50%;background:#14181f;}
+#gvIntro .t{top:0;animation:gvOpenT .95s 2.3s cubic-bezier(.7,0,.2,1) both;}
+#gvIntro .b{bottom:0;animation:gvOpenB .95s 2.3s cubic-bezier(.7,0,.2,1) both;}
+@keyframes gvOpenT{to{transform:translateY(-101%)}}
+@keyframes gvOpenB{to{transform:translateY(101%)}}
+#gvIntro .m{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;animation:gvOut .4s 2.1s ease forwards;}
+@keyframes gvOut{to{opacity:0}}
+#gvIntro .logo{font-size:clamp(2.2rem,7vw,6rem);font-weight:800;letter-spacing:.12em;}
+#gvIntro .ln{height:3px;width:min(40vw,520px);margin:1rem 0;background:linear-gradient(90deg,transparent,#d4af37,transparent);transform:scaleX(0);animation:gvLine 1s .9s cubic-bezier(.16,1,.3,1) forwards;}
+@keyframes gvLine{to{transform:scaleX(1)}}
+#gvIntro .sub{font-size:clamp(.9rem,2vw,1.6rem);letter-spacing:.5em;color:#d4af37;font-weight:600;opacity:0;animation:gvSub .8s 1.2s ease forwards;}
+@keyframes gvSub{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.gv-tr{position:absolute;inset:0;z-index:55;pointer-events:none;display:none;}
+.gv-tr.go{display:block;}
+.gv-tr .s{position:absolute;top:0;bottom:0;width:calc(100%/6 + 1px);background:linear-gradient(#14181f,#232a36);border-bottom:4px solid #d4af37;transform:scaleY(0);}
+.gv-tr.shut .s{animation:gvShut .95s cubic-bezier(.65,0,.35,1) both;animation-delay:calc(var(--k)*55ms);}
+@keyframes gvShut{0%{transform:scaleY(0);transform-origin:top}45%{transform:scaleY(1);transform-origin:top}55%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+.gv-tr .iris{position:absolute;inset:0;background:#14181f;clip-path:circle(0% at 50% 50%);display:none;}
+.gv-tr.iris .iris{display:block;animation:gvIris 1s cubic-bezier(.65,0,.35,1) both;}
+.gv-tr.iris .s{display:none;}
+@keyframes gvIris{0%{clip-path:circle(0% at 50% 50%)}45%,55%{clip-path:circle(80% at 50% 50%)}100%{clip-path:circle(0% at 50% 50%)}}
+</style>
+<script id="gv-fx-js">
+(function(){
+  var ov=document.getElementById('slideOverlay'),body=document.getElementById('slideBody');
+  if(!ov||!body)return;
+  // Abertura cinematográfica (a cada vez que o painel abre)
+  var intro=document.createElement('div');intro.id='gvIntro';
+  intro.innerHTML='<div class="h t"></div><div class="h b"></div><div class="m"><div class="logo"></div><div class="ln"></div><div class="sub">GESTÃO À VISTA</div></div>';
+  var logo=intro.querySelector('.logo');
+  'M-MALACARNE'.split('').forEach(function(ch,i){var s=document.createElement('span');s.className='c';s.style.setProperty('--n',i);s.textContent=ch;logo.appendChild(s);});
+  ov.appendChild(intro);
+  function playIntro(){intro.classList.remove('go');void intro.offsetWidth;intro.classList.add('go');setTimeout(function(){intro.classList.remove('go');},3500);}
+  var wasA=ov.classList.contains('active');if(wasA)playIntro();
+  new MutationObserver(function(){var a=ov.classList.contains('active');if(a&&!wasA)playIntro();wasA=a;}).observe(ov,{attributes:true,attributeFilter:['class']});
+  // Transições alternadas: faixa (existente) → persianas → íris
+  var tr=document.createElement('div');tr.className='gv-tr';
+  tr.innerHTML='<div class="iris"></div>'+[0,1,2,3,4,5].map(function(k){return '<i class="s" style="left:'+(k*100/6)+'%;--k:'+k+'"></i>';}).join('');
+  ov.appendChild(tr);
+  var n=0,last=-1,orig=window.slideRender,mgw=ov.querySelector('.mg-wipe');
+  if(typeof orig==='function')window.slideRender=function(){
+    try{if(slideIdx!==last){if(last!==-1){var v=n++%3;if(mgw)mgw.style.display=v===0?'':'none';
+      tr.className='gv-tr';if(v){void tr.offsetWidth;tr.className='gv-tr go '+(v===1?'shut':'iris');}}last=slideIdx;}}catch(e){}
+    return orig.apply(this,arguments);};
+  // Título cinético: letra por letra
+  function split(){
+    var t=body.querySelector('.slide-section-title');if(!t||t.classList.contains('gv-k'))return;var n=0;
+    Array.prototype.slice.call(t.childNodes).forEach(function(nd){
+      if(nd.nodeType!==3||!nd.textContent.trim())return;
+      var f=document.createDocumentFragment();
+      nd.textContent.split('').forEach(function(ch){var s=document.createElement('span');s.className='c';s.style.setProperty('--n',n++);s.textContent=ch;f.appendChild(s);});
+      t.replaceChild(f,nd);});
+    t.classList.add('gv-k');
+  }
+  var was=false;
+  new MutationObserver(function(){var on=body.classList.contains('show');if(on&&!was)split();was=on;}).observe(body,{attributes:true,attributeFilter:['class']});
 })();
 </script>
 </body>
