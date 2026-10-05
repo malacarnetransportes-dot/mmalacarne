@@ -4666,7 +4666,7 @@ function slideConsumoResumo() {
 // Ranking de médias (cavalo km/L · carreta L/h) — mês passado × corrente
 // ═══════════════════════════════════════════════════════════
 const GV_MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-const GV_CORES = ['#8B7355','#d4af37','#3b82f6','#10b981','#ef4444','#8b5cf6','#f59e0b','#06b6d4','#ec4899'];
+const GV_CORES = ['#1473e6','#2d9d78','#e68619','#d7373f','#6e56cf','#0d9aa6','#c9548b','#8a8f98','#2c2c2c'];
 const GV_PLACAS_FORA = new Set(['MLZ0B00','QTL0H52']);
 let _gvCharts = [];
 let _gvFinEstado = 0, _gvAbastEstado = 0;   // 0 = não tentou · 1 = carregando · 2 = já tentou
@@ -4883,8 +4883,8 @@ function gvRenderTurnover(body, s, slides, idx) {
   const pct = (v, t) => (t ? v / t * 100 : 0).toFixed(1).replace('.', ',') + '%';
   const movTot = d.admitidos + d.desligados;
   const mov = [
-    { nome: 'Admitidos', qtd: d.admitidos, cor: '#10b981' },
-    { nome: 'Desligados', qtd: d.desligados, cor: '#ef4444' }
+    { nome: 'Admitidos', qtd: d.admitidos, cor: '#2d9d78' },
+    { nome: 'Desligados', qtd: d.desligados, cor: '#d7373f' }
   ].filter(x => x.qtd > 0);
   const motTot = d.rankingMotivos.reduce((a, [, q]) => a + q, 0);
   const mot = d.rankingMotivos.map(([nome, qtd], i) => ({ nome, qtd, cor: GV_CORES[i % GV_CORES.length] }));
@@ -5404,7 +5404,7 @@ function slideRender(){
          </div>`;
     requestAnimationFrame(() => body.classList.add('show'));
     slideRenderDots(slides, idx);
-  }, 220);
+  }, 520);
 }
 
 function slideRenderDots(slides, idx){
@@ -5944,7 +5944,7 @@ const PNEU_CUSTOS = [
   { placa:'RLB3C26', valor:116.00 },
 ];
 
-const PNEU_STATUS_COLOR = { novo:'#22c55e', recapado:'#3b82f6', atencao:'#f59e0b', alerta:'#ef4444', semdados:'#cbd5e1' };
+const PNEU_STATUS_COLOR = { novo:'#2d9d78', recapado:'#1473e6', atencao:'#e68619', alerta:'#d7373f', semdados:'#cbd5e1' };
 const PNEU_STATUS_LABEL = { novo:'Novo', recapado:'Recapado / Reaproveitado', atencao:'Atenção / Vulcanizar', alerta:'Alerta / Pendente', semdados:'Sem dados' };
 let pneuInited = false;
 let pneuSelecionado = null; // {placa, key}
@@ -19416,59 +19416,45 @@ document.getElementById('tvBtnOpen').addEventListener('click', function() {
 })();
 </script>
 <style id="gv-fx">
-/* Gestão à Vista · efeitos estilo After Effects: abertura, título cinético, transições alternadas, câmera lenta */
-.slide-body.show{animation:gvPush 20s linear both;}
-@keyframes gvPush{from{scale:1}to{scale:1.03}}
+/* Gestão à Vista · transição suave, abertura institucional, título cinético e paleta unificada */
+.mg-wipe{display:none!important;}
+.slide-body{transition:opacity .8s ease,transform .9s cubic-bezier(.22,1,.36,1)!important;}
 .gv-k .c,#gvIntro .c{display:inline-block;white-space:pre;animation:gvChar .85s cubic-bezier(.16,1,.3,1) both;animation-delay:calc(var(--n)*40ms + .2s);}
 .slide-body.show .slide-section-title.gv-k{animation:none;clip-path:none;}
-@keyframes gvChar{from{opacity:0;transform:perspective(600px) translateY(.7em) rotateX(-70deg) scale(1.15);filter:blur(10px)}to{opacity:1;transform:none;filter:blur(0)}}
-#gvIntro{position:absolute;inset:0;z-index:60;pointer-events:none;display:none;}
-#gvIntro.go{display:block;}
-#gvIntro .h{position:absolute;left:0;right:0;height:50%;background:#14181f;}
-#gvIntro .t{top:0;animation:gvOpenT .95s 2.3s cubic-bezier(.7,0,.2,1) both;}
-#gvIntro .b{bottom:0;animation:gvOpenB .95s 2.3s cubic-bezier(.7,0,.2,1) both;}
-@keyframes gvOpenT{to{transform:translateY(-101%)}}
-@keyframes gvOpenB{to{transform:translateY(101%)}}
-#gvIntro .m{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;animation:gvOut .4s 2.1s ease forwards;}
-@keyframes gvOut{to{opacity:0}}
-#gvIntro .logo{font-size:clamp(2.2rem,7vw,6rem);font-weight:800;letter-spacing:.12em;}
-#gvIntro .ln{height:3px;width:min(40vw,520px);margin:1rem 0;background:linear-gradient(90deg,transparent,#d4af37,transparent);transform:scaleX(0);animation:gvLine 1s .9s cubic-bezier(.16,1,.3,1) forwards;}
+@keyframes gvChar{from{opacity:0;transform:translateY(.5em);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}
+#gvIntro{position:absolute;inset:0;z-index:60;pointer-events:none;display:none;background:#fff;flex-direction:column;align-items:center;justify-content:center;color:#2c2c2c;text-align:center;}
+#gvIntro.go{display:flex;animation:gvIntroOut .9s 3.2s ease forwards;}
+@keyframes gvIntroOut{to{opacity:0}}
+#gvIntro img{height:92px;width:auto;margin-bottom:1.4rem;opacity:0;animation:gvSub .9s .1s cubic-bezier(.16,1,.3,1) forwards;}
+#gvIntro .nm{font-size:clamp(2rem,5.2vw,4.4rem);font-weight:300;letter-spacing:.16em;}
+#gvIntro .sb{font-size:clamp(.8rem,1.5vw,1.2rem);letter-spacing:.42em;color:#6e6e6e;font-weight:600;margin-top:.5rem;opacity:0;animation:gvSub .9s 1s ease forwards;}
+#gvIntro .ln{height:2px;width:min(32vw,420px);margin:1.6rem 0;background:linear-gradient(90deg,transparent,#1473e6,transparent);transform:scaleX(0);animation:gvLine 1.1s .8s cubic-bezier(.16,1,.3,1) forwards;}
+#gvIntro .gv{font-size:clamp(1.1rem,2.4vw,2rem);letter-spacing:.55em;color:#1473e6;font-weight:700;opacity:0;animation:gvSub .9s 1.5s ease forwards;}
 @keyframes gvLine{to{transform:scaleX(1)}}
-#gvIntro .sub{font-size:clamp(.9rem,2vw,1.6rem);letter-spacing:.5em;color:#d4af37;font-weight:600;opacity:0;animation:gvSub .8s 1.2s ease forwards;}
 @keyframes gvSub{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-.gv-tr{position:absolute;inset:0;z-index:55;pointer-events:none;display:none;}
-.gv-tr.go{display:block;}
-.gv-tr .s{position:absolute;top:0;bottom:0;width:calc(100%/6 + 1px);background:linear-gradient(#14181f,#232a36);border-bottom:4px solid #d4af37;transform:scaleY(0);}
-.gv-tr.shut .s{animation:gvShut .95s cubic-bezier(.65,0,.35,1) both;animation-delay:calc(var(--k)*55ms);}
-@keyframes gvShut{0%{transform:scaleY(0);transform-origin:top}45%{transform:scaleY(1);transform-origin:top}55%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
-.gv-tr .iris{position:absolute;inset:0;background:#14181f;clip-path:circle(0% at 50% 50%);display:none;}
-.gv-tr.iris .iris{display:block;animation:gvIris 1s cubic-bezier(.65,0,.35,1) both;}
-.gv-tr.iris .s{display:none;}
-@keyframes gvIris{0%{clip-path:circle(0% at 50% 50%)}45%,55%{clip-path:circle(80% at 50% 50%)}100%{clip-path:circle(0% at 50% 50%)}}
+/* Paleta unificada com o tema (azul/grafite): status em tons Spectrum */
+.slide-overlay{--danger:#d7373f;--warning:#e68619;--success:#2d9d78;--info:#1473e6;}
+.slide-overlay .slide-kpi-card.is-danger .slide-kpi-val{color:#c3262e!important}
+.slide-overlay .slide-kpi-card.is-warning .slide-kpi-val{color:#c26a0a!important}
+.slide-overlay .slide-kpi-card.is-ok .slide-kpi-val{color:#1f7a5c!important}
+.slide-overlay .ig-legend b.d{color:var(--danger)}
+.slide-overlay .ig-legend b.w{color:#c26a0a}
 </style>
 <script id="gv-fx-js">
 (function(){
   var ov=document.getElementById('slideOverlay'),body=document.getElementById('slideBody');
   if(!ov||!body)return;
-  // Abertura cinematográfica (a cada vez que o painel abre)
+  // Abertura institucional: logo, empresa e "Gestão à Vista"
   var intro=document.createElement('div');intro.id='gvIntro';
-  intro.innerHTML='<div class="h t"></div><div class="h b"></div><div class="m"><div class="logo"></div><div class="ln"></div><div class="sub">GESTÃO À VISTA</div></div>';
-  var logo=intro.querySelector('.logo');
-  'M-MALACARNE'.split('').forEach(function(ch,i){var s=document.createElement('span');s.className='c';s.style.setProperty('--n',i);s.textContent=ch;logo.appendChild(s);});
+  var lg=ov.querySelector('.slide-logo');
+  intro.innerHTML=(lg?'<img src="'+lg.getAttribute('src')+'" alt="" onerror="this.style.display=\'none\'">':'')+'<div class="nm"></div><div class="sb">TRANSPORTE E LOGÍSTICA</div><div class="ln"></div><div class="gv">GESTÃO À VISTA</div>';
+  var nm=intro.querySelector('.nm');
+  'M. MALACARNE'.split('').forEach(function(ch,i){var s=document.createElement('span');s.className='c';s.style.setProperty('--n',i);s.textContent=ch;nm.appendChild(s);});
   ov.appendChild(intro);
-  function playIntro(){intro.classList.remove('go');void intro.offsetWidth;intro.classList.add('go');setTimeout(function(){intro.classList.remove('go');},3500);}
+  function playIntro(){intro.classList.remove('go');void intro.offsetWidth;intro.classList.add('go');setTimeout(function(){intro.classList.remove('go');},4300);}
   var wasA=ov.classList.contains('active');if(wasA)playIntro();
   new MutationObserver(function(){var a=ov.classList.contains('active');if(a&&!wasA)playIntro();wasA=a;}).observe(ov,{attributes:true,attributeFilter:['class']});
-  // Transições alternadas: faixa (existente) → persianas → íris
-  var tr=document.createElement('div');tr.className='gv-tr';
-  tr.innerHTML='<div class="iris"></div>'+[0,1,2,3,4,5].map(function(k){return '<i class="s" style="left:'+(k*100/6)+'%;--k:'+k+'"></i>';}).join('');
-  ov.appendChild(tr);
-  var n=0,last=-1,orig=window.slideRender,mgw=ov.querySelector('.mg-wipe');
-  if(typeof orig==='function')window.slideRender=function(){
-    try{if(slideIdx!==last){if(last!==-1){var v=n++%3;if(mgw)mgw.style.display=v===0?'':'none';
-      tr.className='gv-tr';if(v){void tr.offsetWidth;tr.className='gv-tr go '+(v===1?'shut':'iris');}}last=slideIdx;}}catch(e){}
-    return orig.apply(this,arguments);};
-  // Título cinético: letra por letra
+  // Título cinético suave: letra por letra
   function split(){
     var t=body.querySelector('.slide-section-title');if(!t||t.classList.contains('gv-k'))return;var n=0;
     Array.prototype.slice.call(t.childNodes).forEach(function(nd){
