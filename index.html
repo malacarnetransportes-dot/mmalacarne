@@ -11489,43 +11489,46 @@ function fatcRenderResumoCardTab(records, f) {
   // out/2025 e out/2026 e contava um ano inteiro de km contra só 2 meses de
   // litros (resultado absurdo: 118 km/L).
   const _leituraValida = r => (r.km||0) > 0 && (r.statusCalc === 'ok' || r.statusCalc === 'inicio');
+  // Normaliza placa para comparação (remove espaços/traços)
+  const _normPlacaKm = r => String(r.placaFisica || r.placaCarreta || r.placaCavalo || '').toUpperCase().replace(/[^A-Z0-9]/g,'');
   const limitesChain = (filtroFn) => {
     const regs = porDataAsc.filter(r => filtroFn(r) && _leituraValida(r));
     if (!regs.length) return null;
     const primeiro = regs[0], ultimo = regs[regs.length-1];
-    // KM/horímetro inicial = leitura anterior ao 1º registro do período (km − delta)
-    // Caso 1: 1º registro tem delta (statusCalc 'ok') → usa km − kmPercorrido
-    // Caso 2: 1º registro é o 1º elo da cadeia (statusCalc 'inicio', kmPercorrido=0)
-    //   → busca nos dados globais o último registro da mesma placa/grupo anterior ao período
-    //   → se encontrar, usa o km dele; senão, usa o próprio km (veículo sem histórico anterior)
+
+    // ── KM Inicial: busca SEMPRE nos dados globais o último registro da mesma
+    // placa com km válido (qualquer tipo: diesel, arla, carreta) ANTES do 1º
+    // registro do período filtrado. Isso garante que o odômetro de um Arla ou
+    // de um abastecimento fora da cadeia do grupo não seja ignorado.
+    // Apenas se não existir nenhum registro anterior é que usa o próprio km do
+    // 1º registro (veículo sem histórico anterior ao período).
+    const _normPrimeiro  = _normPlacaKm(primeiro);
+    const _tsPrimeiro    = primeiro.data ? primeiro.data.getTime() : 0;
+    const _allGlobal     = (typeof abastAllRecords !== 'undefined' ? abastAllRecords : []);
+    // Para cavalo: aceita diesel E Arla (ambos registram o odômetro do cavalo no campo r.km)
+    // Para carreta: aceita só registros de carreta (horímetro)
+    // Em ambos os casos: mesma placa, km > 0, data anterior ao período
+    const _ehCarFn = r => !_ehArlaReg(r) && (r.tipoAbastecido === 'carreta' || (r.litrosCarreta||0) > 0);
+    const _grupoFn = filtroFn === ehCarReg
+      ? (r => _ehCarFn(r))
+      : (r => !_ehCarFn(r)); // cavalo = tudo que não é carreta (inclui Arla)
+    const _anteriores = _allGlobal.filter(r =>
+      _grupoFn(r) &&
+      (r.km || 0) > 0 &&
+      _normPlacaKm(r) === _normPrimeiro &&
+      r.data && r.data.getTime() < _tsPrimeiro
+    );
     let inicial;
-    if ((primeiro.kmPercorrido || 0) > 0) {
-      inicial = primeiro.km - primeiro.kmPercorrido;
+    if (_anteriores.length) {
+      // Mais recente antes do período → último odômetro do mês anterior
+      _anteriores.sort((a, b) => {
+        const da = a.data.getTime(), db = b.data.getTime();
+        if (da !== db) return db - da;
+        return String(b.hora || '').localeCompare(String(a.hora || ''));
+      });
+      inicial = _anteriores[0].km;
     } else {
-      // Tenta recuperar o odômetro imediatamente anterior ao período via dados globais
-      const _normPlaca = r => String(r.placaFisica || r.placaCarreta || r.placaCavalo || '').toUpperCase().replace(/[^A-Z0-9]/g,'');
-      const _placaPrimeiro = _normPlaca(primeiro);
-      const _dataPrimeiro  = primeiro.data ? primeiro.data.getTime() : 0;
-      const _allGlobal     = (typeof abastAllRecords !== 'undefined' ? abastAllRecords : []);
-      // Filtra registros globais: mesma placa, mesmo grupo (cav/car), com KM válido,
-      // na cadeia (statusCalc ok ou inicio), e ANTES do 1º registro do período
-      const _anteriores = _allGlobal.filter(r =>
-        filtroFn(r) &&
-        _leituraValida(r) &&
-        _normPlaca(r) === _placaPrimeiro &&
-        r.data && r.data.getTime() < _dataPrimeiro
-      );
-      if (_anteriores.length) {
-        // Pega o mais recente antes do período
-        _anteriores.sort((a,b) => {
-          const da = a.data.getTime(), db = b.data.getTime();
-          if (da !== db) return db - da;
-          return String(b.hora||'').localeCompare(String(a.hora||''));
-        });
-        inicial = _anteriores[0].km;
-      } else {
-        inicial = primeiro.km; // veículo sem histórico anterior ao período
-      }
+      inicial = primeiro.km; // sem histórico anterior: usa o próprio 1º km do período
     }
     return { inicial, final: ultimo.km };
   };
