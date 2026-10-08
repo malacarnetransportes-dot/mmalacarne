@@ -2836,24 +2836,26 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
           </div>
 
           <!-- Gráficos -->
-          <div class="charts-grid">
-            <div class="dash-card">
-              <div class="dash-card-title"><i class="fas fa-chart-pie"></i> Admitidos x Desligados (12 meses)</div>
-              <div class="chart-box" style="height:280px"><canvas id="rhChartMensal"></canvas></div>
+          <div class="charts-grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
+            <div class="dash-card" style="display:flex;flex-direction:column;align-items:center">
+              <div class="dash-card-title" style="width:100%"><i class="fas fa-chart-pie" style="color:#22c55e"></i> Quadro: Ativos vs Desligados</div>
+              <div style="width:220px;height:220px;position:relative"><canvas id="rhChartMensal"></canvas></div>
+              <div id="rhLabelAtivosDesl" style="font-size:.8rem;color:var(--text-lt);margin-top:.4rem;text-align:center"></div>
             </div>
-            <div class="dash-card">
-              <div class="dash-card-title"><i class="fas fa-chart-pie"></i> Tempo Médio de Casa</div>
-              <div class="chart-box" style="height:280px"><canvas id="rhChartEvolucao"></canvas></div>
+            <div class="dash-card" style="display:flex;flex-direction:column;align-items:center">
+              <div class="dash-card-title" style="width:100%"><i class="fas fa-chart-pie" style="color:#3b82f6"></i> Tempo de Casa (faixas)</div>
+              <div style="width:220px;height:220px;position:relative"><canvas id="rhChartEvolucao"></canvas></div>
+              <div id="rhLabelTempo" style="font-size:.8rem;color:var(--text-lt);margin-top:.4rem;text-align:center"></div>
             </div>
-          </div>
-          <div class="charts-grid">
-            <div class="dash-card">
-              <div class="dash-card-title"><i class="fas fa-chart-pie"></i> Turnover Geral (%)</div>
-              <div class="chart-box" style="height:240px"><canvas id="rhChartTurnover"></canvas></div>
+            <div class="dash-card" style="display:flex;flex-direction:column;align-items:center">
+              <div class="dash-card-title" style="width:100%"><i class="fas fa-chart-pie" style="color:#f59e0b"></i> Motivos de Desligamento</div>
+              <div style="width:220px;height:220px;position:relative"><canvas id="rhChartTurnover"></canvas></div>
+              <div id="rhLabelMotivos" style="font-size:.8rem;color:var(--text-lt);margin-top:.4rem;text-align:center"></div>
             </div>
-            <div class="dash-card">
-              <div class="dash-card-title"><i class="fas fa-layer-group"></i> Distribuição por Cargo</div>
-              <div class="chart-box" style="height:240px"><canvas id="rhChartCargos"></canvas></div>
+            <div class="dash-card" style="display:flex;flex-direction:column;align-items:center">
+              <div class="dash-card-title" style="width:100%"><i class="fas fa-chart-pie" style="color:#a855f7"></i> Retenção Histórica</div>
+              <div style="width:220px;height:220px;position:relative"><canvas id="rhChartCargos"></canvas></div>
+              <div id="rhLabelRetencao" style="font-size:.8rem;color:var(--text-lt);margin-top:.4rem;text-align:center"></div>
             </div>
           </div>
 
@@ -18392,38 +18394,50 @@ function rhRender(mesesFiltro, corte, hoje) {
     return +((adm + desl) / 2 / quad * 100).toFixed(1);
   });
 
-  // ── Pizza 1: Admitidos x Desligados (12 meses) ──
   const totalAdm12  = admitidosPeriodo.length;
   const totalDesl12 = desligadosPeriodo.length;
+  const totalFuncs  = allFuncs.length;
+  const totalDeslTodos = desligamentos.length;
+
+  // ─── helpers de pizza ───
+  const PIE_OPTS = (labelEl, fmt) => ({
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 }, padding: 8 } },
+      tooltip: { callbacks: { label: ctx => {
+        const tot = ctx.dataset.data.reduce((a,b)=>a+b,0);
+        return ` ${ctx.label}: ${ctx.parsed} (${tot>0?(ctx.parsed/tot*100).toFixed(1):'0'}%)`;
+      }}}
+    },
+    cutout: '52%',
+    animation: { animateRotate: true, duration: 600 },
+    layout: { padding: 4 }
+  });
+
+  // ── Pizza 1: Ativos vs Total Histórico ──
   if (rhChartMensalObj) rhChartMensalObj.destroy();
   rhChartMensalObj = new Chart(document.getElementById('rhChartMensal').getContext('2d'), {
     type: 'doughnut',
     data: {
-      labels: ['Admitidos', 'Desligados'],
-      datasets: [{ data: [totalAdm12, totalDesl12], backgroundColor: ['rgba(34,197,94,.85)', 'rgba(239,68,68,.8)'], borderWidth: 2 }]
+      labels: ['Ativos hoje', 'Desligados (histórico)'],
+      datasets: [{ data: [ativos.length, totalDeslTodos],
+        backgroundColor: ['rgba(34,197,94,.9)', 'rgba(239,68,68,.8)'],
+        borderColor: ['#16a34a','#b91c1c'], borderWidth: 2 }]
     },
-    options: {
-      plugins: {
-        legend: { position: 'bottom' },
-        datalabels: { color: '#fff', font: { weight: 'bold', size: 14 }, formatter: v => v }
-      },
-      cutout: '55%'
-    }
+    options: PIE_OPTS()
   });
+  const lbl1 = document.getElementById('rhLabelAtivosDesl');
+  if (lbl1) lbl1.textContent = `${ativos.length} ativos de ${ativos.length + totalDeslTodos} passagens`;
 
-  // ── Pizza 2: Tempo Médio de Casa (faixas) ──
-  const faixas = { 'Até 6 meses': 0, '6m–1 ano': 0, '1–2 anos': 0, '2–5 anos': 0, '5+ anos': 0 };
-  const hoje2 = new Date();
-  allFuncs.forEach(f => {
+  // ── Pizza 2: Tempo de Casa dos ATIVOS (faixas) ──
+  const faixas = { 'Até 6 meses': 0, '6m – 1 ano': 0, '1 – 2 anos': 0, '2 – 5 anos': 0, '5+ anos': 0 };
+  ativos.forEach(f => {
     const adm = rhParseDate(f.admissao);
     if (!adm) return;
-    const desl = desligamentos.find(d => (d.nome||'').toUpperCase().includes((f.nome||'').toUpperCase().trim()) || (d.matricula && d.matricula === (f.matricula||'').trim()));
-    const fim = desl ? (rhParseDate(desl.dataDesligamento) || hoje2) : hoje2;
-    const meses = (fim - adm) / (1000*60*60*24*30.44);
+    const meses = (hoje - adm) / (1000*60*60*24*30.44);
     if (meses < 6)        faixas['Até 6 meses']++;
-    else if (meses < 12)  faixas['6m–1 ano']++;
-    else if (meses < 24)  faixas['1–2 anos']++;
-    else if (meses < 60)  faixas['2–5 anos']++;
+    else if (meses < 12)  faixas['6m – 1 ano']++;
+    else if (meses < 24)  faixas['1 – 2 anos']++;
+    else if (meses < 60)  faixas['2 – 5 anos']++;
     else                  faixas['5+ anos']++;
   });
   const faixaLabels = Object.keys(faixas).filter(k => faixas[k] > 0);
@@ -18434,59 +18448,65 @@ function rhRender(mesesFiltro, corte, hoje) {
     data: {
       labels: faixaLabels,
       datasets: [{ data: faixaData,
-        backgroundColor: ['rgba(239,68,68,.8)','rgba(251,146,60,.8)','rgba(250,204,21,.85)','rgba(34,197,94,.8)','rgba(59,130,246,.8)'],
-        borderWidth: 2 }]
+        backgroundColor: ['rgba(239,68,68,.85)','rgba(251,146,60,.85)','rgba(250,204,21,.9)','rgba(34,197,94,.85)','rgba(59,130,246,.85)'],
+        borderColor: ['#b91c1c','#c2410c','#a16207','#15803d','#1d4ed8'], borderWidth: 2 }]
     },
-    options: {
-      plugins: {
-        legend: { position: 'bottom' },
-        datalabels: { color: '#fff', font: { weight: 'bold', size: 12 }, formatter: (v, ctx) => v > 0 ? v : '' }
-      },
-      cutout: '55%'
-    }
+    options: PIE_OPTS()
   });
+  const lbl2 = document.getElementById('rhLabelTempo');
+  if (lbl2) lbl2.textContent = `Tempo médio: ${temposDias.length ? tempoMedioStr : '—'} — ${ativos.length} ativos`;
 
-  // ── Pizza 3: Turnover Geral — Retidos x Desligados (todos os registros) ──
-  const totalFuncs = allFuncs.length;
-  const totalDeslTodos = desligamentos.length;
-  const retidos = Math.max(0, totalFuncs - totalDeslTodos);
+  // ── Pizza 3: Motivos de Desligamento ──
+  const motivosMap = {};
+  desligamentos.forEach(d => { const m = (d.motivo||'Não informado').trim(); motivosMap[m] = (motivosMap[m]||0)+1; });
+  const motivEntries = Object.entries(motivosMap).sort((a,b)=>b[1]-a[1]);
+  const PIE3_COLORS = ['rgba(239,68,68,.85)','rgba(251,146,60,.85)','rgba(250,204,21,.9)','rgba(34,197,94,.85)','rgba(59,130,246,.85)','rgba(168,85,247,.85)','rgba(236,72,153,.85)'];
   if (rhChartTurnoverObj) rhChartTurnoverObj.destroy();
   rhChartTurnoverObj = new Chart(document.getElementById('rhChartTurnover').getContext('2d'), {
     type: 'doughnut',
     data: {
-      labels: ['Ativos / Retidos', 'Desligados (histórico)'],
-      datasets: [{ data: [retidos, totalDeslTodos],
-        backgroundColor: ['rgba(34,197,94,.85)', 'rgba(239,68,68,.8)'],
+      labels: motivEntries.map(([k])=>k),
+      datasets: [{ data: motivEntries.map(([,v])=>v),
+        backgroundColor: PIE3_COLORS.slice(0, motivEntries.length),
         borderWidth: 2 }]
     },
+    options: PIE_OPTS()
+  });
+  const lbl3 = document.getElementById('rhLabelMotivos');
+  if (lbl3 && motivEntries[0]) lbl3.textContent = `Principal: ${motivEntries[0][0]} (${motivEntries[0][1]}x)`;
+
+  // ── Pizza 4: Retenção Histórica (retidos vs desligados por período) ──
+  const retidos12  = Math.max(0, ativos.length);
+  const deslHist   = totalDeslTodos;
+  if (rhChartCargosObj) rhChartCargosObj.destroy();
+  rhChartCargosObj = new Chart(document.getElementById('rhChartCargos').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Retidos (ativos)', 'Saíram (histórico)'],
+      datasets: [{ data: [retidos12, deslHist],
+        backgroundColor: ['rgba(168,85,247,.85)', 'rgba(251,146,60,.85)'],
+        borderColor: ['#7e22ce','#c2410c'], borderWidth: 2 }]
+    },
     options: {
+      ...PIE_OPTS(),
       plugins: {
-        legend: { position: 'bottom' },
-        datalabels: {
-          color: '#fff', font: { weight: 'bold', size: 13 },
-          formatter: (v, ctx) => {
-            const total = ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
-            return total > 0 ? (v/total*100).toFixed(1)+'%' : '';
-          }
-        }
-      },
-      cutout: '55%'
+        ...PIE_OPTS().plugins,
+        // label no centro
+      }
     }
   });
+  const taxaRet = (retidos12 + deslHist) > 0 ? (retidos12 / (retidos12 + deslHist) * 100).toFixed(1) : 0;
+  const lbl4 = document.getElementById('rhLabelRetencao');
+  if (lbl4) lbl4.textContent = `Taxa de retenção histórica: ${taxaRet}%`;
 
-  // ── Gerar Análise ──
+  // ── Análise ──
   const analiseBox = document.getElementById('rhAnaliseBox');
   const analiseDiv = document.getElementById('rhAnaliseConteudo');
   if (analiseBox && analiseDiv) {
-    const totalHistorico = allFuncs.length + desligamentos.filter(d => !allFuncs.find(f => (f.nome||'').toUpperCase().includes((d.nome||'').toUpperCase().trim()))).length;
-    const taxaRetencao = totalFuncs > 0 ? ((ativos.length / totalFuncs) * 100).toFixed(1) : 0;
-    const motivosContagem = {};
-    desligamentos.forEach(d => { const m = d.motivo || 'Não informado'; motivosContagem[m] = (motivosContagem[m]||0)+1; });
-    const motivoPrincipal = Object.entries(motivosContagem).sort((a,b)=>b[1]-a[1])[0];
-    const turnoverFormatado = turnover.toFixed(1) + '%';
     const sinalTurnover = turnover > 5 ? '⚠️' : turnover > 3 ? '🟡' : '✅';
+    const motivoPrincipal = motivEntries[0];
     analiseDiv.innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-bottom:1rem">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1rem;margin-bottom:1rem">
         <div style="background:rgba(34,197,94,.08);border-radius:10px;padding:.8rem 1rem;border-left:3px solid #22c55e">
           <div style="font-weight:600;color:#16a34a;margin-bottom:.3rem">📈 Movimentação (12 meses)</div>
           <div>Admitidos: <strong>${totalAdm12}</strong> &nbsp;|&nbsp; Desligados: <strong>${totalDesl12}</strong></div>
@@ -18495,27 +18515,27 @@ function rhRender(mesesFiltro, corte, hoje) {
         <div style="background:rgba(59,130,246,.08);border-radius:10px;padding:.8rem 1rem;border-left:3px solid #3b82f6">
           <div style="font-weight:600;color:#2563eb;margin-bottom:.3rem">👥 Quadro Atual</div>
           <div>Ativos: <strong>${ativos.length}</strong> &nbsp;|&nbsp; Tempo médio: <strong>${temposDias.length ? tempoMedioStr : '—'}</strong></div>
-          <div>Taxa de retenção: <strong>${taxaRetencao}%</strong></div>
+          <div>Retenção histórica: <strong>${taxaRet}%</strong></div>
         </div>
         <div style="background:rgba(212,175,55,.08);border-radius:10px;padding:.8rem 1rem;border-left:3px solid var(--accent)">
-          <div style="font-weight:600;color:var(--accent-dk);margin-bottom:.3rem">${sinalTurnover} Turnover (12 meses)</div>
-          <div>Índice: <strong>${turnoverFormatado}</strong></div>
-          <div style="font-size:.82rem;color:var(--text-lt)">${turnover<=3?'Nível saudável (≤3%)':turnover<=5?'Atenção: acima do ideal':'Elevado: requer ação'}</div>
+          <div style="font-weight:600;color:var(--accent-dk);margin-bottom:.3rem">${sinalTurnover} Turnover (período)</div>
+          <div>Índice: <strong>${turnover.toFixed(1)}%</strong></div>
+          <div style="font-size:.82rem;color:var(--text-lt)">${turnover<=3?'Nível saudável (≤3%)':turnover<=5?'Atenção: acima do ideal':'Elevado: requer ação imediata'}</div>
         </div>
       </div>
-      ${motivoPrincipal ? `<p><strong>Principal motivo de desligamento:</strong> "${motivoPrincipal[0]}" (${motivoPrincipal[1]} caso${motivoPrincipal[1]>1?'s':''}). ${motivoPrincipal[0]==='Oportunidade de Mercado'?'A concentração de saídas por oportunidade de mercado indica que a concorrência externa por talentos é um fator relevante — recomenda-se avaliar pacote de benefícios e retenção.':motivoPrincipal[0]==='Demissão sem justa causa'?'A maioria das saídas foi por iniciativa da empresa — analisar se há padrão de perfil ou período de adaptação.':''}</p>` : ''}
-      <p><strong>Observação:</strong> O quadro conta com ${ativos.length} motoristas ativos. ${totalAdm12 > totalDesl12 ? `O crescimento líquido de ${totalAdm12-totalDesl12} colaborador(es) nos últimos 12 meses indica expansão da frota operacional.` : totalAdm12 === totalDesl12 ? 'O quadro está estável no período analisado.' : `A redução líquida de ${totalDesl12-totalAdm12} colaborador(es) merece atenção para garantir capacidade operacional.`}</p>
+      ${motivoPrincipal ? `<p><strong>Principal motivo de desligamento:</strong> "${motivoPrincipal[0]}" — ${motivoPrincipal[1]} caso${motivoPrincipal[1]>1?'s':''}
+        (${deslHist>0?(motivoPrincipal[1]/deslHist*100).toFixed(0):0}% do total).
+        ${motivoPrincipal[0]==='Oportunidade de Mercado'?'Alta concentração de saídas voluntárias indica concorrência externa por talentos — recomenda-se revisão de benefícios e reconhecimento.':
+          motivoPrincipal[0]==='Demissão sem justa causa'?'Maioria das saídas por iniciativa da empresa — analisar padrão de perfil ou período de adaptação.':''}</p>` : ''}
+      <p><strong>Situação atual:</strong> ${ativos.length} motoristas ativos. ${totalAdm12>totalDesl12?`Crescimento líquido de ${totalAdm12-totalDesl12} colaborador(es) no período — frota em expansão.`:totalAdm12===totalDesl12?'Quadro estável no período.':
+        `Redução líquida de ${totalDesl12-totalAdm12} colaborador(es) — monitorar capacidade operacional.`}</p>
     `;
     analiseBox.style.display = 'block';
   }
 
-  // Gráfico distribuição por cargo (ativos)
-  const porCargo = {};
-  ativos.forEach(f => { const c = f.cargo || 'Sem cargo'; porCargo[c] = (porCargo[c] || 0) + 1; });
-  const cargosEntries = Object.entries(porCargo).sort((a,b) => b[1]-a[1]);
-  if (rhChartCargosObj) rhChartCargosObj.destroy();
-  rhChartCargosObj = new Chart(document.getElementById('rhChartCargos').getContext('2d'), {
-    type: 'bar',
+  // (bloco removido — gráfico de cargo substituído por pizza de retenção)
+  if (false) { let _x; rhChartCargosObj = new Chart(document.getElementById('rhChartCargos').getContext('2d'), {
+    type: 'bar', _x,
     data: {
       labels: cargosEntries.map(([c]) => c.length > 22 ? c.slice(0,20)+'…' : c),
       datasets: [{
@@ -18531,7 +18551,7 @@ function rhRender(mesesFiltro, corte, hoje) {
       plugins: { legend: { display: false } },
       scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }
     }
-  });
+  }); } // fim if(false)
 
   // ── Tabela Admissões ──
   const funcsOrdenados = [...rhFiltradosAdm].sort((a,b) => {
