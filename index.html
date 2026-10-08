@@ -18055,43 +18055,43 @@ const RH_DESL_SEED = [
     empresa: 'M. MALACARNE TRANSPORTE E LOGISTICA LTDA',
     cargo: 'MOTORISTA DE CARRETA',
     admissao: '12/11/2024', dataDesligamento: '12/08/2026',
-    motivo: 'Oportunidade de Mercado', obs: 'Passou no concurso da Prefeitura.', _savedAt: '2026-08-12T00:00:00.000Z'
+    motivo: 'Oportunidade de Mercado', obs: 'Passou no concurso da Prefeitura.', _savedAt: '2026-10-08T10:00:00.000Z'
   },
   {
     nome: 'BRUNO EDUARDO PRZYSIESNY RIBEIRO', matricula: '',
     empresa: 'M. MALACARNE TRANSPORTE E LOGISTICA LTDA',
     cargo: 'MOTORISTA DE CARRETA', admissao: '', dataDesligamento: '21/01/2026',
-    motivo: 'Oportunidade de Mercado', obs: 'Comprou uma Van.', _savedAt: '2026-01-21T00:00:00.000Z'
+    motivo: 'Oportunidade de Mercado', obs: 'Comprou uma Van.', _savedAt: '2026-10-08T10:00:00.000Z'
   },
   {
     nome: 'CLAUDIOMIR DOS SANTOS', matricula: '',
     empresa: 'M. MALACARNE TRANSPORTE E LOGISTICA LTDA',
     cargo: 'MOTORISTA DE CARRETA', admissao: '', dataDesligamento: '16/04/2026',
-    motivo: 'Oportunidade de Mercado', obs: 'Proposta de emprego.', _savedAt: '2026-04-16T00:00:00.000Z'
+    motivo: 'Oportunidade de Mercado', obs: 'Proposta de emprego.', _savedAt: '2026-10-08T10:00:00.000Z'
   },
   {
     nome: 'ALEXANDRE VENETZEI', matricula: '',
     empresa: 'M. MALACARNE TRANSPORTE E LOGISTICA LTDA',
     cargo: 'MOTORISTA DE CARRETA', admissao: '', dataDesligamento: '09/06/2026',
-    motivo: 'Oportunidade de Mercado', obs: 'Alegou motivos pessoais, por ter passado por roubo e incidentes.', _savedAt: '2026-06-09T00:00:00.000Z'
+    motivo: 'Oportunidade de Mercado', obs: 'Alegou motivos pessoais, por ter passado por roubo e incidentes.', _savedAt: '2026-10-08T10:00:00.000Z'
   },
   {
     nome: 'ITAMIR ANTONIO DELLALIBERA', matricula: '55',
     empresa: 'M. MALACARNE TRANSPORTE E LOGISTICA LTDA',
     cargo: 'MOTORISTA DE CARRETA', admissao: '13/07/2026', dataDesligamento: '31/08/2026',
-    motivo: 'Término de contrato', obs: 'Não passou no período de teste (aprendiz).', _savedAt: '2026-08-31T00:00:00.000Z'
+    motivo: 'Término de contrato', obs: 'Não passou no período de teste (aprendiz).', _savedAt: '2026-10-08T10:00:00.000Z'
   },
   {
     nome: 'GILSON MARGOTTI', matricula: '49',
     empresa: 'M. MALACARNE TRANSPORTE E LOGISTICA LTDA',
     cargo: 'MOTORISTA DE CARRETA', admissao: '23/09/2025', dataDesligamento: '31/08/2026',
-    motivo: 'Oportunidade de Mercado', obs: 'Proposta de emprego perto de sua residência.', _savedAt: '2026-08-31T00:00:00.000Z'
+    motivo: 'Oportunidade de Mercado', obs: 'Proposta de emprego perto de sua residência.', _savedAt: '2026-10-08T10:00:00.000Z'
   },
   {
     nome: 'JORGE ODAIR LOPES', matricula: '22',
     empresa: 'M. MALACARNE TRANSPORTE E LOGISTICA LTDA',
     cargo: 'MOTORISTA DE CARRETA', admissao: '08/07/2023', dataDesligamento: '31/08/2026',
-    motivo: 'Oportunidade de Mercado', obs: 'Proposta de outra empresa.', _savedAt: '2026-08-31T00:00:00.000Z'
+    motivo: 'Oportunidade de Mercado', obs: 'Proposta de outra empresa.', _savedAt: '2026-10-08T10:00:00.000Z'
   },
   // ── Importados do relatório "Controle de Turnover" (AI Studio) — Ano 2025 ──
   {
@@ -18148,14 +18148,23 @@ const RH_DESL_SEED = [
     if (!localStorage.getItem(RH_DESL_KEY)) {
       localStorage.setItem(RH_DESL_KEY, JSON.stringify(RH_DESL_SEED));
     } else {
-      // Merge: adiciona seed entries que ainda não existam (por nome)
+      // Merge: adiciona novas entradas do seed E atualiza existentes se o seed
+      // tiver _savedAt mais recente (garante que correções no código reflitam)
       const existing = JSON.parse(localStorage.getItem(RH_DESL_KEY) || '[]');
-      const existingNames = new Set(existing.map(d => (d.nome || '').toUpperCase().trim()));
       let changed = false;
       RH_DESL_SEED.forEach(s => {
-        if (!existingNames.has((s.nome || '').toUpperCase().trim())) {
+        const idx = existing.findIndex(d => (d.nome || '').toUpperCase().trim() === (s.nome || '').toUpperCase().trim());
+        if (idx === -1) {
           existing.push(s);
           changed = true;
+        } else {
+          // Atualiza se o seed tem _savedAt mais recente que o registro salvo
+          const tSeed = new Date(s._savedAt || 0).getTime();
+          const tSaved = new Date(existing[idx]._savedAt || 0).getTime();
+          if (tSeed > tSaved) {
+            existing[idx] = { ...existing[idx], ...s }; // seed prevalece, preserva campos extras
+            changed = true;
+          }
         }
       });
       if (changed) localStorage.setItem(RH_DESL_KEY, JSON.stringify(existing));
