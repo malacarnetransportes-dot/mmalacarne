@@ -1109,7 +1109,31 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">IA na nuvem grátis — Chave Groq</label>
     <input type="password" id="maxGroqApiKey" placeholder="gsk_... (deixe em branco para usar só o modo local)">
     <p style="font-size:.7rem;color:var(--text-lt);margin-top:.2rem;margin-bottom:.5rem">Crie uma chave grátis em <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">console.groq.com/keys</a> (não pede cartão). Sem ela, o MAX continua no modo local por palavras-chave. Quando a resposta usar busca real na web, aparece o selo "🔎 verificado na web".</p>
-    <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">Voz</label>
+    <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">🔊 Voz Azure TTS — Chave (opcional, substitui a voz do Windows)</label>
+    <input type="password" id="maxAzureTTSKey" placeholder="Cole aqui a Key 1 do Azure Speech Service">
+    <div style="display:flex;gap:.5rem;margin-top:.3rem">
+      <div style="flex:1">
+        <label style="font-size:.72rem;font-weight:700;color:var(--text-lt)">Região Azure</label>
+        <select id="maxAzureRegion" style="width:100%;padding:.5rem;border-radius:8px;border:1px solid var(--gray-200);font-size:.8rem">
+          <option value="brazilsouth">Brazil South (recomendado)</option>
+          <option value="eastus">East US</option>
+          <option value="westeurope">West Europe</option>
+          <option value="eastasia">East Asia</option>
+        </select>
+      </div>
+      <div style="flex:1">
+        <label style="font-size:.72rem;font-weight:700;color:var(--text-lt)">Voz Azure</label>
+        <select id="maxAzureVoice" style="width:100%;padding:.5rem;border-radius:8px;border:1px solid var(--gray-200);font-size:.8rem">
+          <option value="pt-BR-ThalitaMultilingualNeural">Thalita (feminina — natural)</option>
+          <option value="pt-BR-AntonioNeural">Antônio (masculino)</option>
+          <option value="pt-BR-FranciscaNeural">Francisca (feminina)</option>
+          <option value="pt-BR-HumbertoNeural">Humberto (masculino)</option>
+          <option value="pt-BR-DonatoNeural">Donato (masculino — grave)</option>
+        </select>
+      </div>
+    </div>
+    <p style="font-size:.7rem;color:var(--text-lt);margin-top:.3rem;margin-bottom:.5rem">Crie grátis em <a href="https://portal.azure.com" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">portal.azure.com</a> → Criar recurso → <b>Speech</b> → região Brazil South → copiar <b>Key 1</b>. Plano gratuito: 500 mil caracteres/mês. Sem chave, usa a melhor voz disponível no navegador.</p>
+    <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">Voz do navegador (fallback)</label>
     <select id="maxVoiceSelect" style="width:100%;padding:.6rem;border-radius:8px;border:1px solid var(--gray-200)"><option value="">Carregando vozes...</option></select>
     <button type="button" id="maxVoiceTestBtn" class="btn btn-gray btn-sm" style="margin-top:.5rem"><i class="fas fa-volume-high"></i> Testar voz</button>
   </div>
@@ -6825,6 +6849,11 @@ function openUrlModal(){
   document.getElementById('nfeClientSecret').value = NFE_CLIENT_SECRET;
   document.getElementById('nfeCnpj').value = NFE_CNPJ;
   document.getElementById('maxGroqApiKey').value = MAX_GROQ_KEY;
+  document.getElementById('maxAzureTTSKey').value = localStorage.getItem('maxAzureTTSKey') || '';
+  const azReg = document.getElementById('maxAzureRegion');
+  if (azReg) azReg.value = localStorage.getItem('maxAzureRegion') || 'brazilsouth';
+  const azVoice = document.getElementById('maxAzureVoice');
+  if (azVoice) azVoice.value = localStorage.getItem('maxAzureVoice') || 'pt-BR-ThalitaMultilingualNeural';
   if (window.__maxPopulateVoices) window.__maxPopulateVoices();
   document.getElementById('urlConfigModal').classList.add('active');
   document.getElementById('urlModalBackdrop').classList.add('active');
@@ -6872,6 +6901,12 @@ document.getElementById('saveUrlsBtn').onclick = () => {
   MAX_GROQ_KEY = document.getElementById('maxGroqApiKey').value.trim();
   if (MAX_GROQ_KEY) localStorage.setItem('maxGroqApiKey', MAX_GROQ_KEY);
   else localStorage.removeItem('maxGroqApiKey');
+  const azKey = document.getElementById('maxAzureTTSKey').value.trim();
+  const azReg2 = (document.getElementById('maxAzureRegion') || {}).value || 'brazilsouth';
+  const azVox = (document.getElementById('maxAzureVoice') || {}).value || 'pt-BR-ThalitaMultilingualNeural';
+  if (azKey) { localStorage.setItem('maxAzureTTSKey', azKey); localStorage.setItem('maxAzureRegion', azReg2); localStorage.setItem('maxAzureVoice', azVox); }
+  else { localStorage.removeItem('maxAzureTTSKey'); localStorage.removeItem('maxAzureRegion'); localStorage.removeItem('maxAzureVoice'); }
+  if (window.__maxSetAzureConfig) window.__maxSetAzureConfig(azKey, azReg2, azVox);
   var maxVoiceSel = document.getElementById('maxVoiceSelect');
   if (maxVoiceSel) {
     if (maxVoiceSel.value) localStorage.setItem('maxVoiceURI', maxVoiceSel.value);
@@ -16196,7 +16231,7 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
   // Groq, mesma chamada de API de antes. Se a Groq descontinuar o nome
   // abaixo, troque aqui — o sistema já cai pro modo local sozinho se a
   // chamada falhar. (Fallback sem busca: 'llama-3.3-70b-versatile'.)
-  const MAX_GROQ_MODEL = 'groq/compound';
+  const MAX_GROQ_MODEL = 'compound-beta'; // compound-beta = Groq com busca na web embutida
 
   function snapshotDadosMAX() {
     return TOPICOS_MAX.map(function (t) {
@@ -16234,7 +16269,16 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
       'DADOS ATUAIS DO DASHBOARD:\n' + (snapshot || '(nenhum módulo com dados carregados ainda)');
   }
 
+  // Histórico de conversa — mantém as últimas 10 trocas (20 mensagens) para o MAX ter contexto
+  var _maxHistorico = []; // [{role:'user'|'assistant', content:'...'}]
+  var MAX_HIST_TURNS = 10; // quantas trocas manter
+
   async function askMAXviaIA(pergunta) {
+    // Monta array de mensagens: sistema + histórico + pergunta atual
+    const msgs = [{ role: 'system', content: buildSystemPrompt() }];
+    _maxHistorico.forEach(function(m) { msgs.push(m); });
+    msgs.push({ role: 'user', content: pergunta });
+
     const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -16243,12 +16287,9 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
       },
       body: JSON.stringify({
         model: MAX_GROQ_MODEL,
-        messages: [
-          { role: 'system', content: buildSystemPrompt() },
-          { role: 'user', content: pergunta }
-        ],
-        temperature: 0.4,
-        max_tokens: 700
+        messages: msgs,
+        temperature: 0.35,
+        max_tokens: 1024
       })
     });
     if (!resp.ok) {
@@ -16259,9 +16300,7 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
     const msg = data && data.choices && data.choices[0] && data.choices[0].message;
     const texto = msg && msg.content;
     if (!texto) throw new Error('Resposta vazia da IA');
-    // groq/compound preenche executed_tools quando de fato buscou na web ou
-    // rodou código pra responder — usamos isso só pra sinalizar visualmente
-    // que a resposta foi checada, não é o texto em si.
+    // compound-beta preenche executed_tools quando buscou na web
     const buscou = !!(msg.executed_tools && msg.executed_tools.length);
     return { texto: texto.trim(), verificado: buscou };
   }
