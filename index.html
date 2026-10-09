@@ -1766,6 +1766,7 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
             <div class="dash-card-title" style="margin-bottom:.8rem"><i class="fas fa-filter"></i> Filtros</div>
             <div class="filters-bar">
               <div class="flt-grp"><label>Veículo / Placa</label><input type="text" id="batVeiculo" list="dlPlacas" placeholder="Placa ou veículo..."></div>
+              <div class="flt-grp"><label>Tipo</label><select id="batTipo"><option value="">Todos</option><option value="cavalo">🚛 Cavalo Mecânico</option><option value="carreta">🚚 Carreta / Equip.</option></select></div>
               <div class="flt-grp"><label>Modelo de Bateria</label><input type="text" id="batModeloFiltro" placeholder="Ex: Heliar, Moura..."></div>
               <div class="flt-grp"><label>Status</label><select id="batStatus"><option value="">Todos</option><option value="vencido">Vencidas</option><option value="proximo30">Próx. 30 dias</option><option value="proximo60">Próx. 2 meses</option><option value="proximo90">Próx. 3 meses</option><option value="ok">Em Dia</option></select></div>
               <div class="flt-grp"><label>Data Início</label><input type="date" id="batDataInicio"></div>
@@ -3352,22 +3353,34 @@ function normalizaPlaca(v) {
   return String(v || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
 }
 
-// Remove registros duplicados por placa, mantendo apenas o mais recente
-// (maior data de vencimento/troca). Linhas sem placa identificável ou sem
-// nenhuma data comparável são mantidas como estão.
-function dedupePorPlaca(rows, colVeiculo, colData) {
+// Remove registros duplicados por placa, mantendo apenas o mais recente.
+// Prioridade: data de instalação/troca (colInstalacao) — quando disponível
+// representa a bateria mais nova instalada; se não houver, cai pra data de
+// vencimento (colData). Garante que baterias substituídas não entrem nos
+// rankings — só a bateria ATUAL (mais recentemente instalada) conta.
+function dedupePorPlaca(rows, colVeiculo, colData, colInstalacao) {
   if (!colVeiculo) return rows;
   const map = new Map();
   const semPlaca = [];
+
+  // Retorna a data de comparação preferindo instalação quando disponível
+  function dataRef(row) {
+    if (colInstalacao) {
+      const d = parseDate(row[colInstalacao]);
+      if (d) return d;
+    }
+    return colData ? parseDate(row[colData]) : null;
+  }
+
   rows.forEach(row => {
     const placa = normalizaPlaca(row[colVeiculo]);
     if (!placa) { semPlaca.push(row); return; }
     const existing = map.get(placa);
     if (!existing) { map.set(placa, row); return; }
-    const dNovo = colData ? parseDate(row[colData]) : null;
-    const dAtual = colData ? parseDate(existing[colData]) : null;
+    const dNovo  = dataRef(row);
+    const dAtual = dataRef(existing);
     if (dNovo && (!dAtual || dNovo > dAtual)) {
-      map.set(placa, row); // registro mais recente vence
+      map.set(placa, row); // bateria mais recente (nova troca) vence
     } else if (!dNovo && !dAtual) {
       map.set(placa, row); // sem data em nenhum: fica o último da planilha
     }
@@ -4168,11 +4181,12 @@ function slideBateriasDetalhe(){
   const headers = Object.keys(bateriasData[0]);
   const colVeiculo = findCol(headers, ['veiculo','placa','caminhao','carro','cavalo','truck','frota']);
   const colData    = findCol(headers, ['vencimento','data','validade','troca','substituicao','proxima']);
+  const colInstalacao = findCol(headers.filter(h=>h!==colData), ['instalacao','instalação','compra','aquisicao','aquisição','data troca','data inicial']);
   if (!colData) return { vencidos: [], proximos: [] };
   const now = new Date(); now.setHours(0,0,0,0);
   const em90 = new Date(now); em90.setDate(em90.getDate() + (GV_SOMENTE_VENCIMENTOS ? 30 : 90));
   const vencidos = [], proximos = [];
-  dedupePorPlaca(bateriasData, colVeiculo, colData).forEach(row => {
+  dedupePorPlaca(bateriasData, colVeiculo, colData, colInstalacao).forEach(row => {
     const d = parseDate(row[colData]);
     if (!d || d > em90) return;
     const pn = slideResolverNomePlaca({ placa: colVeiculo ? row[colVeiculo] : '', ident: colVeiculo ? row[colVeiculo] : '' });
@@ -12688,8 +12702,11 @@ function aplicarFiltrosBaterias() {
   const headers = Object.keys(bateriasData[0]);
   const colVeiculo    = findCol(headers, ['veiculo','placa','caminhao','carro','cavalo','truck','frota']);
   const colData       = findCol(headers, ['vencimento','data','validade','troca','substituicao','proxima']);
-  const colModelo     = findCol(headers, ['modelo bateria','modelo','tipo bateria','tipo']);
+  const colModelo     = findCol(headers, ['modelo bateria','modelo','tipo bateria']);
   const colInstalacao = findCol(headers.filter(h => h !== colData), ['instalacao','instalação','compra','aquisicao','aquisição','fabricacao','fabricação','emissao','emissão','anterior','data inicial','data troca']);
+  // Coluna tipo: pode ser "tipo", "categoria", "tipo veiculo", "classificacao"
+  // Se não houver, deduzimos pela placa (placas de carreta costumam ter sufixo C/S ou estar em coluna separada)
+  const colTipo = findCol(headers, ['tipo veiculo','tipo_veiculo','tipo vei','classificacao','classe do veiculo','cavalo carreta']);
 
   const now = new Date(); now.setHours(0,0,0,0);
   const em30 = new Date(now); em30.setDate(em30.getDate()+30);
@@ -12705,7 +12722,25 @@ function aplicarFiltrosBaterias() {
     return 'ok';
   }
 
+  // Deduz se é cavalo ou carreta pela coluna tipo (quando existir) ou pela placa/nome do veículo
+  function isTipo(row, tipo) {
+    // Tenta coluna dedicada primeiro
+    if (colTipo) {
+      const v = String(row[colTipo]||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+      if (tipo === 'cavalo') return v.includes('cavalo') || v.includes('cav') || v.includes('trator') || v.includes('tracao');
+      if (tipo === 'carreta') return v.includes('carreta') || v.includes('semirreboque') || v.includes('reboque') || v.includes('refrig') || v.includes('equip');
+    }
+    // Fallback: pela coluna de veículo/placa — carretas geralmente têm sufixo C, SC, CAR, ou contêm "CARRETA"
+    if (colVeiculo) {
+      const v = String(row[colVeiculo]||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+      if (tipo === 'carreta') return /\b(carreta|semi|reboque|refrig|equip)\b/.test(v);
+      if (tipo === 'cavalo')  return /\b(cavalo|cav|trator)\b/.test(v) || !/\b(carreta|semi|reboque|refrig|equip)\b/.test(v);
+    }
+    return true;
+  }
+
   const vVeiculo = document.getElementById('batVeiculo').value.toLowerCase();
+  const vTipo    = document.getElementById('batTipo')?.value || '';
   const vModelo  = normalizaModelo(document.getElementById('batModeloFiltro').value);
   const vStatus  = document.getElementById('batStatus').value;
   const vDataIni = document.getElementById('batDataInicio').value ? new Date(document.getElementById('batDataInicio').value) : null;
@@ -12713,8 +12748,8 @@ function aplicarFiltrosBaterias() {
 
   let vencidas=0, proximas30=0, proximas60=0, proximas90=0, ok=0;
 
-  // Para KPIs usa dedup (registro mais recente por placa)
-  const dedupedData = dedupePorPlaca(bateriasData, colVeiculo, colData);
+  // Para KPIs usa dedup (registro mais recente por placa — usa colInstalacao p/ bateria atual)
+  const dedupedData = dedupePorPlaca(bateriasData, colVeiculo, colData, colInstalacao);
 
   dedupedData.forEach(row => {
     const dVenc = colData ? parseDate(row[colData]) : null;
@@ -12738,6 +12773,7 @@ function aplicarFiltrosBaterias() {
     const dVenc = colData ? parseDate(row[colData]) : null;
     const status = classificar(dVenc);
     if (vVeiculo && colVeiculo && !String(row[colVeiculo]||'').toLowerCase().includes(vVeiculo)) return false;
+    if (vTipo && !isTipo(row, vTipo)) return false;
     if (vModelo && colModelo && !normalizaModelo(row[colModelo]).includes(vModelo)) return false;
     if (vStatus && status !== vStatus) return false;
     if (vDataIni && dVenc && dVenc < vDataIni) return false;
@@ -12767,32 +12803,83 @@ function aplicarFiltrosBaterias() {
       const statusUlt = classificar(dUlt);
       const statusLabel = {vencido:'⚠ Vencida',proximo30:'⏰ Próx. 30d',proximo60:'⏰ Próx. 2m',proximo90:'⏰ Próx. 3m',ok:'✓ Em Dia'};
       const statusColor = {vencido:'#ef4444',proximo30:'#f59e0b',proximo60:'#f59e0b',proximo90:'#f59e0b',ok:'#10b981'};
-      resumoBody.innerHTML = `
+      // Monta mini-cards para CADA coluna da planilha (registro atual = último)
+      const dInst = colInstalacao ? parseDate(ultimo[colInstalacao]) : null;
+      const diasVida = (dInst && dUlt) ? Math.round((dUlt-dInst)/86400000) : null;
+      const diasRestantes = dUlt ? Math.round((dUlt-now)/86400000) : null;
+
+      // Colunas fixas de destaque (topo do card)
+      let fixedCards = `
         <div style="background:#fff;padding:.6rem .8rem;border-radius:8px;border:1px solid #bfdbfe">
-          <div style="font-size:.68rem;color:#64748b;margin-bottom:.2rem">Registros encontrados</div>
-          <div style="font-size:1.1rem;font-weight:800;color:#1e40af">${todosPlaca.length}${todosPlaca.length>1?' <span style="font-size:.7rem;color:#f59e0b;font-weight:600">⚠ duplicado</span>':''}</div>
-        </div>
-        <div style="background:#fff;padding:.6rem .8rem;border-radius:8px;border:1px solid #bfdbfe">
-          <div style="font-size:.68rem;color:#64748b;margin-bottom:.2rem">Modelo atual</div>
-          <div style="font-size:.9rem;font-weight:700;color:#1e293b">${escapeHTML(modUlt)}</div>
-        </div>
-        <div style="background:#fff;padding:.6rem .8rem;border-radius:8px;border:1px solid #bfdbfe">
-          <div style="font-size:.68rem;color:#64748b;margin-bottom:.2rem">Vencimento</div>
-          <div style="font-size:.9rem;font-weight:700;color:#1e293b">${dUlt ? fmtDate(dUlt) : '—'}</div>
+          <div style="font-size:.68rem;color:#64748b;margin-bottom:.2rem">Registros / Trocas</div>
+          <div style="font-size:1.1rem;font-weight:800;color:#1e40af">${todosPlaca.length}${todosPlaca.length>1?` <span style="font-size:.7rem;color:#f59e0b;font-weight:600">(${todosPlaca.length-1} troca${todosPlaca.length>2?'s':''})</span>`:' <span style="font-size:.7rem;color:#10b981;font-weight:600">sem troca</span>'}</div>
         </div>
         <div style="background:#fff;padding:.6rem .8rem;border-radius:8px;border:1px solid #bfdbfe">
           <div style="font-size:.68rem;color:#64748b;margin-bottom:.2rem">Status</div>
           <div style="font-size:.9rem;font-weight:700;color:${statusColor[statusUlt]}">${statusLabel[statusUlt]||'—'}</div>
         </div>
-        ${historicoOrdenado.length>1?`<div style="background:#fff;padding:.6rem .8rem;border-radius:8px;border:1px solid #bfdbfe;grid-column:1/-1">
-          <div style="font-size:.68rem;color:#64748b;margin-bottom:.4rem">Histórico de trocas</div>
-          <div style="display:flex;flex-wrap:wrap;gap:.4rem">${historicoOrdenado.map((r,i)=>{
-            const d=colData?parseDate(r[colData]):null;
-            const m=colModelo?(r[colModelo]||'—'):'—';
-            return `<span style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:.2rem .5rem;font-size:.72rem"><b>#${i+1}</b> ${d?fmtDate(d):'s/data'} — ${escapeHTML(m)}</span>`;
-          }).join('')}</div>
+        ${diasRestantes!==null?`<div style="background:#fff;padding:.6rem .8rem;border-radius:8px;border:1px solid #bfdbfe">
+          <div style="font-size:.68rem;color:#64748b;margin-bottom:.2rem">${diasRestantes>=0?'Dias restantes':'Vencida há'}</div>
+          <div style="font-size:.9rem;font-weight:700;color:${diasRestantes<0?'#ef4444':diasRestantes<=30?'#f59e0b':'#10b981'}">${Math.abs(diasRestantes)} dias</div>
+        </div>`:''}
+        ${diasVida!==null?`<div style="background:#fff;padding:.6rem .8rem;border-radius:8px;border:1px solid #bfdbfe">
+          <div style="font-size:.68rem;color:#64748b;margin-bottom:.2rem">Vida útil prevista</div>
+          <div style="font-size:.9rem;font-weight:700;color:#1e293b">${diasVida} dias (${(diasVida/30).toFixed(1)} meses)</div>
         </div>`:''}
       `;
+
+      // Todas as demais colunas da planilha (exceto colunas já destacadas)
+      const colsDestacadas = new Set([colVeiculo, colData, colModelo, colInstalacao, colTipo].filter(Boolean));
+      const colsExtras = headers.filter(h => !colsDestacadas.has(h));
+      let extraCards = colsExtras.map(h => {
+        const val = ultimo[h];
+        if (!val && val !== 0) return '';
+        const d = parseDate(val);
+        const display = d ? fmtDate(d) : escapeHTML(String(val));
+        return `<div style="background:#fff;padding:.6rem .8rem;border-radius:8px;border:1px solid #bfdbfe">
+          <div style="font-size:.68rem;color:#64748b;margin-bottom:.2rem">${escapeHTML(h)}</div>
+          <div style="font-size:.85rem;font-weight:600;color:#1e293b">${display}</div>
+        </div>`;
+      }).join('');
+
+      // Colunas destacadas (em sequência natural) com label amigável
+      const labelMap = {};
+      if (colVeiculo) labelMap[colVeiculo] = 'Veículo / Placa';
+      if (colModelo) labelMap[colModelo] = 'Modelo (bateria atual)';
+      if (colInstalacao) labelMap[colInstalacao] = 'Data de Instalação';
+      if (colData) labelMap[colData] = 'Vencimento';
+      if (colTipo) labelMap[colTipo] = 'Tipo';
+
+      let mainCards = Object.entries(labelMap).map(([col, lbl]) => {
+        const val = ultimo[col];
+        if (!val && val !== 0) return '';
+        const d = parseDate(val);
+        const display = d ? fmtDate(d) : escapeHTML(String(val));
+        return `<div style="background:#fff;padding:.6rem .8rem;border-radius:8px;border:1px solid #bfdbfe">
+          <div style="font-size:.68rem;color:#64748b;margin-bottom:.2rem">${lbl}</div>
+          <div style="font-size:.9rem;font-weight:700;color:#1e293b">${display}</div>
+        </div>`;
+      }).join('');
+
+      // Histórico de trocas (se houver mais de 1 registro)
+      let historicoHtml = historicoOrdenado.length>1 ? `
+        <div style="background:#fff;padding:.6rem .8rem;border-radius:8px;border:1px solid #bfdbfe;grid-column:1/-1">
+          <div style="font-size:.68rem;color:#64748b;margin-bottom:.4rem;font-weight:700">📋 Histórico de trocas (${historicoOrdenado.length} registros — apenas a mais nova entra nos rankings)</div>
+          <div style="display:flex;flex-wrap:wrap;gap:.4rem">${historicoOrdenado.map((r,i)=>{
+            const d=colData?parseDate(r[colData]):null;
+            const di=colInstalacao?parseDate(r[colInstalacao]):null;
+            const m=colModelo?(r[colModelo]||'—'):'—';
+            const isAtual = i===historicoOrdenado.length-1;
+            return `<span style="background:${isAtual?'#dcfce7':'#f1f5f9'};border:1px solid ${isAtual?'#86efac':'#e2e8f0'};border-radius:6px;padding:.2rem .6rem;font-size:.72rem">
+              <b>${isAtual?'✓ ATUAL':'#'+String(i+1)}</b>
+              ${di?` inst. ${fmtDate(di)}`:''}
+              ${d?` venc. ${fmtDate(d)}`:'s/data'}
+              — ${escapeHTML(m)}
+            </span>`;
+          }).join('')}</div>
+        </div>` : '';
+
+      resumoBody.innerHTML = fixedCards + mainCards + extraCards + historicoHtml;
       resumoCard.style.display = 'block';
     } else {
       resumoCard.style.display = 'none';
@@ -13025,6 +13112,8 @@ function batRenderRankings(dedupedData, allData, colVeiculo, colData, colModelo,
 
 function resetBatFilters() {
   document.getElementById('batVeiculo').value='';
+  const batTipoEl = document.getElementById('batTipo');
+  if (batTipoEl) batTipoEl.selectedIndex=0;
   document.getElementById('batModeloFiltro').value='';
   document.getElementById('batStatus').selectedIndex=0;
   document.getElementById('batDataInicio').value='';
