@@ -15,6 +15,9 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<!-- Google Identity Services + GAPI — varredura Gmail→Drive de XML NF-e -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js" async defer></script>
 <style>
 :root{
   --primary:#8B7355;--primary-dk:#6B533A;--primary-lt:#A88F6E;
@@ -1085,6 +1088,9 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt);margin-top:.5rem">⛽ Controle de Consumo por Litro — Web App (Processar PDFs da pasta do Drive)</label>
     <input type="text" id="urlAbastecimentosWebApp" placeholder="URL do Apps Script implantado (…/exec)">
     <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem">Se o botão <b>Processar PDFs</b> parar de funcionar, normalmente é porque essa implantação do Apps Script expirou. No Apps Script: <b>Implantar → Gerenciar implantações → editar → nova versão</b>, com acesso "Qualquer pessoa", e cole a nova URL "…/exec" aqui.</p>
+    <label style="font-size:.75rem;font-weight:700;color:var(--text-lt);margin-top:.5rem">📥 Gmail → Drive — Google OAuth Client ID</label>
+    <input type="text" id="gmailDriveClientId" placeholder="Ex: 123456789-abc.apps.googleusercontent.com">
+    <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem">Usado pelo botão <b>Varrer Gmail → Drive</b> (aba NF-e / Abast.) para ler anexos XML do Gmail e salvá-los na pasta <b>NOTAS DE ABASTECIDAS</b> do Drive. Crie em <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">console.cloud.google.com → Credenciais → OAuth 2.0</a>: tipo "Aplicativo da Web", origem autorizada = URL deste dashboard (ou <code>http://localhost</code> em teste). Ative as APIs Gmail e Drive no mesmo projeto.</p>
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt);margin-top:.5rem">📅 Agenda / Lembretes (CSV)</label>
     <input type="text" id="urlAgenda" placeholder="https://docs.google.com/spreadsheets/... (cole aqui a URL da SUA planilha de agenda)">
     <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem">Planilha com colunas: <code>titulo | data | hora | categoria | prioridade | responsavel | descricao | recorrencia</code>. Publique a aba como CSV (Arquivo → Publicar na Web → selecione a aba → CSV). <b>Não há URL padrão pronta — sem essa URL configurada, a Agenda funciona só com lembretes criados manualmente na tela (o que já funciona normalmente).</b></p>
@@ -2282,6 +2288,30 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
 
         <!-- ── TAB CONTROLE DE CONSUMO POR LITRO ── -->
         <div id="tabConsumoLitro" class="tab-pane">
+          <!-- ── VARREDURA GMAIL → DRIVE ── -->
+          <div class="dash-card" id="gmailDriveCard" style="border-left:4px solid var(--info);margin-bottom:1rem">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6rem;margin-bottom:.7rem">
+              <div style="display:flex;align-items:center;gap:.7rem">
+                <i class="fas fa-envelope-open-text" style="font-size:1.3rem;color:var(--info)"></i>
+                <div>
+                  <div style="font-weight:700;font-size:.9rem;color:#1e2a3a">Varrer Gmail → Drive</div>
+                  <div style="font-size:.76rem;color:var(--text-lt)">Busca anexos XML de NF-e no Gmail e salva direto na pasta <b>NOTAS DE ABASTECIDAS</b></div>
+                </div>
+              </div>
+              <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+                <button class="btn btn-info btn-sm" id="gmailDriveBtn" onclick="gmailDriveVarrer()"><i class="fas fa-search-plus"></i> Varrer Gmail → Drive</button>
+                <button class="btn btn-gray btn-sm" id="gmailDriveLogoffBtn" onclick="gmailDriveLogoff()" style="display:none"><i class="fas fa-sign-out-alt"></i> Sair</button>
+              </div>
+            </div>
+            <div id="gmailDriveProgress" style="display:none;margin-bottom:.6rem">
+              <div style="background:var(--gray-200);border-radius:20px;height:6px;overflow:hidden">
+                <div id="gmailDriveProgressBar" style="height:100%;background:var(--info);border-radius:20px;transition:width .3s;width:0%"></div>
+              </div>
+              <div id="gmailDriveProgressTxt" style="font-size:.73rem;color:var(--text-lt);margin-top:.3rem"></div>
+            </div>
+            <div id="gmailDriveLog" style="max-height:180px;overflow-y:auto;font-size:.75rem;color:var(--text-lt);border-top:1px solid var(--gray-200);padding-top:.5rem;display:none"></div>
+          </div>
+
           <div class="dash-card" style="background:linear-gradient(135deg,rgba(212,175,55,.08),rgba(212,175,55,.02));border:1px solid rgba(212,175,55,.25);margin-bottom:1rem">
             <div class="dash-card-title" style="font-size:1rem"><i class="fas fa-gas-pump" style="color:var(--accent)"></i> Controle de Consumo por Litro
               <button id="btnAtualizarConsumoTab" class="btn btn-accent btn-sm" style="margin-left:1rem" onclick="loadAbastecimentos()"><i class="fas fa-sync-alt"></i> Atualizar</button>
@@ -6845,6 +6875,7 @@ function openUrlModal(){
   document.getElementById('urlAgenda').value = URL_AGENDA;
   document.getElementById('urlAbastecimentosCsv').value = localStorage.getItem('urlAbastecimentosCsv') || '';
   document.getElementById('urlAbastecimentosWebApp').value = localStorage.getItem('urlAbastecimentosWebApp') || '';
+  document.getElementById('gmailDriveClientId').value = localStorage.getItem('gmailDriveClientId') || '421573211563-v8r3hrml7bcv6vuk95gbrd0fpiv4oj1t.apps.googleusercontent.com';
   document.getElementById('nfeClientId').value = NFE_CLIENT_ID;
   document.getElementById('nfeClientSecret').value = NFE_CLIENT_SECRET;
   document.getElementById('nfeCnpj').value = NFE_CNPJ;
@@ -6888,6 +6919,10 @@ document.getElementById('saveUrlsBtn').onclick = () => {
   else localStorage.removeItem('urlAbastecimentosCsv');
   if (novaAbastWebApp) { WEBAPP_ABAST_URL = novaAbastWebApp; localStorage.setItem('urlAbastecimentosWebApp', novaAbastWebApp); }
   else localStorage.removeItem('urlAbastecimentosWebApp');
+  // Gmail→Drive OAuth Client ID
+  const novoGmailClientId = document.getElementById('gmailDriveClientId').value.trim();
+  if (novoGmailClientId) { localStorage.setItem('gmailDriveClientId', novoGmailClientId); }
+  else localStorage.removeItem('gmailDriveClientId');
   // NF-e credentials — salvas em sessionStorage (mais seguro; somem ao fechar a aba)
   NFE_CLIENT_ID     = document.getElementById('nfeClientId').value.trim();
   NFE_CLIENT_SECRET = document.getElementById('nfeClientSecret').value.trim();
@@ -20006,6 +20041,252 @@ document.getElementById('tvBtnOpen').addEventListener('click', function() {
   }
   var was=false;
   new MutationObserver(function(){var on=body.classList.contains('show');if(on&&!was)split();was=on;}).observe(body,{attributes:true,attributeFilter:['class']});
+})();
+</script>
+
+<!-- ════════════════════════════════════════════════════════════
+     GMAIL → DRIVE — Varredura XML NF-e/NFC-e direto no browser
+     Usa Google Identity Services (GIS) + Gmail API + Drive API
+     ════════════════════════════════════════════════════════════ -->
+<script>
+(function(){
+
+  var GDRIVE_PASTA_ID = '1x656mBtR-zOO_ZxXEBmBAMTzp4JCRezC';
+  var GMAIL_LABEL     = 'NF-e Processada';
+  var GAPI_SCOPES     = 'https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/drive.file';
+
+  var _gapiReady   = false;
+  var _tokenClient = null;
+  var _accessToken = null;
+  var _labelId     = null;
+
+  /* ── UI helpers ── */
+  function _log(msg, tipo){
+    var el = document.getElementById('gmailDriveLog');
+    if(!el) return;
+    el.style.display = 'block';
+    var cor = tipo==='ok'?'var(--success)':tipo==='err'?'var(--danger)':tipo==='warn'?'var(--warning)':'var(--text-lt)';
+    var d = document.createElement('div');
+    d.style.cssText = 'padding:.2rem 0;border-bottom:1px solid var(--gray-200);color:'+cor;
+    d.textContent   = new Date().toLocaleTimeString('pt-BR')+' — '+msg;
+    el.insertBefore(d, el.firstChild);
+  }
+  function _prog(pct, txt){
+    var bar  = document.getElementById('gmailDriveProgressBar');
+    var lbl  = document.getElementById('gmailDriveProgressTxt');
+    var wrap = document.getElementById('gmailDriveProgress');
+    if(wrap) wrap.style.display = pct===null ? 'none' : 'block';
+    if(bar)  bar.style.width    = (pct||0)+'%';
+    if(lbl)  lbl.textContent    = txt||'';
+  }
+  function _setBusy(busy){
+    var btn = document.getElementById('gmailDriveBtn');
+    if(!btn) return;
+    btn.disabled    = busy;
+    btn.innerHTML   = busy
+      ? '<i class="fas fa-spinner fa-spin"></i> Processando...'
+      : '<i class="fas fa-search-plus"></i> Varrer Gmail → Drive';
+  }
+
+  /* ── aguarda gapi ficar disponível ── */
+  function _gapiLoad(cb){
+    if(_gapiReady){ cb(); return; }
+    if(typeof gapi === 'undefined'){ setTimeout(function(){ _gapiLoad(cb); }, 300); return; }
+    gapi.load('client', function(){
+      gapi.client.init({}).then(function(){ _gapiReady = true; cb(); });
+    });
+  }
+
+  /* ── fetch autenticado ── */
+  function _apiFetch(url, opts){
+    opts = opts||{};
+    opts.headers = opts.headers||{};
+    opts.headers['Authorization'] = 'Bearer '+_accessToken;
+    return fetch(url, opts);
+  }
+
+  /* ── garante label no Gmail ── */
+  async function _ensureLabel(){
+    if(_labelId) return _labelId;
+    var r    = await _apiFetch('https://gmail.googleapis.com/gmail/v1/users/me/labels');
+    var data = await r.json();
+    var ex   = (data.labels||[]).find(function(l){ return l.name===GMAIL_LABEL; });
+    if(ex){ _labelId=ex.id; return _labelId; }
+    var cr   = await _apiFetch('https://gmail.googleapis.com/gmail/v1/users/me/labels',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({name:GMAIL_LABEL,labelListVisibility:'labelShow',messageListVisibility:'show'})
+    });
+    var created = await cr.json();
+    _labelId = created.id;
+    return _labelId;
+  }
+
+  /* ── verifica duplicata no Drive ── */
+  async function _arquivoExiste(nome){
+    var q = encodeURIComponent("'"+GDRIVE_PASTA_ID+"' in parents and name='"+nome.replace(/'/g,"\\'")+"' and trashed=false");
+    var r    = await _apiFetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id)&pageSize=1');
+    var data = await r.json();
+    return (data.files||[]).length > 0;
+  }
+
+  /* ── upload multipart Drive ── */
+  async function _uploadDrive(nome, conteudo){
+    var bnd  = '-------271828182845904523536028747';
+    var meta = JSON.stringify({name:nome, parents:[GDRIVE_PASTA_ID]});
+    var body = '--'+bnd+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+meta+
+               '\r\n--'+bnd+'\r\nContent-Type: application/xml\r\n\r\n'+conteudo+'\r\n--'+bnd+'--';
+    var r = await _apiFetch(
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name',
+      { method:'POST', headers:{'Content-Type':'multipart/related; boundary="'+bnd+'"'}, body:body }
+    );
+    return await r.json();
+  }
+
+  /* ── marca thread processada ── */
+  async function _marcarThread(threadId, labelId){
+    await _apiFetch('https://gmail.googleapis.com/gmail/v1/users/me/threads/'+threadId+'/modify',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({addLabelIds:[labelId]})
+    });
+  }
+
+  /* ── decodifica base64url para string ── */
+  function _b64urlToStr(s){
+    try{ return decodeURIComponent(escape(atob(s.replace(/-/g,'+').replace(/_/g,'/'))));
+    }catch(e){ return s; }
+  }
+
+  /* ── extrai attachments XML de uma mensagem ── */
+  async function _getXmlAtts(msgId){
+    var r    = await _apiFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/'+msgId+'?format=full');
+    var msg  = await r.json();
+    var atts = [];
+    function walk(parts){
+      if(!parts) return;
+      parts.forEach(function(p){
+        if(p.parts) walk(p.parts);
+        var fn   = (p.filename||'').trim();
+        var mime = (p.mimeType||'').toLowerCase();
+        if(fn && (fn.toLowerCase().endsWith('.xml')||mime.includes('xml')))
+          atts.push({nome:fn, part:p});
+      });
+    }
+    walk(msg.payload && msg.payload.parts);
+    if(!atts.length && msg.payload){
+      var fn0=(msg.payload.filename||'').trim(), m0=(msg.payload.mimeType||'').toLowerCase();
+      if(fn0&&(fn0.toLowerCase().endsWith('.xml')||m0.includes('xml')))
+        atts.push({nome:fn0, part:msg.payload});
+    }
+    return {atts:atts, threadId:msg.threadId};
+  }
+
+  /* ── busca conteúdo do attachment ── */
+  async function _getAttData(msgId, attId, dataInline){
+    if(dataInline) return _b64urlToStr(dataInline);
+    var r    = await _apiFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/'+msgId+'/attachments/'+attId);
+    var data = await r.json();
+    return _b64urlToStr(data.data||'');
+  }
+
+  /* ── ponto de entrada global ── */
+  window.gmailDriveVarrer = function(){
+    var clientId = localStorage.getItem('gmailDriveClientId')||'421573211563-v8r3hrml7bcv6vuk95gbrd0fpiv4oj1t.apps.googleusercontent.com';
+    if(!clientId){
+      showToast('⚠ Configure o Google OAuth Client ID em Config URLs.');
+      document.getElementById('openUrlConfig')&&document.getElementById('openUrlConfig').click();
+      return;
+    }
+    _gapiLoad(function(){
+      if(!_tokenClient){
+        _tokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: clientId,
+          scope: GAPI_SCOPES,
+          callback: function(resp){
+            if(resp.error){ showToast('Erro OAuth: '+resp.error); _setBusy(false); return; }
+            _accessToken = resp.access_token;
+            _run();
+          }
+        });
+      }
+      _setBusy(true);
+      _tokenClient.requestAccessToken({prompt:''});
+    });
+  };
+
+  window.gmailDriveLogoff = function(){
+    if(_accessToken&&typeof google!=='undefined'&&google.accounts&&google.accounts.oauth2)
+      google.accounts.oauth2.revoke(_accessToken);
+    _accessToken=null; _labelId=null;
+    var b=document.getElementById('gmailDriveLogoffBtn'); if(b) b.style.display='none';
+    showToast('Sessão Gmail encerrada.');
+  };
+
+  async function _run(){
+    _prog(0,'Iniciando...');
+    var logEl=document.getElementById('gmailDriveLog');
+    if(logEl){logEl.innerHTML='';logEl.style.display='none';}
+    var btnOff=document.getElementById('gmailDriveLogoffBtn');
+    if(btnOff) btnOff.style.display='inline-flex';
+
+    try{
+      _prog(5,'Verificando labels...');
+      var labelId = await _ensureLabel();
+
+      _prog(10,'Buscando e-mails com XML...');
+      var q   = encodeURIComponent('has:attachment filename:xml -label:"'+GMAIL_LABEL+'"');
+      var r   = await _apiFetch('https://gmail.googleapis.com/gmail/v1/users/me/threads?q='+q+'&maxResults=100');
+      var d   = await r.json();
+      var ths = d.threads||[];
+      _log('Threads encontradas: '+ths.length, ths.length?'ok':'warn');
+
+      if(!ths.length){
+        _prog(100,'Nenhum e-mail novo com XML.');
+        setTimeout(function(){_prog(null,'');},3000);
+        showToast('📭 Nenhum XML novo no Gmail.'); _setBusy(false); return;
+      }
+
+      var salvos=0, pulados=0, erros=0, total=ths.length;
+
+      for(var ti=0;ti<ths.length;ti++){
+        _prog(10+Math.round((ti/total)*80),'Thread '+(ti+1)+'/'+total+'...');
+        try{
+          // Pega IDs de mensagens da thread
+          var tr = await _apiFetch('https://gmail.googleapis.com/gmail/v1/users/me/threads/'+ths[ti].id+'?format=minimal');
+          var td = await tr.json();
+          var msgs = td.messages||[{id:ths[ti].id}];
+
+          for(var mi=0;mi<msgs.length;mi++){
+            var {atts, threadId} = await _getXmlAtts(msgs[mi].id);
+            for(var ai=0;ai<atts.length;ai++){
+              var att  = atts[ai];
+              var nome = att.nome;
+              if(await _arquivoExiste(nome)){ _log('⏩ Já existe: '+nome,'warn'); pulados++; continue; }
+              var body = att.part.body||{};
+              var xml  = await _getAttData(msgs[mi].id, body.attachmentId, body.data);
+              var res  = await _uploadDrive(nome, xml);
+              if(res.id){ _log('✅ Salvo: '+nome,'ok'); salvos++; }
+              else       { _log('❌ Falha: '+nome+' '+(res.error&&res.error.message||''),'err'); erros++; }
+            }
+          }
+          await _marcarThread(ths[ti].id, labelId);
+        }catch(e){ _log('❌ Erro thread '+ths[ti].id+': '+e.message,'err'); erros++; }
+      }
+
+      _prog(100,'Concluído!');
+      setTimeout(function(){_prog(null,'');},4000);
+      var resumo='✅ '+salvos+' salvo(s)'+(pulados?' · ⏩ '+pulados+' já existia(m)':'')+(erros?' · ❌ '+erros+' erro(s)':'');
+      showToast(resumo);
+      _log('─── '+resumo+' ───', salvos?'ok':'warn');
+
+    }catch(e){
+      _prog(null,'');
+      showToast('Erro: '+e.message,5000);
+      _log('❌ Erro geral: '+e.message,'err');
+    }finally{
+      _setBusy(false);
+    }
+  }
+
 })();
 </script>
 </body>
