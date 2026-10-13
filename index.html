@@ -1090,7 +1090,8 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
     <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem">Se o botão <b>Processar PDFs</b> parar de funcionar, normalmente é porque essa implantação do Apps Script expirou. No Apps Script: <b>Implantar → Gerenciar implantações → editar → nova versão</b>, com acesso "Qualquer pessoa", e cole a nova URL "…/exec" aqui.</p>
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt);margin-top:.5rem">📥 Gmail → Drive — Google OAuth Client ID</label>
     <input type="text" id="gmailDriveClientId" placeholder="Ex: 123456789-abc.apps.googleusercontent.com">
-    <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem">Usado pelo botão <b>Varrer Gmail → Drive</b> (aba NF-e / Abast.) para ler anexos XML do Gmail e salvá-los na pasta <b>NOTAS DE ABASTECIDAS</b> do Drive. Crie em <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">console.cloud.google.com → Credenciais → OAuth 2.0</a>: tipo "Aplicativo da Web", origem autorizada = URL deste dashboard (ou <code>http://localhost</code> em teste). Ative as APIs Gmail e Drive no mesmo projeto.</p>
+    <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem">Usado pelo botão <b>Varrer Gmail → Drive</b> (aba NF-e / Abast.) para ler anexos XML do Gmail e salvá-los na pasta <b>NOTAS DE ABASTECIDAS</b> do Drive. Crie em <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">console.cloud.google.com → Credenciais → OAuth 2.0</a>: tipo "Aplicativo da Web". <b>Origens JavaScript autorizadas</b> = URL exata deste dashboard (<code id="gmailOrigemAtual" style="color:var(--accent)">carregando…</code>). Ative as APIs Gmail e Drive no mesmo projeto. Se aparecer erro <b>origin_mismatch</b>, é porque essa URL não está cadastrada.</p>
+    <script>try{document.getElementById('gmailOrigemAtual').textContent=window.location.origin;}catch(e){}</script>
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt);margin-top:.5rem">📅 Agenda / Lembretes (CSV)</label>
     <input type="text" id="urlAgenda" placeholder="https://docs.google.com/spreadsheets/... (cole aqui a URL da SUA planilha de agenda)">
     <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem">Planilha com colunas: <code>titulo | data | hora | categoria | prioridade | responsavel | descricao | recorrencia</code>. Publique a aba como CSV (Arquivo → Publicar na Web → selecione a aba → CSV). <b>Não há URL padrão pronta — sem essa URL configurada, a Agenda funciona só com lembretes criados manualmente na tela (o que já funciona normalmente).</b></p>
@@ -2875,6 +2876,7 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
                   <option value="0">Todos</option>
                 </select>
               </div>
+              <div class="flt-grp"><label>Nome</label><input type="text" id="rhNome" placeholder="Buscar por nome…" style="min-width:160px" oninput="rhApplyFilters()"></div>
               <div class="flt-grp"><label>Empresa</label><select id="rhEmpresa"><option value="">Todas</option></select></div>
               <div class="flt-grp"><label>Cargo</label><select id="rhCargo"><option value="">Todos</option></select></div>
               <div class="flt-grp"><label>Situação</label>
@@ -18421,6 +18423,8 @@ function rhApplyFilters() {
   const empresa     = document.getElementById('rhEmpresa').value;
   const cargo       = document.getElementById('rhCargo').value;
   const situacao    = document.getElementById('rhSituacao').value;
+  const nomeQ       = (document.getElementById('rhNome')||{}).value || '';
+  const nomeFiltro  = nomeQ.trim().toLowerCase();
 
   const hoje    = new Date();
   const corte   = mesesFiltro > 0 ? new Date(hoje.getFullYear(), hoje.getMonth() - mesesFiltro, 1) : null;
@@ -18434,8 +18438,9 @@ function rhApplyFilters() {
 
   // Admissões (dos PDFs)
   let funcs = rhTodosFuncionarios();
-  if (empresa)  funcs = funcs.filter(f => f.empresa === empresa);
-  if (cargo)    funcs = funcs.filter(f => f.cargo === cargo);
+  if (empresa)    funcs = funcs.filter(f => f.empresa === empresa);
+  if (cargo)      funcs = funcs.filter(f => f.cargo === cargo);
+  if (nomeFiltro) funcs = funcs.filter(f => (f.nome || '').toLowerCase().includes(nomeFiltro));
 
   // Marca ativos x desligados
   funcs = funcs.map(f => {
@@ -18451,8 +18456,9 @@ function rhApplyFilters() {
 
   // Desligamentos filtrados
   let desls = desligamentos;
-  if (empresa)  desls = desls.filter(d => (d.empresa || '') === empresa);
-  if (cargo)    desls = desls.filter(d => (d.cargo || '') === cargo);
+  if (empresa)    desls = desls.filter(d => (d.empresa || '') === empresa);
+  if (cargo)      desls = desls.filter(d => (d.cargo || '') === cargo);
+  if (nomeFiltro) desls = desls.filter(d => (d.nome || '').toLowerCase().includes(nomeFiltro));
   rhFiltradosDesl = desls;
 
   rhRender(mesesFiltro, corte, hoje);
@@ -18463,6 +18469,8 @@ function rhReset() {
   document.getElementById('rhEmpresa').value  = '';
   document.getElementById('rhCargo').value    = '';
   document.getElementById('rhSituacao').value = '';
+  const rhNomeEl = document.getElementById('rhNome');
+  if (rhNomeEl) rhNomeEl.value = '';
   rhApplyFilters();
 }
 
@@ -20202,7 +20210,16 @@ document.getElementById('tvBtnOpen').addEventListener('click', function() {
           client_id: clientId,
           scope: GAPI_SCOPES,
           callback: function(resp){
-            if(resp.error){ showToast('Erro OAuth: '+resp.error); _setBusy(false); return; }
+            if(resp.error){
+              if(resp.error === 'origin_mismatch' || (resp.error_description||'').includes('origin')){
+                var origem = window.location.origin;
+                showToast('❌ OAuth bloqueado: origem não autorizada.');
+                alert('Erro OAuth 400 — origin_mismatch\n\nA URL deste dashboard não está registrada no Google Cloud Console.\n\nAdicione esta origem no seu OAuth Client ID:\n👉 ' + origem + '\n\nCaminho: console.cloud.google.com → Credenciais → OAuth 2.0 → Client ID → "Origens JavaScript autorizadas"\n\nDepois salve e aguarde alguns minutos.');
+              } else {
+                showToast('Erro OAuth: '+resp.error);
+              }
+              _setBusy(false); return;
+            }
             _accessToken = resp.access_token;
             _run();
           }
