@@ -2301,7 +2301,6 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
               </div>
               <div style="display:flex;gap:.5rem;flex-wrap:wrap">
                 <button class="btn btn-info btn-sm" id="gmailDriveBtn" onclick="gmailDriveVarrer()"><i class="fas fa-search-plus"></i> Varrer Gmail → Drive</button>
-                <button class="btn btn-gray btn-sm" id="gmailDriveLogoffBtn" onclick="gmailDriveLogoff()" style="display:none"><i class="fas fa-sign-out-alt"></i> Sair</button>
               </div>
             </div>
             <div id="gmailDriveProgress" style="display:none;margin-bottom:.6rem">
@@ -12779,6 +12778,8 @@ function aplicarFiltrosBaterias() {
   // Coluna tipo: pode ser "tipo", "categoria", "tipo veiculo", "classificacao"
   // Se não houver, deduzimos pela placa (placas de carreta costumam ter sufixo C/S ou estar em coluna separada)
   const colTipo = findCol(headers, ['tipo veiculo','tipo_veiculo','tipo vei','classificacao','classe do veiculo','cavalo carreta']);
+  const colLocal = findCol(headers, ['local','localizacao','localização','garagem','base','cidade','unidade','filial','patio','pátio']);
+  const colObs   = findCol(headers, ['observacao','observação','obs','nota','notas','comentario','comentário','descricao','descrição','detalhe']);
 
   const now = new Date(); now.setHours(0,0,0,0);
   const em30 = new Date(now); em30.setDate(em30.getDate()+30);
@@ -12901,7 +12902,7 @@ function aplicarFiltrosBaterias() {
       `;
 
       // Todas as demais colunas da planilha (exceto colunas já destacadas)
-      const colsDestacadas = new Set([colVeiculo, colData, colModelo, colInstalacao, colTipo].filter(Boolean));
+      const colsDestacadas = new Set([colVeiculo, colData, colModelo, colInstalacao, colTipo, colLocal, colObs].filter(Boolean));
       const colsExtras = headers.filter(h => !colsDestacadas.has(h));
       let extraCards = colsExtras.map(h => {
         const val = ultimo[h];
@@ -12921,6 +12922,8 @@ function aplicarFiltrosBaterias() {
       if (colInstalacao) labelMap[colInstalacao] = 'Data de Instalação';
       if (colData) labelMap[colData] = 'Vencimento';
       if (colTipo) labelMap[colTipo] = 'Tipo';
+      if (colLocal) labelMap[colLocal] = '📍 Local';
+      if (colObs)   labelMap[colObs]   = '📝 Observação';
 
       let mainCards = Object.entries(labelMap).map(([col, lbl]) => {
         const val = ultimo[col];
@@ -20053,10 +20056,99 @@ document.getElementById('tvBtnOpen').addEventListener('click', function() {
 </script>
 
 <!-- ════════════════════════════════════════════════════════════
-     GMAIL → DRIVE — Varredura XML NF-e/NFC-e direto no browser
-     Usa Google Identity Services (GIS) + Gmail API + Drive API
+     GMAIL → DRIVE — Varredura XML NF-e/NFC-e via Google Apps Script
+     Chama ?action=varrerGmail no mesmo GAS já usado para XMLs da pasta.
+     Sem OAuth no browser — roda autenticado como financeirommalacarne@gmail.com.
      ════════════════════════════════════════════════════════════ -->
 <script>
+(function(){
+  /* ── UI helpers (mantidos para compatibilidade) ── */
+  function _log(msg, tipo){
+    var el = document.getElementById('gmailDriveLog');
+    if(!el) return;
+    el.style.display = 'block';
+    var cor = tipo==='ok'?'var(--success)':tipo==='err'?'var(--danger)':tipo==='warn'?'var(--warning)':'var(--text-lt)';
+    var d = document.createElement('div');
+    d.style.cssText = 'padding:.2rem 0;border-bottom:1px solid var(--gray-200);color:'+cor;
+    d.textContent   = new Date().toLocaleTimeString('pt-BR')+' — '+msg;
+    el.insertBefore(d, el.firstChild);
+  }
+  function _prog(pct, txt){
+    var bar  = document.getElementById('gmailDriveProgressBar');
+    var lbl  = document.getElementById('gmailDriveProgressTxt');
+    var wrap = document.getElementById('gmailDriveProgress');
+    if(wrap) wrap.style.display = pct===null ? 'none' : 'block';
+    if(bar)  bar.style.width    = (pct||0)+'%';
+    if(lbl)  lbl.textContent    = txt||'';
+  }
+  function _setBusy(busy){
+    var btn = document.getElementById('gmailDriveBtn');
+    if(!btn) return;
+    btn.disabled  = busy;
+    btn.innerHTML = busy
+      ? '<i class="fas fa-spinner fa-spin"></i> Processando...'
+      : '<i class="fas fa-search-plus"></i> Varrer Gmail → Drive';
+  }
+
+  /* ── Função principal — chama o GAS ── */
+  window.gmailDriveVarrer = async function(){
+    var gasUrl = (typeof WEBAPP_ABAST_URL !== 'undefined' ? WEBAPP_ABAST_URL : '')
+              || localStorage.getItem('urlAbastecimentosWebApp') || '';
+    if(!gasUrl){
+      showToast('⚠ Configure a URL do Web App em Config URLs.');
+      return;
+    }
+    _setBusy(true);
+    _prog(20, 'Varrendo Gmail via Apps Script…');
+    var logEl = document.getElementById('gmailDriveLog');
+    if(logEl){ logEl.innerHTML=''; logEl.style.display='none'; }
+
+    try{
+      var url  = gasUrl + '?action=varrerGmail';
+      var resp = await fetch(url, { redirect: 'follow' });
+      if(!resp.ok) throw new Error('HTTP ' + resp.status);
+      var data = await resp.json();
+
+      _prog(100, 'Concluído!');
+      setTimeout(function(){ _prog(null,''); }, 4000);
+
+      if(data.status === 'erro'){
+        _log('❌ Erro: ' + data.msg, 'err');
+        showToast('Erro: ' + data.msg, 5000);
+      } else {
+        var resumo = '📧 ' + (data.threads||0) + ' thread(s) · ✅ ' + (data.salvos||0) + ' XML(s) salvos'
+          + (data.pulados ? ' · ⏩ ' + data.pulados + ' já existiam' : '')
+          + (data.erros   ? ' · ❌ ' + data.erros  + ' erro(s)' : '');
+        _log(resumo, data.salvos ? 'ok' : 'warn');
+        if(data.logErros && data.logErros.length)
+          data.logErros.forEach(function(e){ _log('❌ '+e,'err'); });
+        if(data.processado && data.processado.totalLinhas > 0)
+          _log('📋 ' + data.processado.totalLinhas + ' linha(s) adicionada(s) na planilha.', 'ok');
+        showToast(resumo);
+        // Recarrega tabela de abastecimentos se houver dados novos
+        if((data.salvos||0) > 0 && typeof abastCarregarWebApp === 'function')
+          setTimeout(abastCarregarWebApp, 1500);
+      }
+    }catch(e){
+      _prog(null,'');
+      _log('❌ ' + e.message, 'err');
+      showToast('Erro ao chamar GAS: ' + e.message, 5000);
+    }finally{
+      _setBusy(false);
+    }
+  };
+
+  /* ── Stub para compatibilidade (botão Sair removido) ── */
+  window.gmailDriveLogoff = function(){ showToast('Autenticação via Apps Script — sem sessão local.'); };
+
+  /* ── BLOCO ORIGINAL SUBSTITUÍDO ── era o código GIS+Gmail API+Drive API.
+     Removido pois causava erro 400 origin_mismatch ao rodar de qualquer URL
+     não cadastrada no Google Cloud Console. A nova abordagem delega toda a
+     autenticação ao Apps Script, que roda autenticado como financeirommalacarne@gmail.com.
+  ── */
+
+  /* INÍCIO DO BLOCO ORIGINAL (mantido abaixo como fallback morto — não executa) */
+  if(false){
 (function(){
 
   var GDRIVE_PASTA_ID = '1x656mBtR-zOO_ZxXEBmBAMTzp4JCRezC';
@@ -20303,6 +20395,8 @@ document.getElementById('tvBtnOpen').addEventListener('click', function() {
       _setBusy(false);
     }
   }
+
+  })();} /* fim do bloco original desativado */
 
 })();
 </script>
