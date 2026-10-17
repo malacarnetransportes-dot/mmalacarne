@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600;700&family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600;700&family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800;900&display=swap" rel="stylesheet">
 <!-- Poppins (display, geométrica arredondada) + Inter (dados/UI) usadas apenas na tela cheia
      de Gestão à Vista, para dar um acabamento mais premium sem alterar a
      tipografia do restante do site. -->
@@ -34,94 +34,534 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Segoe UI',system-ui,sans-serif;color:var(--text);background:var(--bg);line-height:1.55;overflow-x:hidden;}
 
+/* ════════════════════════════════════════════════
+   REDESIGN PÚBLICO — M. MALACARNE 2025
+   Paleta: midnight-aço · dourado marca · gelo
+   Tipo: Barlow Condensed (display) + Inter (corpo)
+   ════════════════════════════════════════════════ */
+
+/* Tokens de design público */
+:root {
+  --pub-night:   #0b1523;
+  --pub-steel:   #182638;
+  --pub-ink:     #101c2c;
+  --pub-gold:    #c9a227;
+  --pub-gold-lt: #e8c84a;
+  --pub-ice:     #7ab3d0;
+  --pub-frost:   #e4edf5;
+  --pub-surface: #f3f6fa;
+  --pub-border:  rgba(122,179,208,.18);
+}
+
 /* ── NAV ── */
-header{background:rgba(255,255,255,.98);backdrop-filter:blur(12px);padding:.5rem 5%;position:fixed;width:100%;top:0;z-index:1000;box-shadow:var(--shadow-md);border-bottom:2px solid rgba(212,175,55,.2);}
-nav{display:flex;justify-content:space-between;align-items:center;max-width:1300px;margin:0 auto;}
-.logo{display:flex;align-items:center;gap:.6rem;}
-.logo img{height:40px;border-radius:6px;}
-.logo-main{font-size:1.2rem;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--primary-dk));-webkit-background-clip:text;background-clip:text;color:transparent;}
-.logo-sub{font-size:.58rem;color:var(--text-lt);letter-spacing:1.2px;text-transform:uppercase;}
-.nav-links{display:flex;gap:1.2rem;list-style:none;align-items:center;}
-.nav-links a{color:var(--text);text-decoration:none;font-weight:500;font-size:.83rem;position:relative;padding-bottom:2px;}
-.nav-links a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:2px;background:var(--accent);transition:.25s;}
+header{
+  background:rgba(11,21,35,.96);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  padding:.6rem 5%;
+  position:fixed;width:100%;top:0;z-index:1000;
+  border-bottom:1px solid rgba(201,162,39,.2);
+}
+nav{display:flex;justify-content:space-between;align-items:center;max-width:1340px;margin:0 auto;}
+.logo{display:flex;align-items:center;gap:.7rem;}
+.logo img{height:38px;border-radius:6px;box-shadow:0 0 0 1.5px rgba(201,162,39,.35);}
+.logo-main{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1.35rem;font-weight:800;letter-spacing:.04em;
+  color:#fff;
+}
+.logo-sub{font-size:.56rem;color:rgba(255,255,255,.45);letter-spacing:1.8px;text-transform:uppercase;margin-top:1px;}
+.nav-links{display:flex;gap:1rem;list-style:none;align-items:center;}
+.nav-links a{
+  color:rgba(255,255,255,.7);text-decoration:none;
+  font-weight:500;font-size:.8rem;
+  position:relative;padding-bottom:2px;transition:color .2s;
+}
+.nav-links a:hover{color:#fff;}
+.nav-links a::after{
+  content:'';position:absolute;bottom:-3px;left:0;
+  width:0;height:1.5px;background:var(--pub-gold);transition:.25s;
+}
 .nav-links a:hover::after{width:100%;}
-.priv-btn{background:linear-gradient(135deg,var(--accent),var(--accent-dk))!important;color:#111!important;padding:.28rem .9rem!important;border-radius:40px;font-weight:700!important;}
+.priv-btn{
+  background:linear-gradient(135deg,var(--pub-gold),var(--accent-dk))!important;
+  color:#0b1523!important;padding:.3rem .95rem!important;
+  border-radius:4px;font-weight:700!important;font-size:.78rem!important;
+}
 .priv-btn::after{display:none!important;}
-.menu-toggle{display:none;background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--primary);}
+.menu-toggle{display:none;background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--pub-gold);}
 
 /* ── HERO ── */
-.hero{height:44vh;min-height:340px;background:linear-gradient(135deg,rgba(20,30,46,.88) 0%,rgba(26,32,44,.92) 100%),url('IMG-20220924-WA0022 (1).jpg') center/cover;display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;margin-top:58px;padding:0 5%;border-bottom:4px solid var(--accent);}
-.hero h1{font-size:1.85rem;font-weight:800;margin-bottom:.5rem;letter-spacing:-.02em;}
-.hero p{font-size:.92rem;opacity:.85;margin-bottom:1rem;}
-.cta-btn{display:inline-flex;align-items:center;gap:.4rem;background:linear-gradient(135deg,var(--accent),var(--accent-dk));color:#111;padding:.55rem 1.25rem;border-radius:60px;font-weight:700;text-decoration:none;font-size:.8rem;transition:.2s;box-shadow:var(--shadow-sm);border:none;cursor:pointer;}
-.cta-btn:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
-.cta-btn.outline{background:transparent;color:#fff;border:2px solid rgba(255,255,255,.4);margin-left:.5rem;}
-.cta-btn.outline:hover{background:rgba(255,255,255,.1);}
+.hero{
+  min-height:100svh;min-height:100vh;
+  background:
+    linear-gradient(160deg, rgba(11,21,35,1) 0%, rgba(18,34,52,.97) 55%, rgba(11,21,35,.98) 100%),
+    url('IMG-20220924-WA0022 (1).jpg') center 40%/cover no-repeat;
+  display:flex;align-items:flex-end;
+  margin-top:0;padding:0;
+  position:relative;overflow:hidden;
+  color:#fff;
+}
+/* farol — feixe dourado rasante que aparece uma vez */
+.hero::before{
+  content:'';position:absolute;
+  top:38%;left:-30%;
+  width:160%;height:1.5px;
+  background:linear-gradient(90deg,
+    transparent 0%,
+    rgba(201,162,39,.0) 20%,
+    rgba(201,162,39,.6) 45%,
+    rgba(232,200,74,.85) 50%,
+    rgba(201,162,39,.6) 55%,
+    rgba(201,162,39,.0) 80%,
+    transparent 100%
+  );
+  transform:rotate(-4deg);
+  animation:headlight 1.8s cubic-bezier(.22,.68,0,1.2) .3s both;
+  pointer-events:none;
+}
+/* segundo feixe */
+.hero::after{
+  content:'';position:absolute;
+  top:42%;left:-30%;
+  width:160%;height:1px;
+  background:linear-gradient(90deg,
+    transparent 0%,
+    transparent 22%,
+    rgba(122,179,208,.35) 48%,
+    rgba(122,179,208,.55) 50%,
+    rgba(122,179,208,.35) 52%,
+    transparent 78%,
+    transparent 100%
+  );
+  transform:rotate(-4deg);
+  animation:headlight 1.8s cubic-bezier(.22,.68,0,1.2) .5s both;
+  pointer-events:none;
+}
+@keyframes headlight{
+  from{opacity:0;transform:rotate(-4deg) translateX(-8%);}
+  30%{opacity:1;}
+  to{opacity:0;transform:rotate(-4deg) translateX(8%);}
+}
+/* grain texture overlay */
+.hero-grain{
+  position:absolute;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.035'/%3E%3C/svg%3E");
+  background-size:256px;pointer-events:none;z-index:1;
+}
+.hero-inner{
+  position:relative;z-index:2;
+  width:100%;max-width:1340px;
+  margin:0 auto;
+  padding:0 5% 7vh;
+  padding-top:calc(58px + 6vh);
+  display:grid;
+  grid-template-columns:1fr auto;
+  align-items:flex-end;
+  gap:3rem;
+}
+.hero-copy{max-width:700px;}
+.hero-eyebrow{
+  font-family:'Inter',sans-serif;
+  font-size:.72rem;font-weight:600;
+  letter-spacing:.18em;
+  color:var(--pub-ice);
+  margin-bottom:1.4rem;
+  display:flex;align-items:center;gap:.7rem;
+}
+.hero-eyebrow::before{
+  content:'';display:block;
+  width:32px;height:1.5px;
+  background:var(--pub-ice);flex:none;
+}
+.hero h1{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:clamp(3.5rem,9vw,7.5rem);
+  font-weight:900;
+  line-height:.95;
+  letter-spacing:-.01em;
+  color:#fff;
+  margin-bottom:1.8rem;
+  animation:hero-in .9s cubic-bezier(.22,.68,0,1.05) .15s both;
+}
+.hero h1 em{
+  font-style:normal;
+  color:transparent;
+  -webkit-text-stroke:1.5px rgba(201,162,39,.7);
+}
+@keyframes hero-in{
+  from{opacity:0;transform:translateY(28px);}
+  to{opacity:1;transform:translateY(0);}
+}
+.hero-desc{
+  font-size:1.05rem;line-height:1.65;
+  color:rgba(255,255,255,.62);
+  max-width:480px;
+  margin-bottom:2.4rem;
+  animation:hero-in .9s cubic-bezier(.22,.68,0,1.05) .3s both;
+}
+.hero-ctas{
+  display:flex;gap:1rem;flex-wrap:wrap;
+  animation:hero-in .9s cubic-bezier(.22,.68,0,1.05) .45s both;
+}
+.cta-btn{
+  display:inline-flex;align-items:center;gap:.5rem;
+  background:var(--pub-gold);
+  color:var(--pub-night);
+  padding:.7rem 1.5rem;
+  border-radius:3px;
+  font-weight:700;text-decoration:none;font-size:.88rem;
+  transition:background .18s,transform .18s;
+  box-shadow:0 4px 24px rgba(201,162,39,.28);
+  border:none;cursor:pointer;
+  font-family:'Inter',sans-serif;
+}
+.cta-btn:hover{background:var(--pub-gold-lt);transform:translateY(-2px);}
+.cta-btn.outline{
+  background:transparent;color:#fff;
+  border:1.5px solid rgba(255,255,255,.28);
+  box-shadow:none;
+}
+.cta-btn.outline:hover{background:rgba(255,255,255,.07);transform:translateY(-2px);}
+
+/* hero side: anos counter */
+.hero-counter{
+  text-align:right;
+  animation:hero-in .9s cubic-bezier(.22,.68,0,1.05) .2s both;
+  display:none;
+}
+@media(min-width:780px){.hero-counter{display:block;}}
+.hero-counter-num{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:clamp(5rem,12vw,10rem);
+  font-weight:900;
+  line-height:1;
+  color:transparent;
+  -webkit-text-stroke:1px rgba(201,162,39,.3);
+  display:block;
+}
+.hero-counter-lbl{
+  font-size:.7rem;font-weight:600;
+  letter-spacing:.2em;color:rgba(255,255,255,.35);
+  text-transform:uppercase;
+}
+
+/* scroll indicator */
+.hero-scroll{
+  position:absolute;bottom:2.2rem;left:50%;transform:translateX(-50%);
+  z-index:2;display:flex;flex-direction:column;align-items:center;gap:.4rem;
+  animation:hero-in 1s ease 1.2s both;
+}
+.hero-scroll span{font-size:.62rem;letter-spacing:.18em;color:rgba(255,255,255,.3);}
+.hero-scroll-line{
+  width:1px;height:36px;
+  background:linear-gradient(180deg,rgba(201,162,39,.5),transparent);
+  animation:scroll-pulse 2s ease-in-out 2s infinite;
+}
+@keyframes scroll-pulse{
+  0%,100%{transform:scaleY(1);opacity:.5;}
+  50%{transform:scaleY(.6);opacity:1;}
+}
 
 /* ── STATS BANNER ── */
-.stats-banner{max-width:940px;margin:-22px auto 0;background:#fff;border-radius:var(--r16);box-shadow:var(--shadow-lg);display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0;position:relative;z-index:10;overflow:hidden;}
-.stat-item{padding:.85rem .8rem;text-align:center;border-right:1px solid var(--gray-200);}
+.stats-banner{
+  background:var(--pub-night);
+  border-bottom:1px solid rgba(201,162,39,.15);
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:0;
+  max-width:none;margin:0;
+  border-radius:0;
+  position:relative;z-index:10;
+}
+.stat-item{
+  padding:1.4rem 1rem;
+  text-align:center;
+  border-right:1px solid rgba(255,255,255,.07);
+}
 .stat-item:last-child{border-right:none;}
-.stat-num{font-size:1.35rem;font-weight:800;color:var(--primary);}
-.stat-lbl{font-size:.68rem;color:var(--text-lt);margin-top:.1rem;}
+.stat-num{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:2.4rem;font-weight:900;
+  color:var(--pub-gold);
+  line-height:1;letter-spacing:.01em;
+}
+.stat-lbl{
+  font-size:.68rem;font-weight:600;
+  color:rgba(255,255,255,.4);
+  margin-top:.35rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
 
 /* ── SECTIONS ── */
-.section{padding:2rem 5%;max-width:1180px;margin:0 auto;}
-.section-title{font-size:1.25rem;font-weight:700;color:#1e2a3a;text-align:center;margin-bottom:1.1rem;position:relative;}
-.section-title::after{content:'';display:block;width:40px;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent-dk));margin:.35rem auto 0;border-radius:3px;}
+.section{padding:4.5rem 5%;max-width:1340px;margin:0 auto;}
+.section-title{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:clamp(1.8rem,4vw,2.8rem);
+  font-weight:800;
+  color:var(--pub-night);
+  text-align:left;
+  margin-bottom:2rem;
+  letter-spacing:.01em;
+  line-height:1.1;
+}
+.section-title::after{display:none;}
+.section-title .gold-line{
+  display:block;
+  width:48px;height:3px;
+  background:var(--pub-gold);
+  margin-top:.8rem;border-radius:0;
+}
 
-/* ── VALUES ── */
-.values-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1rem;}
-.value-card{background:#fff;padding:1.1rem;border-radius:var(--r12);box-shadow:var(--shadow-sm);text-align:center;transition:.2s;border:1px solid rgba(0,0,0,.03);}
-.value-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
-.value-icon{font-size:1.6rem;margin-bottom:.5rem;}
-.value-card h3{font-size:.88rem;font-weight:700;margin-bottom:.35rem;color:#1e2a3a;}
-.value-card p{font-size:.78rem;color:var(--text-lt);line-height:1.5;}
+/* ── VALUES / NOSSA HISTÓRIA ── */
+.values-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:auto auto;
+  gap:1.5px;
+  background:rgba(0,0,0,.06);
+  border:1.5px solid rgba(0,0,0,.06);
+  border-radius:12px;
+  overflow:hidden;
+}
+.value-card{
+  background:#fff;
+  padding:2rem 1.8rem;
+  text-align:left;
+  border:none;border-radius:0;
+  box-shadow:none;
+  transition:background .2s;
+  position:relative;
+}
+.value-card:hover{background:var(--pub-frost);}
+.value-icon{
+  width:44px;height:44px;
+  border-radius:8px;
+  background:var(--pub-night);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.2rem;
+  margin-bottom:1rem;
+}
+.value-card h3{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1.3rem;font-weight:800;
+  margin-bottom:.5rem;color:var(--pub-night);
+  letter-spacing:.01em;
+}
+.value-card p{font-size:.88rem;color:#5a6878;line-height:1.65;}
+/* ano discreto no canto */
+.value-year{
+  position:absolute;top:1.2rem;right:1.4rem;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:.95rem;font-weight:700;
+  color:rgba(11,21,35,.12);letter-spacing:.05em;
+}
 
 /* ── GALLERY ── */
-.gallery-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem;}
-.gallery-item{height:190px;border-radius:var(--r12);overflow:hidden;box-shadow:var(--shadow-md);}
-.gallery-item img{width:100%;height:100%;object-fit:cover;transition:.4s;}
-.gallery-item:hover img{transform:scale(1.06);}
+.gallery-grid{
+  display:grid;
+  grid-template-columns:repeat(12,1fr);
+  grid-template-rows:repeat(3,200px);
+  gap:6px;
+  border-radius:12px;overflow:hidden;
+}
+.gallery-item{
+  height:auto;border-radius:0;overflow:hidden;
+  box-shadow:none;
+  position:relative;
+}
+/* distribuição assimétrica */
+.gallery-item:nth-child(1){grid-column:1/8;grid-row:1/3;}   /* grande esquerda */
+.gallery-item:nth-child(2){grid-column:8/13;grid-row:1/2;}
+.gallery-item:nth-child(3){grid-column:8/10;grid-row:2/3;}
+.gallery-item:nth-child(4){grid-column:10/13;grid-row:2/3;}
+.gallery-item:nth-child(5){grid-column:1/5;grid-row:3/4;}
+.gallery-item:nth-child(6){grid-column:5/9;grid-row:3/4;}
+.gallery-item:nth-child(7){grid-column:9/13;grid-row:3/4;}
+.gallery-item:nth-child(8),.gallery-item:nth-child(9),.gallery-item:nth-child(10){display:none;}
+.gallery-item img{width:100%;height:100%;object-fit:cover;transition:.5s;}
+.gallery-item:hover img{transform:scale(1.04);}
+/* overlay sutil */
+.gallery-item::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,transparent 55%,rgba(11,21,35,.35) 100%);
+  opacity:0;transition:.3s;pointer-events:none;
+}
+.gallery-item:hover::after{opacity:1;}
 
 /* ── VIDEO INSTITUCIONAL ── */
-.video-showcase{max-width:900px;margin:0 auto;}
-.video-frame{position:relative;border-radius:var(--r24);overflow:hidden;box-shadow:var(--shadow-lg);border:3px solid rgba(212,175,55,.35);background:#000;aspect-ratio:16/9;}
+.video-showcase{max-width:960px;margin:0 auto;}
+.video-frame{
+  position:relative;
+  border-radius:8px;overflow:hidden;
+  box-shadow:0 24px 64px rgba(11,21,35,.18);
+  border:1px solid rgba(201,162,39,.2);
+  background:#000;aspect-ratio:16/9;
+}
 .video-frame video{width:100%;height:100%;display:block;object-fit:contain;background:#000;}
-.video-caption{text-align:center;color:var(--text-lt);font-size:.85rem;margin-top:.8rem;max-width:520px;margin-left:auto;margin-right:auto;}
+.video-caption{
+  text-align:center;color:#7a8a9a;
+  font-size:.83rem;margin-top:1rem;
+  max-width:520px;margin-left:auto;margin-right:auto;
+}
 
 /* ── ANTT SECTION ── */
-.antt-section{background:linear-gradient(135deg,#fff 0%,#fef9e6 100%);padding:2rem 5%;text-align:center;border-top:1px solid rgba(139,115,85,.15);border-bottom:1px solid rgba(139,115,85,.15);}
-.antt-cards{display:flex;flex-wrap:wrap;gap:.7rem;justify-content:center;margin-top:1.1rem;}
-.antt-card{background:#fff;border:1px solid rgba(212,175,55,.3);border-radius:var(--r12);padding:.9rem 1.3rem;display:flex;align-items:center;gap:.6rem;box-shadow:var(--shadow-sm);text-decoration:none;color:var(--text);transition:.2s;font-weight:600;font-size:.88rem;}
-.antt-card:hover{border-color:var(--accent);box-shadow:var(--shadow-md);transform:translateY(-2px);}
-.antt-card i{font-size:1.2rem;color:var(--accent);}
+.antt-section{
+  background:var(--pub-night);
+  padding:4rem 5%;
+  border-top:none;border-bottom:none;
+}
+.antt-section .section-title{color:#fff;}
+.antt-section .section-title .gold-line{background:var(--pub-ice);}
+.antt-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.8rem;margin-top:2rem;}
+.antt-card{
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:8px;
+  padding:1rem 1.1rem;
+  display:flex;align-items:center;gap:.8rem;
+  text-decoration:none;color:#fff;
+  transition:background .18s,border-color .18s,transform .18s;
+  font-weight:600;font-size:.85rem;
+}
+.antt-card:hover{
+  background:rgba(201,162,39,.12);
+  border-color:rgba(201,162,39,.4);
+  transform:translateY(-2px);
+}
+.antt-card i{font-size:1.1rem;color:var(--pub-gold);flex:none;}
+.antt-card div>div:last-child{font-size:.72rem;color:rgba(255,255,255,.4);font-weight:400;margin-top:.1rem;}
 
 /* ── VAGAS ── */
-.vagas-section{background:linear-gradient(135deg,#1e2a3a 0%,#2d3748 100%);padding:2.5rem 5%;color:#fff;text-align:center;}
-.vagas-section .section-title{color:#fff;}
-.vagas-section .section-title::after{background:var(--accent);}
-.job-card{background:#fff;color:var(--text);border-radius:var(--r16);padding:1.5rem;max-width:620px;margin:0 auto;box-shadow:var(--shadow-lg);}
-.job-card h3{font-size:1.2rem;font-weight:800;margin-bottom:.4rem;color:#1e2a3a;}
-.job-tags{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;margin:.7rem 0;}
-.job-tag{background:var(--gray-100);padding:.25rem .8rem;border-radius:40px;font-size:.78rem;font-weight:600;color:var(--text-lt);}
-.job-reqs{text-align:left;margin:.7rem 0;padding:.8rem;background:var(--gray-100);border-radius:var(--r12);}
-.job-reqs li{font-size:.82rem;padding:.15rem 0;}
+.vagas-section{
+  background:var(--pub-surface);
+  padding:4rem 5%;
+  color:var(--pub-night);
+  text-align:left;
+}
+.vagas-section .section-title{color:var(--pub-night);}
+.job-card{
+  background:var(--pub-night);
+  color:#fff;
+  border-radius:12px;
+  padding:2.2rem 2.4rem;
+  max-width:780px;
+  margin:0;
+  box-shadow:0 16px 48px rgba(11,21,35,.14);
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:1.5rem;
+  align-items:start;
+}
+.job-card-body{min-width:0;}
+.job-card h3{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1.9rem;font-weight:900;
+  margin-bottom:.3rem;color:#fff;
+  letter-spacing:.01em;line-height:1.1;
+}
+.job-card-location{
+  font-size:.78rem;color:var(--pub-ice);
+  margin-bottom:1.2rem;font-weight:500;
+  display:flex;align-items:center;gap:.4rem;
+}
+.job-tags{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:flex-start;margin:.8rem 0;}
+.job-tag{
+  background:rgba(255,255,255,.1);
+  padding:.25rem .75rem;border-radius:3px;
+  font-size:.72rem;font-weight:600;
+  color:rgba(255,255,255,.7);
+  border:1px solid rgba(255,255,255,.12);
+}
+.job-reqs{
+  text-align:left;margin:.8rem 0;
+  padding:.9rem 1rem;
+  background:rgba(255,255,255,.05);
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,.08);
+}
+.job-reqs li{font-size:.83rem;padding:.2rem 0;color:rgba(255,255,255,.75);}
+.job-card-cta{
+  display:flex;flex-direction:column;align-items:flex-end;gap:.8rem;
+  padding-top:.4rem;
+}
 
 /* ── CONTACT ── */
-.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.8rem;margin-top:1.4rem;}
-.contact-info-card{background:#fff;border-radius:var(--r12);padding:1.2rem;box-shadow:var(--shadow-md);}
-.contact-info-card h3{font-size:.92rem;font-weight:700;color:#1e2a3a;margin-bottom:.6rem;display:flex;align-items:center;gap:.4rem;}
-.contact-info-card p{font-size:.85rem;color:var(--text-lt);margin-bottom:.3rem;}
+.contact-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:2rem;margin-top:0;
+}
+.contact-info-card{
+  background:#fff;
+  border-radius:10px;padding:1.4rem 1.6rem;
+  box-shadow:0 4px 20px rgba(11,21,35,.07);
+  border:1px solid rgba(11,21,35,.07);
+}
+.contact-info-card h3{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1.1rem;font-weight:800;
+  color:var(--pub-night);
+  margin-bottom:.7rem;
+  display:flex;align-items:center;gap:.5rem;
+  letter-spacing:.02em;
+}
+.contact-info-card p{font-size:.88rem;color:#5a6878;margin-bottom:.3rem;line-height:1.6;}
 
 /* ── FOOTER ── */
-footer{background:#1e2a3a;color:#94a3b8;text-align:center;padding:1.3rem 5%;font-size:.8rem;}
-footer a{color:var(--accent);text-decoration:none;}
+footer{
+  background:var(--pub-ink);
+  color:rgba(255,255,255,.35);
+  text-align:center;
+  padding:2rem 5%;
+  font-size:.78rem;
+  border-top:1px solid rgba(255,255,255,.07);
+}
+footer a{color:var(--pub-gold);text-decoration:none;}
 
 /* ── WHATSAPP FLOAT ── */
 .wa-float{position:fixed;bottom:24px;right:24px;z-index:1100;}
-.wa-float a{background:#25D366;color:#fff;padding:10px 18px;border-radius:60px;text-decoration:none;font-weight:700;box-shadow:var(--shadow-lg);transition:.2s;display:flex;align-items:center;gap:7px;font-size:.88rem;}
-.wa-float a:hover{transform:scale(1.05);}
+.wa-float a{
+  background:#25D366;color:#fff;
+  padding:11px 20px;border-radius:3px;
+  text-decoration:none;font-weight:700;
+  box-shadow:0 6px 24px rgba(37,211,102,.35);
+  transition:.2s;display:flex;align-items:center;gap:8px;font-size:.85rem;
+}
+.wa-float a:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(37,211,102,.45);}
+
+@media(max-width:768px){
+  .hero h1{font-size:clamp(2.8rem,13vw,5rem);}
+  .hero-inner{grid-template-columns:1fr;padding-bottom:5vh;}
+  .stats-banner{grid-template-columns:repeat(2,1fr);}
+  .stat-item:nth-child(2){border-right:none;}
+  .stat-item:nth-child(3){border-top:1px solid rgba(255,255,255,.07);}
+  .stat-item:nth-child(4){border-top:1px solid rgba(255,255,255,.07);border-right:none;}
+  .values-grid{grid-template-columns:1fr;}
+  .gallery-grid{
+    grid-template-columns:1fr 1fr;
+    grid-template-rows:repeat(4,180px);
+  }
+  .gallery-item:nth-child(1){grid-column:1/3;grid-row:1/2;}
+  .gallery-item:nth-child(2){grid-column:1/2;grid-row:2/3;}
+  .gallery-item:nth-child(3){grid-column:2/3;grid-row:2/3;}
+  .gallery-item:nth-child(4){grid-column:1/2;grid-row:3/4;}
+  .gallery-item:nth-child(5){grid-column:2/3;grid-row:3/4;}
+  .gallery-item:nth-child(6){grid-column:1/2;grid-row:4/5;}
+  .gallery-item:nth-child(7){grid-column:2/3;grid-row:4/5;}
+  .gallery-item:nth-child(8),.gallery-item:nth-child(9),.gallery-item:nth-child(10){display:none;}
+  .contact-grid{grid-template-columns:1fr;}
+  .job-card{grid-template-columns:1fr;}
+  .job-card-cta{align-items:flex-start;}
+  .antt-cards{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:480px){
+  .antt-cards{grid-template-columns:1fr;}
+  .stats-banner{grid-template-columns:repeat(2,1fr);}
+}
+@media(prefers-reduced-motion:reduce){
+  .hero::before,.hero::after,.hero h1,.hero-desc,.hero-ctas,.hero-counter,.hero-scroll{animation:none;opacity:1;transform:none;}
+}
 
 /* ── LOGIN OVERLAY ── */
 .login-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);z-index:2000;display:flex;align-items:center;justify-content:center;visibility:hidden;opacity:0;transition:.2s;}
@@ -865,12 +1305,26 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
 </header>
 
 <section id="home" class="hero">
-  <div>
-    <h1>40 Anos Movendo o Brasil</h1>
-    <p>Excelência em Transporte e Logística Frigorífica desde 1982</p>
-    <a href="#contato" class="cta-btn"><i class="fas fa-phone"></i> Fale Conosco</a>
-    <a href="#infraestrutura" class="cta-btn outline"><i class="fas fa-truck"></i> Nossa Frota</a>
-    <a href="#portal-mbrf" class="cta-btn outline"><i class="fas fa-truck-ramp-box"></i> Portal do Transportador</a>
+  <div class="hero-grain" aria-hidden="true"></div>
+  <div class="hero-inner">
+    <div class="hero-copy">
+      <p class="hero-eyebrow">Transporte Frigorífico · Desde 1982</p>
+      <h1>O frio que<br><em>alimenta</em><br>o Brasil.</h1>
+      <p class="hero-desc">Frota 100% frigorífica, parceiro exclusivo BRF, cobrindo Sul e Sudeste com 40 anos de excelência operacional.</p>
+      <div class="hero-ctas">
+        <a href="#contato" class="cta-btn"><i class="fas fa-phone"></i> Fale Conosco</a>
+        <a href="#infraestrutura" class="cta-btn outline"><i class="fas fa-truck"></i> Nossa Frota</a>
+        <a href="#portal-mbrf" class="cta-btn outline"><i class="fas fa-truck-ramp-box"></i> Portal Transportador</a>
+      </div>
+    </div>
+    <div class="hero-counter" aria-hidden="true">
+      <span class="hero-counter-num">40</span>
+      <span class="hero-counter-lbl">anos</span>
+    </div>
+  </div>
+  <div class="hero-scroll" aria-hidden="true">
+    <span>rolar</span>
+    <div class="hero-scroll-line"></div>
   </div>
 </section>
 
@@ -878,33 +1332,53 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
   <div class="stat-item"><div class="stat-num">40+</div><div class="stat-lbl">Anos de Experiência</div></div>
   <div class="stat-item"><div class="stat-num">100%</div><div class="stat-lbl">Frota Frigorífica</div></div>
   <div class="stat-item"><div class="stat-num">BRF</div><div class="stat-lbl">Parceiro Exclusivo</div></div>
-  <div class="stat-item"><div class="stat-num">Sul/SE</div><div class="stat-lbl">Cobertura Sudeste</div></div>
+  <div class="stat-item"><div class="stat-num">Sul · SE</div><div class="stat-lbl">Cobertura Nacional</div></div>
 </div>
 
 <div class="section" id="portal-mbrf" style="margin-top:2rem;">
-  <div style="max-width:940px;margin:0 auto;border-radius:var(--r16);overflow:hidden;box-shadow:var(--shadow-lg);background:linear-gradient(135deg,rgba(20,30,46,.96),rgba(26,32,44,.98));border-bottom:4px solid var(--accent);display:flex;align-items:center;gap:1.4rem;flex-wrap:wrap;padding:1.6rem 1.8rem;color:#fff">
-    <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-dk));display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:#111;flex:0 0 auto"><i class="fas fa-truck-ramp-box"></i></div>
+  <div style="max-width:900px;margin:0;border-radius:10px;overflow:hidden;box-shadow:0 16px 48px rgba(11,21,35,.12);background:var(--pub-night);border:1px solid rgba(201,162,39,.2);display:flex;align-items:center;gap:1.8rem;flex-wrap:wrap;padding:1.8rem 2rem;color:#fff">
+    <div style="width:56px;height:56px;border-radius:8px;background:rgba(201,162,39,.15);border:1px solid rgba(201,162,39,.3);display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:var(--pub-gold);flex:0 0 auto"><i class="fas fa-truck-ramp-box"></i></div>
     <div style="flex:1;min-width:240px;text-align:left">
-      <div style="font-size:.7rem;font-weight:700;letter-spacing:.14em;color:var(--accent);margin-bottom:.25rem">PARCEIRO BRF</div>
-      <h2 style="font-size:1.35rem;font-weight:800;letter-spacing:-.01em;margin-bottom:.3rem">Portal do Transportador</h2>
-      <p style="font-size:.85rem;opacity:.8;line-height:1.5">Acesso direto ao portal da MBRF para transportadores parceiros.</p>
+      <div style="font-size:.68rem;font-weight:700;letter-spacing:.16em;color:var(--pub-ice);margin-bottom:.3rem">PARCEIRO BRF</div>
+      <h2 style="font-family:'Barlow Condensed',sans-serif;font-size:1.6rem;font-weight:800;letter-spacing:.01em;margin-bottom:.3rem">Portal do Transportador</h2>
+      <p style="font-size:.85rem;color:rgba(255,255,255,.55);line-height:1.5">Acesso direto ao portal da MBRF para transportadores parceiros.</p>
     </div>
-    <a href="https://portaldotransportador.mbrf.com/" target="_blank" rel="noopener noreferrer" class="cta-btn" style="font-size:.85rem;padding:.7rem 1.5rem"><i class="fas fa-arrow-up-right-from-square"></i> Acessar portal</a>
+    <a href="https://portaldotransportador.mbrf.com/" target="_blank" rel="noopener noreferrer" class="cta-btn"><i class="fas fa-arrow-up-right-from-square"></i> Acessar portal</a>
   </div>
 </div>
 
-<div class="section" id="sobre" style="margin-top:2rem;">
-  <h2 class="section-title">Nossa História</h2>
+<div class="section" id="sobre" style="margin-top:1rem;">
+  <h2 class="section-title">Nossa História<span class="gold-line"></span></h2>
   <div class="values-grid">
-    <div class="value-card"><div class="value-icon">🏆</div><h3>Tradição Familiar</h3><p>Fundada em 1982, a M-Malacarne é uma empresa familiar com décadas de tradição e respeito no setor de transportes refrigerados.</p></div>
-    <div class="value-card"><div class="value-icon">❄️</div><h3>Especialistas em Frio</h3><p>Frota 100% frigorífica dedicada ao transporte de produtos alimentícios com rigoroso controle de temperatura.</p></div>
-    <div class="value-card"><div class="value-icon">🤝</div><h3>Parceiro BRF</h3><p>Parceiro exclusivo da BRF, uma das maiores empresas de alimentos do mundo, garantindo excelência operacional.</p></div>
-    <div class="value-card"><div class="value-icon">🗺️</div><h3>Cobertura Total</h3><p>Rotas cobrindo Sul, Sudeste e Sudoeste do Brasil com pontualidade e segurança garantidas.</p></div>
+    <div class="value-card">
+      <span class="value-year">1982</span>
+      <div class="value-icon"><i class="fas fa-truck-front" style="color:#c9a227"></i></div>
+      <h3>Tradição Familiar</h3>
+      <p>Fundada em 1982, a M. Malacarne é uma empresa familiar com décadas de tradição e respeito no setor de transportes refrigerados.</p>
+    </div>
+    <div class="value-card">
+      <span class="value-year">−18°C</span>
+      <div class="value-icon"><i class="fas fa-snowflake" style="color:#7ab3d0"></i></div>
+      <h3>Especialistas em Frio</h3>
+      <p>Frota 100% frigorífica dedicada ao transporte de produtos alimentícios com rigoroso controle de temperatura.</p>
+    </div>
+    <div class="value-card">
+      <span class="value-year">BRF</span>
+      <div class="value-icon"><i class="fas fa-handshake" style="color:#c9a227"></i></div>
+      <h3>Parceiro Exclusivo BRF</h3>
+      <p>Parceiro exclusivo da BRF, uma das maiores empresas de alimentos do mundo, garantindo excelência operacional.</p>
+    </div>
+    <div class="value-card">
+      <span class="value-year">BR</span>
+      <div class="value-icon"><i class="fas fa-route" style="color:#7ab3d0"></i></div>
+      <h3>Cobertura Nacional</h3>
+      <p>Rotas cobrindo Sul, Sudeste e Sudoeste do Brasil com pontualidade e segurança garantidas em cada entrega.</p>
+    </div>
   </div>
 </div>
 
 <div class="section" id="video-institucional">
-  <h2 class="section-title">Conheça a M-Malacarne</h2>
+  <h2 class="section-title">Conheça a M. Malacarne<span class="gold-line"></span></h2>
   <div class="video-showcase">
     <div class="video-frame">
       <video controls preload="metadata" playsinline>
@@ -917,7 +1391,7 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
 </div>
 
 <div class="section" id="infraestrutura">
-  <h2 class="section-title">Nossa Infraestrutura</h2>
+  <h2 class="section-title">Nossa Infraestrutura<span class="gold-line"></span></h2>
   <div class="gallery-grid">
     <div class="gallery-item"><img src="IMG-20220924-WA0022 (1).jpg" alt="Frota Scania" onerror="this.style.background='#eee'"></div>
     <div class="gallery-item"><img src="img87.jpg" alt="Sede" onerror="this.style.background='#eee'"></div>
@@ -934,8 +1408,9 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
 </div>
 
 <div id="antt" class="antt-section">
-  <h2 class="section-title" style="text-align:center">📊 Ferramentas Oficiais ANTT</h2>
-  <p style="color:var(--text-lt);max-width:500px;margin:0 auto .5rem;font-size:.9rem">Acesse as ferramentas oficiais da Agência Nacional de Transportes Terrestres</p>
+  <div style="max-width:1340px;margin:0 auto;">
+  <h2 class="section-title" style="text-align:left;color:#fff">Ferramentas Oficiais<span class="gold-line" style="background:var(--pub-ice)"></span></h2>
+  <p style="color:rgba(255,255,255,.45);max-width:500px;margin:0 0 0;font-size:.88rem">ANTT, SEFAZ, DETRAN e ferramentas de rastreamento para operação diária.</p>
   <div class="antt-cards">
     <a href="https://calculadorafrete.antt.gov.br/" target="_blank" rel="noopener noreferrer" class="antt-card"><i class="fas fa-calculator"></i><div><div style="font-weight:700">Calculadora de Frete</div><div style="font-size:.78rem;color:var(--text-lt)">Tabela ANTT Oficial</div></div></a>
     <a href="https://consultapublica.antt.gov.br/Site/ConsultaRNTRC.aspx" target="_blank" rel="noopener noreferrer" class="antt-card"><i class="fas fa-id-card"></i><div><div style="font-weight:700">Consulta RNTRC</div><div style="font-size:.78rem;color:var(--text-lt)">Registro Nacional</div></div></a>
@@ -947,12 +1422,13 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
     <a href="https://maps.app.goo.gl/riRFfRPhEpAFTLA49?g_st=aw" target="_blank" rel="noopener noreferrer" class="antt-card"><i class="fas fa-square-parking"></i><div><div style="font-weight:700">Estacionamento Regis Renovo Park</div><div style="font-size:.78rem;color:var(--text-lt)">Próximo a Embu das Artes</div></div></a>
     <a href="https://web.movtrans.com.br/" target="_blank" rel="noopener noreferrer" class="antt-card"><i class="fas fa-truck-fast"></i><div><div style="font-weight:700">MovTrans</div><div style="font-size:.78rem;color:var(--text-lt)">Sistema Web de Fretes</div></div></a>
   </div>
+  </div><!-- /max-width wrapper -->
 </div>
 
-<div id="postos" class="section" style="margin-top:2rem;">
-  <h2 class="section-title" style="text-align:center">🗺️ Guia de Postos e Paradas</h2>
-  <p style="color:var(--text-lt);max-width:520px;margin:0 auto 1.2rem;font-size:.9rem;text-align:center">Mapa interativo com a rede de postos credenciados Aurora e pontos de parada — abastecimento, descanso e apoio ao longo das rotas</p>
-  <div style="max-width:640px;margin:0 auto;background:#fff;border-radius:var(--r16);box-shadow:var(--shadow-md);padding:1.6rem;text-align:center;border:2px solid rgba(212,175,55,.15)">
+<div id="postos" class="section" style="margin-top:1rem;">
+  <h2 class="section-title">Guia de Postos e Paradas<span class="gold-line"></span></h2>
+  <p style="color:#5a6878;max-width:520px;margin:0 0 1.8rem;font-size:.9rem;">Mapa interativo com a rede de postos credenciados Aurora e pontos de parada — abastecimento, descanso e apoio ao longo das rotas</p>
+  <div style="max-width:580px;margin:0;background:#fff;border-radius:10px;box-shadow:0 4px 20px rgba(11,21,35,.08);padding:1.8rem 2rem;text-align:center;border:1px solid rgba(11,21,35,.07)">
     <div style="font-size:2.6rem;margin-bottom:.4rem">⛽</div>
     <h3 style="margin-bottom:.4rem">Rede Aurora — Postos Credenciados</h3>
     <p style="color:var(--text-lt);font-size:.85rem;margin-bottom:1rem">Localize postos, filtre por serviços e monte seu roteiro direto no mapa</p>
@@ -969,56 +1445,65 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
 </div>
 
 <div id="vagas" class="vagas-section">
-  <h2 class="section-title">Oportunidades de Emprego</h2>
+  <div style="max-width:1340px;margin:0 auto;">
+  <h2 class="section-title">Faça Parte do Time<span class="gold-line"></span></h2>
   <div class="job-card">
-    <div style="font-size:3rem;margin-bottom:.5rem">🚛</div>
-    <h3>Motorista de Carreta Frigorífica</h3>
-    <p style="color:var(--text-lt);font-size:.9rem">Contratação imediata — Concórdia, SC</p>
-    <div class="job-tags">
-      <span class="job-tag">13º Salário</span><span class="job-tag">Bônus Média</span><span class="job-tag">Férias</span><span class="job-tag">CLT</span>
+    <div class="job-card-body">
+      <h3>Motorista de Carreta Frigorífica</h3>
+      <div class="job-card-location"><i class="fas fa-map-marker-alt"></i> Concórdia, SC — Contratação Imediata</div>
+      <div class="job-tags">
+        <span class="job-tag">CLT</span>
+        <span class="job-tag">13º Salário</span>
+        <span class="job-tag">Bônus de Média</span>
+        <span class="job-tag">Férias</span>
+        <span class="job-tag">CNH-E</span>
+      </div>
+      <div class="job-reqs">
+        <ul style="padding-left:1.2rem;margin:0">
+          <li>Experiência comprovada na função</li>
+          <li>CNH Categoria E vigente</li>
+          <li>Conhecimento de rotas Sul / Sudeste / Sudoeste</li>
+          <li>Experiência em transporte frigorífico</li>
+        </ul>
+      </div>
     </div>
-    <div class="job-reqs">
-      <p style="font-weight:700;margin-bottom:.5rem;font-size:.85rem">Pré-requisitos:</p>
-      <ul style="padding-left:1.2rem">
-        <li style="font-size:.85rem;padding:.2rem 0">Experiência na função</li>
-        <li style="font-size:.85rem;padding:.2rem 0">CNH Categoria E</li>
-        <li style="font-size:.85rem;padding:.2rem 0">Conhecimento rotas Sul/Sudeste/Sudoeste</li>
-        <li style="font-size:.85rem;padding:.2rem 0">Experiência em carreta frigorífica</li>
-      </ul>
+    <div class="job-card-cta">
+      <a href="https://wa.me/5549999675448?text=Olá, gostaria de me candidatar à vaga de Motorista de Carreta" target="_blank" rel="noopener noreferrer" class="cta-btn"><i class="fab fa-whatsapp"></i> Candidatar-se</a>
+      <span style="font-size:.72rem;color:rgba(255,255,255,.3);text-align:right;">via WhatsApp</span>
     </div>
-    <a href="https://wa.me/5549999675448?text=Olá, gostaria de me candidatar à vaga de Motorista de Carreta" target="_blank" rel="noopener noreferrer" class="cta-btn" style="margin-top:.5rem"><i class="fab fa-whatsapp"></i> Candidate-se via WhatsApp</a>
+  </div>
   </div>
 </div>
 
 <div id="contato" class="section">
-  <h2 class="section-title">Entre em Contato</h2>
+  <h2 class="section-title">Entre em Contato<span class="gold-line"></span></h2>
   <div class="contact-grid">
-    <div>
-      <div class="contact-info-card" style="margin-bottom:1rem">
-        <h3><i class="fas fa-map-marker-alt" style="color:var(--danger)"></i> Localização</h3>
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+      <div class="contact-info-card">
+        <h3><i class="fas fa-map-marker-alt" style="color:var(--pub-gold)"></i> Localização</h3>
         <p>Rua Domingos Casagrande, 25</p>
         <p>Bairro Arvoredo — Concórdia, SC</p>
       </div>
-      <div class="contact-info-card" style="margin-bottom:1rem">
-        <h3><i class="fas fa-phone" style="color:var(--success)"></i> Telefones</h3>
+      <div class="contact-info-card">
+        <h3><i class="fas fa-phone" style="color:var(--pub-gold)"></i> Telefones</h3>
         <p>Tel: (49) 3442-2325</p>
         <p>WhatsApp: (49) 99967-5448</p>
       </div>
       <div class="contact-info-card">
-        <h3><i class="fas fa-envelope" style="color:var(--info)"></i> E-mail</h3>
+        <h3><i class="fas fa-envelope" style="color:var(--pub-gold)"></i> E-mail</h3>
         <p>financeirommalacarne@gmail.com</p>
         <p>dmalacarne@netcon.com.br</p>
       </div>
     </div>
     <div>
-      <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3535.234!2d-52.027!3d-27.234!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjfCsDE4JzAyLjQiUyA1MsKwMDEnMzcuMiJX!5e0!3m2!1spt-BR!2sbr!4v1234567890" width="100%" height="380" style="border:0;border-radius:var(--r16);" allowfullscreen loading="lazy"></iframe>
+      <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3535.234!2d-52.027!3d-27.234!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjfCsDE4JzAyLjQiUyA1MsKwMDEnMzcuMiJX!5e0!3m2!1spt-BR!2sbr!4v1234567890" width="100%" height="100%" style="border:0;border-radius:10px;min-height:340px;" allowfullscreen loading="lazy"></iframe>
     </div>
   </div>
 </div>
 
 <footer>
-  <p style="margin-bottom:.4rem">© 2025 <strong>M-Malacarne Transporte e Logística Ltda EPP</strong></p>
-  <p>Rua Domingos Casagrande, 25 — Concórdia, SC &nbsp;|&nbsp; <a href="tel:4934422325">(49) 3442-2325</a> &nbsp;|&nbsp; <a href="mailto:financeirommalacarne@gmail.com">financeirommalacarne@gmail.com</a></p>
+  <p style="margin-bottom:.4rem">© 2025 <strong style="color:rgba(255,255,255,.6)">M. Malacarne Transporte e Logística Ltda EPP</strong></p>
+  <p>Rua Domingos Casagrande, 25 — Concórdia, SC &nbsp;·&nbsp; <a href="tel:4934422325">(49) 3442-2325</a> &nbsp;·&nbsp; <a href="mailto:financeirommalacarne@gmail.com">financeirommalacarne@gmail.com</a></p>
 </footer>
 
 </div><!-- /publicSite -->
@@ -1140,6 +1625,26 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
       </div>
     </div>
     <p style="font-size:.7rem;color:var(--text-lt);margin-top:.3rem;margin-bottom:.5rem">Crie grátis em <a href="https://portal.azure.com" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">portal.azure.com</a> → Criar recurso → <b>Speech</b> → região Brazil South → copiar <b>Key 1</b>. Plano gratuito: 500 mil caracteres/mês. Sem chave, usa a melhor voz disponível no navegador.</p>
+
+    <label style="font-size:.75rem;font-weight:700;color:var(--text-lt);margin-top:.5rem">🎙️ ElevenLabs — Chave API (prioridade máxima de voz)</label>
+    <input type="password" id="maxElevenLabsKey" placeholder="sk_... (cole sua API key do ElevenLabs)">
+    <div style="margin-top:.4rem">
+      <label style="font-size:.72rem;font-weight:700;color:var(--text-lt)">Voz ElevenLabs</label>
+      <select id="maxElevenLabsVoice" style="width:100%;padding:.5rem;border-radius:8px;border:1px solid var(--gray-200);font-size:.8rem">
+        <option value="pNInz6obpgDQGcFmaJgB">Adam — grave, narrativo (EN)</option>
+        <option value="nPczCjzI2devNBz1zQrb">Brian — profissional, masculino (EN)</option>
+        <option value="onwK4e9ZLuTAKqWW03F9">Daniel — jornalístico, britânico (EN)</option>
+        <option value="TxGEqnHWrfWFTfGW9XjX">Josh — jovem, masculino (EN)</option>
+        <option value="VR6AewLTigWG4xSOukaG">Arnold — nítido, masculino (EN)</option>
+        <option value="EXAVITQu4vr4xnSDxMaL">Bella — suave, feminina (EN)</option>
+        <option value="21m00Tcm4TlvDq8ikWAM">Rachel — calma, americana (EN)</option>
+        <option value="XB0fDUnXU5powFXDhCwa">Charlotte — sofisticada (EN/PT)</option>
+        <option value="cgSgspJ2msm6clMCkdW9">Jessica — expressiva (EN/PT)</option>
+      </select>
+    </div>
+    <button type="button" id="maxElevenLabsTestBtn" class="btn btn-gray btn-sm" style="margin-top:.4rem"><i class="fas fa-volume-high"></i> Testar ElevenLabs</button>
+    <p style="font-size:.7rem;color:var(--text-lt);margin-top:.3rem;margin-bottom:.5rem">Crie grátis em <a href="https://elevenlabs.io" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">elevenlabs.io</a> → Profile → API Key. Plano gratuito: 10 mil caracteres/mês. <b>Quando configurado, tem prioridade sobre Azure e navegador.</b></p>
+
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt)">Voz do navegador (fallback)</label>
     <select id="maxVoiceSelect" style="width:100%;padding:.6rem;border-radius:8px;border:1px solid var(--gray-200)"><option value="">Carregando vozes...</option></select>
     <button type="button" id="maxVoiceTestBtn" class="btn btn-gray btn-sm" style="margin-top:.5rem"><i class="fas fa-volume-high"></i> Testar voz</button>
@@ -3140,7 +3645,7 @@ const DEFAULT_PNEU_DOC = "https://docs.google.com/document/d/e/2PACX-1vR4rIhekIE
 // engano, para a MESMA planilha do GIRA/Abastecimentos (colunas de
 // combustível, sem "titulo"), então a sincronização sempre trazia 0
 // lembretes reconhecidos. Configure a URL certa em Config URLs.
-const DEFAULT_AGENDA   = "";
+const DEFAULT_AGENDA   = "https://docs.google.com/spreadsheets/d/1bj3jrzZWqiGXX_rlJo10N_dgl0jXtiZD/pub?output=csv";
 // Doc de texto livre (não é planilha) que o Viny indicou para a Agenda —
 // uma lista de compromissos/treinamentos em texto corrido, não uma tabela.
 const DEFAULT_AG_DOC_URL = "https://docs.google.com/document/d/15ohweIq4wiHRZON0wS5nrqqRZKaREddVdXgE-Z_w9Ag/edit?usp=drive_link";
@@ -4634,20 +5139,25 @@ async function gvFetchNoticias() {
   const parser = new DOMParser();
   const todas = [];
   for (const feed of FEEDS) {
-    try {
-      const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(feed.url);
-      const r = await fetch(proxyUrl, {signal: AbortSignal.timeout(6000)});
-      if (!r.ok) continue;
-      const txt = await r.text();
-      const doc = parser.parseFromString(txt, 'application/xml');
-      const items = [...doc.querySelectorAll('item')].slice(0,3);
-      items.forEach(it => {
-        const title = it.querySelector('title')?.textContent?.trim() || '';
-        const link  = it.querySelector('link')?.textContent?.trim() || '#';
-        const pubDate = it.querySelector('pubDate')?.textContent?.trim() || '';
-        if (title) todas.push({ title, link, pubDate, cat: feed.cat, cor: feed.cor });
-      });
-    } catch(e) {}
+    let ok = false;
+    for (const makeProxy of CORS_PROXIES) {
+      if (ok) break;
+      try {
+        const r = await fetch(makeProxy(feed.url), {signal: AbortSignal.timeout(6000)});
+        if (!r.ok) continue;
+        const txt = await r.text();
+        const doc = parser.parseFromString(txt, 'application/xml');
+        const items = [...doc.querySelectorAll('item')].slice(0,3);
+        if (!items.length) continue;
+        items.forEach(it => {
+          const title = it.querySelector('title')?.textContent?.trim() || '';
+          const link  = it.querySelector('link')?.textContent?.trim() || '#';
+          const pubDate = it.querySelector('pubDate')?.textContent?.trim() || '';
+          if (title) todas.push({ title, link, pubDate, cat: feed.cat, cor: feed.cor });
+        });
+        ok = true;
+      } catch(e) {}
+    }
   }
   // Palavras-chave transporte/logística aplicadas como destaque extra
   const TRANSP = ['caminhão','caminhoneiro','frete','logística','transporte','rodovia','antt','carga','combustível','diesel','porto','modal'];
@@ -5062,7 +5572,7 @@ async function gvFetchRecados() {
   const now = Date.now();
   if (_gvRecadosCache && (now - _gvRecadosCacheTs) < 5*60*1000) return _gvRecadosCache;
   // Busca URL configurada ou usa localStorage para recados manuais
-  const csvUrl = localStorage.getItem(GV_RECADOS_KEY) || '';
+  const csvUrl = localStorage.getItem(GV_RECADOS_KEY) || DEFAULT_AGENDA;
   const manuais = JSON.parse(localStorage.getItem('agenda_lembretes') || '[]');
   let itens = manuais.map(l => ({
     titulo: l.titulo || l.title || '',
@@ -5173,7 +5683,7 @@ async function gvRenderRecados(body, s, slides, idx) {
         <div style="text-align:center;color:var(--text-lt)"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>
       </div>
     </div>
-    <div style="margin-top:.7rem;font-size:.65rem;color:var(--text-lt)">Planilha: configure a URL CSV em <b>Config URLs → Recados/Lembretes</b> ou adicione manualmente na aba Agenda.</div>`;
+    <div style="margin-top:.7rem;font-size:.65rem;color:var(--text-lt)"><i class="fas fa-link" style="color:var(--accent)"></i> Planilha configurada automaticamente · atualiza a cada 5 min.</div>`;
   requestAnimationFrame(() => body.classList.add('show'));
   slideRenderDots(slides, idx);
   const itens = await gvFetchRecados().catch(() => []);
@@ -7109,6 +7619,9 @@ function openUrlModal(){
   if (azReg) azReg.value = localStorage.getItem('maxAzureRegion') || 'brazilsouth';
   const azVoice = document.getElementById('maxAzureVoice');
   if (azVoice) azVoice.value = localStorage.getItem('maxAzureVoice') || 'pt-BR-ThalitaMultilingualNeural';
+  document.getElementById('maxElevenLabsKey').value = localStorage.getItem('maxElevenLabsKey') || '';
+  const elVoice = document.getElementById('maxElevenLabsVoice');
+  if (elVoice) elVoice.value = localStorage.getItem('maxElevenLabsVoice') || 'pNInz6obpgDQGcFmaJgB';
   if (window.__maxPopulateVoices) window.__maxPopulateVoices();
   document.getElementById('urlConfigModal').classList.add('active');
   document.getElementById('urlModalBackdrop').classList.add('active');
@@ -7122,6 +7635,14 @@ document.getElementById('closeUrlModalBtn').onclick = closeUrlModal;
 document.getElementById('maxVoiceTestBtn').onclick = function() {
   var sel = document.getElementById('maxVoiceSelect');
   if (window.__maxTestVoice) window.__maxTestVoice(sel ? sel.value : '');
+};
+document.getElementById('maxElevenLabsTestBtn').onclick = function() {
+  var k  = document.getElementById('maxElevenLabsKey').value.trim();
+  var vv = (document.getElementById('maxElevenLabsVoice') || {}).value || 'pNInz6obpgDQGcFmaJgB';
+  if (!k) { showToast('⚠ Cole a API Key do ElevenLabs primeiro'); return; }
+  if (window.__maxSetElevenLabsConfig) window.__maxSetElevenLabsConfig(k, vv);
+  if (window.__maxTestVoice) window.__maxTestVoice(null); // null → usa ElevenLabs
+  else showToast('MAX não iniciado ainda — faça login primeiro');
 };
 document.getElementById('saveUrlsBtn').onclick = () => {
   URL_FIN = document.getElementById('urlFinanceiro').value || DEFAULT_FINANCEIRO;
@@ -7166,6 +7687,11 @@ document.getElementById('saveUrlsBtn').onclick = () => {
   if (azKey) { localStorage.setItem('maxAzureTTSKey', azKey); localStorage.setItem('maxAzureRegion', azReg2); localStorage.setItem('maxAzureVoice', azVox); }
   else { localStorage.removeItem('maxAzureTTSKey'); localStorage.removeItem('maxAzureRegion'); localStorage.removeItem('maxAzureVoice'); }
   if (window.__maxSetAzureConfig) window.__maxSetAzureConfig(azKey, azReg2, azVox);
+  const elKey = document.getElementById('maxElevenLabsKey').value.trim();
+  const elVox = (document.getElementById('maxElevenLabsVoice') || {}).value || 'pNInz6obpgDQGcFmaJgB';
+  if (elKey) { localStorage.setItem('maxElevenLabsKey', elKey); localStorage.setItem('maxElevenLabsVoice', elVox); }
+  else { localStorage.removeItem('maxElevenLabsKey'); localStorage.removeItem('maxElevenLabsVoice'); }
+  if (window.__maxSetElevenLabsConfig) window.__maxSetElevenLabsConfig(elKey, elVox);
   var maxVoiceSel = document.getElementById('maxVoiceSelect');
   if (maxVoiceSel) {
     if (maxVoiceSel.value) localStorage.setItem('maxVoiceURI', maxVoiceSel.value);
@@ -16809,10 +17335,74 @@ const MAPA_AURORA_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ
     speakText("Sistemas online. Sou o MAX, assistente da M-Malacarne.", voiceURI || null);
   };
 
+  // ── ElevenLabs config (atualizado pelo modal de Config) ──
+  var _elKey  = localStorage.getItem('maxElevenLabsKey')   || '';
+  var _elVoice= localStorage.getItem('maxElevenLabsVoice') || 'pNInz6obpgDQGcFmaJgB';
+  window.__maxSetElevenLabsConfig = function(k, v){ _elKey = k || ''; _elVoice = v || 'pNInz6obpgDQGcFmaJgB'; };
+
+  // ── StreamElements TTS (Amazon Polly, grátis, sem chave) ──
+  var SE_VOICE = 'Vitoria'; // pt-BR feminina — Amazon Polly via StreamElements
+  async function speakStreamElements(clean) {
+    try {
+      var url = 'https://api.streamelements.com/kappa/v2/speech?voice=' + SE_VOICE +
+                '&text=' + encodeURIComponent(clean.slice(0, 500));
+      var audio = new Audio(url);
+      audio.crossOrigin = 'anonymous';
+      isSpeaking = true;
+      if (wakeShouldRun) { try { wakeRecognition.stop(); } catch(e){} }
+      audio.onended = function() {
+        isSpeaking = false;
+        if (wakeShouldRun && !isListening) { try { wakeRecognition.start(); } catch(e){} }
+      };
+      audio.onerror = function() { isSpeaking = false; };
+      await audio.play();
+      return true;
+    } catch(e) { return false; }
+  }
+
+  async function speakElevenLabs(clean) {
+    try {
+      var res = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + _elVoice, {
+        method: 'POST',
+        headers: { 'xi-api-key': _elKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: clean,
+          model_id: 'eleven_multilingual_v2',
+          voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+        }),
+        signal: AbortSignal.timeout(12000)
+      });
+      if (!res.ok) throw new Error('ElevenLabs HTTP ' + res.status);
+      var blob = await res.blob();
+      var url  = URL.createObjectURL(blob);
+      var audio = new Audio(url);
+      isSpeaking = true;
+      if (wakeShouldRun) { try { wakeRecognition.stop(); } catch(e){} }
+      audio.onended = function() {
+        isSpeaking = false;
+        URL.revokeObjectURL(url);
+        if (wakeShouldRun && !isListening) { try { wakeRecognition.start(); } catch(e){} }
+      };
+      audio.play();
+      return true;
+    } catch(e) { return false; }
+  }
+
   function speakText(text, voiceURIOverride) {
-    if (!window.speechSynthesis) return;
     var clean = text.replace(/[\u{1F300}-\u{1FFFF}]/gu, "").replace(/[⚠️✓✕→←↑↓]/g, "").trim();
     if (!clean) return;
+    // Prioridade 1: ElevenLabs (se chave configurada)
+    if (_elKey && !voiceURIOverride) {
+      speakElevenLabs(clean.slice(0, 2500));
+      return;
+    }
+    // Prioridade 2: StreamElements — Vitória pt-BR, grátis, sem chave
+    if (!voiceURIOverride) {
+      speakStreamElements(clean);
+      return;
+    }
+    // Prioridade 3: navegador (Web Speech API) — fallback ou teste manual
+    if (!window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     ttsUtterance = new SpeechSynthesisUtterance(clean);
     ttsUtterance.lang = CONFIG.TTS_VOICE;
