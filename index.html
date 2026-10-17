@@ -4547,6 +4547,8 @@ function slideBuildSlides(){
     { title: '<i class="fas fa-truck"></i> Ranking de Médias — Cavalos (km/L)', type: 'gv-medias-cavalo' },
     { title: '<i class="fas fa-trailer"></i> Ranking de Médias — Carretas (L/h)', type: 'gv-medias-carreta' },
     { title: '<i class="fas fa-user-clock"></i> RH — Turnover (12 meses)', type: 'gv-turnover' },
+    // Slide Recados & Lembretes — calendário + lista da planilha
+    { title: '<i class="fas fa-bell"></i> Recados &amp; Lembretes', type: 'recados-lembretes' },
   ];
 }
 
@@ -4585,6 +4587,87 @@ function weatherCodeIcon(code) {
 const DIAS_PT = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const MESES_CURTOS = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 
+
+// ── Dias Comemorativos do dia (não são feriados, apenas datas especiais) ──
+function diasComemorativosHoje() {
+  const h = new Date(), m = h.getMonth()+1, d = h.getDate();
+  // Domingos variáveis calculados
+  function nthSunday(ano,mes,n){ let c=0,dt=new Date(ano,mes-1,1); while(dt.getMonth()===mes-1){if(dt.getDay()===0)c++;if(c===n)return dt.getDate();dt=new Date(dt.getFullYear(),dt.getMonth(),dt.getDate()+1);} return -1; }
+  const ano=h.getFullYear();
+  const diasMaesDia  = nthSunday(ano,5,2);  // 2º domingo de maio
+  const diasPaisDia  = nthSunday(ano,8,2);  // 2º domingo de agosto
+  const lista = [
+    {m:1,d:1,n:'🎊 Confraternização Universal'},{m:1,d:8,n:'🚛 Dia do Transportador Rodoviário'},
+    {m:1,d:25,n:'🏙️ Aniversário de São Paulo'},
+    {m:2,d:14,n:'❤️ Dia de São Valentim (Amor)'},
+    {m:3,d:8,n:'👩 Dia Internacional da Mulher'},{m:3,d:21,n:'🌸 Início do Outono'},
+    {m:4,d:7,n:'🌍 Dia Mundial da Saúde'},{m:4,d:18,n:'🚛 Dia do Motorista de Caminhão'},{m:4,d:22,n:'🌿 Dia da Terra'},
+    {m:5,d:1,n:'👷 Dia do Trabalhador'},{m:5,d:2,n:'🏍️ Dia do Motociclista'},{m:5,d:diasMaesDia,n:'💐 Dia das Mães'},{m:5,d:15,n:'📋 Dia do Assistente Administrativo'},
+    {m:6,d:5,n:'🌱 Dia Mundial do Meio Ambiente'},{m:6,d:12,n:'💕 Dia dos Namorados'},{m:6,d:24,n:'🚛 Dia do Caminhoneiro / São João'},
+    {m:7,d:1,n:'🌍 Dia do Banco Central'},{m:7,d:28,n:'🚘 Dia do Motorista (São Cristóvão)'},
+    {m:8,d:diasPaisDia,n:'👔 Dia dos Pais'},{m:8,d:12,n:'🌏 Dia Internacional da Juventude'},{m:8,d:25,n:'🏙️ Aniversário de São Paulo Estado'},
+    {m:9,d:7,n:'🇧🇷 Dia da Independência do Brasil'},{m:9,d:22,n:'🚦 Dia Nacional do Trânsito'},{m:9,d:23,n:'🍂 Início da Primavera'},
+    {m:10,d:1,n:'👴 Dia do Idoso'},{m:10,d:4,n:'🐾 Dia dos Animais'},{m:10,d:5,n:'🌍 Dia Mundial do Professor'},{m:10,d:12,n:'👧 Dia das Crianças'},{m:10,d:15,n:'🍎 Dia do Professor'},{m:10,d:29,n:'🏛️ Dia do Funcionário Público'},
+    {m:11,d:10,n:'🏳️ Dia da Bandeira'},{m:11,d:15,n:'🗳️ Proclamação da República'},{m:11,d:20,n:'✊ Consciência Negra'},
+    {m:12,d:1,n:'🎗️ Dia Mundial de Combate à AIDS'},{m:12,d:10,n:'🕊️ Dia dos Direitos Humanos'},{m:12,d:25,n:'🎄 Natal'},{m:12,d:31,n:'🎆 Véspera de Ano Novo'},
+  ];
+  return lista.filter(c => c.m === m && c.d === d);
+}
+function diaComemoravioHojeHTML() {
+  const itens = diasComemorativosHoje();
+  if (!itens.length) return '';
+  const html = itens.map(i => `<div style="display:inline-flex;align-items:center;gap:.5rem;padding:.4rem 1rem;border-radius:40px;background:linear-gradient(135deg,rgba(20,115,230,.1),rgba(13,102,208,.07));border:1.5px solid rgba(20,115,230,.35);font-size:.88rem;font-weight:600;color:#1d4ed8">${i.n}</div>`).join('');
+  return `<div style="margin-top:.7rem;display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;max-width:1200px;width:100%">
+    <div style="width:100%;font-family:'Poppins',sans-serif;font-weight:600;font-size:.78rem;color:#1473e6;text-transform:uppercase;letter-spacing:1px;margin-bottom:.2rem"><i class="fas fa-star"></i> Hoje é ·</div>
+    ${html}</div>`;
+}
+
+// ── Notícias: Agência Brasil RSS (política, transporte, logística) ──
+let _gvNoticiasCache = null, _gvNoticiasCacheTs = 0;
+async function gvFetchNoticias() {
+  const now = Date.now();
+  if (_gvNoticiasCache && (now - _gvNoticiasCacheTs) < 20*60*1000) return _gvNoticiasCache;
+  const FEEDS = [
+    { url:'https://agenciabrasil.ebc.com.br/rss/politica/feed.xml', cat:'Política', cor:'#7c3aed' },
+    { url:'https://agenciabrasil.ebc.com.br/rss/economia/feed.xml', cat:'Economia', cor:'#0891b2' },
+  ];
+  const parser = new DOMParser();
+  const todas = [];
+  for (const feed of FEEDS) {
+    try {
+      const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(feed.url);
+      const r = await fetch(proxyUrl, {signal: AbortSignal.timeout(6000)});
+      if (!r.ok) continue;
+      const txt = await r.text();
+      const doc = parser.parseFromString(txt, 'application/xml');
+      const items = [...doc.querySelectorAll('item')].slice(0,3);
+      items.forEach(it => {
+        const title = it.querySelector('title')?.textContent?.trim() || '';
+        const link  = it.querySelector('link')?.textContent?.trim() || '#';
+        const pubDate = it.querySelector('pubDate')?.textContent?.trim() || '';
+        if (title) todas.push({ title, link, pubDate, cat: feed.cat, cor: feed.cor });
+      });
+    } catch(e) {}
+  }
+  // Palavras-chave transporte/logística aplicadas como destaque extra
+  const TRANSP = ['caminhão','caminhoneiro','frete','logística','transporte','rodovia','antt','carga','combustível','diesel','porto','modal'];
+  todas.forEach(n => { if (TRANSP.some(k => n.title.toLowerCase().includes(k))) n.cat = '🚛 Transporte'; });
+  _gvNoticiasCache = todas;
+  _gvNoticiasCacheTs = now;
+  return todas;
+}
+function gvNoticiasHTML(noticias) {
+  if (!noticias || !noticias.length) return '<div style="font-size:.8rem;color:var(--text-lt);padding:.5rem">Notícias indisponíveis no momento.</div>';
+  const COR = { 'Política':'#7c3aed', 'Economia':'#0891b2', '🚛 Transporte':'#b45309' };
+  const html = noticias.slice(0,6).map(n => {
+    const c = COR[n.cat] || '#475569';
+    return `<div style="display:flex;align-items:flex-start;gap:.6rem;padding:.5rem .7rem;border-radius:10px;background:#f8fafc;border:1px solid rgba(0,0,0,.07);text-align:left">
+      <span style="flex:none;padding:.18rem .55rem;border-radius:20px;font-size:.62rem;font-weight:700;background:${c}20;color:${c};text-transform:uppercase;letter-spacing:.5px;margin-top:.1rem">${n.cat}</span>
+      <span style="font-size:.8rem;color:#2c2c2c;line-height:1.4">${n.title}</span>
+    </div>`;
+  }).join('');
+  return `<div style="display:flex;flex-direction:column;gap:.4rem;width:100%;max-width:880px">${html}</div>`;
+}
 
 // ── Feriados nacionais do mês (fixos + móveis calculados a partir da Páscoa) ──
 function feriadosDoMes(ano, mes){ // mes: 0-11
@@ -4680,9 +4763,19 @@ async function slideRenderWeather(body, s, slides, idx) {
     </div>`).join('')}
   </div>
   ${feriadosMesHTML()}
-  <div style="font-size:.68rem;color:var(--text-lt);margin-top:.9rem">Fonte: Open-Meteo · Concórdia — SC (−27.23 / −52.03)</div>`;
+  ${diaComemoravioHojeHTML()}
+  <div id="gv-noticias-slot" style="margin-top:.8rem;max-width:1200px;width:100%">
+    <div style="font-family:'Poppins',sans-serif;font-weight:600;font-size:.78rem;color:var(--accent-dk);text-transform:uppercase;letter-spacing:1px;margin-bottom:.4rem"><i class="fas fa-newspaper"></i> Notícias — Política · Transporte · Logística</div>
+    <div id="gv-noticias-body" style="font-size:.8rem;color:var(--text-lt)"><i class="fas fa-spinner fa-spin"></i> Carregando notícias...</div>
+  </div>
+  <div style="font-size:.68rem;color:var(--text-lt);margin-top:.9rem">Fonte: Open-Meteo · Concórdia — SC (−27.23 / −52.03) · Agência Brasil</div>`;
   body.classList.add('show');
   slideRenderDots(slides, idx);
+  // Carrega notícias de forma assíncrona após renderizar
+  gvFetchNoticias().then(noticias => {
+    const el = body.querySelector('#gv-noticias-body');
+    if (el) el.outerHTML = gvNoticiasHTML(noticias);
+  }).catch(() => {});
 }
 
 // ── Resumo de Consumo de Cavalos para o slide ──
@@ -4960,6 +5053,135 @@ function gvRenderMedias(body, s, slides, idx) {
 }
 
 // ── Slide: RH Turnover com pizzas (movimentação + motivos de desligamento) ──
+// ── Recados & Lembretes: mini calendário + lista ──
+// URL da planilha publicada como CSV (configurar em Config URLs ou localStorage)
+const GV_RECADOS_KEY = 'gv_recados_csv_url';
+let _gvRecadosCache = null, _gvRecadosCacheTs = 0;
+
+async function gvFetchRecados() {
+  const now = Date.now();
+  if (_gvRecadosCache && (now - _gvRecadosCacheTs) < 5*60*1000) return _gvRecadosCache;
+  // Busca URL configurada ou usa localStorage para recados manuais
+  const csvUrl = localStorage.getItem(GV_RECADOS_KEY) || '';
+  const manuais = JSON.parse(localStorage.getItem('agenda_lembretes') || '[]');
+  let itens = manuais.map(l => ({
+    titulo: l.titulo || l.title || '',
+    data: l.data || l.date || '',
+    hora: l.hora || l.time || '',
+    categoria: l.categoria || l.category || 'Geral',
+    prioridade: l.prioridade || 'normal',
+    responsavel: l.responsavel || '',
+    descricao: l.descricao || '',
+  }));
+  if (csvUrl) {
+    try {
+      const r = await fetch(csvUrl, {signal: AbortSignal.timeout(8000)});
+      if (r.ok) {
+        const txt = await r.text();
+        if (typeof Papa !== 'undefined') {
+          const parsed = Papa.parse(txt, { header:true, skipEmptyLines:true });
+          const rows = parsed.data || [];
+          const csvItens = rows.map(row => ({
+            titulo: row.titulo || row.TITULO || row['Título'] || row.title || '',
+            data: row.data || row.DATA || row['Data'] || '',
+            hora: row.hora || row.HORA || row['Hora'] || '',
+            categoria: row.categoria || row.CATEGORIA || row['Categoria'] || 'Geral',
+            prioridade: row.prioridade || row.PRIORIDADE || row['Prioridade'] || 'normal',
+            responsavel: row.responsavel || row.RESPONSAVEL || row['Responsável'] || '',
+            descricao: row.descricao || row.DESCRICAO || row['Descrição'] || '',
+          })).filter(r => r.titulo);
+          // Mescla: CSV prevalece
+          const manuaisNaoCsv = itens.filter(m => !csvItens.some(c => c.titulo === m.titulo));
+          itens = [...csvItens, ...manuaisNaoCsv];
+        }
+      }
+    } catch(e) {}
+  }
+  // Se não tem nada, adiciona recado da planilha hard-coded (lido do Drive)
+  if (!itens.length) {
+    itens = [
+      { titulo:'CURSO DE INTEGRAÇÃO', data:'09/11 a 12/11 (Web) · 13/11 Presencial', hora:'', categoria:'Treinamento', prioridade:'alta', responsavel:'RH', descricao:'Web: 09/11 a 12/11 — Presencial em Concórdia: 13/11' },
+    ];
+  }
+  _gvRecadosCache = itens;
+  _gvRecadosCacheTs = now;
+  return itens;
+}
+
+function gvMiniCalendario() {
+  const h = new Date();
+  const ano = h.getFullYear(), mes = h.getMonth();
+  const hoje = h.getDate();
+  const nomes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const diasSem = ['D','S','T','Q','Q','S','S'];
+  const primeiro = new Date(ano,mes,1).getDay();
+  const ultDia = new Date(ano,mes+1,0).getDate();
+  const celulas = [];
+  // cabeçalho dias da semana
+  diasSem.forEach(d => celulas.push(`<div style="font-size:.6rem;font-weight:700;color:#94a3b8;text-align:center">${d}</div>`));
+  // espaços antes
+  for(let i=0;i<primeiro;i++) celulas.push('<div></div>');
+  for(let d=1;d<=ultDia;d++){
+    const ehHoje = d === hoje;
+    const ferHoje = feriadosDoMes(ano,mes).some(f=>f.d.getDate()===d);
+    const bg = ehHoje ? 'linear-gradient(135deg,#1473e6,#0d66d0)' : ferHoje ? '#fef2f2' : 'transparent';
+    const c = ehHoje ? '#fff' : ferHoje ? '#b91c1c' : '#2c2c2c';
+    const fw = ehHoje ? '700' : d === 0 || d === 6 ? '500' : '400';
+    celulas.push(`<div style="text-align:center;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:${fw};background:${bg};color:${c};margin:0 auto">${d}</div>`);
+  }
+  return `<div style="background:#fff;border-radius:16px;padding:1rem;box-shadow:0 4px 20px rgba(30,42,58,.08);border:1px solid rgba(0,0,0,.07);min-width:210px;max-width:240px;flex:none">
+    <div style="font-family:'Poppins',sans-serif;font-weight:600;font-size:.85rem;color:#1473e6;text-align:center;margin-bottom:.6rem;text-transform:uppercase;letter-spacing:1px">${nomes[mes]} ${ano}</div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px">${celulas.join('')}</div>
+    <div style="margin-top:.6rem;display:flex;gap:.4rem;flex-wrap:wrap;font-size:.62rem">
+      <span style="display:flex;align-items:center;gap:.25rem"><span style="width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,#1473e6,#0d66d0);display:inline-block"></span>Hoje</span>
+      <span style="display:flex;align-items:center;gap:.25rem"><span style="width:10px;height:10px;border-radius:50%;background:#fef2f2;border:1px solid #fecaca;display:inline-block"></span>Feriado</span>
+    </div>
+  </div>`;
+}
+
+function gvRecadosListaHTML(itens) {
+  const COR_PRIO = { alta:'#ef4444', media:'#f59e0b', normal:'#10b981', baixa:'#94a3b8' };
+  const COR_CAT  = { 'Treinamento':'#7c3aed', 'RH':'#0891b2', 'Operação':'#b45309', 'Financeiro':'#059669', 'Segurança':'#dc2626', 'Geral':'#475569' };
+  if (!itens.length) return `<div style="text-align:center;color:var(--text-lt);padding:2rem"><i class="fas fa-check-circle" style="font-size:2rem;color:#10b981;display:block;margin-bottom:.5rem"></i>Nenhum recado no momento.</div>`;
+  return itens.map(item => {
+    const pCor = COR_PRIO[item.prioridade] || '#475569';
+    const cCor = COR_CAT[item.categoria] || '#475569';
+    return `<div style="display:flex;align-items:flex-start;gap:.75rem;padding:.8rem 1rem;border-radius:14px;background:#fff;border:1px solid rgba(0,0,0,.07);box-shadow:0 2px 10px rgba(30,42,58,.05);border-left:4px solid ${pCor}">
+      <div style="flex:none;width:36px;height:36px;border-radius:10px;background:${cCor}18;display:flex;align-items:center;justify-content:center">
+        <i class="fas fa-bell" style="color:${cCor};font-size:.8rem"></i>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-family:'Poppins',sans-serif;font-weight:600;font-size:.9rem;color:#1e2a3a;margin-bottom:.2rem">${escapeHTML(item.titulo)}</div>
+        ${item.descricao ? `<div style="font-size:.78rem;color:#475569;margin-bottom:.25rem">${escapeHTML(item.descricao)}</div>` : ''}
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+          ${item.data ? `<span style="font-size:.7rem;color:#1473e6;font-weight:500"><i class="fas fa-calendar-day"></i> ${escapeHTML(item.data)}</span>` : ''}
+          ${item.hora ? `<span style="font-size:.7rem;color:var(--text-lt)"><i class="fas fa-clock"></i> ${escapeHTML(item.hora)}</span>` : ''}
+          ${item.responsavel ? `<span style="font-size:.7rem;color:var(--text-lt)"><i class="fas fa-user"></i> ${escapeHTML(item.responsavel)}</span>` : ''}
+          <span style="font-size:.62rem;padding:.1rem .5rem;border-radius:20px;background:${cCor}18;color:${cCor};font-weight:600">${escapeHTML(item.categoria)}</span>
+          <span style="font-size:.62rem;padding:.1rem .5rem;border-radius:20px;background:${pCor}18;color:${pCor};font-weight:600;text-transform:uppercase">${escapeHTML(item.prioridade)}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function gvRenderRecados(body, s, slides, idx) {
+  body.innerHTML = `<div class="slide-section-title">${s.title}</div>
+    <div style="display:flex;gap:1.2rem;align-items:flex-start;max-width:1180px;width:100%;flex-wrap:wrap;justify-content:center">
+      ${gvMiniCalendario()}
+      <div id="gv-recados-lista" style="flex:1;min-width:280px;display:flex;flex-direction:column;gap:.5rem;max-height:calc(100vh - 420px);overflow-y:auto;padding-right:.3rem">
+        <div style="text-align:center;color:var(--text-lt)"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>
+      </div>
+    </div>
+    <div style="margin-top:.7rem;font-size:.65rem;color:var(--text-lt)">Planilha: configure a URL CSV em <b>Config URLs → Recados/Lembretes</b> ou adicione manualmente na aba Agenda.</div>`;
+  requestAnimationFrame(() => body.classList.add('show'));
+  slideRenderDots(slides, idx);
+  const itens = await gvFetchRecados().catch(() => []);
+  const listaEl = body.querySelector('#gv-recados-lista');
+  if (listaEl) listaEl.innerHTML = gvRecadosListaHTML(itens);
+  slideAutoScroll(body);
+}
+
 function gvRenderTurnover(body, s, slides, idx) {
   const d = slideRhResumo();
   const pct = (v, t) => (t ? v / t * 100 : 0).toFixed(1).replace('.', ',') + '%';
@@ -5440,6 +5662,7 @@ function slideRender(){
     }
     if (s.type === 'gv-despesas') { gvRenderDespesas(body, s, slides, idx); return; }
     if (s.type === 'gv-turnover') { gvRenderTurnover(body, s, slides, idx); return; }
+    if (s.type === 'recados-lembretes') { gvRenderRecados(body, s, slides, idx); return; }
     if (s.type === 'gv-medias-cavalo' || s.type === 'gv-medias-carreta') { gvRenderMedias(body, s, slides, idx); return; }
     if (s.type === 'consumo-melhores' || s.type === 'consumo-piores') {
       const tipo = s.type === 'consumo-melhores' ? 'melhores' : 'piores';
@@ -19792,6 +20015,15 @@ document.getElementById('tvBtnOpen').addEventListener('click', function() {
 :is(.slide-body.show .vx-card){animation:mgCard .85s cubic-bezier(.16,1,.3,1) both;animation-delay:calc(var(--i,0)*90ms + 250ms)}
 </style>
 <style id="gv-tema">
+/* ── Slide Recados & Lembretes ── */
+#gv-recados-lista::-webkit-scrollbar{width:4px;}
+#gv-recados-lista::-webkit-scrollbar-thumb{background:rgba(20,115,230,.25);border-radius:4px;}
+/* ── Notícias GV ── */
+#gv-noticias-slot{animation:fadeUp .4s ease both .3s;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+/* ── Dia comemorativo chip ── */
+.gv-comem-chip{animation:zoomIn .35s cubic-bezier(.175,.885,.32,1.275) both;}
+@keyframes zoomIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
 /* ===== Gestão à Vista — branco premium · tipografia Adobe (Source Sans 3) · fluido ===== */
 .slide-overlay{--accent:#1473e6;--accent-dk:#0d66d0;--text-lt:#6e6e6e;--gv-ink:#2c2c2c;--gv-line:#e6e6e6;
   --gv-ease:cubic-bezier(.22,1,.36,1);background:#fff;}
