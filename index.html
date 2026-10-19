@@ -35,553 +35,639 @@
 body{font-family:'Segoe UI',system-ui,sans-serif;color:var(--text);background:var(--bg);line-height:1.55;overflow-x:hidden;}
 
 /* ════════════════════════════════════════════════
-   REDESIGN PÚBLICO — M. MALACARNE 2025
-   Paleta: midnight-aço · dourado marca · gelo
+   REDESIGN CINEMATOGRÁFICO — M. MALACARNE 2025
+   Visual: rodovia noturna · faróis · frigorífico
    Tipo: Barlow Condensed (display) + Inter (corpo)
    ════════════════════════════════════════════════ */
 
-/* Tokens de design público */
 :root {
-  --pub-night:   #0b1523;
-  --pub-steel:   #182638;
-  --pub-ink:     #101c2c;
+  --pub-night:   #000000;
+  --pub-deep:    #04090f;
+  --pub-steel:   #0a1628;
+  --pub-ink:     #0d1c2e;
+  --pub-surface: #f3f6fa;
   --pub-gold:    #c9a227;
   --pub-gold-lt: #e8c84a;
+  --pub-gold-dk: #9b7b14;
   --pub-ice:     #7ab3d0;
   --pub-frost:   #e4edf5;
-  --pub-surface: #f3f6fa;
-  --pub-border:  rgba(122,179,208,.18);
+  --pub-border:  rgba(122,179,208,.14);
+  --pub-glow:    rgba(201,162,39,.35);
 }
 
 /* ── NAV ── */
-header{
-  background:rgba(11,21,35,.96);
-  backdrop-filter:blur(16px);
-  -webkit-backdrop-filter:blur(16px);
-  padding:.6rem 5%;
-  position:fixed;width:100%;top:0;z-index:1000;
-  border-bottom:1px solid rgba(201,162,39,.2);
+header {
+  background: rgba(0,0,0,.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  padding: .65rem 5%;
+  position: fixed; width: 100%; top: 0; z-index: 1000;
+  border-bottom: 1px solid rgba(201,162,39,.12);
+  transition: background .3s;
 }
-nav{display:flex;justify-content:space-between;align-items:center;max-width:1340px;margin:0 auto;}
-.logo{display:flex;align-items:center;gap:.7rem;}
-.logo img{height:38px;border-radius:6px;box-shadow:0 0 0 1.5px rgba(201,162,39,.35);}
-.logo-main{
+nav { display:flex; justify-content:space-between; align-items:center; max-width:1380px; margin:0 auto; }
+.logo { display:flex; align-items:center; gap:.75rem; }
+.logo img { height:36px; border-radius:5px; box-shadow:0 0 0 1px rgba(201,162,39,.3); }
+.logo-main {
   font-family:'Barlow Condensed',sans-serif;
-  font-size:1.35rem;font-weight:800;letter-spacing:.04em;
-  color:#fff;
+  font-size:1.3rem; font-weight:900; letter-spacing:.06em;
+  color:#fff; line-height:1;
 }
-.logo-sub{font-size:.56rem;color:rgba(255,255,255,.45);letter-spacing:1.8px;text-transform:uppercase;margin-top:1px;}
-.nav-links{display:flex;gap:1rem;list-style:none;align-items:center;}
-.nav-links a{
-  color:rgba(255,255,255,.7);text-decoration:none;
-  font-weight:500;font-size:.8rem;
-  position:relative;padding-bottom:2px;transition:color .2s;
+.logo-sub { font-size:.5rem; color:rgba(255,255,255,.35); letter-spacing:2.2px; text-transform:uppercase; margin-top:2px; }
+.nav-links { display:flex; gap:.9rem; list-style:none; align-items:center; }
+.nav-links a {
+  color:rgba(255,255,255,.6); text-decoration:none;
+  font-weight:500; font-size:.78rem; letter-spacing:.02em;
+  position:relative; padding-bottom:3px; transition:color .2s;
 }
-.nav-links a:hover{color:#fff;}
-.nav-links a::after{
-  content:'';position:absolute;bottom:-3px;left:0;
-  width:0;height:1.5px;background:var(--pub-gold);transition:.25s;
+.nav-links a:hover { color:#fff; }
+.nav-links a::after {
+  content:''; position:absolute; bottom:-2px; left:0;
+  width:0; height:1px; background:var(--pub-gold); transition:.25s;
 }
-.nav-links a:hover::after{width:100%;}
-.priv-btn{
-  background:linear-gradient(135deg,var(--pub-gold),var(--accent-dk))!important;
-  color:#0b1523!important;padding:.3rem .95rem!important;
-  border-radius:4px;font-weight:700!important;font-size:.78rem!important;
+.nav-links a:hover::after { width:100%; }
+.priv-btn {
+  background:linear-gradient(135deg,var(--pub-gold),var(--pub-gold-dk)) !important;
+  color:#000 !important; padding:.32rem 1rem !important;
+  border-radius:3px; font-weight:800 !important; font-size:.75rem !important;
+  letter-spacing:.04em !important;
 }
-.priv-btn::after{display:none!important;}
-.menu-toggle{display:none;background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--pub-gold);}
+.priv-btn::after { display:none !important; }
+.menu-toggle { display:none; background:none; border:none; font-size:1.3rem; cursor:pointer; color:var(--pub-gold); }
 
-/* ══════════════════════════════════════════
-   HERO — MOTION GRAPHICS (2025 REDESIGN)
-   ══════════════════════════════════════════ */
-.hero{
-  min-height:100svh;min-height:100vh;
-  background:linear-gradient(160deg,#05101f 0%,#0a1929 50%,#05101f 100%);
-  display:flex;align-items:center;
-  position:relative;overflow:hidden;color:#fff;
+/* ══════════════════════════════════════════════
+   HERO CINEMATOGRÁFICO — PARALLAX + MOTION
+   ══════════════════════════════════════════════ */
+.hero {
+  position: relative;
+  height: 100svh; height: 100vh; min-height: 640px;
+  display: flex; align-items: flex-end;
+  overflow: hidden; color: #fff;
 }
-/* canvas partículas */
-#hero-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;}
-/* grain */
-.hero-grain{
-  position:absolute;inset:0;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
-  background-size:256px;pointer-events:none;z-index:1;
-}
-/* feixe de faróis */
-.hero::before{
-  content:'';position:absolute;top:48%;left:-30%;
-  width:160%;height:1.5px;z-index:2;
-  background:linear-gradient(90deg,transparent 0%,rgba(201,162,39,.0) 20%,rgba(201,162,39,.7) 45%,rgba(232,200,74,.9) 50%,rgba(201,162,39,.7) 55%,rgba(201,162,39,.0) 80%,transparent 100%);
-  transform:rotate(-3deg);
-  animation:headlight 2s cubic-bezier(.22,.68,0,1.2) .3s both;pointer-events:none;
-}
-.hero::after{
-  content:'';position:absolute;top:52%;left:-30%;
-  width:160%;height:1px;z-index:2;
-  background:linear-gradient(90deg,transparent 22%,rgba(122,179,208,.45) 48%,rgba(122,179,208,.6) 50%,rgba(122,179,208,.45) 52%,transparent 78%);
-  transform:rotate(-3deg);
-  animation:headlight 2s cubic-bezier(.22,.68,0,1.2) .5s both;pointer-events:none;
-}
-@keyframes headlight{
-  from{opacity:0;transform:rotate(-3deg) translateX(-8%);}
-  30%{opacity:1;}
-  to{opacity:0;transform:rotate(-3deg) translateX(8%);}
-}
-/* waveform de fundo */
-.hero-wave-wrap{
-  position:absolute;bottom:0;left:0;right:0;height:260px;
-  z-index:1;pointer-events:none;
-}
-.hero-wave-svg{width:100%;height:100%;}
-.wave-path{fill:none;stroke-dasharray:500;}
-.wave-1{stroke:rgba(201,162,39,.3);stroke-width:1.5;animation:wave-scroll 10s linear infinite;}
-.wave-2{stroke:rgba(122,179,208,.18);stroke-width:1;animation:wave-scroll 15s linear infinite reverse;}
-.wave-3{stroke:rgba(201,162,39,.12);stroke-width:1;stroke-dasharray:200;animation:wave-scroll 7s linear infinite;}
-@keyframes wave-scroll{from{stroke-dashoffset:0;}to{stroke-dashoffset:-500;}}
 
-/* chips flutuantes */
-.hero-chips{
-  position:absolute;top:20%;right:4%;
-  display:flex;flex-direction:column;gap:.55rem;z-index:4;
-  animation:fade-up .8s ease .9s both;
+/* camadas de fundo paralax */
+.hero-bg-layer {
+  position: absolute; inset: -15% 0;
+  background: url('IMG-20220924-WA0022 (1).jpg') center / cover no-repeat;
+  transform: translateY(0);
+  will-change: transform;
+  z-index: 0;
 }
-.hero-chip{
-  display:inline-flex;align-items:center;gap:.45rem;
-  font-family:'Inter',sans-serif;font-size:.7rem;font-weight:600;
-  padding:.32rem .75rem;border-radius:20px;letter-spacing:.05em;
-  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+/* overlay cinematográfico em 3 camadas */
+.hero-overlay {
+  position: absolute; inset: 0; z-index: 1;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.72) 0%, rgba(0,0,0,.28) 38%, rgba(0,0,0,.18) 58%, rgba(0,0,0,.82) 100%),
+    linear-gradient(105deg, rgba(0,4,12,.85) 0%, transparent 55%);
 }
-.chip-cold{background:rgba(122,179,208,.12);border:1px solid rgba(122,179,208,.28);color:#7ab3d0;}
-.chip-gps{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.28);color:#34d399;animation:chip-float 4s ease-in-out 1s infinite;}
-.chip-brf{background:rgba(201,162,39,.1);border:1px solid rgba(201,162,39,.28);color:#c9a227;}
-@keyframes chip-float{0%,100%{transform:translateY(0);}50%{transform:translateY(-5px);}}
-@keyframes fade-up{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+/* névoa de cor — atmosfera azul-noturna */
+.hero-atmosphere {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background: radial-gradient(ellipse 70% 60% at 80% 30%, rgba(10,22,40,.3), transparent 70%);
+}
+/* feixe de faróis horizontal */
+.hero-beam {
+  position: absolute; z-index: 3; pointer-events: none;
+  bottom: 38%; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(201,162,39,.0) 15%, rgba(201,162,39,.6) 40%, rgba(232,200,74,.95) 50%, rgba(201,162,39,.6) 60%, rgba(201,162,39,.0) 85%, transparent 100%);
+  animation: beam-cross 3.2s cubic-bezier(.22,.68,0,1.2) .2s both;
+}
+.hero-beam-2 {
+  bottom: 36%; height: .5px;
+  background: linear-gradient(90deg, transparent 20%, rgba(122,179,208,.3) 45%, rgba(122,179,208,.55) 50%, rgba(122,179,208,.3) 55%, transparent 80%);
+  animation: beam-cross 3.2s cubic-bezier(.22,.68,0,1.2) .4s both;
+}
+@keyframes beam-cross {
+  0%   { opacity:0; clip-path:inset(0 100% 0 0); }
+  25%  { opacity:1; }
+  75%  { opacity:1; }
+  100% { opacity:0; clip-path:inset(0 0 0 100%); }
+}
+/* grain de filme */
+.hero-grain {
+  position:absolute; inset:0; z-index:4; pointer-events:none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E");
+  background-size: 200px;
+}
 
-/* inner */
-.hero-inner{
-  position:relative;z-index:3;
-  width:100%;max-width:1340px;margin:0 auto;
-  padding:0 5% 5vh;padding-top:calc(58px + 8vh);
-  display:grid;grid-template-columns:1fr 1fr;
-  align-items:center;gap:2rem;
+/* conteúdo hero */
+.hero-inner {
+  position: relative; z-index: 5;
+  width: 100%; max-width: 1380px; margin: 0 auto;
+  padding: 0 5% 6vh;
+  display: flex; flex-direction: column; justify-content: flex-end;
 }
-.hero-copy{max-width:620px;}
-.hero-eyebrow{
-  font-family:'Inter',sans-serif;font-size:.7rem;font-weight:600;
-  letter-spacing:.2em;color:var(--pub-ice);
-  margin-bottom:1.3rem;display:flex;align-items:center;gap:.7rem;
-  animation:reveal-clip .7s ease .15s both;
+/* pill de rodovia */
+.hero-route-pill {
+  display: inline-flex; align-items: center; gap: .55rem;
+  font-family: 'Inter', sans-serif; font-size: .65rem; font-weight: 700;
+  letter-spacing: .18em; color: var(--pub-ice);
+  margin-bottom: 1.8rem;
+  animation: ci-fade-up .8s ease .1s both;
 }
-.hero-eyebrow::before{content:'';display:block;width:28px;height:1.5px;background:var(--pub-ice);flex:none;}
-.hero h1{
+.hero-route-pill::before {
+  content:''; display:block; width:24px; height:1px;
+  background: var(--pub-ice); flex:none;
+}
+/* headline cinematográfica */
+.hero h1 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(4.2rem, 10.5vw, 10rem);
+  font-weight: 900; line-height: .88; letter-spacing: -.02em;
+  color: #fff; margin-bottom: 0;
+  text-transform: uppercase;
+}
+.h1-line-a {
+  display: block;
+  animation: ci-reveal .7s cubic-bezier(.22,.68,0,1.05) .05s both;
+}
+.h1-line-b {
+  display: block;
+  background: linear-gradient(90deg, var(--pub-gold) 0%, var(--pub-gold-lt) 50%, var(--pub-gold) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 48px rgba(201,162,39,.55));
+  animation: ci-reveal .7s cubic-bezier(.22,.68,0,1.05) .18s both;
+}
+.h1-line-c {
+  display: block;
+  color: rgba(255,255,255,.82);
+  animation: ci-reveal .7s cubic-bezier(.22,.68,0,1.05) .32s both;
+}
+@keyframes ci-reveal {
+  from { clip-path: inset(0 100% 0 0); opacity:0; transform:translateX(-12px); }
+  to   { clip-path: inset(0 0% 0 0);   opacity:1; transform:translateX(0); }
+}
+/* sub linha + CTAs */
+.hero-sub-row {
+  display: flex; align-items: center; gap: 2.5rem; flex-wrap: wrap;
+  margin-top: 2.2rem;
+  animation: ci-fade-up .8s ease .55s both;
+}
+.hero-desc {
+  font-family: 'Inter', sans-serif;
+  font-size: .95rem; line-height: 1.7;
+  color: rgba(255,255,255,.52);
+  max-width: 400px;
+}
+.hero-ctas { display:flex; gap:.8rem; flex-wrap:wrap; }
+.cta-btn {
+  display: inline-flex; align-items:center; gap:.5rem;
+  background: var(--pub-gold); color: #000;
+  padding: .78rem 1.6rem; border-radius:2px;
+  font-weight: 800; font-size: .82rem; letter-spacing:.04em;
+  text-decoration: none; text-transform: uppercase;
+  transition: background .18s, transform .18s, box-shadow .18s;
+  box-shadow: 0 0 0 0 var(--pub-glow);
+  border: none; cursor: pointer; font-family:'Inter',sans-serif;
+}
+.cta-btn:hover {
+  background: var(--pub-gold-lt);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 36px rgba(201,162,39,.45);
+}
+.cta-btn.ghost {
+  background: transparent; color: #fff;
+  border: 1px solid rgba(255,255,255,.2);
+  box-shadow: none;
+}
+.cta-btn.ghost:hover { background: rgba(255,255,255,.06); }
+/* linha de dados no canto direito */
+.hero-data-strip {
+  position: absolute; right: 5%; bottom: 6vh;
+  z-index: 5; display:flex; flex-direction:column; gap:.6rem; align-items:flex-end;
+  animation: ci-fade-up .8s ease .7s both;
+}
+.hero-data-chip {
+  display:flex; align-items:center; gap:.5rem;
+  font-family:'Inter',sans-serif; font-size:.68rem; font-weight:600;
+  color: rgba(255,255,255,.7);
+  padding: .3rem .75rem;
+  border-right: 2px solid var(--pub-gold);
+}
+.hero-data-chip .val {
   font-family:'Barlow Condensed',sans-serif;
-  font-size:clamp(3.6rem,8vw,7.2rem);
-  font-weight:900;line-height:.93;letter-spacing:-.01em;
-  color:#fff;margin-bottom:1.6rem;
+  font-size:1.1rem; font-weight:900; color:#fff;
+  margin-right:.2rem;
 }
-.h1-line{
-  display:block;
-  animation:reveal-clip .65s cubic-bezier(.22,.68,0,1.05) .25s both;
+/* scroll cue */
+.hero-scroll-cue {
+  position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%);
+  z-index: 5; display:flex; flex-direction:column; align-items:center; gap:.4rem;
+  animation: ci-fade-up .8s ease 1.1s both;
 }
-.h1-em{
-  display:block;font-style:normal;
-  background:linear-gradient(90deg,var(--pub-gold),var(--pub-gold-lt));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  filter:drop-shadow(0 0 28px rgba(201,162,39,.45));
-  animation:reveal-clip .65s cubic-bezier(.22,.68,0,1.05) .42s both;
+.hero-scroll-cue span { font-size:.55rem; letter-spacing:.25em; color:rgba(255,255,255,.22); }
+.scroll-line {
+  width:1px; height:40px;
+  background: linear-gradient(180deg, var(--pub-gold), transparent);
+  animation: scroll-breathe 2.2s ease-in-out 1.5s infinite;
 }
-.h1-line.h1-last{animation-delay:.58s;}
-@keyframes reveal-clip{
-  from{clip-path:inset(0 100% 0 0);opacity:0;}
-  to{clip-path:inset(0 0% 0 0);opacity:1;}
-}
-.hero-desc{
-  font-size:1rem;line-height:1.68;color:rgba(255,255,255,.58);
-  max-width:460px;margin-bottom:2.2rem;
-  animation:fade-up .8s ease .7s both;
-}
-.hero-ctas{display:flex;gap:1rem;flex-wrap:wrap;animation:fade-up .8s ease .85s both;}
-.cta-btn{
-  display:inline-flex;align-items:center;gap:.5rem;
-  background:var(--pub-gold);color:var(--pub-night);
-  padding:.72rem 1.5rem;border-radius:4px;
-  font-weight:700;text-decoration:none;font-size:.88rem;
-  transition:background .18s,transform .18s,box-shadow .18s;
-  box-shadow:0 4px 24px rgba(201,162,39,.3);
-  border:none;cursor:pointer;font-family:'Inter',sans-serif;
-}
-.cta-btn:hover{background:var(--pub-gold-lt);transform:translateY(-2px);box-shadow:0 6px 32px rgba(201,162,39,.45);}
-.cta-btn.outline{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.22);box-shadow:none;}
-.cta-btn.outline:hover{background:rgba(255,255,255,.06);transform:translateY(-2px);}
-
-/* painel visual direito */
-.hero-visual{
-  position:relative;
-  display:flex;flex-direction:column;align-items:center;
-  animation:fade-up 1s ease .4s both;
-}
-.hero-truck-wrap{
-  position:relative;width:100%;max-width:480px;
-  padding:1.5rem;
-  background:radial-gradient(ellipse at 55% 50%, rgba(201,162,39,.07) 0%, transparent 65%);
-}
-.hero-truck-svg{
-  width:100%;filter:drop-shadow(0 0 24px rgba(201,162,39,.18)) drop-shadow(0 2px 8px rgba(0,0,0,.5));
-  animation:truck-float 7s ease-in-out infinite;
-}
-@keyframes truck-float{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
-.truck-motion{stroke-dasharray:6 10;animation:motion-dash 1s linear infinite;}
-.tm-2{animation-delay:-.35s;}.tm-3{animation-delay:-.7s;}
-@keyframes motion-dash{from{stroke-dashoffset:0;}to{stroke-dashoffset:-64;}}
-.hero-truck-glow{
-  position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
-  width:68%;height:30px;
-  background:radial-gradient(ellipse,rgba(201,162,39,.28) 0%,transparent 70%);
-  filter:blur(10px);
-}
-/* badge temperatura */
-.hero-temp-badge{
-  display:inline-flex;align-items:center;gap:.8rem;
-  background:rgba(8,20,38,.82);border:1px solid rgba(122,179,208,.2);
-  border-radius:14px;padding:.7rem 1.2rem;
-  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-  margin-top:1rem;animation:fade-up 1s ease 1s both;
-}
-.temp-icon{
-  width:38px;height:38px;border-radius:10px;
-  background:rgba(122,179,208,.12);
-  display:flex;align-items:center;justify-content:center;
-  font-size:1.1rem;color:var(--pub-ice);flex:none;
-  animation:pulse-temp 3s ease infinite;
-}
-@keyframes pulse-temp{
-  0%,100%{box-shadow:0 0 0 0 rgba(122,179,208,.35);}
-  50%{box-shadow:0 0 0 8px rgba(122,179,208,.0);}
-}
-.temp-val{font-family:'Barlow Condensed',sans-serif;font-size:1.55rem;font-weight:900;color:var(--pub-ice);line-height:1;}
-.temp-lbl{font-size:.63rem;font-weight:600;color:rgba(255,255,255,.38);letter-spacing:.07em;margin-top:.18rem;}
-
-/* scroll indicator */
-.hero-scroll{
-  position:absolute;bottom:2.2rem;left:50%;transform:translateX(-50%);
-  z-index:4;display:flex;flex-direction:column;align-items:center;gap:.4rem;
-  animation:fade-up 1s ease 1.4s both;
-}
-.hero-scroll span{font-size:.6rem;letter-spacing:.2em;color:rgba(255,255,255,.28);}
-.hero-scroll-line{
-  width:1px;height:36px;
-  background:linear-gradient(180deg,rgba(201,162,39,.55),transparent);
-  animation:scroll-pulse 2s ease-in-out 2s infinite;
-}
-@keyframes scroll-pulse{0%,100%{transform:scaleY(1);opacity:.5;}50%{transform:scaleY(.6);opacity:1;}}
-
-/* responsivo */
-@media(max-width:860px){
-  .hero-inner{grid-template-columns:1fr;padding-top:calc(58px+5vh);}
-  .hero-visual{display:none;}
-  .hero-chips{top:auto;bottom:12%;right:3%;flex-direction:row;flex-wrap:wrap;}
+@keyframes scroll-breathe { 0%,100%{transform:scaleY(1);opacity:.4} 50%{transform:scaleY(.55);opacity:1} }
+@keyframes ci-fade-up {
+  from{opacity:0;transform:translateY(18px);}
+  to{opacity:1;transform:translateY(0);}
 }
 
-/* ── STATS BANNER ── */
-.stats-banner{
-  background:var(--pub-night);
-  border-bottom:1px solid rgba(201,162,39,.15);
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:0;
-  max-width:none;margin:0;
-  border-radius:0;
-  position:relative;z-index:10;
+/* ── STATS STRIP ── */
+.stats-banner {
+  background: #000;
+  border-bottom: 1px solid rgba(201,162,39,.1);
+  display: grid; grid-template-columns: repeat(4,1fr);
+  position: relative; z-index: 10;
 }
-.stat-item{
-  padding:1.4rem 1rem;
-  text-align:center;
-  border-right:1px solid rgba(255,255,255,.07);
+.stats-banner::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:1px;
+  background: linear-gradient(90deg, transparent, var(--pub-gold), transparent);
 }
-.stat-item:last-child{border-right:none;}
-.stat-num{
+.stat-item {
+  padding: 1.6rem 1rem; text-align:center;
+  border-right: 1px solid rgba(255,255,255,.05);
+  transition: background .2s;
+}
+.stat-item:last-child { border-right:none; }
+.stat-item:hover { background: rgba(201,162,39,.04); }
+.stat-num {
   font-family:'Barlow Condensed',sans-serif;
-  font-size:2.4rem;font-weight:900;
-  color:var(--pub-gold);
-  line-height:1;letter-spacing:.01em;
+  font-size: 2.8rem; font-weight:900;
+  color: var(--pub-gold); line-height:1;
+  letter-spacing:-.01em;
 }
-.stat-lbl{
-  font-size:.68rem;font-weight:600;
-  color:rgba(255,255,255,.4);
-  margin-top:.35rem;
-  letter-spacing:.08em;
-  text-transform:uppercase;
+.stat-lbl {
+  font-family:'Inter',sans-serif;
+  font-size:.64rem; font-weight:600;
+  color:rgba(255,255,255,.35);
+  margin-top:.4rem; letter-spacing:.1em; text-transform:uppercase;
 }
 
-/* ── SECTIONS ── */
-.section{padding:4.5rem 5%;max-width:1340px;margin:0 auto;}
-.section-title{
+/* ── REVEAL SCROLL (IntersectionObserver) ── */
+.ci-reveal {
+  opacity:0; transform:translateY(32px);
+  transition: opacity .7s ease, transform .7s ease;
+}
+.ci-reveal.visible {
+  opacity:1; transform:translateY(0);
+}
+.ci-reveal-delay-1 { transition-delay:.12s; }
+.ci-reveal-delay-2 { transition-delay:.24s; }
+.ci-reveal-delay-3 { transition-delay:.36s; }
+.ci-reveal-delay-4 { transition-delay:.48s; }
+
+/* ── SEÇÕES GENÉRICAS ── */
+.pub-section {
+  padding: 5.5rem 5%; max-width: 1380px; margin:0 auto;
+}
+.pub-section-wide { padding:5.5rem 5%; }
+
+/* título de seção */
+.section-title {
   font-family:'Barlow Condensed',sans-serif;
-  font-size:clamp(1.8rem,4vw,2.8rem);
-  font-weight:800;
-  color:var(--pub-night);
+  font-size:clamp(2rem,4.5vw,3.2rem);
+  font-weight:900; color:#0a1628; letter-spacing:.01em;
+  line-height:1; margin-bottom:2.4rem; text-transform:uppercase;
   text-align:left;
-  margin-bottom:2rem;
-  letter-spacing:.01em;
-  line-height:1.1;
 }
-.section-title::after{display:none;}
-.section-title .gold-line{
-  display:block;
-  width:48px;height:3px;
-  background:var(--pub-gold);
-  margin-top:.8rem;border-radius:0;
+.section-title .gold-line {
+  display:block; width:36px; height:3px;
+  background:var(--pub-gold); margin-top:.9rem; border-radius:0;
 }
+.section-title.light { color:#fff; }
 
-/* ── VALUES / NOSSA HISTÓRIA ── */
-.values-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  grid-template-rows:auto auto;
-  gap:1.5px;
-  background:rgba(0,0,0,.06);
-  border:1.5px solid rgba(0,0,0,.06);
-  border-radius:12px;
-  overflow:hidden;
+/* ── PORTAL BRF ── */
+.portal-brf-wrap {
+  background: #000;
+  border: 1px solid rgba(201,162,39,.18);
+  border-radius:4px;
+  display:flex; align-items:center; gap:2rem; flex-wrap:wrap;
+  padding:2rem 2.4rem; max-width:960px;
 }
-.value-card{
-  background:#fff;
-  padding:2rem 1.8rem;
-  text-align:left;
-  border:none;border-radius:0;
-  box-shadow:none;
-  transition:background .2s;
-  position:relative;
+.portal-brf-icon {
+  width:60px; height:60px; flex:none; border-radius:4px;
+  background: rgba(201,162,39,.08); border:1px solid rgba(201,162,39,.2);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.5rem; color:var(--pub-gold);
 }
-.value-card:hover{background:var(--pub-frost);}
-.value-icon{
-  width:44px;height:44px;
-  border-radius:8px;
-  background:var(--pub-night);
-  display:flex;align-items:center;justify-content:center;
-  font-size:1.2rem;
-  margin-bottom:1rem;
+.portal-brf-body { flex:1; min-width:200px; }
+.portal-brf-eyebrow {
+  font-family:'Inter',sans-serif; font-size:.6rem; font-weight:700;
+  letter-spacing:.2em; color:var(--pub-ice); margin-bottom:.4rem;
 }
-.value-card h3{
+.portal-brf-body h2 {
   font-family:'Barlow Condensed',sans-serif;
-  font-size:1.3rem;font-weight:800;
-  margin-bottom:.5rem;color:var(--pub-night);
-  letter-spacing:.01em;
+  font-size:1.8rem; font-weight:900; letter-spacing:.02em;
+  color:#fff; margin-bottom:.3rem; text-transform:uppercase;
 }
-.value-card p{font-size:.88rem;color:#5a6878;line-height:1.65;}
-/* ano discreto no canto */
-.value-year{
-  position:absolute;top:1.2rem;right:1.4rem;
+.portal-brf-body p { font-size:.85rem; color:rgba(255,255,255,.4); line-height:1.5; }
+
+/* ── NOSSA HISTÓRIA — parallax card grid ── */
+.history-section {
+  background: #000;
+  padding: 6rem 5%;
+  position: relative; overflow:hidden;
+}
+.history-section::before {
+  content:''; position:absolute; inset:0;
+  background: url('img87.jpg') center / cover no-repeat;
+  transform: translateY(var(--parallax-bg, 0px));
+  opacity:.08; will-change:transform; z-index:0;
+  filter: blur(2px);
+}
+.history-section-inner {
+  max-width:1380px; margin:0 auto;
+  position:relative; z-index:1;
+}
+.history-grid {
+  display: grid; grid-template-columns:1fr 1fr;
+  gap: 1px; background: rgba(255,255,255,.06);
+  margin-top:2.5rem;
+}
+.history-card {
+  background: #050c18;
+  padding: 2.5rem 2.2rem;
+  position:relative; overflow:hidden;
+  transition: background .25s;
+}
+.history-card:hover { background: #09131f; }
+.history-card::after {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+  background: linear-gradient(90deg, var(--pub-gold), transparent);
+  transform:scaleX(0); transform-origin:left;
+  transition: transform .35s ease;
+}
+.history-card:hover::after { transform:scaleX(1); }
+.history-year {
   font-family:'Barlow Condensed',sans-serif;
-  font-size:.95rem;font-weight:700;
-  color:rgba(11,21,35,.12);letter-spacing:.05em;
+  font-size:3.5rem; font-weight:900; letter-spacing:-.02em;
+  color:rgba(201,162,39,.12); line-height:1;
+  position:absolute; top:1.2rem; right:1.4rem;
+}
+.history-icon {
+  width:42px; height:42px; margin-bottom:1.3rem;
+  border-radius:3px;
+  background:rgba(201,162,39,.08); border:1px solid rgba(201,162,39,.15);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.1rem;
+}
+.history-card h3 {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1.5rem; font-weight:900; text-transform:uppercase;
+  letter-spacing:.03em; color:#fff; margin-bottom:.7rem;
+}
+.history-card p { font-size:.88rem; color:rgba(255,255,255,.45); line-height:1.7; max-width:320px; }
+
+/* ── VÍDEO ── */
+.video-section {
+  background: #000; padding:5rem 5%;
+}
+.video-section-inner { max-width:1380px; margin:0 auto; }
+.video-frame-wrap {
+  max-width:960px; margin:2.5rem auto 0;
+  position:relative; border-radius:3px; overflow:hidden;
+  box-shadow: 0 40px 100px rgba(0,0,0,.7);
+  border:1px solid rgba(201,162,39,.15);
+}
+.video-frame-wrap video {
+  width:100%; display:block;
+  aspect-ratio:16/9; background:#000;
+}
+.video-caption {
+  text-align:center; color:rgba(255,255,255,.3);
+  font-size:.8rem; margin-top:1.2rem; line-height:1.7;
+  max-width:500px; margin-left:auto; margin-right:auto;
 }
 
-/* ── GALLERY ── */
-.gallery-grid{
-  display:grid;
-  grid-template-columns:repeat(12,1fr);
-  grid-template-rows:repeat(3,200px);
-  gap:6px;
-  border-radius:12px;overflow:hidden;
+/* ── GALERIA COM PARALLAX ── */
+.gallery-section {
+  padding: 0;
+  background: #000;
 }
-.gallery-item{
-  height:auto;border-radius:0;overflow:hidden;
-  box-shadow:none;
-  position:relative;
+.gallery-section .section-title-wrap {
+  padding: 5.5rem 5% 3rem;
+  max-width:1380px; margin:0 auto;
 }
-/* distribuição assimétrica */
-.gallery-item:nth-child(1){grid-column:1/8;grid-row:1/3;}   /* grande esquerda */
-.gallery-item:nth-child(2){grid-column:8/13;grid-row:1/2;}
-.gallery-item:nth-child(3){grid-column:8/10;grid-row:2/3;}
-.gallery-item:nth-child(4){grid-column:10/13;grid-row:2/3;}
-.gallery-item:nth-child(5){grid-column:1/5;grid-row:3/4;}
-.gallery-item:nth-child(6){grid-column:5/9;grid-row:3/4;}
-.gallery-item:nth-child(7){grid-column:9/13;grid-row:3/4;}
-.gallery-item:nth-child(8),.gallery-item:nth-child(9),.gallery-item:nth-child(10){display:none;}
-.gallery-item img{width:100%;height:100%;object-fit:cover;transition:.5s;}
-.gallery-item:hover img{transform:scale(1.04);}
-/* overlay sutil */
-.gallery-item::after{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(180deg,transparent 55%,rgba(11,21,35,.35) 100%);
-  opacity:0;transition:.3s;pointer-events:none;
+.gallery-parallax-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: 340px 220px;
+  gap: 3px;
 }
-.gallery-item:hover::after{opacity:1;}
+.gp-item {
+  position: relative; overflow:hidden;
+  background: #0a1628;
+}
+/* layout assimétrico */
+.gp-item:nth-child(1) { grid-column:1/3; grid-row:1/2; }
+.gp-item:nth-child(2) { grid-column:3/4; grid-row:1/2; }
+.gp-item:nth-child(3) { grid-column:1/2; grid-row:2/3; }
+.gp-item:nth-child(4) { grid-column:2/3; grid-row:2/3; }
+.gp-item:nth-child(5) { grid-column:3/4; grid-row:2/3; }
 
-/* ── VIDEO INSTITUCIONAL ── */
-.video-showcase{max-width:960px;margin:0 auto;}
-.video-frame{
-  position:relative;
-  border-radius:8px;overflow:hidden;
-  box-shadow:0 24px 64px rgba(11,21,35,.18);
-  border:1px solid rgba(201,162,39,.2);
-  background:#000;aspect-ratio:16/9;
+.gp-img {
+  position:absolute; inset:-20% 0;
+  width:100%; height:140%;
+  object-fit:cover;
+  will-change:transform;
+  transform: translateY(0px);
+  transition: none;
 }
-.video-frame video{width:100%;height:100%;display:block;object-fit:contain;background:#000;}
-.video-caption{
-  text-align:center;color:#7a8a9a;
-  font-size:.83rem;margin-top:1rem;
-  max-width:520px;margin-left:auto;margin-right:auto;
+.gp-item::after {
+  content:''; position:absolute; inset:0;
+  background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,.65) 100%);
+  z-index:1; opacity:0; transition: opacity .4s;
 }
+.gp-item:hover::after { opacity:1; }
+.gp-caption {
+  position:absolute; bottom:1.2rem; left:1.4rem;
+  z-index:2; opacity:0; transform:translateY(8px);
+  transition: opacity .3s, transform .3s;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1rem; font-weight:800; letter-spacing:.06em;
+  color:#fff; text-transform:uppercase;
+}
+.gp-item:hover .gp-caption { opacity:1; transform:translateY(0); }
 
 /* ── ANTT SECTION ── */
-.antt-section{
-  background:var(--pub-night);
-  padding:4rem 5%;
-  border-top:none;border-bottom:none;
+.antt-section {
+  background: #04090f;
+  padding: 5.5rem 5%;
+  border-top: 1px solid rgba(201,162,39,.07);
 }
-.antt-section .section-title{color:#fff;}
-.antt-section .section-title .gold-line{background:var(--pub-ice);}
-.antt-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.8rem;margin-top:2rem;}
-.antt-card{
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.09);
-  border-radius:8px;
-  padding:1rem 1.1rem;
-  display:flex;align-items:center;gap:.8rem;
-  text-decoration:none;color:#fff;
-  transition:background .18s,border-color .18s,transform .18s;
-  font-weight:600;font-size:.85rem;
+.antt-section-inner { max-width:1380px; margin:0 auto; }
+.antt-cards {
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(230px,1fr));
+  gap:.6rem; margin-top:2.5rem;
 }
-.antt-card:hover{
-  background:rgba(201,162,39,.12);
-  border-color:rgba(201,162,39,.4);
-  transform:translateY(-2px);
+.antt-card {
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:3px;
+  padding:1rem 1.2rem;
+  display:flex; align-items:center; gap:.9rem;
+  text-decoration:none; color:#fff;
+  font-size:.84rem; font-weight:600;
+  transition: background .18s, border-color .18s, transform .15s;
 }
-.antt-card i{font-size:1.1rem;color:var(--pub-gold);flex:none;}
-.antt-card div>div:last-child{font-size:.72rem;color:rgba(255,255,255,.4);font-weight:400;margin-top:.1rem;}
+.antt-card:hover {
+  background: rgba(201,162,39,.07);
+  border-color: rgba(201,162,39,.3);
+  transform: translateX(3px);
+}
+.antt-card i { color:var(--pub-gold); font-size:1rem; flex:none; width:18px; }
+.antt-card div > div:last-child { font-size:.7rem; color:rgba(255,255,255,.32); font-weight:400; margin-top:.1rem; }
+
+/* ── POSTOS ── */
+.postos-section {
+  background: #04090f;
+  padding: 0 5% 5.5rem;
+}
+.postos-section-inner { max-width:1380px; margin:0 auto; }
+.postos-card {
+  max-width:560px;
+  background: rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.07); border-radius:4px;
+  padding:2rem 2.2rem; text-align:left;
+}
+.postos-card .postos-icon {
+  font-size:2.2rem; margin-bottom:.8rem; display:block;
+}
+.postos-card h3 {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1.4rem; font-weight:900; text-transform:uppercase;
+  color:#fff; margin-bottom:.5rem; letter-spacing:.03em;
+}
+.postos-card p { font-size:.84rem; color:rgba(255,255,255,.35); line-height:1.6; margin-bottom:1.4rem; }
 
 /* ── VAGAS ── */
-.vagas-section{
-  background:var(--pub-surface);
-  padding:4rem 5%;
-  color:var(--pub-night);
-  text-align:left;
+.vagas-section {
+  background: #000;
+  padding: 5.5rem 5%;
+  position:relative; overflow:hidden;
 }
-.vagas-section .section-title{color:var(--pub-night);}
-.job-card{
-  background:var(--pub-night);
-  color:#fff;
-  border-radius:12px;
-  padding:2.2rem 2.4rem;
-  max-width:780px;
-  margin:0;
-  box-shadow:0 16px 48px rgba(11,21,35,.14);
-  display:grid;
-  grid-template-columns:1fr auto;
-  gap:1.5rem;
-  align-items:start;
+.vagas-section::before {
+  content:''; position:absolute; inset:0;
+  background: url('IMG-20230213-WA0005.jpg') center 40% / cover no-repeat;
+  opacity:.06; transform:translateY(var(--parallax-vagas,0px));
+  will-change:transform; z-index:0;
 }
-.job-card-body{min-width:0;}
-.job-card h3{
+.vagas-section-inner { max-width:1380px; margin:0 auto; position:relative; z-index:1; }
+.vagas-section .section-title { color:#fff; }
+.job-card {
+  background: #050c18;
+  border:1px solid rgba(201,162,39,.15);
+  border-radius:4px;
+  padding:2.4rem 2.6rem;
+  max-width:820px;
+  display:grid; grid-template-columns:1fr auto; gap:2rem; align-items:start;
+  box-shadow: 0 24px 64px rgba(0,0,0,.5);
+  margin-top: 2rem;
+}
+.job-card-body { min-width:0; }
+.job-card h3 {
   font-family:'Barlow Condensed',sans-serif;
-  font-size:1.9rem;font-weight:900;
-  margin-bottom:.3rem;color:#fff;
-  letter-spacing:.01em;line-height:1.1;
+  font-size:2.2rem; font-weight:900; text-transform:uppercase;
+  letter-spacing:.02em; color:#fff; margin-bottom:.4rem; line-height:1;
 }
-.job-card-location{
-  font-size:.78rem;color:var(--pub-ice);
-  margin-bottom:1.2rem;font-weight:500;
-  display:flex;align-items:center;gap:.4rem;
+.job-card-location {
+  font-size:.78rem; color:var(--pub-ice); margin-bottom:1.4rem;
+  font-weight:500; display:flex; align-items:center; gap:.4rem;
 }
-.job-tags{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:flex-start;margin:.8rem 0;}
-.job-tag{
-  background:rgba(255,255,255,.1);
-  padding:.25rem .75rem;border-radius:3px;
-  font-size:.72rem;font-weight:600;
-  color:rgba(255,255,255,.7);
-  border:1px solid rgba(255,255,255,.12);
+.job-tags { display:flex; flex-wrap:wrap; gap:.35rem; margin:.8rem 0; }
+.job-tag {
+  background:rgba(201,162,39,.08);
+  border:1px solid rgba(201,162,39,.18);
+  padding:.22rem .72rem; border-radius:2px;
+  font-size:.7rem; font-weight:700;
+  color:rgba(201,162,39,.8); letter-spacing:.04em;
 }
-.job-reqs{
-  text-align:left;margin:.8rem 0;
-  padding:.9rem 1rem;
-  background:rgba(255,255,255,.05);
-  border-radius:8px;
-  border:1px solid rgba(255,255,255,.08);
+.job-reqs {
+  margin:.8rem 0; padding:.9rem 1.1rem;
+  background:rgba(255,255,255,.03);
+  border-radius:3px; border:1px solid rgba(255,255,255,.06);
 }
-.job-reqs li{font-size:.83rem;padding:.2rem 0;color:rgba(255,255,255,.75);}
-.job-card-cta{
-  display:flex;flex-direction:column;align-items:flex-end;gap:.8rem;
-  padding-top:.4rem;
-}
+.job-reqs li { font-size:.82rem; padding:.22rem 0; color:rgba(255,255,255,.6); }
+.job-card-cta { display:flex; flex-direction:column; align-items:flex-end; gap:.8rem; padding-top:.4rem; }
 
-/* ── CONTACT ── */
-.contact-grid{
-  display:grid;grid-template-columns:1fr 1fr;
-  gap:2rem;margin-top:0;
+/* ── CONTATO ── */
+.contact-section {
+  background: #04090f;
+  padding: 5.5rem 5%;
+  border-top:1px solid rgba(255,255,255,.04);
 }
-.contact-info-card{
-  background:#fff;
-  border-radius:10px;padding:1.4rem 1.6rem;
-  box-shadow:0 4px 20px rgba(11,21,35,.07);
-  border:1px solid rgba(11,21,35,.07);
+.contact-section-inner { max-width:1380px; margin:0 auto; }
+.contact-section .section-title { color:#fff; }
+.contact-grid { display:grid; grid-template-columns:1fr 1.4fr; gap:2rem; margin-top:2.5rem; }
+.contact-info-card {
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius:3px; padding:1.3rem 1.6rem;
 }
-.contact-info-card h3{
+.contact-info-card h3 {
   font-family:'Barlow Condensed',sans-serif;
-  font-size:1.1rem;font-weight:800;
-  color:var(--pub-night);
-  margin-bottom:.7rem;
-  display:flex;align-items:center;gap:.5rem;
-  letter-spacing:.02em;
+  font-size:1rem; font-weight:900; text-transform:uppercase;
+  letter-spacing:.06em; color:#fff; margin-bottom:.7rem;
+  display:flex; align-items:center; gap:.5rem;
 }
-.contact-info-card p{font-size:.88rem;color:#5a6878;margin-bottom:.3rem;line-height:1.6;}
+.contact-info-card p { font-size:.84rem; color:rgba(255,255,255,.38); line-height:1.65; margin-bottom:.25rem; }
 
 /* ── FOOTER ── */
-footer{
-  background:var(--pub-ink);
-  color:rgba(255,255,255,.35);
-  text-align:center;
-  padding:2rem 5%;
-  font-size:.78rem;
-  border-top:1px solid rgba(255,255,255,.07);
+footer {
+  background: #000;
+  border-top:1px solid rgba(255,255,255,.05);
+  text-align:center; padding:2.2rem 5%;
+  font-family:'Inter',sans-serif;
+  font-size:.75rem; color:rgba(255,255,255,.22);
 }
-footer a{color:var(--pub-gold);text-decoration:none;}
+footer a { color:var(--pub-gold); text-decoration:none; }
+footer strong { color:rgba(255,255,255,.4); }
 
-/* ── WHATSAPP FLOAT ── */
-.wa-float{position:fixed;bottom:24px;right:24px;z-index:1100;}
-.wa-float a{
-  background:#25D366;color:#fff;
-  padding:11px 20px;border-radius:3px;
-  text-decoration:none;font-weight:700;
-  box-shadow:0 6px 24px rgba(37,211,102,.35);
-  transition:.2s;display:flex;align-items:center;gap:8px;font-size:.85rem;
+/* ── WHATSAPP ── */
+.wa-float { position:fixed; bottom:24px; right:24px; z-index:1100; }
+.wa-float a {
+  background:#25D366; color:#fff;
+  padding:11px 20px; border-radius:2px;
+  text-decoration:none; font-weight:800;
+  box-shadow:0 6px 28px rgba(37,211,102,.3);
+  transition:.2s; display:flex; align-items:center; gap:8px;
+  font-size:.82rem; letter-spacing:.03em;
 }
-.wa-float a:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(37,211,102,.45);}
+.wa-float a:hover { transform:translateY(-2px); box-shadow:0 10px 32px rgba(37,211,102,.45); }
 
-@media(max-width:768px){
-  .hero h1{font-size:clamp(2.8rem,13vw,5rem);}
-  .hero-inner{grid-template-columns:1fr;padding-bottom:5vh;}
-  .stats-banner{grid-template-columns:repeat(2,1fr);}
-  .stat-item:nth-child(2){border-right:none;}
-  .stat-item:nth-child(3){border-top:1px solid rgba(255,255,255,.07);}
-  .stat-item:nth-child(4){border-top:1px solid rgba(255,255,255,.07);border-right:none;}
-  .values-grid{grid-template-columns:1fr;}
-  .gallery-grid{
-    grid-template-columns:1fr 1fr;
-    grid-template-rows:repeat(4,180px);
-  }
-  .gallery-item:nth-child(1){grid-column:1/3;grid-row:1/2;}
-  .gallery-item:nth-child(2){grid-column:1/2;grid-row:2/3;}
-  .gallery-item:nth-child(3){grid-column:2/3;grid-row:2/3;}
-  .gallery-item:nth-child(4){grid-column:1/2;grid-row:3/4;}
-  .gallery-item:nth-child(5){grid-column:2/3;grid-row:3/4;}
-  .gallery-item:nth-child(6){grid-column:1/2;grid-row:4/5;}
-  .gallery-item:nth-child(7){grid-column:2/3;grid-row:4/5;}
-  .gallery-item:nth-child(8),.gallery-item:nth-child(9),.gallery-item:nth-child(10){display:none;}
-  .contact-grid{grid-template-columns:1fr;}
-  .job-card{grid-template-columns:1fr;}
-  .job-card-cta{align-items:flex-start;}
-  .antt-cards{grid-template-columns:1fr 1fr;}
+/* ── MOBILE ── */
+@media(max-width:900px){
+  .hero h1 { font-size:clamp(3.4rem,13vw,6rem); }
+  .hero-data-strip { display:none; }
+  .history-grid { grid-template-columns:1fr; }
+  .gallery-parallax-grid { grid-template-columns:1fr 1fr; grid-template-rows: repeat(3,220px); }
+  .gp-item:nth-child(1){grid-column:1/3;grid-row:1/2;}
+  .gp-item:nth-child(2){grid-column:1/2;grid-row:2/3;}
+  .gp-item:nth-child(3){grid-column:2/3;grid-row:2/3;}
+  .gp-item:nth-child(4){grid-column:1/2;grid-row:3/4;}
+  .gp-item:nth-child(5){grid-column:2/3;grid-row:3/4;}
+  .gp-img { inset:0; height:100%; }
+  .contact-grid { grid-template-columns:1fr; }
+  .job-card { grid-template-columns:1fr; }
+  .job-card-cta { align-items:flex-start; }
+  .stats-banner { grid-template-columns:repeat(2,1fr); }
+  .stat-item:nth-child(2){ border-right:none; }
+  .stat-item:nth-child(3){ border-top:1px solid rgba(255,255,255,.04); }
+  .stat-item:nth-child(4){ border-top:1px solid rgba(255,255,255,.04); border-right:none; }
+  .antt-cards { grid-template-columns:1fr 1fr; }
+  .hero-sub-row { flex-direction:column; align-items:flex-start; gap:1.2rem; }
 }
 @media(max-width:480px){
-  .antt-cards{grid-template-columns:1fr;}
-  .stats-banner{grid-template-columns:repeat(2,1fr);}
+  .hero h1 { font-size:clamp(2.8rem,16vw,4.5rem); }
+  .antt-cards { grid-template-columns:1fr; }
+  .gallery-parallax-grid { grid-template-columns:1fr; grid-template-rows:repeat(5,200px); }
+  .gp-item{grid-column:1/2!important;grid-row:auto!important;}
+  .pub-section, .pub-section-wide, .history-section, .vagas-section,
+  .video-section, .antt-section, .postos-section, .contact-section { padding-left:5%; padding-right:5%; }
 }
 @media(prefers-reduced-motion:reduce){
-  .hero::before,.hero::after,.hero h1,.hero-desc,.hero-ctas,.hero-counter,.hero-scroll{animation:none;opacity:1;transform:none;}
+  .hero h1, .hero-route-pill, .hero-sub-row, .hero-scroll-cue,
+  .hero-beam, .hero-beam-2, .ci-reveal { animation:none!important; opacity:1!important; transform:none!important; }
+  .gp-img { transition:none!important; }
 }
+
 
 /* ── LOGIN OVERLAY ── */
 .login-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);z-index:2000;display:flex;align-items:center;justify-content:center;visibility:hidden;opacity:0;transition:.2s;}
@@ -1306,223 +1392,275 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
   <nav>
     <div class="logo">
       <img src="Screenshot_2.jpg" alt="M-Malacarne" onerror="this.style.display='none'">
-      <div><div class="logo-main">M-MALACARNE</div><div class="logo-sub">Transporte & Logística</div></div>
+      <div><div class="logo-main">M·MALACARNE</div><div class="logo-sub">Transporte &amp; Logística</div></div>
     </div>
-    <button class="menu-toggle" id="menuToggle">☰</button>
+    <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
     <ul class="nav-links" id="navLinks">
       <li><a href="#home">Início</a></li>
       <li><a href="#portal-mbrf">Portal MBRF</a></li>
       <li><a href="#sobre">Sobre</a></li>
       <li><a href="#video-institucional">Vídeo</a></li>
-      <li><a href="#infraestrutura">Infraestrutura</a></li>
-      <li><a href="#antt">Ferramentas ANTT</a></li>
-      <li><a href="#" id="navPostosBtn">Postos e Paradas</a></li>
+      <li><a href="#infraestrutura">Frota</a></li>
+      <li><a href="#antt">ANTT</a></li>
+      <li><a href="#" id="navPostosBtn">Postos</a></li>
       <li><a href="#vagas">Vagas</a></li>
       <li><a href="#contato">Contato</a></li>
-      <li><a href="#" id="privateAccessBtn" class="priv-btn">🔒 Acesso Privado</a></li>
+      <li><a href="#" id="privateAccessBtn" class="priv-btn">Acesso Privado</a></li>
     </ul>
   </nav>
 </header>
 
+<!-- HERO CINEMATOGRÁFICO -->
 <section id="home" class="hero">
+  <div class="hero-bg-layer" id="heroBgLayer"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-atmosphere"></div>
+  <div class="hero-beam"></div>
+  <div class="hero-beam hero-beam-2"></div>
   <div class="hero-grain" aria-hidden="true"></div>
+
   <div class="hero-inner">
-    <div class="hero-copy">
-      <p class="hero-eyebrow">Transporte Frigorífico · Desde 1982</p>
-      <h1>O frio que<br><em>alimenta</em><br>o Brasil.</h1>
-      <p class="hero-desc">Frota 100% frigorífica, parceiro exclusivo BRF, cobrindo Sul e Sudeste com 40 anos de excelência operacional.</p>
+    <p class="hero-route-pill">Transporte Frigorífico · Desde 1982</p>
+    <h1>
+      <span class="h1-line-a">O frio</span>
+      <span class="h1-line-b">que alimenta</span>
+      <span class="h1-line-c">o Brasil.</span>
+    </h1>
+    <div class="hero-sub-row">
+      <p class="hero-desc">Frota 100% frigorífica, parceiro exclusivo BRF. Sul e Sudeste com 40 anos de excelência operacional.</p>
       <div class="hero-ctas">
         <a href="#contato" class="cta-btn"><i class="fas fa-phone"></i> Fale Conosco</a>
-        <a href="#infraestrutura" class="cta-btn outline"><i class="fas fa-truck"></i> Nossa Frota</a>
-        <a href="#portal-mbrf" class="cta-btn outline"><i class="fas fa-truck-ramp-box"></i> Portal Transportador</a>
+        <a href="#infraestrutura" class="cta-btn ghost"><i class="fas fa-truck"></i> Nossa Frota</a>
       </div>
     </div>
-    <div class="hero-counter" aria-hidden="true">
-      <span class="hero-counter-num">40</span>
-      <span class="hero-counter-lbl">anos</span>
-    </div>
   </div>
-  <div class="hero-scroll" aria-hidden="true">
-    <span>rolar</span>
-    <div class="hero-scroll-line"></div>
+
+  <div class="hero-data-strip" aria-hidden="true">
+    <div class="hero-data-chip"><span class="val">40+</span> anos de operação</div>
+    <div class="hero-data-chip"><span class="val">−18°C</span> controle de temperatura</div>
+    <div class="hero-data-chip"><span class="val">BRF</span> parceiro exclusivo</div>
+  </div>
+
+  <div class="hero-scroll-cue" aria-hidden="true">
+    <span>ROLAR</span>
+    <div class="scroll-line"></div>
   </div>
 </section>
 
+<!-- STATS -->
 <div class="stats-banner">
-  <div class="stat-item"><div class="stat-num">40+</div><div class="stat-lbl">Anos de Experiência</div></div>
-  <div class="stat-item"><div class="stat-num">100%</div><div class="stat-lbl">Frota Frigorífica</div></div>
-  <div class="stat-item"><div class="stat-num">BRF</div><div class="stat-lbl">Parceiro Exclusivo</div></div>
-  <div class="stat-item"><div class="stat-num">Sul · SE</div><div class="stat-lbl">Cobertura Nacional</div></div>
+  <div class="stat-item ci-reveal">
+    <div class="stat-num" data-count-to="40" data-count-suffix="+">40+</div>
+    <div class="stat-lbl">Anos de Experiência</div>
+  </div>
+  <div class="stat-item ci-reveal ci-reveal-delay-1">
+    <div class="stat-num">100%</div>
+    <div class="stat-lbl">Frota Frigorífica</div>
+  </div>
+  <div class="stat-item ci-reveal ci-reveal-delay-2">
+    <div class="stat-num">BRF</div>
+    <div class="stat-lbl">Parceiro Exclusivo</div>
+  </div>
+  <div class="stat-item ci-reveal ci-reveal-delay-3">
+    <div class="stat-num">Sul · SE</div>
+    <div class="stat-lbl">Cobertura Nacional</div>
+  </div>
 </div>
 
-<div class="section" id="portal-mbrf" style="margin-top:2rem;">
-  <div style="max-width:900px;margin:0;border-radius:10px;overflow:hidden;box-shadow:0 16px 48px rgba(11,21,35,.12);background:var(--pub-night);border:1px solid rgba(201,162,39,.2);display:flex;align-items:center;gap:1.8rem;flex-wrap:wrap;padding:1.8rem 2rem;color:#fff">
-    <div style="width:56px;height:56px;border-radius:8px;background:rgba(201,162,39,.15);border:1px solid rgba(201,162,39,.3);display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:var(--pub-gold);flex:0 0 auto"><i class="fas fa-truck-ramp-box"></i></div>
-    <div style="flex:1;min-width:240px;text-align:left">
-      <div style="font-size:.68rem;font-weight:700;letter-spacing:.16em;color:var(--pub-ice);margin-bottom:.3rem">PARCEIRO BRF</div>
-      <h2 style="font-family:'Barlow Condensed',sans-serif;font-size:1.6rem;font-weight:800;letter-spacing:.01em;margin-bottom:.3rem">Portal do Transportador</h2>
-      <p style="font-size:.85rem;color:rgba(255,255,255,.55);line-height:1.5">Acesso direto ao portal da MBRF para transportadores parceiros.</p>
+<!-- PORTAL BRF -->
+<div class="pub-section" id="portal-mbrf">
+  <div class="portal-brf-wrap ci-reveal">
+    <div class="portal-brf-icon"><i class="fas fa-truck-ramp-box"></i></div>
+    <div class="portal-brf-body">
+      <div class="portal-brf-eyebrow">Parceiro BRF</div>
+      <h2>Portal do Transportador</h2>
+      <p>Acesso direto ao portal da MBRF para transportadores parceiros da rede BRF.</p>
     </div>
     <a href="https://portaldotransportador.mbrf.com/" target="_blank" rel="noopener noreferrer" class="cta-btn"><i class="fas fa-arrow-up-right-from-square"></i> Acessar portal</a>
   </div>
 </div>
 
-<div class="section" id="sobre" style="margin-top:1rem;">
-  <h2 class="section-title">Nossa História<span class="gold-line"></span></h2>
-  <div class="values-grid">
-    <div class="value-card">
-      <span class="value-year">1982</span>
-      <div class="value-icon"><i class="fas fa-truck-front" style="color:#c9a227"></i></div>
-      <h3>Tradição Familiar</h3>
-      <p>Fundada em 1982, a M. Malacarne é uma empresa familiar com décadas de tradição e respeito no setor de transportes refrigerados.</p>
-    </div>
-    <div class="value-card">
-      <span class="value-year">−18°C</span>
-      <div class="value-icon"><i class="fas fa-snowflake" style="color:#7ab3d0"></i></div>
-      <h3>Especialistas em Frio</h3>
-      <p>Frota 100% frigorífica dedicada ao transporte de produtos alimentícios com rigoroso controle de temperatura.</p>
-    </div>
-    <div class="value-card">
-      <span class="value-year">BRF</span>
-      <div class="value-icon"><i class="fas fa-handshake" style="color:#c9a227"></i></div>
-      <h3>Parceiro Exclusivo BRF</h3>
-      <p>Parceiro exclusivo da BRF, uma das maiores empresas de alimentos do mundo, garantindo excelência operacional.</p>
-    </div>
-    <div class="value-card">
-      <span class="value-year">BR</span>
-      <div class="value-icon"><i class="fas fa-route" style="color:#7ab3d0"></i></div>
-      <h3>Cobertura Nacional</h3>
-      <p>Rotas cobrindo Sul, Sudeste e Sudoeste do Brasil com pontualidade e segurança garantidas em cada entrega.</p>
+<!-- NOSSA HISTÓRIA com parallax -->
+<section class="history-section" id="sobre">
+  <div class="history-section-inner">
+    <h2 class="section-title light ci-reveal">Nossa História<span class="gold-line"></span></h2>
+    <div class="history-grid">
+      <div class="history-card ci-reveal">
+        <div class="history-year">1982</div>
+        <div class="history-icon"><i class="fas fa-truck-front" style="color:var(--pub-gold)"></i></div>
+        <h3>Tradição Familiar</h3>
+        <p>Fundada em 1982, a M. Malacarne é uma empresa familiar com décadas de tradição no transporte refrigerado do Sul do Brasil.</p>
+      </div>
+      <div class="history-card ci-reveal ci-reveal-delay-1">
+        <div class="history-year">−18°</div>
+        <div class="history-icon"><i class="fas fa-snowflake" style="color:var(--pub-ice)"></i></div>
+        <h3>Especialistas em Frio</h3>
+        <p>Frota 100% frigorífica com rigoroso controle de temperatura em toda cadeia logística — da origem ao destino final.</p>
+      </div>
+      <div class="history-card ci-reveal ci-reveal-delay-2">
+        <div class="history-year">BRF</div>
+        <div class="history-icon"><i class="fas fa-handshake" style="color:var(--pub-gold)"></i></div>
+        <h3>Parceiro Exclusivo BRF</h3>
+        <p>Parceiro operacional da BRF — uma das maiores empresas de alimentos do mundo — com excelência comprovada em cada entrega.</p>
+      </div>
+      <div class="history-card ci-reveal ci-reveal-delay-3">
+        <div class="history-year">BR</div>
+        <div class="history-icon"><i class="fas fa-route" style="color:var(--pub-ice)"></i></div>
+        <h3>Cobertura Nacional</h3>
+        <p>Rotas Sul, Sudeste e Sudoeste com pontualidade e segurança certificadas. Cada quilômetro rodado é garantia de qualidade.</p>
+      </div>
     </div>
   </div>
-</div>
+</section>
 
-<div class="section" id="video-institucional">
-  <h2 class="section-title">Conheça a M. Malacarne<span class="gold-line"></span></h2>
-  <div class="video-showcase">
-    <div class="video-frame">
+<!-- VÍDEO INSTITUCIONAL -->
+<section class="video-section" id="video-institucional">
+  <div class="video-section-inner">
+    <h2 class="section-title light ci-reveal">Conheça a M. Malacarne<span class="gold-line"></span></h2>
+    <div class="video-frame-wrap ci-reveal ci-reveal-delay-1">
       <video controls preload="metadata" playsinline>
         <source src="video.mp4" type="video/mp4">
         Seu navegador não suporta a exibição de vídeo.
       </video>
     </div>
-    <p class="video-caption">Um pouco da nossa história, estrutura e operação — 40 anos movendo o Brasil com excelência em transporte frigorífico.</p>
+    <p class="video-caption ci-reveal ci-reveal-delay-2">40 anos movendo o Brasil. Nossa história, estrutura e operação — contada em imagens.</p>
   </div>
-</div>
+</section>
 
-<div class="section" id="infraestrutura">
-  <h2 class="section-title">Nossa Infraestrutura<span class="gold-line"></span></h2>
-  <div class="gallery-grid">
-    <div class="gallery-item"><img src="IMG-20220924-WA0022 (1).jpg" alt="Frota Scania" onerror="this.style.background='#eee'"></div>
-    <div class="gallery-item"><img src="img87.jpg" alt="Sede" onerror="this.style.background='#eee'"></div>
-    <div class="gallery-item"><img src="img89.jpg" alt="Pátio" onerror="this.style.background='#eee'"></div>
-    <div class="gallery-item"><img src="7.jpg" alt="Frota" onerror="this.style.background='#eee'"></div>
-    <div class="gallery-item"><img src="2.jpg" alt="Galpão" onerror="this.style.background='#eee'"></div>
-    <div class="gallery-item"><img src="IMG-20230213-WA0005.jpg" alt="Caminhões Scania" onerror="this.style.background='#eee'"></div>
-    <div class="gallery-item"><img src="IMG-20230213-WA0006.jpg" alt="Sede — Vista Exterior" onerror="this.style.background='#eee'"></div>
-    <div class="gallery-item"><img src="IMG-20230213-WA0009.jpg" alt="Pátio — Vista Aérea" onerror="this.style.background='#eee'"></div>
-    <div class="gallery-item"><img src="IMG-20230213-WA0015.jpg" alt="Painel Solar" onerror="this.style.background='#eee'"></div>
-    <div class="gallery-item"><img src="IMG-20230213-WA0017.jpg" alt="Instalações" onerror="this.style.background='#eee'"></div>
-
+<!-- GALERIA COM PARALLAX -->
+<section class="gallery-section" id="infraestrutura">
+  <div class="gallery-section .section-title-wrap">
+    <div style="padding:5.5rem 5% 3rem;max-width:1380px;margin:0 auto;">
+      <h2 class="section-title light ci-reveal">Nossa Infraestrutura<span class="gold-line"></span></h2>
+    </div>
   </div>
-</div>
+  <div class="gallery-parallax-grid">
+    <div class="gp-item">
+      <img class="gp-img" src="IMG-20220924-WA0022 (1).jpg" alt="Frota Scania" onerror="this.parentElement.style.background='#0a1628'">
+      <span class="gp-caption">Frota Scania</span>
+    </div>
+    <div class="gp-item">
+      <img class="gp-img" src="img87.jpg" alt="Sede" onerror="this.parentElement.style.background='#0a1628'">
+      <span class="gp-caption">Sede Concórdia</span>
+    </div>
+    <div class="gp-item">
+      <img class="gp-img" src="img89.jpg" alt="Pátio" onerror="this.parentElement.style.background='#0a1628'">
+      <span class="gp-caption">Pátio Operacional</span>
+    </div>
+    <div class="gp-item">
+      <img class="gp-img" src="7.jpg" alt="Frota" onerror="this.parentElement.style.background='#0a1628'">
+      <span class="gp-caption">Frota Refrigerada</span>
+    </div>
+    <div class="gp-item">
+      <img class="gp-img" src="2.jpg" alt="Galpão" onerror="this.parentElement.style.background='#0a1628'">
+      <span class="gp-caption">Instalações</span>
+    </div>
+  </div>
+</section>
 
+<!-- ANTT -->
 <div id="antt" class="antt-section">
-  <div style="max-width:1340px;margin:0 auto;">
-  <h2 class="section-title" style="text-align:left;color:#fff">Ferramentas Oficiais<span class="gold-line" style="background:var(--pub-ice)"></span></h2>
-  <p style="color:rgba(255,255,255,.45);max-width:500px;margin:0 0 0;font-size:.88rem">ANTT, SEFAZ, DETRAN e ferramentas de rastreamento para operação diária.</p>
-  <div class="antt-cards">
-    <a href="https://calculadorafrete.antt.gov.br/" target="_blank" rel="noopener noreferrer" class="antt-card"><i class="fas fa-calculator"></i><div><div style="font-weight:700">Calculadora de Frete</div><div style="font-size:.78rem;color:var(--text-lt)">Tabela ANTT Oficial</div></div></a>
-    <a href="https://consultapublica.antt.gov.br/Site/ConsultaRNTRC.aspx" target="_blank" rel="noopener noreferrer" class="antt-card"><i class="fas fa-id-card"></i><div><div style="font-weight:700">Consulta RNTRC</div><div style="font-size:.78rem;color:var(--text-lt)">Registro Nacional</div></div></a>
-    <a href="https://www.antt.gov.br/" target="_blank" rel="noopener noreferrer" class="antt-card"><i class="fas fa-shield-alt"></i><div><div style="font-weight:700">Portal ANTT</div><div style="font-size:.78rem;color:var(--text-lt)">Site Oficial</div></div></a>
-    <a href="https://www.nfe.fazenda.gov.br/portal/consultaRecaptcha.aspx?tipoConsulta=completa" target="_blank" rel="noopener noreferrer" class="antt-card"><i class="fas fa-file-invoice"></i><div><div style="font-weight:700">Consulta NF-e</div><div style="font-size:.78rem;color:var(--text-lt)">Situação na SEFAZ</div></div></a>
-    <a href="https://detran.sc.gov.br/" target="_blank" rel="noopener noreferrer" class="antt-card"><i class="fas fa-car"></i><div><div style="font-weight:700">DETRAN SC</div><div style="font-size:.78rem;color:var(--text-lt)">CNH, Multas e Veículos</div></div></a>
-    <a href="https://www.newrastreamentoonline.com.br/new/login" target="_blank" rel="noopener noreferrer" class="antt-card"><i class="fas fa-satellite-dish"></i><div><div style="font-weight:700">Rastreamento Online</div><div style="font-size:.78rem;color:var(--text-lt)">Monitoramento da Frota</div></div></a>
-    <a href="https://maps.app.goo.gl/mgfqFUj6xszixUXJ7?g_st=aw" target="_blank" rel="noopener noreferrer" class="antt-card"><i class="fas fa-map-marker-alt"></i><div><div style="font-weight:700">Localização</div><div style="font-size:.78rem;color:var(--text-lt)">Abrir no Google Maps</div></div></a>
-    <a href="https://maps.app.goo.gl/riRFfRPhEpAFTLA49?g_st=aw" target="_blank" rel="noopener noreferrer" class="antt-card"><i class="fas fa-square-parking"></i><div><div style="font-weight:700">Estacionamento Regis Renovo Park</div><div style="font-size:.78rem;color:var(--text-lt)">Próximo a Embu das Artes</div></div></a>
-    <a href="https://web.movtrans.com.br/" target="_blank" rel="noopener noreferrer" class="antt-card"><i class="fas fa-truck-fast"></i><div><div style="font-weight:700">MovTrans</div><div style="font-size:.78rem;color:var(--text-lt)">Sistema Web de Fretes</div></div></a>
+  <div class="antt-section-inner">
+    <h2 class="section-title light ci-reveal">Ferramentas Oficiais<span class="gold-line"></span></h2>
+    <p class="ci-reveal" style="color:rgba(255,255,255,.3);max-width:480px;font-size:.86rem;line-height:1.7;margin-bottom:0">ANTT, SEFAZ, DETRAN e rastreamento para operação diária.</p>
+    <div class="antt-cards">
+      <a href="https://calculadorafrete.antt.gov.br/" target="_blank" rel="noopener noreferrer" class="antt-card ci-reveal"><i class="fas fa-calculator"></i><div><div>Calculadora de Frete</div><div>Tabela ANTT Oficial</div></div></a>
+      <a href="https://consultapublica.antt.gov.br/Site/ConsultaRNTRC.aspx" target="_blank" rel="noopener noreferrer" class="antt-card ci-reveal ci-reveal-delay-1"><i class="fas fa-id-card"></i><div><div>Consulta RNTRC</div><div>Registro Nacional</div></div></a>
+      <a href="https://www.antt.gov.br/" target="_blank" rel="noopener noreferrer" class="antt-card ci-reveal ci-reveal-delay-1"><i class="fas fa-shield-alt"></i><div><div>Portal ANTT</div><div>Site Oficial</div></div></a>
+      <a href="https://www.nfe.fazenda.gov.br/portal/consultaRecaptcha.aspx?tipoConsulta=completa" target="_blank" rel="noopener noreferrer" class="antt-card ci-reveal ci-reveal-delay-2"><i class="fas fa-file-invoice"></i><div><div>Consulta NF-e</div><div>Situação na SEFAZ</div></div></a>
+      <a href="https://detran.sc.gov.br/" target="_blank" rel="noopener noreferrer" class="antt-card ci-reveal ci-reveal-delay-2"><i class="fas fa-car"></i><div><div>DETRAN SC</div><div>CNH, Multas e Veículos</div></div></a>
+      <a href="https://www.newrastreamentoonline.com.br/new/login" target="_blank" rel="noopener noreferrer" class="antt-card ci-reveal ci-reveal-delay-3"><i class="fas fa-satellite-dish"></i><div><div>Rastreamento Online</div><div>Monitoramento da Frota</div></div></a>
+      <a href="https://maps.app.goo.gl/mgfqFUj6xszixUXJ7?g_st=aw" target="_blank" rel="noopener noreferrer" class="antt-card ci-reveal ci-reveal-delay-3"><i class="fas fa-map-marker-alt"></i><div><div>Localização</div><div>Abrir no Google Maps</div></div></a>
+      <a href="https://maps.app.goo.gl/riRFfRPhEpAFTLA49?g_st=aw" target="_blank" rel="noopener noreferrer" class="antt-card ci-reveal ci-reveal-delay-3"><i class="fas fa-square-parking"></i><div><div>Estacionamento Regis</div><div>Próximo a Embu das Artes</div></div></a>
+      <a href="https://web.movtrans.com.br/" target="_blank" rel="noopener noreferrer" class="antt-card ci-reveal ci-reveal-delay-3"><i class="fas fa-truck-fast"></i><div><div>MovTrans</div><div>Sistema Web de Fretes</div></div></a>
+    </div>
   </div>
-  </div><!-- /max-width wrapper -->
 </div>
 
-<div id="postos" class="section" style="margin-top:1rem;">
-  <h2 class="section-title">Guia de Postos e Paradas<span class="gold-line"></span></h2>
-  <p style="color:#5a6878;max-width:520px;margin:0 0 1.8rem;font-size:.9rem;">Mapa interativo com a rede de postos credenciados Aurora e pontos de parada — abastecimento, descanso e apoio ao longo das rotas</p>
-  <div style="max-width:580px;margin:0;background:#fff;border-radius:10px;box-shadow:0 4px 20px rgba(11,21,35,.08);padding:1.8rem 2rem;text-align:center;border:1px solid rgba(11,21,35,.07)">
-    <div style="font-size:2.6rem;margin-bottom:.4rem">⛽</div>
-    <h3 style="margin-bottom:.4rem">Rede Aurora — Postos Credenciados</h3>
-    <p style="color:var(--text-lt);font-size:.85rem;margin-bottom:1rem">Localize postos, filtre por serviços e monte seu roteiro direto no mapa</p>
-    <a href="#" id="btnAbrirMapaPostos" class="cta-btn"><i class="fas fa-map-location-dot"></i> Abrir Mapa Interativo</a>
+<!-- POSTOS E PARADAS -->
+<div id="postos" class="postos-section">
+  <div class="postos-section-inner">
+    <h2 class="section-title light ci-reveal" style="padding-bottom:0">Postos e Paradas<span class="gold-line"></span></h2>
+    <div class="postos-card ci-reveal ci-reveal-delay-1" style="margin-top:2.5rem">
+      <span class="postos-icon">⛽</span>
+      <h3>Rede Aurora — Postos Credenciados</h3>
+      <p>Mapa interativo com postos credenciados e pontos de parada ao longo das rotas — abastecimento, descanso e apoio.</p>
+      <a href="#" id="btnAbrirMapaPostos" class="cta-btn"><i class="fas fa-map-location-dot"></i> Abrir Mapa Interativo</a>
+    </div>
   </div>
 </div>
 
 <div id="mapaPostosOverlay" style="display:none;position:fixed;inset:0;z-index:5000;background:#000;flex-direction:column;">
-  <div style="display:flex;align-items:center;justify-content:space-between;background:#1a1a1a;padding:.6rem 1rem;flex:none;">
+  <div style="display:flex;align-items:center;justify-content:space-between;background:#0a1628;padding:.6rem 1rem;flex:none;border-bottom:1px solid rgba(201,162,39,.15);">
     <span style="color:#fff;font-weight:700;font-size:.9rem"><i class="fas fa-map-location-dot"></i> Guia de Postos e Paradas — Aurora</span>
-    <button id="btnFecharMapaPostos" style="background:var(--accent);border:none;color:#111;font-weight:700;padding:.4rem .9rem;border-radius:8px;cursor:pointer;font-size:.85rem"><i class="fas fa-times"></i> Fechar</button>
+    <button id="btnFecharMapaPostos" style="background:var(--pub-gold);border:none;color:#000;font-weight:800;padding:.4rem .9rem;border-radius:2px;cursor:pointer;font-size:.82rem"><i class="fas fa-times"></i> Fechar</button>
   </div>
   <iframe id="mapaPostosIframe" style="flex:1 1 auto;border:0;width:100%;height:100%;background:#fff"></iframe>
 </div>
 
+<!-- VAGAS -->
 <div id="vagas" class="vagas-section">
-  <div style="max-width:1340px;margin:0 auto;">
-  <h2 class="section-title">Faça Parte do Time<span class="gold-line"></span></h2>
-  <div class="job-card">
-    <div class="job-card-body">
-      <h3>Motorista de Carreta Frigorífica</h3>
-      <div class="job-card-location"><i class="fas fa-map-marker-alt"></i> Concórdia, SC — Contratação Imediata</div>
-      <div class="job-tags">
-        <span class="job-tag">CLT</span>
-        <span class="job-tag">13º Salário</span>
-        <span class="job-tag">Bônus de Média</span>
-        <span class="job-tag">Férias</span>
-        <span class="job-tag">CNH-E</span>
+  <div class="vagas-section-inner">
+    <h2 class="section-title light ci-reveal">Faça Parte do Time<span class="gold-line"></span></h2>
+    <div class="job-card ci-reveal ci-reveal-delay-1">
+      <div class="job-card-body">
+        <h3>Motorista de Carreta Frigorífica</h3>
+        <div class="job-card-location"><i class="fas fa-map-marker-alt"></i> Concórdia, SC — Contratação Imediata</div>
+        <div class="job-tags">
+          <span class="job-tag">CLT</span>
+          <span class="job-tag">13º Salário</span>
+          <span class="job-tag">Bônus de Média</span>
+          <span class="job-tag">Férias</span>
+          <span class="job-tag">CNH-E</span>
+        </div>
+        <div class="job-reqs">
+          <ul style="padding-left:1.2rem;margin:0">
+            <li>Experiência comprovada na função</li>
+            <li>CNH Categoria E vigente</li>
+            <li>Conhecimento de rotas Sul / Sudeste / Sudoeste</li>
+            <li>Experiência em transporte frigorífico</li>
+          </ul>
+        </div>
       </div>
-      <div class="job-reqs">
-        <ul style="padding-left:1.2rem;margin:0">
-          <li>Experiência comprovada na função</li>
-          <li>CNH Categoria E vigente</li>
-          <li>Conhecimento de rotas Sul / Sudeste / Sudoeste</li>
-          <li>Experiência em transporte frigorífico</li>
-        </ul>
+      <div class="job-card-cta">
+        <a href="https://wa.me/5549999675448?text=Olá, gostaria de me candidatar à vaga de Motorista de Carreta" target="_blank" rel="noopener noreferrer" class="cta-btn"><i class="fab fa-whatsapp"></i> Candidatar-se</a>
+        <span style="font-size:.7rem;color:rgba(255,255,255,.22)">via WhatsApp</span>
       </div>
     </div>
-    <div class="job-card-cta">
-      <a href="https://wa.me/5549999675448?text=Olá, gostaria de me candidatar à vaga de Motorista de Carreta" target="_blank" rel="noopener noreferrer" class="cta-btn"><i class="fab fa-whatsapp"></i> Candidatar-se</a>
-      <span style="font-size:.72rem;color:rgba(255,255,255,.3);text-align:right;">via WhatsApp</span>
-    </div>
-  </div>
   </div>
 </div>
 
-<div id="contato" class="section">
-  <h2 class="section-title">Entre em Contato<span class="gold-line"></span></h2>
-  <div class="contact-grid">
-    <div style="display:flex;flex-direction:column;gap:1rem;">
-      <div class="contact-info-card">
-        <h3><i class="fas fa-map-marker-alt" style="color:var(--pub-gold)"></i> Localização</h3>
-        <p>Rua Domingos Casagrande, 25</p>
-        <p>Bairro Arvoredo — Concórdia, SC</p>
+<!-- CONTATO -->
+<div id="contato" class="contact-section">
+  <div class="contact-section-inner">
+    <h2 class="section-title light ci-reveal">Entre em Contato<span class="gold-line"></span></h2>
+    <div class="contact-grid">
+      <div style="display:flex;flex-direction:column;gap:.8rem;">
+        <div class="contact-info-card ci-reveal">
+          <h3><i class="fas fa-map-marker-alt" style="color:var(--pub-gold)"></i> Localização</h3>
+          <p>Rua Domingos Casagrande, 25</p>
+          <p>Bairro Arvoredo — Concórdia, SC</p>
+        </div>
+        <div class="contact-info-card ci-reveal ci-reveal-delay-1">
+          <h3><i class="fas fa-phone" style="color:var(--pub-gold)"></i> Telefones</h3>
+          <p>Tel: (49) 3442-2325</p>
+          <p>WhatsApp: (49) 99967-5448</p>
+        </div>
+        <div class="contact-info-card ci-reveal ci-reveal-delay-2">
+          <h3><i class="fas fa-envelope" style="color:var(--pub-gold)"></i> E-mail</h3>
+          <p>financeirommalacarne@gmail.com</p>
+          <p>dmalacarne@netcon.com.br</p>
+        </div>
       </div>
-      <div class="contact-info-card">
-        <h3><i class="fas fa-phone" style="color:var(--pub-gold)"></i> Telefones</h3>
-        <p>Tel: (49) 3442-2325</p>
-        <p>WhatsApp: (49) 99967-5448</p>
+      <div class="ci-reveal ci-reveal-delay-1">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3535.234!2d-52.027!3d-27.234!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjfCsDE4JzAyLjQiUyA1MsKwMDEnMzcuMiJX!5e0!3m2!1spt-BR!2sbr!4v1234567890" width="100%" height="100%" style="border:0;border-radius:3px;min-height:380px;filter:grayscale(80%) invert(90%) hue-rotate(180deg);" allowfullscreen loading="lazy"></iframe>
       </div>
-      <div class="contact-info-card">
-        <h3><i class="fas fa-envelope" style="color:var(--pub-gold)"></i> E-mail</h3>
-        <p>financeirommalacarne@gmail.com</p>
-        <p>dmalacarne@netcon.com.br</p>
-      </div>
-    </div>
-    <div>
-      <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3535.234!2d-52.027!3d-27.234!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjfCsDE4JzAyLjQiUyA1MsKwMDEnMzcuMiJX!5e0!3m2!1spt-BR!2sbr!4v1234567890" width="100%" height="100%" style="border:0;border-radius:10px;min-height:340px;" allowfullscreen loading="lazy"></iframe>
     </div>
   </div>
 </div>
 
 <footer>
-  <p style="margin-bottom:.4rem">© 2025 <strong style="color:rgba(255,255,255,.6)">M. Malacarne Transporte e Logística Ltda EPP</strong></p>
+  <p style="margin-bottom:.4rem">© 2025 <strong>M. Malacarne Transporte e Logística Ltda EPP</strong></p>
   <p>Rua Domingos Casagrande, 25 — Concórdia, SC &nbsp;·&nbsp; <a href="tel:4934422325">(49) 3442-2325</a> &nbsp;·&nbsp; <a href="mailto:financeirommalacarne@gmail.com">financeirommalacarne@gmail.com</a></p>
 </footer>
 
@@ -4256,6 +4394,84 @@ async function fetchCSV(url) {
   throw lastErr || new Error('Falha ao carregar dados');
 }
 
+
+// ═══════════════════════════════════════════════════════════
+// PARALLAX + SCROLL REVEALS — SITE PÚBLICO
+// ═══════════════════════════════════════════════════════════
+(function(){
+  // --- Parallax hero background ---
+  const heroBg = document.getElementById('heroBgLayer');
+  const histBg = document.querySelector('.history-section');
+  const vagasBg = document.querySelector('.vagas-section');
+
+  // --- Parallax imagens da galeria ---
+  const gpImgs = document.querySelectorAll('.gp-img');
+  const gpItems = document.querySelectorAll('.gp-item');
+
+  // --- IntersectionObserver para reveal ---
+  const revealEls = document.querySelectorAll('.ci-reveal');
+  const revealObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); }
+    });
+  }, { threshold: 0.12 });
+  revealEls.forEach(el => revealObs.observe(el));
+
+  // --- Scroll handler (thottle via RAF) ---
+  let ticking = false;
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      const sy = window.scrollY;
+
+      // hero parallax
+      if (heroBg) heroBg.style.transform = 'translateY(' + (sy * 0.45) + 'px)';
+
+      // história parallax
+      if (histBg) {
+        const r = histBg.getBoundingClientRect();
+        const mid = r.top + r.height / 2 - window.innerHeight / 2;
+        histBg.style.setProperty('--parallax-bg', (mid * 0.18) + 'px');
+      }
+
+      // vagas parallax
+      if (vagasBg) {
+        const r = vagasBg.getBoundingClientRect();
+        const mid = r.top + r.height / 2 - window.innerHeight / 2;
+        vagasBg.style.setProperty('--parallax-vagas', (mid * 0.15) + 'px');
+      }
+
+      // galeria: cada imagem se move em velocidade diferente
+      gpItems.forEach((item, i) => {
+        const r = item.getBoundingClientRect();
+        if (r.bottom < -100 || r.top > window.innerHeight + 100) { ticking = false; return; }
+        const speed = 0.12 + (i % 3) * 0.06;
+        const center = r.top + r.height / 2 - window.innerHeight / 2;
+        const img = item.querySelector('.gp-img');
+        if (img) img.style.transform = 'translateY(' + (center * speed) + 'px)';
+      });
+
+      ticking = false;
+    });
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll(); // inicializar
+
+  // --- nav smooth scroll ---
+  document.querySelectorAll('.nav-links a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const target = document.getElementById(a.getAttribute('href').slice(1));
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('navLinks').classList.remove('open');
+      }
+    });
+  });
+})();
+
 // ═══════════════════════════════════════════════════════════
 // NAV PÚBLICO
 // ═══════════════════════════════════════════════════════════
@@ -5036,7 +5252,9 @@ function slideBuildSlides(){
     { title: 'Gestão à Vista', type: 'gv-capa', conjuntos: conjuntos.length, totalVencidos, totalProximos },
     // 1) Previsão do Tempo — Concórdia SC (semana)
     { title: '<i class="fas fa-cloud-sun"></i> Previsão do Tempo — Concórdia/SC', type: 'weather-concordia' },
-    // 1b) Painel Executivo (infográfico): números-chave + barras por categoria
+    // 1b) Recados & Lembretes — logo após a previsão
+    { title: '<i class="fas fa-bell"></i> Recados &amp; Lembretes', type: 'recados-lembretes' },
+    // 1c) Painel Executivo (infográfico): números-chave + barras por categoria
     { title: '<i class="fas fa-chart-pie"></i> Painel Executivo — Visão do Dia', type: 'exec-painel',
       vencResumo, totalVencidos, totalProximos, conjuntos: conjuntos.length },
     // 2) Baterias — só vencidas e próximas 30 dias
@@ -5072,8 +5290,6 @@ function slideBuildSlides(){
     { title: '<i class="fas fa-truck"></i> Ranking de Médias — Cavalos (km/L)', type: 'gv-medias-cavalo' },
     { title: '<i class="fas fa-trailer"></i> Ranking de Médias — Carretas (L/h)', type: 'gv-medias-carreta' },
     { title: '<i class="fas fa-user-clock"></i> RH — Turnover (12 meses)', type: 'gv-turnover' },
-    // Slide Recados & Lembretes — calendário + lista da planilha
-    { title: '<i class="fas fa-bell"></i> Recados &amp; Lembretes', type: 'recados-lembretes' },
   ];
 }
 
@@ -5153,24 +5369,41 @@ async function gvFetchNoticias() {
   const now = Date.now();
   if (_gvNoticiasCache && (now - _gvNoticiasCacheTs) < 20*60*1000) return _gvNoticiasCache;
   const FEEDS = [
-    { url:'https://agenciabrasil.ebc.com.br/rss/politica/feed.xml', cat:'Política', cor:'#7c3aed' },
-    { url:'https://agenciabrasil.ebc.com.br/rss/economia/feed.xml', cat:'Economia', cor:'#0891b2' },
+    // Google News em português — tópicos relevantes
+    { url:'https://news.google.com/rss/search?q=transporte+logística+caminhão+brasil&hl=pt-BR&gl=BR&ceid=BR:pt-419', cat:'🚛 Transporte', cor:'#b45309' },
+    { url:'https://news.google.com/rss/search?q=economia+brasil+combustível+diesel&hl=pt-BR&gl=BR&ceid=BR:pt-419', cat:'Economia', cor:'#0891b2' },
+    { url:'https://news.google.com/rss/headlines/section/geo/BR?hl=pt-BR&gl=BR&ceid=BR:pt-419', cat:'Brasil', cor:'#7c3aed' },
   ];
   const parser = new DOMParser();
   const todas = [];
   for (const feed of FEEDS) {
     let ok = false;
-    for (const makeProxy of CORS_PROXIES) {
+    // Tenta allorigins /get (retorna JSON com contents), depois /raw, depois demais proxies
+    const proxyAttempts = [
+      `https://api.allorigins.win/get?url=${encodeURIComponent(feed.url)}`,
+      ...CORS_PROXIES.map(fn => fn(feed.url)),
+    ];
+    for (const proxyUrl of proxyAttempts) {
       if (ok) break;
       try {
-        const r = await fetch(makeProxy(feed.url), {signal: AbortSignal.timeout(6000)});
+        const r = await fetch(proxyUrl, {signal: AbortSignal.timeout(7000)});
         if (!r.ok) continue;
-        const txt = await r.text();
+        let txt;
+        // allorigins /get retorna JSON { contents, status }
+        if (proxyUrl.includes('allorigins.win/get')) {
+          const j = await r.json().catch(() => null);
+          if (!j || !j.contents) continue;
+          txt = j.contents;
+        } else {
+          txt = await r.text();
+        }
         const doc = parser.parseFromString(txt, 'application/xml');
-        const items = [...doc.querySelectorAll('item')].slice(0,3);
+        const items = [...doc.querySelectorAll('item')].slice(0,4);
         if (!items.length) continue;
         items.forEach(it => {
-          const title = it.querySelector('title')?.textContent?.trim() || '';
+          let title = it.querySelector('title')?.textContent?.trim() || '';
+          // Google News coloca " - Fonte" no final — remove
+          title = title.replace(/\s*-\s*[^-]{3,40}$/, '').trim();
           const link  = it.querySelector('link')?.textContent?.trim() || '#';
           const pubDate = it.querySelector('pubDate')?.textContent?.trim() || '';
           if (title) todas.push({ title, link, pubDate, cat: feed.cat, cor: feed.cor });
@@ -5179,24 +5412,30 @@ async function gvFetchNoticias() {
       } catch(e) {}
     }
   }
-  // Palavras-chave transporte/logística aplicadas como destaque extra
-  const TRANSP = ['caminhão','caminhoneiro','frete','logística','transporte','rodovia','antt','carga','combustível','diesel','porto','modal'];
-  todas.forEach(n => { if (TRANSP.some(k => n.title.toLowerCase().includes(k))) n.cat = '🚛 Transporte'; });
-  _gvNoticiasCache = todas;
+  // Deduplica por título
+  const seen = new Set();
+  const unicas = todas.filter(n => { const k = n.title.toLowerCase().slice(0,40); if(seen.has(k)) return false; seen.add(k); return true; });
+  _gvNoticiasCache = unicas;
   _gvNoticiasCacheTs = now;
-  return todas;
+  return unicas;
 }
 function gvNoticiasHTML(noticias) {
-  if (!noticias || !noticias.length) return '<div style="font-size:.8rem;color:var(--text-lt);padding:.5rem">Notícias indisponíveis no momento.</div>';
-  const COR = { 'Política':'#7c3aed', 'Economia':'#0891b2', '🚛 Transporte':'#b45309' };
-  const html = noticias.slice(0,6).map(n => {
+  if (!noticias || !noticias.length) return `<div style="display:flex;align-items:center;gap:.6rem;padding:1rem;background:#f8fafc;border-radius:12px;border:1px dashed #cbd5e1;color:#64748b;font-size:.82rem"><i class="fas fa-satellite-dish" style="font-size:1.1rem;color:#94a3b8"></i> Notícias indisponíveis no momento. Verifique a conexão.</div>`;
+  const COR = { 'Política':'#7c3aed', 'Economia':'#0891b2', '🚛 Transporte':'#b45309', 'Brasil':'#059669' };
+  const html = noticias.slice(0,7).map(n => {
     const c = COR[n.cat] || '#475569';
-    return `<div style="display:flex;align-items:flex-start;gap:.6rem;padding:.5rem .7rem;border-radius:10px;background:#f8fafc;border:1px solid rgba(0,0,0,.07);text-align:left">
-      <span style="flex:none;padding:.18rem .55rem;border-radius:20px;font-size:.62rem;font-weight:700;background:${c}20;color:${c};text-transform:uppercase;letter-spacing:.5px;margin-top:.1rem">${n.cat}</span>
-      <span style="font-size:.8rem;color:#2c2c2c;line-height:1.4">${n.title}</span>
+    const data = n.pubDate ? (() => { try { const d=new Date(n.pubDate); return isNaN(d)?'':d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); } catch(e){return '';} })() : '';
+    return `<div style="display:flex;align-items:flex-start;gap:.7rem;padding:.65rem .85rem;border-radius:12px;background:#fff;border:1px solid rgba(0,0,0,.08);border-left:4px solid ${c};text-align:left;box-shadow:0 2px 8px rgba(30,42,58,.04)">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.2rem">
+          <span style="flex:none;padding:.12rem .48rem;border-radius:20px;font-size:.62rem;font-weight:700;background:${c}18;color:${c};text-transform:uppercase;letter-spacing:.5px">${n.cat}</span>
+          ${data ? `<span style="font-size:.6rem;color:#94a3b8">${data}</span>` : ''}
+        </div>
+        <div style="font-size:.84rem;color:#1e2a3a;line-height:1.45;font-weight:500">${n.title}</div>
+      </div>
     </div>`;
   }).join('');
-  return `<div style="display:flex;flex-direction:column;gap:.4rem;width:100%;max-width:880px">${html}</div>`;
+  return `<div style="display:flex;flex-direction:column;gap:.45rem;width:100%">${html}</div>`;
 }
 
 // ── Feriados nacionais do mês (fixos + móveis calculados a partir da Páscoa) ──
@@ -5292,20 +5531,29 @@ async function slideRenderWeather(body, s, slides, idx) {
       <div style="font-size:.65rem;color:var(--text-lt)"><i class="fas fa-wind"></i> ${d.vento} km/h</div>
     </div>`).join('')}
   </div>
-  ${feriadosMesHTML()}
   ${diaComemoravioHojeHTML()}
-  <div id="gv-noticias-slot" style="margin-top:.8rem;max-width:1200px;width:100%">
-    <div style="font-family:'Poppins',sans-serif;font-weight:600;font-size:.78rem;color:var(--accent-dk);text-transform:uppercase;letter-spacing:1px;margin-bottom:.4rem"><i class="fas fa-newspaper"></i> Notícias — Política · Transporte · Logística</div>
-    <div id="gv-noticias-body" style="font-size:.8rem;color:var(--text-lt)"><i class="fas fa-spinner fa-spin"></i> Carregando notícias...</div>
+  <div style="display:flex;gap:1.2rem;max-width:1200px;width:100%;margin-top:.8rem;flex-wrap:wrap;align-items:flex-start">
+    <!-- Coluna Feriados -->
+    <div style="flex:1;min-width:280px">
+      ${feriadosMesHTML()}
+    </div>
+    <!-- Coluna Notícias -->
+    <div style="flex:2;min-width:340px">
+      <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.82rem;color:var(--accent-dk);text-transform:uppercase;letter-spacing:1px;margin-bottom:.5rem"><i class="fas fa-newspaper"></i> Notícias — Política · Transporte · Logística</div>
+      <div id="gv-noticias-body" style="font-size:.82rem;color:var(--text-lt)"><i class="fas fa-spinner fa-spin"></i> Carregando notícias...</div>
+    </div>
   </div>
-  <div style="font-size:.68rem;color:var(--text-lt);margin-top:.9rem">Fonte: Open-Meteo · Concórdia — SC (−27.23 / −52.03) · Agência Brasil</div>`;
+  <div style="font-size:.68rem;color:var(--text-lt);margin-top:.7rem">Fonte: Open-Meteo · Concórdia — SC (−27.23 / −52.03) · Agência Brasil</div>`;
   body.classList.add('show');
   slideRenderDots(slides, idx);
   // Carrega notícias de forma assíncrona após renderizar
   gvFetchNoticias().then(noticias => {
     const el = body.querySelector('#gv-noticias-body');
-    if (el) el.outerHTML = gvNoticiasHTML(noticias);
-  }).catch(() => {});
+    if (el) el.innerHTML = gvNoticiasHTML(noticias);
+  }).catch(() => {
+    const el = body.querySelector('#gv-noticias-body');
+    if (el) el.innerHTML = gvNoticiasHTML([]);
+  });
 }
 
 // ── Resumo de Consumo de Cavalos para o slide ──
@@ -5697,19 +5945,72 @@ function gvRecadosListaHTML(itens) {
 
 async function gvRenderRecados(body, s, slides, idx) {
   body.innerHTML = `<div class="slide-section-title">${s.title}</div>
-    <div style="display:flex;gap:1.2rem;align-items:flex-start;max-width:1180px;width:100%;flex-wrap:wrap;justify-content:center">
-      ${gvMiniCalendario()}
-      <div id="gv-recados-lista" style="flex:1;min-width:280px;display:flex;flex-direction:column;gap:.5rem;max-height:calc(100vh - 420px);overflow-y:auto;padding-right:.3rem">
-        <div style="text-align:center;color:var(--text-lt)"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>
+    <div style="display:flex;gap:1.4rem;align-items:flex-start;max-width:1280px;width:100%;flex-wrap:wrap;justify-content:center">
+      <!-- Calendário grande + feriados do mês -->
+      <div style="display:flex;flex-direction:column;gap:.8rem;flex:none">
+        ${gvCalendarioGrande()}
+      </div>
+      <!-- Lista de recados/lembretes -->
+      <div style="flex:1;min-width:340px;display:flex;flex-direction:column;gap:.0rem">
+        <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.82rem;color:var(--accent-dk);text-transform:uppercase;letter-spacing:1px;margin-bottom:.55rem"><i class="fas fa-list-check"></i> Recados &amp; Lembretes</div>
+        <div id="gv-recados-lista" style="display:flex;flex-direction:column;gap:.55rem;max-height:calc(100vh - 280px);overflow-y:auto;padding-right:.3rem">
+          <div style="text-align:center;color:var(--text-lt)"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>
+        </div>
       </div>
     </div>
-    <div style="margin-top:.7rem;font-size:.65rem;color:var(--text-lt)"><i class="fas fa-link" style="color:var(--accent)"></i> Planilha configurada automaticamente · atualiza a cada 5 min.</div>`;
+    <div style="margin-top:.5rem;font-size:.65rem;color:var(--text-lt)"><i class="fas fa-link" style="color:var(--accent)"></i> Planilha configurada automaticamente · atualiza a cada 5 min.</div>`;
   requestAnimationFrame(() => body.classList.add('show'));
   slideRenderDots(slides, idx);
   const itens = await gvFetchRecados().catch(() => []);
   const listaEl = body.querySelector('#gv-recados-lista');
   if (listaEl) listaEl.innerHTML = gvRecadosListaHTML(itens);
   slideAutoScroll(body);
+}
+
+function gvCalendarioGrande() {
+  const h = new Date();
+  const ano = h.getFullYear(), mes = h.getMonth();
+  const hoje = h.getDate();
+  const nomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const diasSem = ['D','S','T','Q','Q','S','S'];
+  const primeiro = new Date(ano,mes,1).getDay();
+  const ultDia = new Date(ano,mes+1,0).getDate();
+  const ferList = feriadosDoMes(ano,mes);
+  const ferDias = new Set(ferList.map(f=>f.d.getDate()));
+  const celulas = [];
+  diasSem.forEach(d => celulas.push(`<div style="font-size:.68rem;font-weight:700;color:#94a3b8;text-align:center;padding:.2rem 0">${d}</div>`));
+  for(let i=0;i<primeiro;i++) celulas.push('<div></div>');
+  for(let d=1;d<=ultDia;d++){
+    const ehHoje = d === hoje;
+    const ehFer = ferDias.has(d);
+    const dow = new Date(ano,mes,d).getDay();
+    const isWeekend = dow===0||dow===6;
+    const bg = ehHoje ? 'linear-gradient(135deg,#1473e6,#0d66d0)' : ehFer ? '#fef2f2' : 'transparent';
+    const c = ehHoje ? '#fff' : ehFer ? '#b91c1c' : isWeekend ? '#64748b' : '#2c2c2c';
+    const fw = ehHoje ? '700' : '400';
+    const border = ehHoje ? '' : ehFer ? 'border:1px solid #fecaca;' : '';
+    celulas.push(`<div style="text-align:center;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:${fw};background:${bg};color:${c};${border}margin:0 auto">${d}</div>`);
+  }
+  // Feriados do mês listados abaixo
+  const ferHTML = ferList.length ? ferList.map(f=>{
+    const passou = f.d < new Date(ano,mes,hoje);
+    return `<div style="display:flex;align-items:center;gap:.5rem;padding:.3rem .6rem;border-radius:8px;background:${f.pf?'#fffbeb':f.mun?'#eff6ff':'#fef2f2'};border:1px solid ${f.pf?'#fde68a':f.mun?'#bfdbfe':'#fecaca'};opacity:${passou?.5:1}">
+      <b style="font-size:.95rem;color:${f.pf?'#92400e':f.mun?'#1d4ed8':'#b91c1c'};min-width:22px;text-align:center">${String(f.d.getDate()).padStart(2,'0')}</b>
+      <span style="font-size:.75rem;font-weight:500;color:#2c2c2c">${f.n}${f.pf?' <span style=\'font-size:.62rem;color:#92400e\'>(pf)</span>':''}</span>
+    </div>`;
+  }).join('') : `<div style="font-size:.75rem;color:var(--text-lt)">Nenhum feriado em ${nomes[mes]}.</div>`;
+  return `<div style="background:#fff;border-radius:18px;padding:1.1rem 1rem;box-shadow:0 4px 20px rgba(30,42,58,.08);border:1px solid rgba(0,0,0,.07);min-width:250px;max-width:270px">
+    <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.95rem;color:#1473e6;text-align:center;margin-bottom:.7rem;text-transform:uppercase;letter-spacing:1px">${nomes[mes]} ${ano}</div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">${celulas.join('')}</div>
+    <div style="margin-top:.5rem;display:flex;gap:.5rem;flex-wrap:wrap;font-size:.65rem">
+      <span style="display:flex;align-items:center;gap:.3rem"><span style="width:11px;height:11px;border-radius:50%;background:linear-gradient(135deg,#1473e6,#0d66d0);display:inline-block"></span>Hoje</span>
+      <span style="display:flex;align-items:center;gap:.3rem"><span style="width:11px;height:11px;border-radius:50%;background:#fef2f2;border:1px solid #fecaca;display:inline-block"></span>Feriado</span>
+    </div>
+  </div>
+  <div style="background:#fff;border-radius:18px;padding:1rem;box-shadow:0 4px 20px rgba(30,42,58,.08);border:1px solid rgba(0,0,0,.07);min-width:250px;max-width:270px">
+    <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.78rem;color:var(--accent-dk);text-transform:uppercase;letter-spacing:1px;margin-bottom:.6rem"><i class="fas fa-calendar-day"></i> Feriados — ${nomes[mes]}/${ano}</div>
+    <div style="display:flex;flex-direction:column;gap:.35rem">${ferHTML}</div>
+  </div>`;
 }
 
 function gvRenderTurnover(body, s, slides, idx) {
