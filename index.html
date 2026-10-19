@@ -5369,10 +5369,15 @@ async function gvFetchNoticias() {
   const now = Date.now();
   if (_gvNoticiasCache && (now - _gvNoticiasCacheTs) < 20*60*1000) return _gvNoticiasCache;
   const FEEDS = [
-    // Google News em português — tópicos relevantes
-    { url:'https://news.google.com/rss/search?q=transporte+logística+caminhão+brasil&hl=pt-BR&gl=BR&ceid=BR:pt-419', cat:'🚛 Transporte', cor:'#b45309' },
-    { url:'https://news.google.com/rss/search?q=economia+brasil+combustível+diesel&hl=pt-BR&gl=BR&ceid=BR:pt-419', cat:'Economia', cor:'#0891b2' },
-    { url:'https://news.google.com/rss/headlines/section/geo/BR?hl=pt-BR&gl=BR&ceid=BR:pt-419', cat:'Brasil', cor:'#7c3aed' },
+    // Agência Brasil (EBC) — fontes abertas, sem bloqueio CORS via proxy
+    { url:'https://agenciabrasil.ebc.com.br/rss/economia/feed.rss',          cat:'Economia',      cor:'#0891b2' },
+    { url:'https://agenciabrasil.ebc.com.br/rss/ultimasnoticias/feed.rss',   cat:'Brasil',         cor:'#7c3aed' },
+    // Notícias de transporte — portais especializados
+    { url:'https://www.cnt.org.br/agencia-cnt/rss',                          cat:'🚛 Transporte',  cor:'#b45309' },
+    { url:'https://www.transporte.org.br/feed/',                              cat:'🚛 Transporte',  cor:'#b45309' },
+    // Fallback Google News (tenta mesmo com CORS — pode funcionar via proxy)
+    { url:'https://news.google.com/rss/search?q=transporte+logística+caminhão+diesel+brasil&hl=pt-BR&gl=BR&ceid=BR:pt-419', cat:'🚛 Transporte', cor:'#b45309' },
+    { url:'https://news.google.com/rss/search?q=combustível+diesel+preço+anp+petrobras&hl=pt-BR&gl=BR&ceid=BR:pt-419', cat:'Economia', cor:'#0891b2' },
   ];
   const parser = new DOMParser();
   const todas = [];
@@ -5420,18 +5425,18 @@ async function gvFetchNoticias() {
   return unicas;
 }
 function gvNoticiasHTML(noticias) {
-  if (!noticias || !noticias.length) return `<div style="display:flex;align-items:center;gap:.6rem;padding:1rem;background:#f8fafc;border-radius:12px;border:1px dashed #cbd5e1;color:#64748b;font-size:.82rem"><i class="fas fa-satellite-dish" style="font-size:1.1rem;color:#94a3b8"></i> Notícias indisponíveis no momento. Verifique a conexão.</div>`;
+  if (!noticias || !noticias.length) return `<div style="display:flex;align-items:center;gap:.8rem;padding:1.2rem;background:#f8fafc;border-radius:14px;border:1px dashed #cbd5e1;color:#64748b;font-size:.95rem"><i class="fas fa-satellite-dish" style="font-size:1.4rem;color:#94a3b8"></i> Notícias indisponíveis no momento — verifique a conexão ou tente recarregar.</div>`;
   const COR = { 'Política':'#7c3aed', 'Economia':'#0891b2', '🚛 Transporte':'#b45309', 'Brasil':'#059669' };
-  const html = noticias.slice(0,7).map(n => {
+  const html = noticias.slice(0,8).map(n => {
     const c = COR[n.cat] || '#475569';
     const data = n.pubDate ? (() => { try { const d=new Date(n.pubDate); return isNaN(d)?'':d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); } catch(e){return '';} })() : '';
-    return `<div style="display:flex;align-items:flex-start;gap:.7rem;padding:.65rem .85rem;border-radius:12px;background:#fff;border:1px solid rgba(0,0,0,.08);border-left:4px solid ${c};text-align:left;box-shadow:0 2px 8px rgba(30,42,58,.04)">
+    return `<div style="display:flex;align-items:flex-start;gap:.8rem;padding:.85rem 1rem;border-radius:14px;background:#fff;border:1px solid rgba(0,0,0,.08);border-left:5px solid ${c};text-align:left;box-shadow:0 2px 10px rgba(30,42,58,.06)">
       <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.2rem">
-          <span style="flex:none;padding:.12rem .48rem;border-radius:20px;font-size:.62rem;font-weight:700;background:${c}18;color:${c};text-transform:uppercase;letter-spacing:.5px">${n.cat}</span>
-          ${data ? `<span style="font-size:.6rem;color:#94a3b8">${data}</span>` : ''}
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem">
+          <span style="flex:none;padding:.15rem .6rem;border-radius:20px;font-size:.75rem;font-weight:700;background:${c}18;color:${c};text-transform:uppercase;letter-spacing:.5px">${n.cat}</span>
+          ${data ? `<span style="font-size:.72rem;color:#94a3b8">${data}</span>` : ''}
         </div>
-        <div style="font-size:.84rem;color:#1e2a3a;line-height:1.45;font-weight:500">${n.title}</div>
+        <div style="font-size:.97rem;color:#1e2a3a;line-height:1.5;font-weight:500">${n.title}</div>
       </div>
     </div>`;
   }).join('');
@@ -5859,15 +5864,41 @@ async function gvFetchRecados() {
         if (typeof Papa !== 'undefined') {
           const parsed = Papa.parse(txt, { header:true, skipEmptyLines:true });
           const rows = parsed.data || [];
-          const csvItens = rows.map(row => ({
-            titulo: row.titulo || row.TITULO || row['Título'] || row.title || '',
-            data: row.data || row.DATA || row['Data'] || '',
-            hora: row.hora || row.HORA || row['Hora'] || '',
-            categoria: row.categoria || row.CATEGORIA || row['Categoria'] || 'Geral',
-            prioridade: row.prioridade || row.PRIORIDADE || row['Prioridade'] || 'normal',
-            responsavel: row.responsavel || row.RESPONSAVEL || row['Responsável'] || '',
-            descricao: row.descricao || row.DESCRICAO || row['Descrição'] || '',
-          })).filter(r => r.titulo);
+          const csvItens = rows.map(row => {
+            // Aceita coluna RECADO (formato livre) além das colunas estruturadas
+            const rawTxt = row.RECADO || row.recado || row['Recado'] || '';
+            const titulo = row.titulo || row.TITULO || row['Título'] || row.title || rawTxt || '';
+            if (!titulo) return null;
+            // Extrai primeira data dd/mm/yyyy ou dd/mm encontrada no texto
+            const dtMatch = titulo.match(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/);
+            let dataExtr = '', horaExtr = '';
+            if (dtMatch) {
+              const d = dtMatch[1].padStart(2,'0'), m = dtMatch[2].padStart(2,'0');
+              const a = dtMatch[3] ? (dtMatch[3].length===2?'20'+dtMatch[3]:dtMatch[3]) : new Date().getFullYear();
+              dataExtr = `${d}/${m}/${a}`;
+            }
+            const hrMatch = titulo.match(/(\d{1,2})[hH:](\d{0,2})/);
+            if (hrMatch) horaExtr = `${hrMatch[1].padStart(2,'0')}:${(hrMatch[2]||'00').padStart(2,'0')}`;
+            // Categoria automática por palavras-chave
+            const tl = titulo.toLowerCase();
+            const cat = row.categoria||row.CATEGORIA||row['Categoria']||(
+              tl.includes('curso')||tl.includes('trein')||tl.includes('integra')||tl.includes('live')||tl.includes('youtube') ? 'Treinamento' :
+              tl.includes('exame')||tl.includes('admissional')||tl.includes('médico')||tl.includes('medico') ? 'RH' :
+              tl.includes('financ')||tl.includes('pagamento')||tl.includes('boleto') ? 'Financeiro' :
+              tl.includes('opera')||tl.includes('viagem')||tl.includes('caminhão')||tl.includes('frete') ? 'Operação' :
+              tl.includes('urgent')||tl.includes('segur') ? 'Segurança' : 'Geral');
+            const prio = row.prioridade||row.PRIORIDADE||row['Prioridade']||(
+              tl.includes('urgent')||tl.includes('importante')||tl.includes('obrigat') ? 'alta' :
+              tl.includes('prazo')||tl.includes('vence')||tl.includes('entrega') ? 'media' : 'normal');
+            return {
+              titulo,
+              data: row.data||row.DATA||row['Data']||dataExtr,
+              hora: row.hora||row.HORA||row['Hora']||horaExtr,
+              categoria: cat, prioridade: prio,
+              responsavel: row.responsavel||row.RESPONSAVEL||row['Responsável']||'',
+              descricao: row.descricao||row.DESCRICAO||row['Descrição']||'',
+            };
+          }).filter(r => r && r.titulo);
           // Mescla: CSV prevalece
           const manuaisNaoCsv = itens.filter(m => !csvItens.some(c => c.titulo === m.titulo));
           itens = [...csvItens, ...manuaisNaoCsv];
@@ -5920,23 +5951,29 @@ function gvMiniCalendario() {
 function gvRecadosListaHTML(itens) {
   const COR_PRIO = { alta:'#ef4444', media:'#f59e0b', normal:'#10b981', baixa:'#94a3b8' };
   const COR_CAT  = { 'Treinamento':'#7c3aed', 'RH':'#0891b2', 'Operação':'#b45309', 'Financeiro':'#059669', 'Segurança':'#dc2626', 'Geral':'#475569' };
-  if (!itens.length) return `<div style="text-align:center;color:var(--text-lt);padding:2rem"><i class="fas fa-check-circle" style="font-size:2rem;color:#10b981;display:block;margin-bottom:.5rem"></i>Nenhum recado no momento.</div>`;
-  return itens.map(item => {
+  const ICON_CAT = { 'Treinamento':'fa-graduation-cap', 'RH':'fa-user-tie', 'Operação':'fa-truck', 'Financeiro':'fa-coins', 'Segurança':'fa-shield-alt', 'Geral':'fa-bell' };
+  if (!itens.length) return `<div style="text-align:center;color:var(--text-lt);padding:2rem"><i class="fas fa-check-circle" style="font-size:2.5rem;color:#10b981;display:block;margin-bottom:.8rem"></i><span style="font-size:1.1rem">Nenhum recado no momento.</span></div>`;
+  return itens.map((item, idx) => {
     const pCor = COR_PRIO[item.prioridade] || '#475569';
     const cCor = COR_CAT[item.categoria] || '#475569';
-    return `<div style="display:flex;align-items:flex-start;gap:.75rem;padding:.8rem 1rem;border-radius:14px;background:#fff;border:1px solid rgba(0,0,0,.07);box-shadow:0 2px 10px rgba(30,42,58,.05);border-left:4px solid ${pCor}">
-      <div style="flex:none;width:36px;height:36px;border-radius:10px;background:${cCor}18;display:flex;align-items:center;justify-content:center">
-        <i class="fas fa-bell" style="color:${cCor};font-size:.8rem"></i>
+    const ico  = ICON_CAT[item.categoria] || 'fa-bell';
+    const numBadge = `<div style="flex:none;width:30px;height:30px;border-radius:50%;background:${pCor};display:flex;align-items:center;justify-content:center;font-family:'Poppins',sans-serif;font-weight:800;font-size:1rem;color:#fff;box-shadow:0 3px 10px ${pCor}55">${idx+1}</div>`;
+    return `<div style="display:flex;align-items:flex-start;gap:1rem;padding:1.1rem 1.2rem;border-radius:16px;background:#fff;border:1px solid rgba(0,0,0,.07);box-shadow:0 3px 14px rgba(30,42,58,.07);border-left:5px solid ${pCor};transition:transform .15s" onmouseenter="this.style.transform='translateX(4px)'" onmouseleave="this.style.transform=''">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:.4rem;flex:none">
+        ${numBadge}
+        <div style="width:32px;height:32px;border-radius:10px;background:${cCor}18;display:flex;align-items:center;justify-content:center">
+          <i class="fas ${ico}" style="color:${cCor};font-size:.9rem"></i>
+        </div>
       </div>
       <div style="flex:1;min-width:0">
-        <div style="font-family:'Poppins',sans-serif;font-weight:600;font-size:.9rem;color:#1e2a3a;margin-bottom:.2rem">${escapeHTML(item.titulo)}</div>
-        ${item.descricao ? `<div style="font-size:.78rem;color:#475569;margin-bottom:.25rem">${escapeHTML(item.descricao)}</div>` : ''}
-        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
-          ${item.data ? `<span style="font-size:.7rem;color:#1473e6;font-weight:500"><i class="fas fa-calendar-day"></i> ${escapeHTML(item.data)}</span>` : ''}
-          ${item.hora ? `<span style="font-size:.7rem;color:var(--text-lt)"><i class="fas fa-clock"></i> ${escapeHTML(item.hora)}</span>` : ''}
-          ${item.responsavel ? `<span style="font-size:.7rem;color:var(--text-lt)"><i class="fas fa-user"></i> ${escapeHTML(item.responsavel)}</span>` : ''}
-          <span style="font-size:.62rem;padding:.1rem .5rem;border-radius:20px;background:${cCor}18;color:${cCor};font-weight:600">${escapeHTML(item.categoria)}</span>
-          <span style="font-size:.62rem;padding:.1rem .5rem;border-radius:20px;background:${pCor}18;color:${pCor};font-weight:600;text-transform:uppercase">${escapeHTML(item.prioridade)}</span>
+        <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:1.05rem;color:#1e2a3a;margin-bottom:.35rem;line-height:1.35">${escapeHTML(item.titulo)}</div>
+        ${item.descricao ? `<div style="font-size:.9rem;color:#475569;margin-bottom:.4rem;line-height:1.5">${escapeHTML(item.descricao)}</div>` : ''}
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-top:.3rem">
+          ${item.data ? `<span style="font-size:.85rem;color:#1473e6;font-weight:600;background:#eff6ff;padding:.2rem .65rem;border-radius:20px;border:1px solid #bfdbfe"><i class="fas fa-calendar-day"></i> ${escapeHTML(item.data)}</span>` : ''}
+          ${item.hora ? `<span style="font-size:.85rem;color:#7c3aed;font-weight:600;background:#f5f3ff;padding:.2rem .65rem;border-radius:20px;border:1px solid #ddd6fe"><i class="fas fa-clock"></i> ${escapeHTML(item.hora)}</span>` : ''}
+          ${item.responsavel ? `<span style="font-size:.82rem;color:var(--text-lt);background:#f1f5f9;padding:.2rem .65rem;border-radius:20px"><i class="fas fa-user"></i> ${escapeHTML(item.responsavel)}</span>` : ''}
+          <span style="font-size:.78rem;padding:.2rem .7rem;border-radius:20px;background:${cCor}18;color:${cCor};font-weight:700">${escapeHTML(item.categoria)}</span>
+          <span style="font-size:.78rem;padding:.2rem .7rem;border-radius:20px;background:${pCor}18;color:${pCor};font-weight:700;text-transform:uppercase">${escapeHTML(item.prioridade)}</span>
         </div>
       </div>
     </div>`;
@@ -5945,71 +5982,95 @@ function gvRecadosListaHTML(itens) {
 
 async function gvRenderRecados(body, s, slides, idx) {
   body.innerHTML = `<div class="slide-section-title">${s.title}</div>
-    <div style="display:flex;gap:1.4rem;align-items:flex-start;max-width:1280px;width:100%;flex-wrap:wrap;justify-content:center">
+    <div style="display:flex;gap:1.6rem;align-items:flex-start;max-width:1360px;width:100%;flex-wrap:wrap;justify-content:center">
       <!-- Calendário grande + feriados do mês -->
-      <div style="display:flex;flex-direction:column;gap:.8rem;flex:none">
-        ${gvCalendarioGrande()}
+      <div id="gv-recados-cal-wrap" style="display:flex;flex-direction:column;gap:.8rem;flex:none">
+        <div style="text-align:center;color:var(--text-lt);padding:1rem"><i class="fas fa-spinner fa-spin"></i></div>
       </div>
       <!-- Lista de recados/lembretes -->
-      <div style="flex:1;min-width:340px;display:flex;flex-direction:column;gap:.0rem">
-        <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.82rem;color:var(--accent-dk);text-transform:uppercase;letter-spacing:1px;margin-bottom:.55rem"><i class="fas fa-list-check"></i> Recados &amp; Lembretes</div>
-        <div id="gv-recados-lista" style="display:flex;flex-direction:column;gap:.55rem;max-height:calc(100vh - 280px);overflow-y:auto;padding-right:.3rem">
-          <div style="text-align:center;color:var(--text-lt)"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>
+      <div style="flex:1;min-width:360px;display:flex;flex-direction:column;gap:.0rem">
+        <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1rem;color:var(--accent-dk);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:.8rem;display:flex;align-items:center;gap:.5rem"><i class="fas fa-list-check"></i> Recados &amp; Lembretes <span id="gv-rec-count" style="font-size:.75rem;background:var(--accent);color:#000;border-radius:20px;padding:.1rem .6rem;font-weight:700"></span></div>
+        <div id="gv-recados-lista" style="display:flex;flex-direction:column;gap:.75rem;max-height:calc(100vh - 260px);overflow-y:auto;padding-right:.4rem">
+          <div style="text-align:center;color:var(--text-lt);padding:2rem"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem"></i></div>
         </div>
       </div>
     </div>
-    <div style="margin-top:.5rem;font-size:.65rem;color:var(--text-lt)"><i class="fas fa-link" style="color:var(--accent)"></i> Planilha configurada automaticamente · atualiza a cada 5 min.</div>`;
+    <div style="margin-top:.6rem;font-size:.72rem;color:var(--text-lt)"><i class="fas fa-link" style="color:var(--accent)"></i> Planilha RECADOS sincronizada · atualiza a cada 5 min.</div>`;
   requestAnimationFrame(() => body.classList.add('show'));
   slideRenderDots(slides, idx);
   const itens = await gvFetchRecados().catch(() => []);
+  // Extrai dias com recado no mês atual para destacar no calendário
+  const hoje = new Date();
+  const anoAtual = hoje.getFullYear(), mesAtual = hoje.getMonth();
+  const recadosDias = {}; // { dia: cor }
+  const COR_CAT_CAL = { 'Treinamento':'#7c3aed', 'RH':'#0891b2', 'Operação':'#b45309', 'Financeiro':'#059669', 'Segurança':'#dc2626', 'Geral':'#c9a227' };
+  itens.forEach(it => {
+    if (!it.data) return;
+    const m = it.data.match(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/);
+    if (!m) return;
+    const d = parseInt(m[1]), mo = parseInt(m[2])-1;
+    const a = m[3] ? (m[3].length===2?2000+parseInt(m[3]):parseInt(m[3])) : anoAtual;
+    if (mo === mesAtual && a === anoAtual) recadosDias[d] = COR_CAT_CAL[it.categoria] || '#c9a227';
+  });
+  const calWrap = body.querySelector('#gv-recados-cal-wrap');
+  if (calWrap) calWrap.innerHTML = gvCalendarioGrande(recadosDias);
   const listaEl = body.querySelector('#gv-recados-lista');
   if (listaEl) listaEl.innerHTML = gvRecadosListaHTML(itens);
+  const countEl = body.querySelector('#gv-rec-count');
+  if (countEl && itens.length) countEl.textContent = itens.length;
   slideAutoScroll(body);
 }
 
-function gvCalendarioGrande() {
+function gvCalendarioGrande(recadosDias) {
+  recadosDias = recadosDias || {};
   const h = new Date();
   const ano = h.getFullYear(), mes = h.getMonth();
   const hoje = h.getDate();
   const nomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  const diasSem = ['D','S','T','Q','Q','S','S'];
+  const diasSem = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
   const primeiro = new Date(ano,mes,1).getDay();
   const ultDia = new Date(ano,mes+1,0).getDate();
   const ferList = feriadosDoMes(ano,mes);
   const ferDias = new Set(ferList.map(f=>f.d.getDate()));
   const celulas = [];
-  diasSem.forEach(d => celulas.push(`<div style="font-size:.68rem;font-weight:700;color:#94a3b8;text-align:center;padding:.2rem 0">${d}</div>`));
+  diasSem.forEach(d => celulas.push(`<div style="font-size:.7rem;font-weight:700;color:#94a3b8;text-align:center;padding:.3rem 0">${d}</div>`));
   for(let i=0;i<primeiro;i++) celulas.push('<div></div>');
   for(let d=1;d<=ultDia;d++){
     const ehHoje = d === hoje;
     const ehFer = ferDias.has(d);
+    const recCor = recadosDias[d];
     const dow = new Date(ano,mes,d).getDay();
     const isWeekend = dow===0||dow===6;
-    const bg = ehHoje ? 'linear-gradient(135deg,#1473e6,#0d66d0)' : ehFer ? '#fef2f2' : 'transparent';
-    const c = ehHoje ? '#fff' : ehFer ? '#b91c1c' : isWeekend ? '#64748b' : '#2c2c2c';
-    const fw = ehHoje ? '700' : '400';
-    const border = ehHoje ? '' : ehFer ? 'border:1px solid #fecaca;' : '';
-    celulas.push(`<div style="text-align:center;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:${fw};background:${bg};color:${c};${border}margin:0 auto">${d}</div>`);
+    let bg, c, fw, extra='';
+    if (ehHoje) { bg='linear-gradient(135deg,#1473e6,#0d66d0)'; c='#fff'; fw='800'; }
+    else if (recCor) { bg=recCor; c='#fff'; fw='700'; extra=`box-shadow:0 2px 8px ${recCor}88;`; }
+    else if (ehFer) { bg='#fef2f2'; c='#b91c1c'; fw='500'; extra='border:1px solid #fecaca;'; }
+    else { bg='transparent'; c=isWeekend?'#64748b':'#2c2c2c'; fw='400'; }
+    const dot = recCor && !ehHoje ? `<span style="position:absolute;bottom:1px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:#fff;opacity:.8"></span>` : '';
+    celulas.push(`<div style="position:relative;text-align:center;border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:${fw};background:${bg};color:${c};${extra}margin:0 auto;cursor:default" title="${recCor?'Recado neste dia':ehFer?ferList.find(f=>f.d.getDate()===d)?.n||'Feriado':''}">${d}${dot}</div>`);
   }
+  // Legenda dinâmica de categorias com recados
+  const legendaRec = Object.keys(recadosDias).length ? `<span style="display:flex;align-items:center;gap:.3rem"><span style="width:11px;height:11px;border-radius:3px;background:var(--accent);display:inline-block"></span>Recado</span>` : '';
   // Feriados do mês listados abaixo
   const ferHTML = ferList.length ? ferList.map(f=>{
     const passou = f.d < new Date(ano,mes,hoje);
-    return `<div style="display:flex;align-items:center;gap:.5rem;padding:.3rem .6rem;border-radius:8px;background:${f.pf?'#fffbeb':f.mun?'#eff6ff':'#fef2f2'};border:1px solid ${f.pf?'#fde68a':f.mun?'#bfdbfe':'#fecaca'};opacity:${passou?.5:1}">
-      <b style="font-size:.95rem;color:${f.pf?'#92400e':f.mun?'#1d4ed8':'#b91c1c'};min-width:22px;text-align:center">${String(f.d.getDate()).padStart(2,'0')}</b>
-      <span style="font-size:.75rem;font-weight:500;color:#2c2c2c">${f.n}${f.pf?' <span style=\'font-size:.62rem;color:#92400e\'>(pf)</span>':''}</span>
+    return `<div style="display:flex;align-items:center;gap:.6rem;padding:.4rem .7rem;border-radius:10px;background:${f.pf?'#fffbeb':f.mun?'#eff6ff':'#fef2f2'};border:1px solid ${f.pf?'#fde68a':f.mun?'#bfdbfe':'#fecaca'};opacity:${passou?.5:1}">
+      <b style="font-size:1rem;color:${f.pf?'#92400e':f.mun?'#1d4ed8':'#b91c1c'};min-width:26px;text-align:center">${String(f.d.getDate()).padStart(2,'0')}</b>
+      <span style="font-size:.82rem;font-weight:500;color:#2c2c2c">${f.n}${f.pf?' <span style=\'font-size:.68rem;color:#92400e\'>(pf)</span>':''}</span>
     </div>`;
-  }).join('') : `<div style="font-size:.75rem;color:var(--text-lt)">Nenhum feriado em ${nomes[mes]}.</div>`;
-  return `<div style="background:#fff;border-radius:18px;padding:1.1rem 1rem;box-shadow:0 4px 20px rgba(30,42,58,.08);border:1px solid rgba(0,0,0,.07);min-width:250px;max-width:270px">
-    <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.95rem;color:#1473e6;text-align:center;margin-bottom:.7rem;text-transform:uppercase;letter-spacing:1px">${nomes[mes]} ${ano}</div>
+  }).join('') : `<div style="font-size:.82rem;color:var(--text-lt)">Nenhum feriado em ${nomes[mes]}.</div>`;
+  return `<div style="background:#fff;border-radius:20px;padding:1.3rem 1.1rem;box-shadow:0 4px 24px rgba(30,42,58,.1);border:1px solid rgba(0,0,0,.07);min-width:280px;max-width:300px">
+    <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.05rem;color:#1473e6;text-align:center;margin-bottom:.8rem;text-transform:uppercase;letter-spacing:1.5px">${nomes[mes]} ${ano}</div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">${celulas.join('')}</div>
-    <div style="margin-top:.5rem;display:flex;gap:.5rem;flex-wrap:wrap;font-size:.65rem">
-      <span style="display:flex;align-items:center;gap:.3rem"><span style="width:11px;height:11px;border-radius:50%;background:linear-gradient(135deg,#1473e6,#0d66d0);display:inline-block"></span>Hoje</span>
-      <span style="display:flex;align-items:center;gap:.3rem"><span style="width:11px;height:11px;border-radius:50%;background:#fef2f2;border:1px solid #fecaca;display:inline-block"></span>Feriado</span>
+    <div style="margin-top:.7rem;display:flex;gap:.6rem;flex-wrap:wrap;font-size:.72rem">
+      <span style="display:flex;align-items:center;gap:.3rem"><span style="width:11px;height:11px;border-radius:3px;background:linear-gradient(135deg,#1473e6,#0d66d0);display:inline-block"></span>Hoje</span>
+      <span style="display:flex;align-items:center;gap:.3rem"><span style="width:11px;height:11px;border-radius:3px;background:#fef2f2;border:1px solid #fecaca;display:inline-block"></span>Feriado</span>
+      ${legendaRec}
     </div>
   </div>
-  <div style="background:#fff;border-radius:18px;padding:1rem;box-shadow:0 4px 20px rgba(30,42,58,.08);border:1px solid rgba(0,0,0,.07);min-width:250px;max-width:270px">
-    <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.78rem;color:var(--accent-dk);text-transform:uppercase;letter-spacing:1px;margin-bottom:.6rem"><i class="fas fa-calendar-day"></i> Feriados — ${nomes[mes]}/${ano}</div>
-    <div style="display:flex;flex-direction:column;gap:.35rem">${ferHTML}</div>
+  <div style="background:#fff;border-radius:20px;padding:1.1rem;box-shadow:0 4px 24px rgba(30,42,58,.1);border:1px solid rgba(0,0,0,.07);min-width:280px;max-width:300px">
+    <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.85rem;color:var(--accent-dk);text-transform:uppercase;letter-spacing:1px;margin-bottom:.7rem"><i class="fas fa-calendar-day"></i> Feriados — ${nomes[mes]}/${ano}</div>
+    <div style="display:flex;flex-direction:column;gap:.4rem">${ferHTML}</div>
   </div>`;
 }
 
