@@ -1730,7 +1730,7 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
     <input type="text" id="urlAbastecimentosCsv" placeholder="URL padrão já configurada — cole aqui só se a planilha mudar">
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt);margin-top:.5rem">⛽ Controle de Consumo por Litro — Web App (Processar PDFs da pasta do Drive)</label>
     <input type="text" id="urlAbastecimentosWebApp" placeholder="URL do Apps Script implantado (…/exec)">
-    <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem">Se o botão <b>Processar PDFs</b> parar de funcionar, normalmente é porque essa implantação do Apps Script expirou. No Apps Script: <b>Implantar → Gerenciar implantações → editar → nova versão</b>, com acesso "Qualquer pessoa", e cole a nova URL "…/exec" aqui.</p>
+    <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem">Se o botão <b>Atualizar</b> parar de processar XMLs, normalmente é porque essa implantação do Apps Script expirou. No Apps Script: <b>Implantar → Gerenciar implantações → editar → nova versão</b>, com acesso "Qualquer pessoa", e cole a nova URL "…/exec" aqui.</p>
     <label style="font-size:.75rem;font-weight:700;color:var(--text-lt);margin-top:.5rem">📥 Gmail → Drive — Google OAuth Client ID</label>
     <input type="text" id="gmailDriveClientId" placeholder="Ex: 123456789-abc.apps.googleusercontent.com">
     <p style="font-size:.72rem;color:var(--text-lt);margin-top:.2rem">Usado pelo botão <b>Varrer Gmail → Drive</b> (aba NF-e / Abast.) para ler anexos XML do Gmail e salvá-los na pasta <b>NOTAS DE ABASTECIDAS</b> do Drive. Crie em <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">console.cloud.google.com → Credenciais → OAuth 2.0</a>: tipo "Aplicativo da Web". <b>Origens JavaScript autorizadas</b> = URL exata deste dashboard (<code id="gmailOrigemAtual" style="color:var(--accent)">carregando…</code>). Ative as APIs Gmail e Drive no mesmo projeto. Se aparecer erro <b>origin_mismatch</b>, é porque essa URL não está cadastrada.</p>
@@ -2977,10 +2977,9 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
 
           <div class="dash-card" style="background:linear-gradient(135deg,rgba(212,175,55,.08),rgba(212,175,55,.02));border:1px solid rgba(212,175,55,.25);margin-bottom:1rem">
             <div class="dash-card-title" style="font-size:1rem"><i class="fas fa-gas-pump" style="color:var(--accent)"></i> Controle de Consumo por Litro
-              <button id="btnAtualizarConsumoTab" class="btn btn-accent btn-sm" style="margin-left:1rem" onclick="loadAbastecimentos()"><i class="fas fa-sync-alt"></i> Atualizar</button>
-              <button id="btnProcessarPDFsTab" class="btn btn-success btn-sm" style="margin-left:.5rem" onclick="acionarWebApp()"><i class="fas fa-file-pdf"></i> Processar PDFs</button>
+              <button id="btnAtualizarConsumoTab" class="btn btn-accent btn-sm" style="margin-left:1rem" onclick="atualizarAbastSmart()"><i class="fas fa-sync-alt"></i> Atualizar</button>
               <button id="btnPararPDFsTab" class="btn btn-danger btn-sm" style="margin-left:.5rem;display:none" onclick="pararWebApp()"><i class="fas fa-stop"></i> Parar</button>
-              <button id="btnLimparRelerTab" class="btn btn-gray btn-sm" style="margin-left:.5rem" onclick="abastLimparEReler()"><i class="fas fa-broom"></i> Limpar e reler</button>
+              <a href="#" onclick="abastLimparEReler();return false;" id="lnkLimparReler" style="margin-left:.9rem;font-size:.75rem;color:var(--text-lt);text-decoration:none;opacity:.7" title="Apaga cache local e relê tudo do servidor"><i class="fas fa-broom"></i> forçar releitura</a>
             </div>
             <div id="webAppStatusTab" style="display:none;margin-top:.5rem;font-size:.8rem;padding:.5rem .8rem;border-radius:8px;background:var(--gray-100)"></div>
             <div id="abastDiagnostico" style="display:none;margin-top:.5rem;font-size:.78rem;padding:.5rem .9rem;border-radius:8px;border:1px solid #fca5a5;background:#fff5f5;color:#991b1b;line-height:1.6"></div>
@@ -4254,12 +4253,17 @@ function toGvizUrl(url) {
   const id = m[1];
   const gidMatch = String(url).match(/[?&#]gid=(\d+)/);
   const gid = gidMatch ? gidMatch[1] : '0';
-  return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&gid=${gid}`;
+  // Adiciona timestamp para forçar dado fresco (gviz pode cachear até 5 min)
+  return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&gid=${gid}&t=${Date.now()}`;
 }
 
 function toCsvUrl(url) {
   // Garante que a URL do Google Sheets retorne CSV (mesmo se foi colada como xlsx)
-  return url.replace(/output=xlsx/i, 'output=csv');
+  let base = url.replace(/output=xlsx/i, 'output=csv');
+  // Remove timestamp antigo se existir, adiciona novo para forçar dado fresco
+  base = base.replace(/[&?]t=\d+/, '');
+  const sep = base.includes('?') ? '&' : '?';
+  return base + sep + 't=' + Date.now();
 }
 
 // Mascara CPF para exibição: 023.114.919-03 → ***.***.919-03 (últimos 5 dígitos visíveis)
@@ -5843,7 +5847,7 @@ let _gvRecadosCache = null, _gvRecadosCacheTs = 0;
 
 async function gvFetchRecados() {
   const now = Date.now();
-  if (_gvRecadosCache && (now - _gvRecadosCacheTs) < 5*60*1000) return _gvRecadosCache;
+  if (_gvRecadosCache && (now - _gvRecadosCacheTs) < 30*1000) return _gvRecadosCache;
   // Busca URL configurada ou usa localStorage para recados manuais
   const csvUrl = localStorage.getItem(GV_RECADOS_KEY) || DEFAULT_AGENDA;
   const manuais = JSON.parse(localStorage.getItem('agenda_lembretes') || '[]');
@@ -5948,32 +5952,77 @@ function gvMiniCalendario() {
   </div>`;
 }
 
+// Paleta de cores únicas por recado (índice 0, 1, 2…)
+const GV_CORES_RECADO = ['#7c3aed','#0891b2','#b45309','#059669','#dc2626','#1473e6','#9d174d','#065f46','#78350f','#1e40af'];
+
+// Extrai TODAS as datas de um texto, incluindo intervalos "09/11 a 12/11"
+function gvExtrairDatas(texto) {
+  const parseDt = (str) => {
+    const m = str.match(/^(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?$/);
+    if (!m) return null;
+    const d = parseInt(m[1]), mo = parseInt(m[2]);
+    if (d < 1 || d > 31 || mo < 1 || mo > 12) return null;
+    const a = m[3] ? (m[3].length===2?2000+parseInt(m[3]):parseInt(m[3])) : new Date().getFullYear();
+    return { d, mo: mo-1, a };
+  };
+  const dias = [];
+  // Detecta intervalos: "09/11/2026 A 12/11/2026" ou "09/11 a 12/11"
+  const rangeRE = /(\d{1,2}[\/\-]\d{1,2}(?:[\/\-]\d{2,4})?)\s+(?:a|A|à|até|ate)\s+(\d{1,2}[\/\-]\d{1,2}(?:[\/\-]\d{2,4})?)/g;
+  const rangeStrs = new Set();
+  let rm;
+  while ((rm = rangeRE.exec(texto)) !== null) {
+    const dt1 = parseDt(rm[1].trim()), dt2 = parseDt(rm[2].trim());
+    if (dt1 && dt2 && dt1.mo === dt2.mo && dt1.a === dt2.a) {
+      for (let d = dt1.d; d <= dt2.d; d++) dias.push({ d, mo: dt1.mo, a: dt1.a });
+      rangeStrs.add(rm[1].trim()); rangeStrs.add(rm[2].trim());
+    } else {
+      if (dt1) dias.push(dt1);
+      if (dt2) dias.push(dt2);
+    }
+  }
+  // Datas avulsas
+  const singleRE = /\b(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?\b/g;
+  let sm;
+  while ((sm = singleRE.exec(texto)) !== null) {
+    if (!rangeStrs.has(sm[0])) {
+      const dt = parseDt(sm[0]);
+      if (dt) dias.push(dt);
+    }
+  }
+  return dias;
+}
+
 function gvRecadosListaHTML(itens) {
-  const COR_PRIO = { alta:'#ef4444', media:'#f59e0b', normal:'#10b981', baixa:'#94a3b8' };
   const COR_CAT  = { 'Treinamento':'#7c3aed', 'RH':'#0891b2', 'Operação':'#b45309', 'Financeiro':'#059669', 'Segurança':'#dc2626', 'Geral':'#475569' };
   const ICON_CAT = { 'Treinamento':'fa-graduation-cap', 'RH':'fa-user-tie', 'Operação':'fa-truck', 'Financeiro':'fa-coins', 'Segurança':'fa-shield-alt', 'Geral':'fa-bell' };
   if (!itens.length) return `<div style="text-align:center;color:var(--text-lt);padding:2rem"><i class="fas fa-check-circle" style="font-size:2.5rem;color:#10b981;display:block;margin-bottom:.8rem"></i><span style="font-size:1.1rem">Nenhum recado no momento.</span></div>`;
   return itens.map((item, idx) => {
-    const pCor = COR_PRIO[item.prioridade] || '#475569';
+    // Cor única por recado (independente da categoria/prioridade)
+    const cor = item._cor || GV_CORES_RECADO[idx % GV_CORES_RECADO.length];
     const cCor = COR_CAT[item.categoria] || '#475569';
     const ico  = ICON_CAT[item.categoria] || 'fa-bell';
-    const numBadge = `<div style="flex:none;width:30px;height:30px;border-radius:50%;background:${pCor};display:flex;align-items:center;justify-content:center;font-family:'Poppins',sans-serif;font-weight:800;font-size:1rem;color:#fff;box-shadow:0 3px 10px ${pCor}55">${idx+1}</div>`;
-    return `<div style="display:flex;align-items:flex-start;gap:1rem;padding:1.1rem 1.2rem;border-radius:16px;background:#fff;border:1px solid rgba(0,0,0,.07);box-shadow:0 3px 14px rgba(30,42,58,.07);border-left:5px solid ${pCor};transition:transform .15s" onmouseenter="this.style.transform='translateX(4px)'" onmouseleave="this.style.transform=''">
-      <div style="display:flex;flex-direction:column;align-items:center;gap:.4rem;flex:none">
+    const numBadge = `<div style="flex:none;width:34px;height:34px;border-radius:50%;background:${cor};display:flex;align-items:center;justify-content:center;font-family:'Poppins',sans-serif;font-weight:800;font-size:1.05rem;color:#fff;box-shadow:0 3px 12px ${cor}66">${idx+1}</div>`;
+    // Exibe TODAS as datas extraídas do texto como pills
+    const todasDatas = gvExtrairDatas(item.titulo + ' ' + (item.descricao||''));
+    const datasUnicas = [...new Map(todasDatas.map(dt=>[`${dt.d}/${dt.mo}/${dt.a}`,dt])).values()];
+    const dataPillsHTML = datasUnicas.map(dt =>
+      `<span style="font-size:.85rem;color:${cor};font-weight:700;background:${cor}15;padding:.2rem .65rem;border-radius:20px;border:1px solid ${cor}44"><i class="fas fa-calendar-day"></i> ${String(dt.d).padStart(2,'0')}/${String(dt.mo+1).padStart(2,'0')}/${dt.a}</span>`
+    ).join('');
+    return `<div style="display:flex;align-items:flex-start;gap:1rem;padding:1.2rem 1.3rem;border-radius:16px;background:#fff;border:1px solid ${cor}30;box-shadow:0 3px 16px ${cor}22;border-left:6px solid ${cor};transition:transform .15s,box-shadow .15s" onmouseenter="this.style.transform='translateX(5px)';this.style.boxShadow='0 6px 22px ${cor}40'" onmouseleave="this.style.transform='';this.style.boxShadow='0 3px 16px ${cor}22'">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:.45rem;flex:none">
         ${numBadge}
-        <div style="width:32px;height:32px;border-radius:10px;background:${cCor}18;display:flex;align-items:center;justify-content:center">
-          <i class="fas ${ico}" style="color:${cCor};font-size:.9rem"></i>
+        <div style="width:34px;height:34px;border-radius:10px;background:${cor}18;display:flex;align-items:center;justify-content:center">
+          <i class="fas ${ico}" style="color:${cor};font-size:1rem"></i>
         </div>
       </div>
       <div style="flex:1;min-width:0">
-        <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:1.05rem;color:#1e2a3a;margin-bottom:.35rem;line-height:1.35">${escapeHTML(item.titulo)}</div>
-        ${item.descricao ? `<div style="font-size:.9rem;color:#475569;margin-bottom:.4rem;line-height:1.5">${escapeHTML(item.descricao)}</div>` : ''}
-        <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-top:.3rem">
-          ${item.data ? `<span style="font-size:.85rem;color:#1473e6;font-weight:600;background:#eff6ff;padding:.2rem .65rem;border-radius:20px;border:1px solid #bfdbfe"><i class="fas fa-calendar-day"></i> ${escapeHTML(item.data)}</span>` : ''}
-          ${item.hora ? `<span style="font-size:.85rem;color:#7c3aed;font-weight:600;background:#f5f3ff;padding:.2rem .65rem;border-radius:20px;border:1px solid #ddd6fe"><i class="fas fa-clock"></i> ${escapeHTML(item.hora)}</span>` : ''}
+        <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:1.1rem;color:#1e2a3a;margin-bottom:.4rem;line-height:1.4">${escapeHTML(item.titulo)}</div>
+        ${item.descricao ? `<div style="font-size:.92rem;color:#475569;margin-bottom:.5rem;line-height:1.55;padding:.5rem .7rem;background:#f8fafc;border-radius:8px">${escapeHTML(item.descricao)}</div>` : ''}
+        <div style="display:flex;gap:.55rem;flex-wrap:wrap;align-items:center;margin-top:.4rem">
+          ${dataPillsHTML}
+          ${item.hora ? `<span style="font-size:.85rem;color:#7c3aed;font-weight:700;background:#f5f3ff;padding:.2rem .65rem;border-radius:20px;border:1px solid #ddd6fe"><i class="fas fa-clock"></i> ${escapeHTML(item.hora)}</span>` : ''}
           ${item.responsavel ? `<span style="font-size:.82rem;color:var(--text-lt);background:#f1f5f9;padding:.2rem .65rem;border-radius:20px"><i class="fas fa-user"></i> ${escapeHTML(item.responsavel)}</span>` : ''}
-          <span style="font-size:.78rem;padding:.2rem .7rem;border-radius:20px;background:${cCor}18;color:${cCor};font-weight:700">${escapeHTML(item.categoria)}</span>
-          <span style="font-size:.78rem;padding:.2rem .7rem;border-radius:20px;background:${pCor}18;color:${pCor};font-weight:700;text-transform:uppercase">${escapeHTML(item.prioridade)}</span>
+          <span style="font-size:.78rem;padding:.2rem .75rem;border-radius:20px;background:${cor}18;color:${cor};font-weight:700">${escapeHTML(item.categoria)}</span>
         </div>
       </div>
     </div>`;
@@ -5999,21 +6048,27 @@ async function gvRenderRecados(body, s, slides, idx) {
   requestAnimationFrame(() => body.classList.add('show'));
   slideRenderDots(slides, idx);
   const itens = await gvFetchRecados().catch(() => []);
-  // Extrai dias com recado no mês atual para destacar no calendário
+  // Atribui cor única por recado e extrai TODAS as datas para o calendário
   const hoje = new Date();
   const anoAtual = hoje.getFullYear(), mesAtual = hoje.getMonth();
-  const recadosDias = {}; // { dia: cor }
-  const COR_CAT_CAL = { 'Treinamento':'#7c3aed', 'RH':'#0891b2', 'Operação':'#b45309', 'Financeiro':'#059669', 'Segurança':'#dc2626', 'Geral':'#c9a227' };
-  itens.forEach(it => {
-    if (!it.data) return;
-    const m = it.data.match(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/);
-    if (!m) return;
-    const d = parseInt(m[1]), mo = parseInt(m[2])-1;
-    const a = m[3] ? (m[3].length===2?2000+parseInt(m[3]):parseInt(m[3])) : anoAtual;
-    if (mo === mesAtual && a === anoAtual) recadosDias[d] = COR_CAT_CAL[it.categoria] || '#c9a227';
+  const recadosDias = {}; // { dia: { cor, titulo } }
+  const recadosLegenda = []; // para legenda do calendário
+  itens.forEach((it, idx) => {
+    const cor = GV_CORES_RECADO[idx % GV_CORES_RECADO.length];
+    it._cor = cor; // injeta cor no item para gvRecadosListaHTML usar
+    recadosLegenda.push({ cor, titulo: it.titulo });
+    // Extrai TODAS as datas do texto do recado (incluindo intervalos)
+    const txtCompleto = it.titulo + ' ' + (it.descricao||'');
+    const datas = gvExtrairDatas(txtCompleto);
+    datas.forEach(dt => {
+      if (dt.mo === mesAtual && dt.a === anoAtual) {
+        // Se o dia já tem um recado, usa a cor de quem veio primeiro
+        if (!recadosDias[dt.d]) recadosDias[dt.d] = { cor, titulo: it.titulo };
+      }
+    });
   });
   const calWrap = body.querySelector('#gv-recados-cal-wrap');
-  if (calWrap) calWrap.innerHTML = gvCalendarioGrande(recadosDias);
+  if (calWrap) calWrap.innerHTML = gvCalendarioGrande(recadosDias, recadosLegenda);
   const listaEl = body.querySelector('#gv-recados-lista');
   if (listaEl) listaEl.innerHTML = gvRecadosListaHTML(itens);
   const countEl = body.querySelector('#gv-rec-count');
@@ -6021,8 +6076,9 @@ async function gvRenderRecados(body, s, slides, idx) {
   slideAutoScroll(body);
 }
 
-function gvCalendarioGrande(recadosDias) {
+function gvCalendarioGrande(recadosDias, recadosLegenda) {
   recadosDias = recadosDias || {};
+  recadosLegenda = recadosLegenda || [];
   const h = new Date();
   const ano = h.getFullYear(), mes = h.getMonth();
   const hoje = h.getDate();
@@ -6038,19 +6094,39 @@ function gvCalendarioGrande(recadosDias) {
   for(let d=1;d<=ultDia;d++){
     const ehHoje = d === hoje;
     const ehFer = ferDias.has(d);
-    const recCor = recadosDias[d];
+    const recInfo = recadosDias[d]; // { cor, titulo }
+    const recCor = recInfo ? recInfo.cor : null;
+    const recTit = recInfo ? recInfo.titulo : '';
     const dow = new Date(ano,mes,d).getDay();
     const isWeekend = dow===0||dow===6;
     let bg, c, fw, extra='';
-    if (ehHoje) { bg='linear-gradient(135deg,#1473e6,#0d66d0)'; c='#fff'; fw='800'; }
-    else if (recCor) { bg=recCor; c='#fff'; fw='700'; extra=`box-shadow:0 2px 8px ${recCor}88;`; }
-    else if (ehFer) { bg='#fef2f2'; c='#b91c1c'; fw='500'; extra='border:1px solid #fecaca;'; }
-    else { bg='transparent'; c=isWeekend?'#64748b':'#2c2c2c'; fw='400'; }
-    const dot = recCor && !ehHoje ? `<span style="position:absolute;bottom:1px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:#fff;opacity:.8"></span>` : '';
-    celulas.push(`<div style="position:relative;text-align:center;border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:${fw};background:${bg};color:${c};${extra}margin:0 auto;cursor:default" title="${recCor?'Recado neste dia':ehFer?ferList.find(f=>f.d.getDate()===d)?.n||'Feriado':''}">${d}${dot}</div>`);
+    if (ehHoje && recCor) {
+      // Hoje E tem recado: fundo do dia + borda colorida
+      bg=`linear-gradient(135deg,#1473e6,#0d66d0)`;
+      c='#fff'; fw='800';
+      extra=`box-shadow:0 0 0 3px ${recCor},0 3px 10px ${recCor}66;`;
+    } else if (ehHoje) {
+      bg='linear-gradient(135deg,#1473e6,#0d66d0)'; c='#fff'; fw='800';
+    } else if (recCor) {
+      bg=recCor; c='#fff'; fw='800'; extra=`box-shadow:0 3px 10px ${recCor}88;`;
+    } else if (ehFer) {
+      bg='#fef2f2'; c='#b91c1c'; fw='500'; extra='border:1px solid #fecaca;';
+    } else {
+      bg='transparent'; c=isWeekend?'#64748b':'#2c2c2c'; fw='400';
+    }
+    const dot = recCor && !ehHoje ? `<span style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:#fff;opacity:.9"></span>` : '';
+    const titulo = recTit ? recTit.substring(0,60) + (recTit.length>60?'…':'') : (ehFer ? ferList.find(f=>f.d.getDate()===d)?.n||'Feriado' : '');
+    celulas.push(`<div style="position:relative;text-align:center;border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:${fw};background:${bg};color:${c};${extra}margin:0 auto;cursor:default" title="${escapeHTML(titulo)}">${d}${dot}</div>`);
   }
-  // Legenda dinâmica de categorias com recados
-  const legendaRec = Object.keys(recadosDias).length ? `<span style="display:flex;align-items:center;gap:.3rem"><span style="width:11px;height:11px;border-radius:3px;background:var(--accent);display:inline-block"></span>Recado</span>` : '';
+  // Legenda por recado (cor + número)
+  const legendaHasRec = recadosLegenda.length > 0;
+  const legendaRecHTML = recadosLegenda.map((lr, idx) => {
+    const tit = lr.titulo.length > 28 ? lr.titulo.substring(0,28)+'…' : lr.titulo;
+    return `<span style="display:flex;align-items:center;gap:.3rem;max-width:100%">
+      <span style="flex:none;width:16px;height:16px;border-radius:4px;background:${lr.cor};display:inline-flex;align-items:center;justify-content:center;font-size:.65rem;color:#fff;font-weight:800">${idx+1}</span>
+      <span style="font-size:.68rem;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escapeHTML(lr.titulo)}">${escapeHTML(tit)}</span>
+    </span>`;
+  }).join('');
   // Feriados do mês listados abaixo
   const ferHTML = ferList.length ? ferList.map(f=>{
     const passou = f.d < new Date(ano,mes,hoje);
@@ -6062,11 +6138,11 @@ function gvCalendarioGrande(recadosDias) {
   return `<div style="background:#fff;border-radius:20px;padding:1.3rem 1.1rem;box-shadow:0 4px 24px rgba(30,42,58,.1);border:1px solid rgba(0,0,0,.07);min-width:280px;max-width:300px">
     <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.05rem;color:#1473e6;text-align:center;margin-bottom:.8rem;text-transform:uppercase;letter-spacing:1.5px">${nomes[mes]} ${ano}</div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">${celulas.join('')}</div>
-    <div style="margin-top:.7rem;display:flex;gap:.6rem;flex-wrap:wrap;font-size:.72rem">
-      <span style="display:flex;align-items:center;gap:.3rem"><span style="width:11px;height:11px;border-radius:3px;background:linear-gradient(135deg,#1473e6,#0d66d0);display:inline-block"></span>Hoje</span>
-      <span style="display:flex;align-items:center;gap:.3rem"><span style="width:11px;height:11px;border-radius:3px;background:#fef2f2;border:1px solid #fecaca;display:inline-block"></span>Feriado</span>
-      ${legendaRec}
+    <div style="margin-top:.8rem;display:flex;gap:.4rem;flex-wrap:wrap;font-size:.72rem;border-top:1px solid #f1f5f9;padding-top:.6rem">
+      <span style="display:flex;align-items:center;gap:.3rem"><span style="width:12px;height:12px;border-radius:3px;background:linear-gradient(135deg,#1473e6,#0d66d0);display:inline-block"></span>Hoje</span>
+      <span style="display:flex;align-items:center;gap:.3rem"><span style="width:12px;height:12px;border-radius:3px;background:#fef2f2;border:1px solid #fecaca;display:inline-block"></span>Feriado</span>
     </div>
+    ${legendaHasRec ? `<div style="margin-top:.55rem;display:flex;flex-direction:column;gap:.35rem;border-top:1px solid #f1f5f9;padding-top:.55rem">${legendaRecHTML}</div>` : ''}
   </div>
   <div style="background:#fff;border-radius:20px;padding:1.1rem;box-shadow:0 4px 24px rgba(30,42,58,.1);border:1px solid rgba(0,0,0,.07);min-width:280px;max-width:300px">
     <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.85rem;color:var(--accent-dk);text-transform:uppercase;letter-spacing:1px;margin-bottom:.7rem"><i class="fas fa-calendar-day"></i> Feriados — ${nomes[mes]}/${ano}</div>
@@ -13150,6 +13226,16 @@ function abastCols(headers) {
   };
 }
 
+// Botão único inteligente — decide o que fazer:
+// · WebApp configurado → acionarWebApp() (verifica XMLs, processa se houver, e recarrega CSV)
+// · Sem WebApp configurado → apenas recarrega o CSV
+async function atualizarAbastSmart() {
+  if (WEBAPP_ABAST_URL) {
+    return acionarWebApp();
+  }
+  return loadAbastecimentos();
+}
+
 async function loadAbastecimentos(opts) {
   const silencioso = !!(opts && opts.silencioso);
   const btn = document.getElementById('btnAtualizarConsumoTab');
@@ -13645,13 +13731,13 @@ function pararWebApp() {
 // valendo mesmo relendo tudo.
 async function abastLimparEReler() {
   const status   = document.getElementById('webAppStatusTab');
-  const btn      = document.getElementById('btnLimparRelerTab');
-  const btnProc  = document.getElementById('btnProcessarPDFsTab');
+  const btn      = document.getElementById('btnAtualizarConsumoTab');
+  const lnk      = document.getElementById('lnkLimparReler');
   const btnParar = document.getElementById('btnPararPDFsTab');
 
-  // Desabilita ambos durante toda a operação
-  if (btn)    { btn.disabled = true;  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Relendo...'; }
-  if (btnProc){ btnProc.disabled = true; btnProc.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando XMLs...'; }
+  // Desabilita botão principal durante toda a operação
+  if (btn)  { btn.disabled = true;  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Relendo...'; }
+  if (lnk)  { lnk.style.pointerEvents = 'none'; lnk.style.opacity = '.3'; }
   if (btnParar){ btnParar.style.display = 'inline-flex'; btnParar.disabled = false; btnParar.innerHTML = '<i class="fas fa-stop"></i> Parar'; }
   if (status) { status.style.display = 'block'; status.style.background = 'var(--gray-100)'; status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Forçando reprocessamento de todos os arquivos da pasta...'; }
 
@@ -13723,8 +13809,8 @@ async function abastLimparEReler() {
   } catch (e) {
     if (status) { status.style.background = '#fef2f2'; status.innerHTML = '<i class="fas fa-times-circle" style="color:#dc2626"></i> Erro: ' + e.message; }
   } finally {
-    if (btn)    { btn.disabled = false;  btn.innerHTML = '<i class="fas fa-broom"></i> Limpar busca e reler'; }
-    if (btnProc){ btnProc.disabled = false; btnProc.innerHTML = '<i class="fas fa-file-pdf"></i> Processar PDFs'; }
+    if (btn)    { btn.disabled = false;  btn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar'; }
+    if (lnk)    { lnk.style.pointerEvents = ''; lnk.style.opacity = ''; }
     if (btnParar){ btnParar.style.display = 'none'; }
     abastCancelarProcessamento = false;
     abastControllerAtivo = null;
@@ -13732,7 +13818,7 @@ async function abastLimparEReler() {
 }
 
 async function acionarWebApp() {
-  const btn      = document.getElementById('btnProcessarPDFsTab');
+  const btn      = document.getElementById('btnAtualizarConsumoTab');
   const btnParar = document.getElementById('btnPararPDFsTab');
   const status   = document.getElementById('webAppStatusTab');
   if (!btn || !status) return;
@@ -13754,8 +13840,10 @@ async function acionarWebApp() {
       status.style.background = '#fef9c3';
       status.innerHTML = '<i class="fas fa-info-circle" style="color:#ca8a04"></i> Nenhum XML novo na pasta — tudo já foi processado.';
       btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-file-pdf"></i> Processar PDFs';
+      btn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar';
       if (btnParar) btnParar.style.display = 'none';
+      // Sem XMLs pendentes: recarrega CSV assim mesmo
+      await loadAbastecimentos({ silencioso: true });
       return;
     }
 
@@ -13811,7 +13899,7 @@ async function acionarWebApp() {
       `<b>${totais.totalLinhas}</b> linha(s) gravada(s) · ` +
       `<b>${totais.duplicatas}</b> duplicata(s) · ` +
       `<b>${totais.erros}</b> erro(s)` +
-      (restante > 0 ? ` · <b style="color:#dc2626">${restante} ainda pendente(s)</b> — clique novamente em Processar PDFs` : '');
+      (restante > 0 ? ` · <b style="color:#dc2626">${restante} ainda pendente(s)</b> — clique Atualizar novamente` : '');
 
     if (totais.totalLinhas > 0) {
       showToast('✅ Planilha atualizada com ' + totais.totalLinhas + ' novo(s) registro(s)!', 4000);
@@ -13827,7 +13915,7 @@ async function acionarWebApp() {
   }
 
   btn.disabled = false;
-  btn.innerHTML = '<i class="fas fa-file-pdf"></i> Processar PDFs';
+  btn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar';
   if (btnParar) btnParar.style.display = 'none';
   abastCancelarProcessamento = false;
 }
