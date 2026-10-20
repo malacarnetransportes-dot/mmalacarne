@@ -5910,10 +5910,12 @@ async function gvFetchRecados() {
       }
     } catch(e) {}
   }
-  // Se não tem nada, adiciona recado da planilha hard-coded (lido do Drive)
+  // Se não tem nada, usa recados da planilha (fallback hardcoded)
   if (!itens.length) {
     itens = [
-      { titulo:'CURSO DE INTEGRAÇÃO', data:'09/11 a 12/11 (Web) · 13/11 Presencial', hora:'', categoria:'Treinamento', prioridade:'alta', responsavel:'RH', descricao:'Web: 09/11 a 12/11 — Presencial em Concórdia: 13/11' },
+      { titulo:'(LEANDRO KLEE) - CURSO DE INTEGRAÇÃO 09/11/2026 A 12/11/2026 WEB - 13/11/2026 - PRESENCIAL EM CONCÓRDIA', data:'09/11/2026', hora:'', categoria:'Treinamento', prioridade:'alta', responsavel:'RH', descricao:'Web: 09/11 a 12/11/2026 — Presencial em Concórdia: 13/11/2026' },
+      { titulo:'03/11/2026 - LIVE NO YOUTUBE SOBRE MUDANÇAS NO SIOT - (MOVITRANS)', data:'03/11/2026', hora:'', categoria:'Treinamento', prioridade:'media', responsavel:'', descricao:'Live no YouTube sobre mudanças no SIOT pela Movitrans' },
+      { titulo:'MARWIN ADRIEL BORTOLOTI - EXAME ADMISSIONAL - 21/10/2026 ÀS 07:00', data:'21/10/2026', hora:'07:00', categoria:'RH', prioridade:'alta', responsavel:'RH', descricao:'Exame admissional — 21/10/2026 às 07:00' },
     ];
   }
   _gvRecadosCache = itens;
@@ -5996,19 +5998,39 @@ function gvRecadosListaHTML(itens) {
   const COR_CAT  = { 'Treinamento':'#7c3aed', 'RH':'#0891b2', 'Operação':'#b45309', 'Financeiro':'#059669', 'Segurança':'#dc2626', 'Geral':'#475569' };
   const ICON_CAT = { 'Treinamento':'fa-graduation-cap', 'RH':'fa-user-tie', 'Operação':'fa-truck', 'Financeiro':'fa-coins', 'Segurança':'fa-shield-alt', 'Geral':'fa-bell' };
   if (!itens.length) return `<div style="text-align:center;color:var(--text-lt);padding:2rem"><i class="fas fa-check-circle" style="font-size:2.5rem;color:#10b981;display:block;margin-bottom:.8rem"></i><span style="font-size:1.1rem">Nenhum recado no momento.</span></div>`;
+  const hj = new Date();
+  const hjD = hj.getDate(), hjMo = hj.getMonth(), hjA = hj.getFullYear();
   return itens.map((item, idx) => {
     // Cor única por recado (independente da categoria/prioridade)
     const cor = item._cor || GV_CORES_RECADO[idx % GV_CORES_RECADO.length];
-    const cCor = COR_CAT[item.categoria] || '#475569';
     const ico  = ICON_CAT[item.categoria] || 'fa-bell';
     const numBadge = `<div style="flex:none;width:34px;height:34px;border-radius:50%;background:${cor};display:flex;align-items:center;justify-content:center;font-family:'Poppins',sans-serif;font-weight:800;font-size:1.05rem;color:#fff;box-shadow:0 3px 12px ${cor}66">${idx+1}</div>`;
     // Exibe TODAS as datas extraídas do texto como pills
     const todasDatas = gvExtrairDatas(item.titulo + ' ' + (item.descricao||''));
     const datasUnicas = [...new Map(todasDatas.map(dt=>[`${dt.d}/${dt.mo}/${dt.a}`,dt])).values()];
-    const dataPillsHTML = datasUnicas.map(dt =>
-      `<span style="font-size:.85rem;color:${cor};font-weight:700;background:${cor}15;padding:.2rem .65rem;border-radius:20px;border:1px solid ${cor}44"><i class="fas fa-calendar-day"></i> ${String(dt.d).padStart(2,'0')}/${String(dt.mo+1).padStart(2,'0')}/${dt.a}</span>`
-    ).join('');
-    return `<div style="display:flex;align-items:flex-start;gap:1rem;padding:1.2rem 1.3rem;border-radius:16px;background:#fff;border:1px solid ${cor}30;box-shadow:0 3px 16px ${cor}22;border-left:6px solid ${cor};transition:transform .15s,box-shadow .15s" onmouseenter="this.style.transform='translateX(5px)';this.style.boxShadow='0 6px 22px ${cor}40'" onmouseleave="this.style.transform='';this.style.boxShadow='0 3px 16px ${cor}22'">
+    // Verifica se alguma data é hoje ou amanhã
+    let alertaLabel = '';
+    for (const dt of datasUnicas) {
+      const ehHoje = dt.d === hjD && dt.mo === hjMo && dt.a === hjA;
+      const dtAmanha = new Date(hjA, hjMo, hjD + 1);
+      const ehAmanha = dt.d === dtAmanha.getDate() && dt.mo === dtAmanha.getMonth() && dt.a === dtAmanha.getFullYear();
+      if (ehHoje) { alertaLabel = 'HOJE'; break; }
+      if (ehAmanha) { alertaLabel = 'AMANHÃ'; }
+    }
+    const alertaBadge = alertaLabel === 'HOJE'
+      ? `<span style="font-size:.78rem;font-weight:900;background:#ef4444;color:#fff;padding:.25rem .8rem;border-radius:20px;letter-spacing:.5px;animation:pulse 1s infinite;box-shadow:0 0 0 0 #ef444488"><i class="fas fa-exclamation-circle"></i> ${alertaLabel}</span>`
+      : alertaLabel === 'AMANHÃ'
+      ? `<span style="font-size:.78rem;font-weight:900;background:#f59e0b;color:#fff;padding:.25rem .8rem;border-radius:20px;letter-spacing:.5px"><i class="fas fa-bell"></i> ${alertaLabel}</span>`
+      : '';
+    const borderCor = alertaLabel === 'HOJE' ? '#ef4444' : alertaLabel === 'AMANHÃ' ? '#f59e0b' : cor;
+    const dataPillsHTML = datasUnicas.map(dt => {
+      const ehHoje2 = dt.d === hjD && dt.mo === hjMo && dt.a === hjA;
+      const pillBg = ehHoje2 ? '#ef444418' : `${cor}15`;
+      const pillBorder = ehHoje2 ? '#ef444488' : `${cor}44`;
+      const pillCor = ehHoje2 ? '#ef4444' : cor;
+      return `<span style="font-size:.85rem;color:${pillCor};font-weight:700;background:${pillBg};padding:.2rem .65rem;border-radius:20px;border:1px solid ${pillBorder}"><i class="fas fa-calendar-day"></i> ${String(dt.d).padStart(2,'0')}/${String(dt.mo+1).padStart(2,'0')}/${dt.a}</span>`;
+    }).join('');
+    return `<div style="display:flex;align-items:flex-start;gap:1rem;padding:1.2rem 1.3rem;border-radius:16px;background:#fff;border:1px solid ${borderCor}44;box-shadow:0 3px 16px ${borderCor}22;border-left:6px solid ${borderCor};transition:transform .15s,box-shadow .15s" onmouseenter="this.style.transform='translateX(5px)';this.style.boxShadow='0 6px 22px ${borderCor}40'" onmouseleave="this.style.transform='';this.style.boxShadow='0 3px 16px ${borderCor}22'">
       <div style="display:flex;flex-direction:column;align-items:center;gap:.45rem;flex:none">
         ${numBadge}
         <div style="width:34px;height:34px;border-radius:10px;background:${cor}18;display:flex;align-items:center;justify-content:center">
@@ -6019,6 +6041,7 @@ function gvRecadosListaHTML(itens) {
         <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:1.1rem;color:#1e2a3a;margin-bottom:.4rem;line-height:1.4">${escapeHTML(item.titulo)}</div>
         ${item.descricao ? `<div style="font-size:.92rem;color:#475569;margin-bottom:.5rem;line-height:1.55;padding:.5rem .7rem;background:#f8fafc;border-radius:8px">${escapeHTML(item.descricao)}</div>` : ''}
         <div style="display:flex;gap:.55rem;flex-wrap:wrap;align-items:center;margin-top:.4rem">
+          ${alertaBadge}
           ${dataPillsHTML}
           ${item.hora ? `<span style="font-size:.85rem;color:#7c3aed;font-weight:700;background:#f5f3ff;padding:.2rem .65rem;border-radius:20px;border:1px solid #ddd6fe"><i class="fas fa-clock"></i> ${escapeHTML(item.hora)}</span>` : ''}
           ${item.responsavel ? `<span style="font-size:.82rem;color:var(--text-lt);background:#f1f5f9;padding:.2rem .65rem;border-radius:20px"><i class="fas fa-user"></i> ${escapeHTML(item.responsavel)}</span>` : ''}
@@ -21078,6 +21101,7 @@ document.getElementById('tvBtnOpen').addEventListener('click', function() {
 /* ── Slide Recados & Lembretes ── */
 #gv-recados-lista::-webkit-scrollbar{width:4px;}
 #gv-recados-lista::-webkit-scrollbar-thumb{background:rgba(20,115,230,.25);border-radius:4px;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 #ef444488}50%{box-shadow:0 0 0 6px #ef444422}}
 /* ── Notícias GV ── */
 #gv-noticias-slot{animation:fadeUp .4s ease both .3s;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
