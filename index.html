@@ -2519,14 +2519,6 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
               </div>
             </div>
 
-            <!-- Linha 3: Trocas por mês (timeline) -->
-            <div style="margin-bottom:.4rem">
-              <div class="dash-card-title" style="margin-bottom:.6rem"><i class="fas fa-chart-line"></i> Histórico de Trocas por Período</div>
-              <div style="position:relative;height:180px">
-                <canvas id="batChartTrocas" style="max-height:170px"></canvas>
-              </div>
-            </div>
-
           </div>
 
           <!-- Tabela -->
@@ -14020,6 +14012,7 @@ function aplicarFiltrosBaterias() {
   // Coluna tipo: pode ser "tipo", "categoria", "tipo veiculo", "classificacao"
   // Se não houver, deduzimos pela placa (placas de carreta costumam ter sufixo C/S ou estar em coluna separada)
   const colTipo = findCol(headers, ['tipo veiculo','tipo_veiculo','tipo vei','classificacao','classe do veiculo','cavalo carreta']);
+  const colEmpresa = findCol(headers, ['empresa','razao social','razão social','proprietario','proprietário']);
   const colLocal = findCol(headers, ['local','localizacao','localização','garagem','base','cidade','unidade','filial','patio','pátio']);
   const colObs   = findCol(headers, ['observacao','observação','obs','nota','notas','comentario','comentário','descricao','descrição','detalhe']);
 
@@ -14144,7 +14137,7 @@ function aplicarFiltrosBaterias() {
       `;
 
       // Todas as demais colunas da planilha (exceto colunas já destacadas)
-      const colsDestacadas = new Set([colVeiculo, colData, colModelo, colInstalacao, colTipo, colLocal, colObs].filter(Boolean));
+      const colsDestacadas = new Set([colVeiculo, colData, colModelo, colInstalacao, colTipo, colLocal, colObs, colEmpresa].filter(Boolean));
       const colsExtras = headers.filter(h => !colsDestacadas.has(h));
       let extraCards = colsExtras.map(h => {
         const val = ultimo[h];
@@ -14159,6 +14152,7 @@ function aplicarFiltrosBaterias() {
 
       // Colunas destacadas (em sequência natural) com label amigável
       const labelMap = {};
+      if (colEmpresa) labelMap[colEmpresa] = '🏢 Empresa';
       if (colVeiculo) labelMap[colVeiculo] = 'Veículo / Placa';
       if (colModelo) labelMap[colModelo] = 'Modelo (bateria atual)';
       if (colInstalacao) labelMap[colInstalacao] = 'Data de Instalação';
@@ -14196,7 +14190,29 @@ function aplicarFiltrosBaterias() {
           }).join('')}</div>
         </div>` : '';
 
-      resumoBody.innerHTML = fixedCards + mainCards + extraCards + historicoHtml;
+      // Bateria anterior (penúltimo registro), se houver
+      let anteriorHtml = '';
+      if (historicoOrdenado.length > 1) {
+        const ant = historicoOrdenado[historicoOrdenado.length-2];
+        const dAntVenc = colData ? parseDate(ant[colData]) : null;
+        const dAntInst = colInstalacao ? parseDate(ant[colInstalacao]) : null;
+        const modAnt = colModelo ? (ant[colModelo]||'—') : '—';
+        const dInstAtual = colInstalacao ? parseDate(ultimo[colInstalacao]) : null;
+        const fimAnt = dInstAtual || dUlt;
+        const iniAnt = dAntInst;
+        const durReal = (iniAnt && dInstAtual) ? Math.round((dInstAtual-iniAnt)/86400000) : null;
+        anteriorHtml = `
+        <div style="background:#fff7ed;padding:.6rem .8rem;border-radius:8px;border:1px solid #fdba74">
+          <div style="font-size:.68rem;color:#9a3412;margin-bottom:.2rem;font-weight:700">🔋 Bateria anterior</div>
+          <div style="font-size:.9rem;font-weight:700;color:#1e293b">${escapeHTML(String(modAnt))}</div>
+          <div style="font-size:.72rem;color:#64748b;margin-top:.2rem">
+            ${dAntInst?`inst. ${fmtDate(dAntInst)}`:''}${dAntVenc?` · venc. ${fmtDate(dAntVenc)}`:''}
+            ${durReal!==null?`<br>durou ${durReal} dias (${(durReal/30).toFixed(1)} meses)`:''}
+          </div>
+        </div>`;
+      }
+
+      resumoBody.innerHTML = fixedCards + mainCards + anteriorHtml + extraCards + historicoHtml;
       resumoCard.style.display = 'block';
     } else {
       resumoCard.style.display = 'none';
@@ -14371,55 +14387,6 @@ function batRenderRankings(dedupedData, allData, colVeiculo, colData, colModelo,
       options:{responsive:true,maintainAspectRatio:false,
         plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw} dias (${fmtDias(ctx.raw)})`}}},
         scales:{y:{ticks:{font:{size:10}},grid:{color:'rgba(0,0,0,.04)'}},x:{ticks:{font:{size:10}}}}
-      }
-    });
-  }
-
-  // ── Gráfico: Trocas por mês (usa todos os registros, não dedup) ──
-  const ctxTrocas = document.getElementById('batChartTrocas')?.getContext('2d');
-  if (ctxTrocas && colInstalacao) {
-    if (_batChartTrocas) _batChartTrocas.destroy();
-    const porMes = {};
-    allData.forEach(r => {
-      const d = parseDate(r[colInstalacao]);
-      if (!d) return;
-      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-      porMes[key] = (porMes[key]||0)+1;
-    });
-    const meses = Object.keys(porMes).sort();
-    const fmtMes = m => { const [y,mo]=m.split('-'); return `${mo}/${y.slice(2)}`; };
-    _batChartTrocas = new Chart(ctxTrocas, {
-      type:'bar',
-      data:{
-        labels: meses.map(fmtMes),
-        datasets:[{label:'Trocas no mês',data:meses.map(m=>porMes[m]),backgroundColor:'rgba(139,115,85,.7)',borderRadius:4}]
-      },
-      options:{responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false}},
-        scales:{y:{ticks:{font:{size:10},stepSize:1},grid:{color:'rgba(0,0,0,.04)'}},x:{ticks:{font:{size:10}}}}
-      }
-    });
-  } else if (ctxTrocas && !colInstalacao) {
-    // sem coluna de instalação — mostra vencimentos por mês como proxy
-    if (_batChartTrocas) _batChartTrocas.destroy();
-    const porMes = {};
-    allData.forEach(r => {
-      const d = colData ? parseDate(r[colData]) : null;
-      if (!d) return;
-      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-      porMes[key] = (porMes[key]||0)+1;
-    });
-    const meses = Object.keys(porMes).sort();
-    const fmtMes = m => { const [y,mo]=m.split('-'); return `${mo}/${y.slice(2)}`; };
-    _batChartTrocas = new Chart(ctxTrocas, {
-      type:'bar',
-      data:{
-        labels: meses.map(fmtMes),
-        datasets:[{label:'Vencimentos por mês',data:meses.map(m=>porMes[m]),backgroundColor:'rgba(59,130,246,.65)',borderRadius:4}]
-      },
-      options:{responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},tooltip:{callbacks:{title:ctx=>`Mês: ${ctx[0].label}`,label:ctx=>`${ctx.raw} vencimento(s)`}}},
-        scales:{y:{ticks:{font:{size:10},stepSize:1},grid:{color:'rgba(0,0,0,.04)'}},x:{ticks:{font:{size:10}}}}
       }
     });
   }
