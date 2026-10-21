@@ -1420,7 +1420,7 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
   <div class="hero-grain" aria-hidden="true"></div>
 
   <div class="hero-inner">
-    <p class="hero-route-pill">Transporte Frigorífico · Desde 1982</p>
+    <p class="hero-route-pill">Transportes de Cargas Frigoríficas · Desde 1982</p>
     <h1>
       <span class="h1-line-a">O frio</span>
       <span class="h1-line-b">que alimenta</span>
@@ -6074,7 +6074,19 @@ async function gvRenderRecados(body, s, slides, idx) {
     <div style="margin-top:.6rem;font-size:.72rem;color:var(--text-lt)"><i class="fas fa-link" style="color:var(--accent)"></i> Planilha RECADOS sincronizada · atualiza a cada 5 min.</div>`;
   requestAnimationFrame(() => body.classList.add('show'));
   slideRenderDots(slides, idx);
-  const itens = await gvFetchRecados().catch(() => []);
+  let itens = await gvFetchRecados().catch(() => []);
+  // ── Ordena por data mais próxima (futuro/hoje primeiro, depois sem data) ──
+  const _agora = Date.now();
+  function _proximidade(it) {
+    const datas = gvExtrairDatas(it.titulo + ' ' + (it.descricao||''));
+    if (!datas.length) return Infinity;
+    const ms = datas.map(dt => {
+      const d = new Date(dt.a, dt.mo, dt.d);
+      return Math.abs(d.getTime() - _agora);
+    });
+    return Math.min(...ms);
+  }
+  itens = [...itens].sort((a,b) => _proximidade(a) - _proximidade(b));
   // Atribui cor única por recado e extrai TODAS as datas para o calendário
   const hoje = new Date();
   const anoAtual = hoje.getFullYear(), mesAtual = hoje.getMonth();
@@ -6100,8 +6112,76 @@ async function gvRenderRecados(body, s, slides, idx) {
   if (listaEl) listaEl.innerHTML = gvRecadosListaHTML(itens);
   const countEl = body.querySelector('#gv-rec-count');
   if (countEl && itens.length) countEl.textContent = itens.length;
+  // ── Popup automático de alerta para recados urgentes ──
+  gvAlertaRecadosUrgentes(itens);
   slideAutoScroll(body);
 }
+
+function gvAlertaRecadosUrgentes(itens) {
+  const hj = new Date();
+  const hjD = hj.getDate(), hjMo = hj.getMonth(), hjA = hj.getFullYear();
+  const amanha = new Date(hjA, hjMo, hjD + 1);
+  const urgentes = itens.filter(it => {
+    const datas = gvExtrairDatas(it.titulo + ' ' + (it.descricao||''));
+    return datas.some(dt => {
+      const ehHoje = dt.d===hjD && dt.mo===hjMo && dt.a===hjA;
+      const ehAmanha = dt.d===amanha.getDate() && dt.mo===amanha.getMonth() && dt.a===amanha.getFullYear();
+      return ehHoje || ehAmanha;
+    });
+  });
+  if (!urgentes.length) return;
+  // Não repete o popup mais de uma vez por slide (sessão)
+  const chave = 'gv_alerta_recados_' + hjA + '_' + hjMo + '_' + hjD;
+  if (sessionStorage.getItem(chave)) return;
+  sessionStorage.setItem(chave, '1');
+  // Cria overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'gv-alerta-popup-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;animation:fadeIn .25s ease';
+  const hoje_amanha_lista = urgentes.map(it => {
+    const datas = gvExtrairDatas(it.titulo+' '+(it.descricao||''));
+    const label = datas.some(dt => dt.d===hjD && dt.mo===hjMo && dt.a===hjA)
+      ? '<span style="background:#ef4444;color:#fff;border-radius:20px;padding:.15rem .6rem;font-size:.75rem;font-weight:900;margin-right:.5rem"><i class="fas fa-exclamation-circle"></i> HOJE</span>'
+      : '<span style="background:#f59e0b;color:#fff;border-radius:20px;padding:.15rem .6rem;font-size:.75rem;font-weight:900;margin-right:.5rem"><i class="fas fa-bell"></i> AMANHÃ</span>';
+    return `<div style="display:flex;align-items:flex-start;gap:.6rem;padding:.7rem .9rem;background:#fff8f8;border-left:4px solid #ef4444;border-radius:10px;margin-bottom:.5rem">
+      <i class="fas fa-circle-exclamation" style="color:#ef4444;margin-top:.15rem"></i>
+      <div><div style="font-weight:700;font-size:.95rem;color:#1e2a3a">${label}${escapeHTML(it.titulo)}</div>
+      ${it.descricao?`<div style="font-size:.82rem;color:#64748b;margin-top:.2rem">${escapeHTML(it.descricao)}</div>`:''}
+      </div></div>`;
+  }).join('');
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:18px;padding:2rem 2.2rem;max-width:500px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.35);animation:slideUp .28s ease;position:relative">
+      <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:1.2rem">
+        <div style="width:48px;height:48px;background:#ef444418;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:none">
+          <i class="fas fa-bell" style="font-size:1.4rem;color:#ef4444;animation:shake 0.6s ease 0.3s both"></i>
+        </div>
+        <div>
+          <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.15rem;color:#1e2a3a">⚠️ Atenção — Recados Urgentes</div>
+          <div style="font-size:.8rem;color:#94a3b8">${urgentes.length} lembrete(s) vencem hoje ou amanhã</div>
+        </div>
+        <button onclick="document.getElementById('gv-alerta-popup-overlay').remove()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.3rem;cursor:pointer;color:#94a3b8;line-height:1" title="Fechar">×</button>
+      </div>
+      <div style="max-height:280px;overflow-y:auto">${hoje_amanha_lista}</div>
+      <button onclick="document.getElementById('gv-alerta-popup-overlay').remove()" style="margin-top:1.2rem;width:100%;padding:.65rem;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:.95rem;cursor:pointer;letter-spacing:.02em">
+        <i class="fas fa-check"></i> Entendido
+      </button>
+    </div>`;
+  // Fechar clicando fora
+  overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+}
+// Keyframe shake para o ícone de sino
+(function(){
+  if (document.getElementById('gv-alerta-style')) return;
+  const s = document.createElement('style');
+  s.id = 'gv-alerta-style';
+  s.textContent = `
+    @keyframes shake{0%,100%{transform:rotate(0)}15%{transform:rotate(15deg)}30%{transform:rotate(-13deg)}45%{transform:rotate(10deg)}60%{transform:rotate(-8deg)}75%{transform:rotate(5deg)}}
+    @keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  `;
+  document.head.appendChild(s);
+})();
 
 function gvCalendarioGrande(recadosDias, recadosLegenda) {
   recadosDias = recadosDias || {};
