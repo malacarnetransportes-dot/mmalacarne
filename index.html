@@ -5852,11 +5852,15 @@ let _gvRecadosCache = null, _gvRecadosCacheTs = 0;
 async function gvFetchRecados() {
   const now = Date.now();
   if (_gvRecadosCache && (now - _gvRecadosCacheTs) < 30*1000) return _gvRecadosCache;
-  // URL da planilha RECADOS: prioridade = chave específica GV > Config URLs > DEFAULT_AGENDA
-  // Se urlAgenda no localStorage for igual à URL errada antiga, ignora e usa DEFAULT_AGENDA
-  const _agendaStorage = localStorage.getItem('urlAgenda') || '';
-  const _agendaValida = _agendaStorage && !_agendaStorage.includes('2PACX-1vRCjwo2zV2NWdhstfp3J4kCRcnxKKg0OHNM9f1Xp7xx3') ? _agendaStorage : DEFAULT_AGENDA;
-  const csvUrl = localStorage.getItem(GV_RECADOS_KEY) || _agendaValida;
+  // URLs candidatas em ordem de prioridade — tenta todas até uma funcionar
+  const _candidatas = [
+    localStorage.getItem(GV_RECADOS_KEY),
+    // URL direta pelo ID + gid (não exige "publicar na web", só compartilhamento público)
+    'https://docs.google.com/spreadsheets/d/1bj3jrzZWqiGXX_rlJo10N_dgl0jXtiZD/pub?gid=670512955&output=csv',
+    // URL publicada informada pelo usuário
+    'https://docs.google.com/spreadsheets/d/e/2PACX-1vQEp3tUp5HMdJl7PfpaXm_LBrcaEDOnlRbi7cAEKr4Nam3DhYgFRyJeEB-chE-Esg/pub?output=csv',
+    DEFAULT_AGENDA,
+  ].filter(Boolean);
   const manuais = JSON.parse(localStorage.getItem('agenda_lembretes') || '[]');
   let itens = manuais.map(l => ({
     titulo: l.titulo || l.title || '',
@@ -5867,10 +5871,12 @@ async function gvFetchRecados() {
     responsavel: l.responsavel || '',
     descricao: l.descricao || '',
   }));
-  if (csvUrl) {
+  // Tenta cada URL candidata até obter dados válidos
+  for (const csvUrl of _candidatas) {
     try {
       const r = await fetch(csvUrl, {signal: AbortSignal.timeout(8000)});
-      if (r.ok) {
+      if (!r.ok) continue;
+      {
         const txt = await r.text();
         if (typeof Papa !== 'undefined') {
           const parsed = Papa.parse(txt, { header:true, skipEmptyLines:true });
@@ -5922,9 +5928,10 @@ async function gvFetchRecados() {
           // Mescla: CSV prevalece
           const manuaisNaoCsv = itens.filter(m => !csvItens.some(c => c.titulo === m.titulo));
           itens = [...csvItens, ...manuaisNaoCsv];
+          if (csvItens.length > 0) break; // achou dados — não precisa tentar próxima URL
         }
       }
-    } catch(e) {}
+    } catch(e) { /* tenta próxima URL */ }
   }
   // Se não tem nada (planilha inacessível), mostra aviso vazio
   // (fallback hardcoded removido — dados antigos não devem aparecer)
