@@ -3806,7 +3806,7 @@ const DEFAULT_PNEU_DOC = "https://docs.google.com/document/d/e/2PACX-1vR4rIhekIE
 // engano, para a MESMA planilha do GIRA/Abastecimentos (colunas de
 // combustível, sem "titulo"), então a sincronização sempre trazia 0
 // lembretes reconhecidos. Configure a URL certa em Config URLs.
-const DEFAULT_AGENDA   = "https://docs.google.com/spreadsheets/d/1bj3jrzZWqiGXX_rlJo10N_dgl0jXtiZD/pub?output=csv";
+const DEFAULT_AGENDA   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQEp3tUp5HMdJl7PfpaXm_LBrcaEDOnlRbi7cAEKr4Nam3DhYgFRyJeEB-chE-Esg/pub?output=csv";
 // Doc de texto livre (não é planilha) que o Viny indicou para a Agenda —
 // uma lista de compromissos/treinamentos em texto corrido, não uma tabela.
 const DEFAULT_AG_DOC_URL = "https://docs.google.com/document/d/15ohweIq4wiHRZON0wS5nrqqRZKaREddVdXgE-Z_w9Ag/edit?usp=drive_link";
@@ -5874,9 +5874,15 @@ async function gvFetchRecados() {
           const parsed = Papa.parse(txt, { header:true, skipEmptyLines:true });
           const rows = parsed.data || [];
           const csvItens = rows.map(row => {
-            // Aceita coluna RECADO (formato livre) além das colunas estruturadas
-            const rawTxt = row.RECADO || row.recado || row['Recado'] || '';
-            const titulo = row.titulo || row.TITULO || row['Título'] || row.title || rawTxt || '';
+            // Aceita coluna RECADO/TEXTO/MENSAGEM (formato livre) além das colunas estruturadas
+            const rawTxt = row.RECADO || row.recado || row['Recado']
+                        || row.TEXTO  || row.texto  || row['Texto']
+                        || row.MENSAGEM || row.mensagem || row['Mensagem']
+                        || row.DESCRICAO || row.descricao || row['Descrição'] || '';
+            const titulo = row.titulo || row.TITULO || row['Título']
+                        || row.title  || row.TITLE
+                        || row.ASSUNTO || row.assunto || row['Assunto']
+                        || rawTxt || '';
             if (!titulo) return null;
             // Extrai primeira data dd/mm/yyyy ou dd/mm encontrada no texto
             const dtMatch = titulo.match(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/);
