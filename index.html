@@ -18410,10 +18410,23 @@ function agSave(arr) {
 function agParseCsvRow(row, findCol) {
   // Colunas aceitas (case-insensitive, com variações em pt/en):
   const get = (...keys) => { for (const k of keys) { const v = findCol(row, k); if (v !== undefined && String(v).trim()) return String(v).trim(); } return ''; };
-  const titulo     = get('titulo','title','assunto','subject','lembrete');
+  // Aceita coluna RECADO (planilha M. Malacarne) além das colunas estruturadas
+  // Fallback: primeiro valor não-vazio da linha (cabeçalho mesclado no Sheets)
+  const primeiroVal = Object.values(row).find(v => v && String(v).trim()) || '';
+  const titulo     = get('titulo','title','assunto','subject','lembrete','recado','texto','mensagem') || primeiroVal;
   if (!titulo) return null; // linha em branco ou só cabeçalho
-  const data       = get('data','date','prazo','vencimento','deadline');
-  const hora       = get('hora','horario','time','hora_inicio');
+  // Extrai data e hora do texto quando não há colunas separadas
+  const _dtMatch = titulo.match(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/);
+  let _dataExtr = '', _horaExtr = '';
+  if (_dtMatch) {
+    const _d = _dtMatch[1].padStart(2,'0'), _m = _dtMatch[2].padStart(2,'0');
+    const _a = _dtMatch[3] ? (_dtMatch[3].length===2?'20'+_dtMatch[3]:_dtMatch[3]) : String(new Date().getFullYear());
+    _dataExtr = `${_d}/${_m}/${_a}`;
+  }
+  const _hrMatch = titulo.match(/(\d{1,2})[hH:](\d{2})/);
+  if (_hrMatch) _horaExtr = `${_hrMatch[1].padStart(2,'0')}:${_hrMatch[2]}`;
+  const data       = get('data','date','prazo','vencimento','deadline') || _dataExtr;
+  const hora       = get('hora','horario','time','hora_inicio') || _horaExtr;
   const categoria  = get('categoria','category','tipo','type');
   const prioridade = get('prioridade','priority');
   const responsavel= get('responsavel','responsável','resp','owner','pessoa');
@@ -18436,16 +18449,17 @@ function agParseCsvRow(row, findCol) {
     financeiro:['financeiro','finance','pagamento','payment','conta'],
     outro:['outro','other','geral'] };
   let catNorm = 'outro';
-  const catLow = categoria.toLowerCase();
+  // Se não tem coluna categoria, infere pelo texto do título
+  const catLow = (categoria || titulo).toLowerCase();
   for (const [key, aliases] of Object.entries(catMap)) {
     if (aliases.some(a => catLow.includes(a))) { catNorm = key; break; }
   }
 
-  // Normaliza prioridade
+  // Normaliza prioridade — infere pelo título se sem coluna
   let priNorm = 'normal';
-  const priLow = prioridade.toLowerCase();
-  if (/alta|high|urgent|1/.test(priLow)) priNorm = 'alta';
-  else if (/baixa|low|3/.test(priLow)) priNorm = 'baixa';
+  const priLow = (prioridade || titulo).toLowerCase();
+  if (/alta|high|urgent|obrigat|importante/.test(priLow)) priNorm = 'alta';
+  else if (/baixa|low/.test(priLow)) priNorm = 'baixa';
 
   return {
     id: 'ag_sheets_' + titulo.slice(0,12).replace(/\s/g,'_') + '_' + Math.random().toString(36).slice(2,6),
