@@ -5852,9 +5852,11 @@ let _gvRecadosCache = null, _gvRecadosCacheTs = 0;
 async function gvFetchRecados() {
   const now = Date.now();
   if (_gvRecadosCache && (now - _gvRecadosCacheTs) < 30*1000) return _gvRecadosCache;
-  // Busca URL configurada — usa a mesma chave 'urlAgenda' da tela de Config URLs
-  // (antes usava 'gv_recados_csv_url', que nunca era gravada pela tela de config)
-  const csvUrl = localStorage.getItem(GV_RECADOS_KEY) || localStorage.getItem('urlAgenda') || DEFAULT_AGENDA;
+  // URL da planilha RECADOS: prioridade = chave específica GV > Config URLs > DEFAULT_AGENDA
+  // Se urlAgenda no localStorage for igual à URL errada antiga, ignora e usa DEFAULT_AGENDA
+  const _agendaStorage = localStorage.getItem('urlAgenda') || '';
+  const _agendaValida = _agendaStorage && !_agendaStorage.includes('2PACX-1vRCjwo2zV2NWdhstfp3J4kCRcnxKKg0OHNM9f1Xp7xx3') ? _agendaStorage : DEFAULT_AGENDA;
+  const csvUrl = localStorage.getItem(GV_RECADOS_KEY) || _agendaValida;
   const manuais = JSON.parse(localStorage.getItem('agenda_lembretes') || '[]');
   let itens = manuais.map(l => ({
     titulo: l.titulo || l.title || '',
@@ -5879,10 +5881,13 @@ async function gvFetchRecados() {
                         || row.TEXTO  || row.texto  || row['Texto']
                         || row.MENSAGEM || row.mensagem || row['Mensagem']
                         || row.DESCRICAO || row.descricao || row['Descrição'] || '';
+            // Fallback: se o cabeçalho é mesclado (ex: A:G mesclado = "RECADO")
+            // os dados ficam em colunas sem nome no CSV — pega o primeiro valor não-vazio
+            const primeiroValor = Object.values(row).find(v => v && String(v).trim()) || '';
             const titulo = row.titulo || row.TITULO || row['Título']
                         || row.title  || row.TITLE
                         || row.ASSUNTO || row.assunto || row['Assunto']
-                        || rawTxt || '';
+                        || rawTxt || primeiroValor || '';
             if (!titulo) return null;
             // Extrai primeira data dd/mm/yyyy ou dd/mm encontrada no texto
             const dtMatch = titulo.match(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/);
@@ -5921,14 +5926,8 @@ async function gvFetchRecados() {
       }
     } catch(e) {}
   }
-  // Se não tem nada, usa recados da planilha (fallback hardcoded)
-  if (!itens.length) {
-    itens = [
-      { titulo:'(LEANDRO KLEE) - CURSO DE INTEGRAÇÃO 09/11/2026 A 12/11/2026 WEB - 13/11/2026 - PRESENCIAL EM CONCÓRDIA', data:'09/11/2026', hora:'', categoria:'Treinamento', prioridade:'alta', responsavel:'RH', descricao:'Web: 09/11 a 12/11/2026 — Presencial em Concórdia: 13/11/2026' },
-      { titulo:'03/11/2026 - LIVE NO YOUTUBE SOBRE MUDANÇAS NO SIOT - (MOVITRANS)', data:'03/11/2026', hora:'', categoria:'Treinamento', prioridade:'media', responsavel:'', descricao:'Live no YouTube sobre mudanças no SIOT pela Movitrans' },
-      { titulo:'MARWIN ADRIEL BORTOLOTI - EXAME ADMISSIONAL - 21/10/2026 ÀS 07:00', data:'21/10/2026', hora:'07:00', categoria:'RH', prioridade:'alta', responsavel:'RH', descricao:'Exame admissional — 21/10/2026 às 07:00' },
-    ];
-  }
+  // Se não tem nada (planilha inacessível), mostra aviso vazio
+  // (fallback hardcoded removido — dados antigos não devem aparecer)
   _gvRecadosCache = itens;
   _gvRecadosCacheTs = now;
   return itens;
