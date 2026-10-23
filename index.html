@@ -5375,39 +5375,34 @@ function diaComemoravioHojeHTML() {
 let _gvNoticiasCache = null, _gvNoticiasCacheTs = 0;
 async function gvFetchNoticias() {
   const now = Date.now();
-  if (_gvNoticiasCache && (now - _gvNoticiasCacheTs) < 20*60*1000) return _gvNoticiasCache;
+  if (_gvNoticiasCache && (now - _gvNoticiasCacheTs) < 5*60*1000) return _gvNoticiasCache;
+  // Feeds em ordem de prioridade — G1 removido (bloqueia proxies)
   const FEEDS = [
-    // Agência Brasil (EBC) — fontes abertas, sem bloqueio CORS via proxy
-    // G1 / Globo (feeds públicos)
-    { url:'https://g1.globo.com/rss/g1/brasil/',                             cat:'G1 Brasil',      cor:'#dc2626' },
-    { url:'https://g1.globo.com/rss/g1/economia/',                           cat:'G1 Economia',    cor:'#0891b2' },
-    { url:'https://g1.globo.com/rss/g1/economia/negocios/',                  cat:'G1 Negócios',    cor:'#0891b2' },
-    // Agência Brasil (EBC) — fontes abertas
-    { url:'https://agenciabrasil.ebc.com.br/rss/economia/feed.rss',          cat:'Ag.Brasil',      cor:'#7c3aed' },
-    { url:'https://agenciabrasil.ebc.com.br/rss/ultimasnoticias/feed.rss',   cat:'Ag.Brasil',      cor:'#7c3aed' },
-    // Notícias de transporte — portais especializados
-    { url:'https://www.cnt.org.br/agencia-cnt/rss',                          cat:'🚛 Transporte',  cor:'#b45309' },
-    { url:'https://www.transporte.org.br/feed/',                              cat:'🚛 Transporte',  cor:'#b45309' },
-    // Google News — transporte e combustível
-    { url:'https://news.google.com/rss/search?q=transporte+logística+caminhão+diesel+brasil&hl=pt-BR&gl=BR&ceid=BR:pt-419', cat:'🚛 Transporte', cor:'#b45309' },
-    { url:'https://news.google.com/rss/search?q=combustível+diesel+preço+anp+petrobras&hl=pt-BR&gl=BR&ceid=BR:pt-419', cat:'Economia', cor:'#0891b2' },
+    // Agência Brasil / EBC — abertas, funcionam bem via proxy
+    { url:'https://agenciabrasil.ebc.com.br/rss/ultimasnoticias/feed.rss',   cat:'Ag. Brasil',     cor:'#7c3aed' },
+    { url:'https://agenciabrasil.ebc.com.br/rss/economia/feed.rss',          cat:'Economia',       cor:'#0891b2' },
+    // UOL — RSS público, funciona via allorigins
+    { url:'https://rss.uol.com.br/feed/noticias.xml',                        cat:'UOL Brasil',     cor:'#dc2626' },
+    { url:'https://rss.uol.com.br/feed/economia.xml',                        cat:'UOL Economia',   cor:'#0891b2' },
+    // Transporte — portais especializados
+    { url:'https://www.cnt.org.br/agencia-cnt/rss',                          cat:'🚛 CNT',         cor:'#b45309' },
+    // Google News — transporte e combustível (via allorigins funciona bem)
+    { url:'https://news.google.com/rss/search?q=transporte+logística+diesel+brasil&hl=pt-BR&gl=BR&ceid=BR:pt-419', cat:'🚛 Transporte', cor:'#b45309' },
+    { url:'https://news.google.com/rss/search?q=diesel+preço+ANP+Petrobras+frete&hl=pt-BR&gl=BR&ceid=BR:pt-419',  cat:'Combustível',   cor:'#059669' },
   ];
   const parser = new DOMParser();
-  const todas = [];
-  for (const feed of FEEDS) {
-    let ok = false;
-    // Tenta allorigins /get (retorna JSON com contents), depois /raw, depois demais proxies
+
+  // Função que tenta buscar um único feed via proxies (timeout 5s por tentativa)
+  async function fetchFeed(feed) {
     const proxyAttempts = [
       `https://api.allorigins.win/get?url=${encodeURIComponent(feed.url)}`,
       ...CORS_PROXIES.map(fn => fn(feed.url)),
     ];
     for (const proxyUrl of proxyAttempts) {
-      if (ok) break;
       try {
-        const r = await fetch(proxyUrl, {signal: AbortSignal.timeout(7000)});
+        const r = await fetch(proxyUrl, { signal: AbortSignal.timeout(5000) });
         if (!r.ok) continue;
         let txt;
-        // allorigins /get retorna JSON { contents, status }
         if (proxyUrl.includes('allorigins.win/get')) {
           const j = await r.json().catch(() => null);
           if (!j || !j.contents) continue;
@@ -5416,23 +5411,32 @@ async function gvFetchNoticias() {
           txt = await r.text();
         }
         const doc = parser.parseFromString(txt, 'application/xml');
-        const items = [...doc.querySelectorAll('item')].slice(0,4);
+        const items = [...doc.querySelectorAll('item')].slice(0, 4);
         if (!items.length) continue;
+        const result = [];
         items.forEach(it => {
           let title = it.querySelector('title')?.textContent?.trim() || '';
-          // Google News coloca " - Fonte" no final — remove
-          title = title.replace(/\s*-\s*[^-]{3,40}$/, '').trim();
-          const link  = it.querySelector('link')?.textContent?.trim() || '#';
+          title = title.replace(/\s*-\s*[^-]{3,50}$/, '').trim(); // remove " - Fonte"
+          const link    = it.querySelector('link')?.textContent?.trim() || '#';
           const pubDate = it.querySelector('pubDate')?.textContent?.trim() || '';
-          if (title) todas.push({ title, link, pubDate, cat: feed.cat, cor: feed.cor });
+          if (title) result.push({ title, link, pubDate, cat: feed.cat, cor: feed.cor });
         });
-        ok = true;
-      } catch(e) {}
+        if (result.length) return result;
+      } catch(e) { /* tenta próximo proxy */ }
     }
+    return [];
   }
-  // Deduplica por título
+
+  // Busca TODOS os feeds em paralelo — muito mais rápido que sequencial
+  const resultados = await Promise.allSettled(FEEDS.map(f => fetchFeed(f)));
+  const todas = resultados.flatMap(r => r.status === 'fulfilled' ? r.value : []);
+
+  // Deduplica por título (40 chars) e ordena por data desc
   const seen = new Set();
-  const unicas = todas.filter(n => { const k = n.title.toLowerCase().slice(0,40); if(seen.has(k)) return false; seen.add(k); return true; });
+  const unicas = todas
+    .filter(n => { const k = n.title.toLowerCase().slice(0,40); if(seen.has(k)) return false; seen.add(k); return true; })
+    .sort((a,b) => { try { return new Date(b.pubDate) - new Date(a.pubDate); } catch(e){ return 0; } });
+
   _gvNoticiasCache = unicas;
   _gvNoticiasCacheTs = now;
   return unicas;
@@ -5859,10 +5863,11 @@ async function gvFetchRecados() {
   if (_gvRecadosCache && (now - _gvRecadosCacheTs) < 30*1000) return _gvRecadosCache;
   // URLs candidatas em ordem de prioridade — tenta todas até uma funcionar
   const _candidatas = [
-    localStorage.getItem(GV_RECADOS_KEY),
-    // URL direta pelo ID + gid (não exige "publicar na web", só compartilhamento público)
+    localStorage.getItem(GV_RECADOS_KEY),          // URL configurada pelo usuário (prioridade máxima)
+    typeof URL_AGENDA !== 'undefined' ? URL_AGENDA : null, // agenda configurada (fallback automático na TV)
+    // URL direta pelo ID + gid
     'https://docs.google.com/spreadsheets/d/1bj3jrzZWqiGXX_rlJo10N_dgl0jXtiZD/pub?gid=670512955&output=csv',
-    // URL publicada informada pelo usuário
+    // URL publicada
     'https://docs.google.com/spreadsheets/d/e/2PACX-1vQEp3tUp5HMdJl7PfpaXm_LBrcaEDOnlRbi7cAEKr4Nam3DhYgFRyJeEB-chE-Esg/pub?output=csv',
     DEFAULT_AGENDA,
   ].filter(Boolean);
@@ -21063,6 +21068,13 @@ document.getElementById('tvBtnOpen').addEventListener('click', function() {
   if (params.get('bat'))   { try { URL_BAT    = params.get('bat');   } catch(e){} }
   if (params.get('fat'))   { try { URL_FAT    = params.get('fat');   } catch(e){} }
   if (params.get('agenda')){ try { URL_AGENDA = params.get('agenda');} catch(e){} }
+  // Auto-fallback: se a TV não tem URL de recados no link (link gerado antes
+  // da atualização), usa automaticamente a URL da agenda como fonte de recados.
+  // Assim o TV funciona sem precisar gerar um novo link manualmente.
+  if (!params.get('recados')) {
+    var agendaFallback = params.get('agenda') || localStorage.getItem('urlAgenda') || DEFAULT_AGENDA;
+    if (agendaFallback) localStorage.setItem('gv_recados_csv_url', agendaFallback);
+  }
 
   // Ocultar cursor após 5s de inatividade — e aproveita o primeiro gesto
   // real do usuário (clique/toque/tecla) pra tentar de novo a tela cheia e
