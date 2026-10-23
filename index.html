@@ -5378,12 +5378,17 @@ async function gvFetchNoticias() {
   if (_gvNoticiasCache && (now - _gvNoticiasCacheTs) < 20*60*1000) return _gvNoticiasCache;
   const FEEDS = [
     // Agência Brasil (EBC) — fontes abertas, sem bloqueio CORS via proxy
-    { url:'https://agenciabrasil.ebc.com.br/rss/economia/feed.rss',          cat:'Economia',      cor:'#0891b2' },
-    { url:'https://agenciabrasil.ebc.com.br/rss/ultimasnoticias/feed.rss',   cat:'Brasil',         cor:'#7c3aed' },
+    // G1 / Globo (feeds públicos)
+    { url:'https://g1.globo.com/rss/g1/brasil/',                             cat:'G1 Brasil',      cor:'#dc2626' },
+    { url:'https://g1.globo.com/rss/g1/economia/',                           cat:'G1 Economia',    cor:'#0891b2' },
+    { url:'https://g1.globo.com/rss/g1/economia/negocios/',                  cat:'G1 Negócios',    cor:'#0891b2' },
+    // Agência Brasil (EBC) — fontes abertas
+    { url:'https://agenciabrasil.ebc.com.br/rss/economia/feed.rss',          cat:'Ag.Brasil',      cor:'#7c3aed' },
+    { url:'https://agenciabrasil.ebc.com.br/rss/ultimasnoticias/feed.rss',   cat:'Ag.Brasil',      cor:'#7c3aed' },
     // Notícias de transporte — portais especializados
     { url:'https://www.cnt.org.br/agencia-cnt/rss',                          cat:'🚛 Transporte',  cor:'#b45309' },
     { url:'https://www.transporte.org.br/feed/',                              cat:'🚛 Transporte',  cor:'#b45309' },
-    // Fallback Google News (tenta mesmo com CORS — pode funcionar via proxy)
+    // Google News — transporte e combustível
     { url:'https://news.google.com/rss/search?q=transporte+logística+caminhão+diesel+brasil&hl=pt-BR&gl=BR&ceid=BR:pt-419', cat:'🚛 Transporte', cor:'#b45309' },
     { url:'https://news.google.com/rss/search?q=combustível+diesel+preço+anp+petrobras&hl=pt-BR&gl=BR&ceid=BR:pt-419', cat:'Economia', cor:'#0891b2' },
   ];
@@ -6949,6 +6954,17 @@ function openSlideMode(){
       }
     });
   }, 10 * 60 * 1000);
+  // Pré-carrega notícias imediatamente (slide de previsão do tempo mostra news)
+  gvFetchNoticias().catch(()=>{});
+  // Refresca notícias a cada 5 min enquanto o painel estiver aberto
+  if (window._slideNoticiasRefreshTimer) clearInterval(window._slideNoticiasRefreshTimer);
+  window._slideNoticiasRefreshTimer = setInterval(() => {
+    _gvNoticiasCache = null; // invalida cache → próximo fetch busca dados novos
+    gvFetchNoticias().then(() => {
+      // Se o slide atual for o de previsão/notícias, re-renderiza direto
+      slideRerenderSe(['weather-concordia']);
+    }).catch(()=>{});
+  }, 5 * 60 * 1000);
   if (document.documentElement.requestFullscreen) {
     document.documentElement.requestFullscreen().catch(()=>{});
   }
@@ -7229,6 +7245,7 @@ function closeSlideMode(){
   clearInterval(slideClockTimer);
   if (slideFinChartInstance) { slideFinChartInstance.destroy(); slideFinChartInstance = null; }
   gvDestroyCharts();
+  if (window._slideNoticiasRefreshTimer) { clearInterval(window._slideNoticiasRefreshTimer); window._slideNoticiasRefreshTimer = null; }
   // Rádio não fica tocando depois que o painel é fechado
   slideRadioAutoRetryAtivo = false;
   if (typeof slideRadioDesligar === 'function') slideRadioDesligar();
@@ -20958,6 +20975,7 @@ function tvBuildUrl() {
     ['abastWebApp', localStorage.getItem('urlAbastecimentosWebApp') || ''],
     ['pneuDoc',     localStorage.getItem('pneu_doc_url')            || ''],
     ['checklist',   localStorage.getItem('url_checklist')           || ''],
+    ['recados',     localStorage.getItem('gv_recados_csv_url')      || ''],
   ];
   if (typeof VENC_CATEGORIAS !== 'undefined') {
     VENC_CATEGORIAS.forEach(function(cat) {
@@ -21030,6 +21048,7 @@ document.getElementById('tvBtnOpen').addEventListener('click', function() {
     ['abastWebApp',  'urlAbastecimentosWebApp'],
     ['pneuDoc',      'pneu_doc_url'],
     ['checklist',    'url_checklist'],
+    ['recados',      'gv_recados_csv_url'],
   ];
   tvUrlMap.forEach(function(pair) {
     var v = params.get(pair[0]);
