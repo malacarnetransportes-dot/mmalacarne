@@ -21068,10 +21068,10 @@ document.getElementById('tvBtnOpen').addEventListener('click', function() {
   if (params.get('bat'))   { try { URL_BAT    = params.get('bat');   } catch(e){} }
   if (params.get('fat'))   { try { URL_FAT    = params.get('fat');   } catch(e){} }
   if (params.get('agenda')){ try { URL_AGENDA = params.get('agenda');} catch(e){} }
-  // Auto-fallback: se a TV não tem URL de recados no link (link gerado antes
-  // da atualização), usa automaticamente a URL da agenda como fonte de recados.
-  // Assim o TV funciona sem precisar gerar um novo link manualmente.
-  if (!params.get('recados')) {
+  // Aplica URL de recados do link — ou usa agenda como fallback para links antigos.
+  if (params.get('recados')) {
+    localStorage.setItem('gv_recados_csv_url', params.get('recados'));
+  } else {
     var agendaFallback = params.get('agenda') || localStorage.getItem('urlAgenda') || DEFAULT_AGENDA;
     if (agendaFallback) localStorage.setItem('gv_recados_csv_url', agendaFallback);
   }
