@@ -5862,15 +5862,13 @@ async function gvFetchRecados() {
   const now = Date.now();
   if (_gvRecadosCache && (now - _gvRecadosCacheTs) < 30*1000) return _gvRecadosCache;
   // URLs candidatas em ordem de prioridade — tenta todas até uma funcionar
+  // A planilha de RECADOS (DEFAULT_AGENDA) tem prioridade; depois a URL configurada
+  // para recados e a da Agenda. Sem duplicatas.
   const _candidatas = [
-    localStorage.getItem(GV_RECADOS_KEY),          // URL configurada pelo usuário (prioridade máxima)
-    typeof URL_AGENDA !== 'undefined' ? URL_AGENDA : null, // agenda configurada (fallback automático na TV)
-    // URL direta pelo ID + gid
-    'https://docs.google.com/spreadsheets/d/1bj3jrzZWqiGXX_rlJo10N_dgl0jXtiZD/pub?gid=670512955&output=csv',
-    // URL publicada
-    'https://docs.google.com/spreadsheets/d/e/2PACX-1vQEp3tUp5HMdJl7PfpaXm_LBrcaEDOnlRbi7cAEKr4Nam3DhYgFRyJeEB-chE-Esg/pub?output=csv',
     DEFAULT_AGENDA,
-  ].filter(Boolean);
+    localStorage.getItem(GV_RECADOS_KEY),
+    typeof URL_AGENDA !== 'undefined' ? URL_AGENDA : null,
+  ].filter((u, i, arr) => u && arr.indexOf(u) === i);
   // ── Mesma fonte da aba Agenda do dash ──
   // A Agenda guarda os lembretes em agLembretes (localStorage 'mm_agenda_v1') e os
   // alimenta pela planilha via agSincronizarSheets(). A TV é outro aparelho: o
@@ -5885,7 +5883,7 @@ async function gvFetchRecados() {
   } catch(e) { /* segue com o que houver */ }
   const _fmtDataBR = (d) => { const m = String(d||'').match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[3]}/${m[2]}/${m[1]}` : String(d||''); };
   const _agItens = (typeof agLembretes !== 'undefined' && Array.isArray(agLembretes)) ? agLembretes : [];
-  let itens = _agItens.filter(l => !l.concluido).map(l => {
+  let itens = _agItens.filter(l => !l.concluido && !String(l.id||'').startsWith('ag_seed_')).map(l => {
     const dataBR = _fmtDataBR(l.data);
     let desc = l.descricao || '';
     // o slide extrai datas do texto — garante que a coluna "data" também apareça
@@ -5955,12 +5953,15 @@ async function gvFetchRecados() {
   // Tenta cada URL candidata até obter dados válidos.
   // 1) fetch direto; 2) fetchCSV (gviz + proxies CORS) — é o mesmo caminho que
   // faz o dashboard funcionar; na TV o fetch direto costuma ser bloqueado por CORS.
-  // Se a Agenda (mesma fonte do dash) já trouxe itens, não mistura outras planilhas
-  let achou = _temAgenda;
+  let achou = false;
   for (const csvUrl of _candidatas) {
     if (achou) break;
     try {
-      const r = await fetch(csvUrl, {signal: AbortSignal.timeout(8000)});
+      const _ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+      const _tm = _ctrl ? setTimeout(() => _ctrl.abort(), 8000) : null;
+      let r;
+      try { r = await fetch(csvUrl + (csvUrl.includes('?') ? '&' : '?') + 't=' + Date.now(), _ctrl ? {signal: _ctrl.signal, cache:'no-store'} : {}); }
+      finally { if (_tm) clearTimeout(_tm); }
       if (r.ok) {
         const txt = await r.text();
         if (typeof Papa !== 'undefined' && txt && !/^\s*<(!doctype|html)/i.test(txt)) {
@@ -6070,20 +6071,18 @@ function gvRecadosListaHTML(itens) {
     const todasDatas = gvExtrairDatas(item.titulo + ' ' + (item.descricao||''));
     const datasUnicas = [...new Map(todasDatas.map(dt=>[`${dt.d}/${dt.mo}/${dt.a}`,dt])).values()];
     // Verifica se alguma data é hoje ou amanhã
-    let alertaLabel = '';
+    // Janela de alerta: de 3 dias antes até o dia (datas futuras mais próximas)
+    let _minDias = Infinity;
     for (const dt of datasUnicas) {
-      const ehHoje = dt.d === hjD && dt.mo === hjMo && dt.a === hjA;
-      const dtAmanha = new Date(hjA, hjMo, hjD + 1);
-      const ehAmanha = dt.d === dtAmanha.getDate() && dt.mo === dtAmanha.getMonth() && dt.a === dtAmanha.getFullYear();
-      if (ehHoje) { alertaLabel = 'HOJE'; break; }
-      if (ehAmanha) { alertaLabel = 'AMANHÃ'; }
+      const df = gvDiasAteHoje(dt);
+      if (df >= 0 && df <= 3 && df < _minDias) _minDias = df;
     }
-    const alertaBadge = alertaLabel === 'HOJE'
-      ? `<span style="font-size:.78rem;font-weight:900;background:#ef4444;color:#fff;padding:.25rem .8rem;border-radius:20px;letter-spacing:.5px;animation:pulse 1s infinite;box-shadow:0 0 0 0 #ef444488"><i class="fas fa-exclamation-circle"></i> ${alertaLabel}</span>`
-      : alertaLabel === 'AMANHÃ'
-      ? `<span style="font-size:.78rem;font-weight:900;background:#f59e0b;color:#fff;padding:.25rem .8rem;border-radius:20px;letter-spacing:.5px"><i class="fas fa-bell"></i> ${alertaLabel}</span>`
+    const _AL = gvAlertaInfo(_minDias);
+    const alertaLabel = _AL ? _AL.label : '';
+    const alertaBadge = _AL
+      ? `<span style="font-size:.78rem;font-weight:900;background:${_AL.cor};color:#fff;padding:.25rem .8rem;border-radius:20px;letter-spacing:.5px;${_minDias===0?'animation:pulse 1s infinite;':''}"><i class="fas ${_minDias===0?'fa-exclamation-circle':'fa-bell'}"></i> ${_AL.label}</span>`
       : '';
-    const borderCor = alertaLabel === 'HOJE' ? '#ef4444' : alertaLabel === 'AMANHÃ' ? '#f59e0b' : cor;
+    const borderCor = _AL ? _AL.cor : cor;
     const dataPillsHTML = datasUnicas.map(dt => {
       const ehHoje2 = dt.d === hjD && dt.mo === hjMo && dt.a === hjA;
       const pillBg = ehHoje2 ? '#ef444418' : `${cor}15`;
@@ -6165,72 +6164,127 @@ async function gvRenderRecados(body, s, slides, idx) {
   if (listaEl) listaEl.innerHTML = gvRecadosListaHTML(itens);
   const countEl = body.querySelector('#gv-rec-count');
   if (countEl && itens.length) countEl.textContent = itens.length;
-  // ── Popup automático de alerta para recados urgentes ──
-  gvAlertaRecadosUrgentes(itens);
-  slideAutoScroll(body);
+  // ── Popup automático (3 dias antes até o dia) ──
+  const _tok = slideIdx;
+  const _nUrg = gvAlertaRecadosUrgentes(itens);
+  // ── Tempo do slide cresce com a quantidade de recados (+ tempo do popup) ──
+  const _dur = gvRecadosDurMs(itens.length) + (_nUrg ? GV_POPUP_MS : 0);
+  window._gvRecadosDurMs = _dur;
+  const _ov = document.getElementById('slideOverlay');
+  if (slideIdx === _tok && _ov && _ov.classList.contains('active')) { slideAgendar(); slideStartProgress(); }
+  // ── Rola a própria lista (todos os recados aparecem, sem limite) ──
+  gvAutoScrollLista(body, listaEl, _dur, _nUrg ? GV_POPUP_MS + 1500 : 3000);
 }
 
-function gvAlertaRecadosUrgentes(itens) {
-  const hj = new Date();
-  const hjD = hj.getDate(), hjMo = hj.getMonth(), hjA = hj.getFullYear();
-  const amanha = new Date(hjA, hjMo, hjD + 1);
-  const urgentes = itens.filter(it => {
-    const datas = gvExtrairDatas(it.titulo + ' ' + (it.descricao||''));
-    return datas.some(dt => {
-      const ehHoje = dt.d===hjD && dt.mo===hjMo && dt.a===hjA;
-      const ehAmanha = dt.d===amanha.getDate() && dt.mo===amanha.getMonth() && dt.a===amanha.getFullYear();
-      return ehHoje || ehAmanha;
-    });
+// Duração do slide de recados: base + ~7s por recado (mín 30s, máx 3 min)
+function gvRecadosDurMs(n) {
+  return Math.min(180000, Math.max(30000, 15000 + 7000 * (n || 0)));
+}
+// Rolagem suave da lista de recados ao longo do tempo do slide (usa as mesmas
+// variáveis do slideAutoScroll, então é cancelada ao trocar de slide)
+function gvAutoScrollLista(body, listaEl, durTotal, atrasoMs) {
+  slideAutoScrollStop();
+  if (!listaEl) return;
+  listaEl.scrollTop = 0;
+  _slideScrollTo = setTimeout(() => {
+    const max = listaEl.scrollHeight - listaEl.clientHeight;
+    if (max <= 4) { slideAutoScroll(body); return; }
+    const dur = Math.max(5000, durTotal - atrasoMs - 4000); // sobra 4s parado no final
+    const t0 = performance.now();
+    const step = t => {
+      const pr = Math.min(1, (t - t0) / dur);
+      listaEl.scrollTop = max * pr;
+      if (pr < 1) _slideScrollRaf = requestAnimationFrame(step);
+    };
+    _slideScrollRaf = requestAnimationFrame(step);
+  }, atrasoMs);
+}
+
+// Dias entre hoje (00:00) e a data {d,mo,a}; 0 = hoje, 1 = amanhã, negativo = passou
+function gvDiasAteHoje(dt) {
+  const h = new Date();
+  const base = new Date(h.getFullYear(), h.getMonth(), h.getDate()).getTime();
+  return Math.round((new Date(dt.a, dt.mo, dt.d).getTime() - base) / 86400000);
+}
+function gvAlertaInfo(dias) {
+  if (dias === 0) return { label: 'HOJE',       cor: '#ef4444' };
+  if (dias === 1) return { label: 'AMANHÃ',     cor: '#f59e0b' };
+  if (dias === 2) return { label: 'EM 2 DIAS',  cor: '#d97706' };
+  if (dias === 3) return { label: 'EM 3 DIAS',  cor: '#2563eb' };
+  return null;
+}
+// Recados cuja data (a mais próxima, de hoje em diante) cai nos próximos 3 dias
+function gvRecadosUrgentes(itens) {
+  const out = [];
+  (itens || []).forEach(it => {
+    const datas = gvExtrairDatas((it.titulo || '') + ' ' + (it.descricao || ''));
+    let min = Infinity;
+    datas.forEach(dt => { const df = gvDiasAteHoje(dt); if (df >= 0 && df <= 3 && df < min) min = df; });
+    if (min !== Infinity) out.push({ it, dias: min });
   });
-  if (!urgentes.length) return;
-  // Não repete o popup mais de uma vez por abertura do slide (evita spam em loop de slides)
-  // Usa chave com dia+hora para repetir a cada nova abertura do dashboard no dia
-  const chave = 'gv_alerta_recados_' + hjA + '_' + hjMo + '_' + hjD + '_' + Math.floor(Date.now()/60000);
-  if (sessionStorage.getItem(chave)) return;
-  sessionStorage.setItem(chave, '1');
-  // Remove overlay anterior se existir
+  out.sort((x, y) => x.dias - y.dias);
+  return out;
+}
+const GV_POPUP_MS = 25000; // tempo que o popup fica na tela (some sozinho — na TV ninguém clica)
+
+function gvAlertaRecadosUrgentes(itens) {
+  const urg = gvRecadosUrgentes(itens);
+  if (!urg.length) return 0;
+  const hj = new Date();
+  // Evita reabrir o popup duas vezes no mesmo minuto (re-renders do slide)
+  const chave = 'gv_alerta_recados_' + hj.getFullYear() + '_' + hj.getMonth() + '_' + hj.getDate() + '_' + Math.floor(Date.now()/60000);
+  try { if (sessionStorage.getItem(chave)) return 0; sessionStorage.setItem(chave, '1'); } catch(e) {}
   const antigo = document.getElementById('gv-alerta-popup-overlay');
   if (antigo) antigo.remove();
-  // Cria overlay
+  const noSlide = document.getElementById('slideOverlay');
+  const emSlide = !!(noSlide && noSlide.classList.contains('active'));
+  const modoTv  = document.body.classList.contains('tv-kiosk-mode');
+  const autoFecha = emSlide || modoTv;
+  const pior = urg[0].dias;
+  const corTopo = (gvAlertaInfo(pior) || {cor:'#ef4444'}).cor;
+  const lista = urg.map(({it, dias}) => {
+    const al = gvAlertaInfo(dias);
+    return `<div style="display:flex;align-items:flex-start;gap:.8rem;padding:.85rem 1.05rem;background:#fff;border-left:7px solid ${al.cor};border-radius:12px;margin-bottom:.6rem;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+      <span style="flex:none;background:${al.cor};color:#fff;border-radius:20px;padding:.25rem .8rem;font-size:.95rem;font-weight:900;letter-spacing:.4px;white-space:nowrap"><i class="fas ${dias===0?'fa-exclamation-circle':'fa-bell'}"></i> ${al.label}</span>
+      <div style="min-width:0"><div style="font-weight:700;font-size:1.15rem;line-height:1.35;color:#1e2a3a;word-break:break-word">${escapeHTML(it.titulo)}</div>
+      ${it.descricao?`<div style="font-size:.9rem;color:#64748b;margin-top:.2rem">${escapeHTML(it.descricao)}</div>`:''}</div>
+    </div>`;
+  }).join('');
   const overlay = document.createElement('div');
   overlay.id = 'gv-alerta-popup-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;animation:fadeIn .25s ease';
-  const hoje_amanha_lista = urgentes.map(it => {
-    const datas = gvExtrairDatas(it.titulo+' '+(it.descricao||''));
-    const label = datas.some(dt => dt.d===hjD && dt.mo===hjMo && dt.a===hjA)
-      ? '<span style="background:#ef4444;color:#fff;border-radius:20px;padding:.15rem .6rem;font-size:.75rem;font-weight:900;margin-right:.5rem"><i class="fas fa-exclamation-circle"></i> HOJE</span>'
-      : '<span style="background:#f59e0b;color:#fff;border-radius:20px;padding:.15rem .6rem;font-size:.75rem;font-weight:900;margin-right:.5rem"><i class="fas fa-bell"></i> AMANHÃ</span>';
-    return `<div style="display:flex;align-items:flex-start;gap:.6rem;padding:.7rem .9rem;background:#fff8f8;border-left:4px solid #ef4444;border-radius:10px;margin-bottom:.5rem">
-      <i class="fas fa-circle-exclamation" style="color:#ef4444;margin-top:.15rem"></i>
-      <div><div style="font-weight:700;font-size:.95rem;color:#1e2a3a">${label}${escapeHTML(it.titulo)}</div>
-      ${it.descricao?`<div style="font-size:.82rem;color:#64748b;margin-top:.2rem">${escapeHTML(it.descricao)}</div>`:''}
-      </div></div>`;
-  }).join('');
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483000;background:rgba(0,0,0,.66);display:flex;align-items:center;justify-content:center;animation:fadeIn .25s ease';
   overlay.innerHTML = `
-    <div style="background:#fff;border-radius:22px;padding:2rem 2.2rem;max-width:520px;width:94%;box-shadow:0 24px 80px rgba(239,68,68,.25),0 8px 32px rgba(0,0,0,.18);animation:slideUp .3s cubic-bezier(.34,1.56,.64,1);position:relative;border-top:5px solid #ef4444">
-      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.3rem">
-        <div style="width:56px;height:56px;background:linear-gradient(135deg,#ef4444,#dc2626);border-radius:16px;display:flex;align-items:center;justify-content:center;flex:none;box-shadow:0 4px 16px #ef444466">
-          <i class="fas fa-bell" style="font-size:1.6rem;color:#fff;animation:shake 0.7s ease 0.2s both"></i>
+    <div style="background:#fff;border-radius:24px;padding:2rem 2.4rem 1.6rem;max-width:min(860px,94vw);width:94%;box-shadow:0 24px 80px ${corTopo}55,0 8px 32px rgba(0,0,0,.25);animation:slideUp .3s cubic-bezier(.34,1.56,.64,1);position:relative;border-top:7px solid ${corTopo};overflow:hidden">
+      <div style="display:flex;align-items:center;gap:1.1rem;margin-bottom:1.2rem">
+        <div style="width:64px;height:64px;background:linear-gradient(135deg,${corTopo},#111);border-radius:18px;display:flex;align-items:center;justify-content:center;flex:none;box-shadow:0 4px 16px ${corTopo}77">
+          <i class="fas fa-bell" style="font-size:1.9rem;color:#fff;animation:shake 0.7s ease 0.2s both"></i>
         </div>
-        <div style="flex:1">
-          <div style="font-family:'Poppins',sans-serif;font-weight:900;font-size:1.2rem;color:#1e2a3a;letter-spacing:-.01em">⚠️ Atenção — Recados Urgentes</div>
-          <div style="font-size:.82rem;color:#64748b;margin-top:.15rem"><b style="color:#ef4444">${urgentes.length}</b> lembrete(s) vencem hoje ou amanhã</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-family:'Poppins',sans-serif;font-weight:900;font-size:1.5rem;color:#1e2a3a;letter-spacing:-.01em">⚠️ Atenção — Recados</div>
+          <div style="font-size:1rem;color:#64748b;margin-top:.15rem"><b style="color:${corTopo}">${urg.length}</b> recado(s) para os próximos 3 dias</div>
         </div>
-        <button onclick="document.getElementById('gv-alerta-popup-overlay').remove()" style="position:absolute;top:1rem;right:1.1rem;background:#f1f5f9;border:none;width:32px;height:32px;border-radius:50%;font-size:1.1rem;cursor:pointer;color:#64748b;line-height:1;display:flex;align-items:center;justify-content:center" title="Fechar">×</button>
       </div>
-      <div style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:.5rem">${hoje_amanha_lista}</div>
-      <div style="display:flex;gap:.7rem;margin-top:1.3rem">
-        <button onclick="document.getElementById('gv-alerta-popup-overlay').remove()" style="flex:1;padding:.7rem;background:#f1f5f9;color:#475569;border:none;border-radius:10px;font-weight:600;font-size:.9rem;cursor:pointer">
-          <i class="fas fa-times"></i> Fechar
-        </button>
-        <button onclick="document.getElementById('gv-alerta-popup-overlay').remove();showTab('tabAgenda')" style="flex:2;padding:.7rem;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:10px;font-weight:800;font-size:.95rem;cursor:pointer;letter-spacing:.02em;box-shadow:0 4px 14px #ef444455">
-          <i class="fas fa-calendar-check"></i> Ver Agenda Completa
-        </button>
+      <div id="gv-alerta-lista" style="max-height:min(52vh,460px);overflow-y:auto;padding-right:.3rem">${lista}</div>
+      <div style="display:flex;gap:.7rem;margin-top:1rem">
+        <button onclick="document.getElementById('gv-alerta-popup-overlay').remove()" style="flex:1;padding:.75rem;background:#f1f5f9;color:#475569;border:none;border-radius:10px;font-weight:700;font-size:1rem;cursor:pointer"><i class="fas fa-times"></i> Fechar</button>
+        ${modoTv ? '' : `<button onclick="document.getElementById('gv-alerta-popup-overlay').remove();showTab('tabAgenda')" style="flex:2;padding:.75rem;background:linear-gradient(135deg,${corTopo},#111);color:#fff;border:none;border-radius:10px;font-weight:800;font-size:1rem;cursor:pointer"><i class="fas fa-calendar-check"></i> Ver Agenda Completa</button>`}
       </div>
+      ${autoFecha ? `<div style="position:absolute;left:0;bottom:0;height:6px;background:${corTopo};width:100%;transform-origin:left;animation:gvPopupBar ${GV_POPUP_MS}ms linear forwards"></div>` : ''}
     </div>`;
-  // Fechar clicando fora
-  overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
-  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  // Em modo TV o CSS esconde tudo que não seja o #slideOverlay — por isso o popup
+  // vai DENTRO do slideOverlay quando ele está ativo (antes ficava invisível na TV).
+  (emSlide ? noSlide : document.body).appendChild(overlay);
+  if (autoFecha) setTimeout(() => { const o = document.getElementById('gv-alerta-popup-overlay'); if (o === overlay) o.remove(); }, GV_POPUP_MS);
+  // rola a lista do popup sozinha se houver mais itens do que cabem
+  setTimeout(() => {
+    const el = document.getElementById('gv-alerta-lista');
+    if (!el || el.scrollHeight - el.clientHeight < 8) return;
+    const max = el.scrollHeight - el.clientHeight, t0 = performance.now(), dur = Math.max(4000, GV_POPUP_MS - 9000);
+    const step = t => { const pr = Math.min(1, (t - t0) / dur); el.scrollTop = max * pr; if (pr < 1 && document.getElementById('gv-alerta-lista') === el) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  }, 3000);
+  return urg.length;
 }
 // Keyframe shake para o ícone de sino
 (function(){
@@ -6241,6 +6295,7 @@ function gvAlertaRecadosUrgentes(itens) {
     @keyframes shake{0%,100%{transform:rotate(0)}15%{transform:rotate(15deg)}30%{transform:rotate(-13deg)}45%{transform:rotate(10deg)}60%{transform:rotate(-8deg)}75%{transform:rotate(5deg)}}
     @keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes gvPopupBar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
   `;
   document.head.appendChild(s);
 })();
@@ -6897,7 +6952,15 @@ function slideRerenderSe(tipos){
 
 // Duração por slide: a capa "Gestão à Vista" fica menos tempo que os painéis de dados.
 function slideDurFor(i){
-  try { const sl = slideBuildSlides(); const sx = sl[i % sl.length]; if (sx && sx.type === 'gv-capa') return 7000; } catch(e) {}
+  try {
+    const sl = slideBuildSlides(); const sx = sl[i % sl.length];
+    if (sx && sx.type === 'gv-capa') return 7000;
+    if (sx && sx.type === 'recados-lembretes') {
+      // antes de buscar a planilha usa a contagem em cache; depois gvRenderRecados ajusta
+      const n = (typeof _gvRecadosCache !== 'undefined' && _gvRecadosCache) ? _gvRecadosCache.length : 0;
+      return window._gvRecadosDurMs || gvRecadosDurMs(n);
+    }
+  } catch(e) {}
   return SLIDE_DURATION;
 }
 function slideAgendar(){
