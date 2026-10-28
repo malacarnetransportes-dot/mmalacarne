@@ -5871,82 +5871,116 @@ async function gvFetchRecados() {
     'https://docs.google.com/spreadsheets/d/e/2PACX-1vQEp3tUp5HMdJl7PfpaXm_LBrcaEDOnlRbi7cAEKr4Nam3DhYgFRyJeEB-chE-Esg/pub?output=csv',
     DEFAULT_AGENDA,
   ].filter(Boolean);
-  const manuais = JSON.parse(localStorage.getItem('agenda_lembretes') || '[]');
-  let itens = manuais.map(l => ({
-    titulo: l.titulo || l.title || '',
-    data: l.data || l.date || '',
-    hora: l.hora || l.time || '',
-    categoria: l.categoria || l.category || 'Geral',
-    prioridade: l.prioridade || 'normal',
-    responsavel: l.responsavel || '',
-    descricao: l.descricao || '',
-  }));
-  // Tenta cada URL candidata até obter dados válidos
+  // ── Mesma fonte da aba Agenda do dash ──
+  // A Agenda guarda os lembretes em agLembretes (localStorage 'mm_agenda_v1') e os
+  // alimenta pela planilha via agSincronizarSheets(). A TV é outro aparelho: o
+  // localStorage dela começa vazio e refreshAllData() não sincroniza a Agenda,
+  // então aqui sincronizamos antes de ler (no máximo 1x a cada 60s).
+  try {
+    if (typeof URL_AGENDA !== 'undefined' && URL_AGENDA && typeof agSincronizarSheets === 'function'
+        && (now - (window._gvAgSyncTs || 0)) > 60*1000) {
+      window._gvAgSyncTs = now;
+      await Promise.race([agSincronizarSheets(true), new Promise(res => setTimeout(res, 12000))]);
+    }
+  } catch(e) { /* segue com o que houver */ }
+  const _fmtDataBR = (d) => { const m = String(d||'').match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[3]}/${m[2]}/${m[1]}` : String(d||''); };
+  const _agItens = (typeof agLembretes !== 'undefined' && Array.isArray(agLembretes)) ? agLembretes : [];
+  let itens = _agItens.filter(l => !l.concluido).map(l => {
+    const dataBR = _fmtDataBR(l.data);
+    let desc = l.descricao || '';
+    // o slide extrai datas do texto — garante que a coluna "data" também apareça
+    if (dataBR && !((l.titulo||'') + ' ' + desc).includes(dataBR)) desc = (desc ? desc + ' · ' : '') + dataBR;
+    return {
+      titulo: l.titulo || l.title || '',
+      data: dataBR,
+      hora: l.hora || l.time || '',
+      categoria: l.categoria || l.category || 'Geral',
+      prioridade: l.prioridade || 'normal',
+      responsavel: l.responsavel || '',
+      descricao: desc,
+    };
+  }).filter(x => x.titulo);
+  const _temAgenda = itens.length > 0;
+  // Converte uma linha da planilha em item de recado
+  const _mapRow = (row) => {
+    // Aceita coluna RECADO/TEXTO/MENSAGEM (formato livre) além das colunas estruturadas
+    const rawTxt = row.RECADO || row.recado || row['Recado']
+                || row.TEXTO  || row.texto  || row['Texto']
+                || row.MENSAGEM || row.mensagem || row['Mensagem']
+                || row.DESCRICAO || row.descricao || row['Descrição'] || '';
+    // Fallback: se o cabeçalho é mesclado (ex: A:G mesclado = "RECADO")
+    // os dados ficam em colunas sem nome no CSV — pega o primeiro valor não-vazio
+    const primeiroValor = Object.values(row).find(v => v && String(v).trim()) || '';
+    const titulo = row.titulo || row.TITULO || row['Título']
+                || row.title  || row.TITLE
+                || row.ASSUNTO || row.assunto || row['Assunto']
+                || rawTxt || primeiroValor || '';
+    if (!titulo) return null;
+    // Extrai primeira data dd/mm/yyyy ou dd/mm encontrada no texto
+    const dtMatch = titulo.match(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/);
+    let dataExtr = '', horaExtr = '';
+    if (dtMatch) {
+      const d = dtMatch[1].padStart(2,'0'), m = dtMatch[2].padStart(2,'0');
+      const a = dtMatch[3] ? (dtMatch[3].length===2?'20'+dtMatch[3]:dtMatch[3]) : new Date().getFullYear();
+      dataExtr = `${d}/${m}/${a}`;
+    }
+    const hrMatch = titulo.match(/(\d{1,2})[hH:](\d{0,2})/);
+    if (hrMatch) horaExtr = `${hrMatch[1].padStart(2,'0')}:${(hrMatch[2]||'00').padStart(2,'0')}`;
+    // Categoria automática por palavras-chave
+    const tl = titulo.toLowerCase();
+    const cat = row.categoria||row.CATEGORIA||row['Categoria']||(
+      tl.includes('curso')||tl.includes('trein')||tl.includes('integra')||tl.includes('live')||tl.includes('youtube') ? 'Treinamento' :
+      tl.includes('exame')||tl.includes('admissional')||tl.includes('médico')||tl.includes('medico') ? 'RH' :
+      tl.includes('financ')||tl.includes('pagamento')||tl.includes('boleto') ? 'Financeiro' :
+      tl.includes('opera')||tl.includes('viagem')||tl.includes('caminhão')||tl.includes('frete') ? 'Operação' :
+      tl.includes('urgent')||tl.includes('segur') ? 'Segurança' : 'Geral');
+    const prio = row.prioridade||row.PRIORIDADE||row['Prioridade']||(
+      tl.includes('urgent')||tl.includes('importante')||tl.includes('obrigat') ? 'alta' :
+      tl.includes('prazo')||tl.includes('vence')||tl.includes('entrega') ? 'media' : 'normal');
+    return {
+      titulo,
+      data: row.data||row.DATA||row['Data']||dataExtr,
+      hora: row.hora||row.HORA||row['Hora']||horaExtr,
+      categoria: cat, prioridade: prio,
+      responsavel: row.responsavel||row.RESPONSAVEL||row['Responsável']||'',
+      descricao: row.descricao||row.DESCRICAO||row['Descrição']||'',
+    };
+  };
+  // Parse tolerante: aceita linhas já em objeto (fetchCSV) ou texto CSV cru
+  const _rowsParaItens = (rows) => (rows || []).map(_mapRow).filter(r => r && r.titulo);
+  const _mescla = (csvItens) => {
+    const manuaisNaoCsv = itens.filter(m => !csvItens.some(c => c.titulo === m.titulo));
+    itens = [...csvItens, ...manuaisNaoCsv];
+  };
+  // Tenta cada URL candidata até obter dados válidos.
+  // 1) fetch direto; 2) fetchCSV (gviz + proxies CORS) — é o mesmo caminho que
+  // faz o dashboard funcionar; na TV o fetch direto costuma ser bloqueado por CORS.
+  // Se a Agenda (mesma fonte do dash) já trouxe itens, não mistura outras planilhas
+  let achou = _temAgenda;
   for (const csvUrl of _candidatas) {
+    if (achou) break;
     try {
       const r = await fetch(csvUrl, {signal: AbortSignal.timeout(8000)});
-      if (!r.ok) continue;
-      {
+      if (r.ok) {
         const txt = await r.text();
-        if (typeof Papa !== 'undefined') {
+        if (typeof Papa !== 'undefined' && txt && !/^\s*<(!doctype|html)/i.test(txt)) {
           const parsed = Papa.parse(txt, { header:true, skipEmptyLines:true });
-          const rows = parsed.data || [];
-          const csvItens = rows.map(row => {
-            // Aceita coluna RECADO/TEXTO/MENSAGEM (formato livre) além das colunas estruturadas
-            const rawTxt = row.RECADO || row.recado || row['Recado']
-                        || row.TEXTO  || row.texto  || row['Texto']
-                        || row.MENSAGEM || row.mensagem || row['Mensagem']
-                        || row.DESCRICAO || row.descricao || row['Descrição'] || '';
-            // Fallback: se o cabeçalho é mesclado (ex: A:G mesclado = "RECADO")
-            // os dados ficam em colunas sem nome no CSV — pega o primeiro valor não-vazio
-            const primeiroValor = Object.values(row).find(v => v && String(v).trim()) || '';
-            const titulo = row.titulo || row.TITULO || row['Título']
-                        || row.title  || row.TITLE
-                        || row.ASSUNTO || row.assunto || row['Assunto']
-                        || rawTxt || primeiroValor || '';
-            if (!titulo) return null;
-            // Extrai primeira data dd/mm/yyyy ou dd/mm encontrada no texto
-            const dtMatch = titulo.match(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/);
-            let dataExtr = '', horaExtr = '';
-            if (dtMatch) {
-              const d = dtMatch[1].padStart(2,'0'), m = dtMatch[2].padStart(2,'0');
-              const a = dtMatch[3] ? (dtMatch[3].length===2?'20'+dtMatch[3]:dtMatch[3]) : new Date().getFullYear();
-              dataExtr = `${d}/${m}/${a}`;
-            }
-            const hrMatch = titulo.match(/(\d{1,2})[hH:](\d{0,2})/);
-            if (hrMatch) horaExtr = `${hrMatch[1].padStart(2,'0')}:${(hrMatch[2]||'00').padStart(2,'0')}`;
-            // Categoria automática por palavras-chave
-            const tl = titulo.toLowerCase();
-            const cat = row.categoria||row.CATEGORIA||row['Categoria']||(
-              tl.includes('curso')||tl.includes('trein')||tl.includes('integra')||tl.includes('live')||tl.includes('youtube') ? 'Treinamento' :
-              tl.includes('exame')||tl.includes('admissional')||tl.includes('médico')||tl.includes('medico') ? 'RH' :
-              tl.includes('financ')||tl.includes('pagamento')||tl.includes('boleto') ? 'Financeiro' :
-              tl.includes('opera')||tl.includes('viagem')||tl.includes('caminhão')||tl.includes('frete') ? 'Operação' :
-              tl.includes('urgent')||tl.includes('segur') ? 'Segurança' : 'Geral');
-            const prio = row.prioridade||row.PRIORIDADE||row['Prioridade']||(
-              tl.includes('urgent')||tl.includes('importante')||tl.includes('obrigat') ? 'alta' :
-              tl.includes('prazo')||tl.includes('vence')||tl.includes('entrega') ? 'media' : 'normal');
-            return {
-              titulo,
-              data: row.data||row.DATA||row['Data']||dataExtr,
-              hora: row.hora||row.HORA||row['Hora']||horaExtr,
-              categoria: cat, prioridade: prio,
-              responsavel: row.responsavel||row.RESPONSAVEL||row['Responsável']||'',
-              descricao: row.descricao||row.DESCRICAO||row['Descrição']||'',
-            };
-          }).filter(r => r && r.titulo);
-          // Mescla: CSV prevalece
-          const manuaisNaoCsv = itens.filter(m => !csvItens.some(c => c.titulo === m.titulo));
-          itens = [...csvItens, ...manuaisNaoCsv];
-          if (csvItens.length > 0) break; // achou dados — não precisa tentar próxima URL
+          const csvItens = _rowsParaItens(parsed.data);
+          if (csvItens.length) { _mescla(csvItens); achou = true; continue; }
         }
+      }
+    } catch(e) { /* cai para fetchCSV */ }
+    try {
+      if (typeof fetchCSV === 'function') {
+        const rows = await fetchCSV(csvUrl);
+        const csvItens = _rowsParaItens(rows);
+        if (csvItens.length) { _mescla(csvItens); achou = true; }
       }
     } catch(e) { /* tenta próxima URL */ }
   }
   // Se não tem nada (planilha inacessível), mostra aviso vazio
   // (fallback hardcoded removido — dados antigos não devem aparecer)
-  _gvRecadosCache = itens;
-  _gvRecadosCacheTs = now;
+  if (itens.length) { _gvRecadosCache = itens; _gvRecadosCacheTs = now; }
   return itens;
 }
 
