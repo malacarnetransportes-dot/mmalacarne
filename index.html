@@ -6125,8 +6125,8 @@ function gvRecadosListaHTML(itens) {
         </div>
       </div>
       <div style="flex:1;min-width:0">
-        <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:1.1rem;color:#1e2a3a;margin-bottom:.4rem;line-height:1.4">${escapeHTML(item.titulo)}</div>
-        ${item.descricao ? `<div style="font-size:.92rem;color:#475569;margin-bottom:.5rem;line-height:1.55;padding:.5rem .7rem;background:#f8fafc;border-radius:8px">${escapeHTML(item.descricao)}</div>` : ''}
+        <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:1.1rem;color:#1e2a3a;margin-bottom:.4rem;line-height:1.4;overflow-wrap:anywhere;white-space:pre-line">${escapeHTML(item.titulo)}</div>
+        ${item.descricao ? `<div style="font-size:.92rem;color:#475569;margin-bottom:.5rem;line-height:1.55;padding:.5rem .7rem;background:#f8fafc;border-radius:8px;overflow-wrap:anywhere;white-space:pre-line">${escapeHTML(item.descricao)}</div>` : ''}
         <div style="display:flex;gap:.55rem;flex-wrap:wrap;align-items:center;margin-top:.4rem">
           ${alertaBadge}
           ${dataPillsHTML}
@@ -6149,7 +6149,7 @@ async function gvRenderRecados(body, s, slides, idx) {
       <!-- Lista de recados/lembretes -->
       <div style="flex:1;min-width:360px;display:flex;flex-direction:column;gap:.0rem">
         <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1rem;color:var(--accent-dk);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:.8rem;display:flex;align-items:center;gap:.5rem"><i class="fas fa-list-check"></i> Recados &amp; Lembretes <span id="gv-rec-count" style="font-size:.75rem;background:var(--accent);color:#000;border-radius:20px;padding:.1rem .6rem;font-weight:700"></span></div>
-        <div id="gv-recados-lista" style="display:flex;flex-direction:column;gap:.75rem;max-height:calc(100vh - 260px);overflow-y:auto;padding-right:.4rem">
+        <div id="gv-recados-lista" style="display:flex;flex-direction:column;gap:.75rem;text-align:left;padding-bottom:1.5rem">
           <div style="text-align:center;color:var(--text-lt);padding:2rem"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem"></i></div>
         </div>
       </div>
@@ -6194,13 +6194,50 @@ async function gvRenderRecados(body, s, slides, idx) {
   // ── Popup automático (3 dias antes até o dia) ──
   const _tok = slideIdx;
   const _nUrg = gvAlertaRecadosUrgentes(itens);
-  // ── Tempo do slide cresce com a quantidade de recados (+ tempo do popup) ──
-  const _dur = gvRecadosDurMs(itens.length) + (_nUrg ? GV_POPUP_MS : 0);
+  const _atraso = _nUrg ? GV_POPUP_MS + 1500 : 3500;
+  // Calendário fica fixo à esquerda enquanto a lista sobe (só se couber e estiver ao lado da lista)
+  const _cal = body.querySelector('#gv-recados-cal-wrap');
+  if (_cal && listaEl && _cal.offsetHeight < body.clientHeight - 80 && _cal.offsetTop === listaEl.parentElement.offsetTop) {
+    _cal.style.position = 'sticky'; _cal.style.top = '.5rem'; _cal.style.alignSelf = 'flex-start';
+  }
+  // Espera o layout assentar para medir a altura real da lista
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  if (slideIdx !== _tok) return;
+  // ── Tempo do slide = espera inicial + (altura a rolar ÷ velocidade de leitura) + pausa final ──
+  const _dur = gvRecadosDurPorAltura(body, itens.length, _atraso);
   window._gvRecadosDurMs = _dur;
   const _ov = document.getElementById('slideOverlay');
   if (slideIdx === _tok && _ov && _ov.classList.contains('active')) { slideAgendar(); slideStartProgress(); }
-  // ── Rola a própria lista (todos os recados aparecem, sem limite) ──
-  gvAutoScrollLista(body, listaEl, _dur, _nUrg ? GV_POPUP_MS + 1500 : 3000);
+  // ── O slide inteiro sobe devagar, igual aos demais painéis: todos os recados aparecem ──
+  gvAutoScrollRecados(body, _dur, _atraso);
+}
+
+// Velocidade de leitura na TV (px por segundo): ~1 recado a cada 5-6 s
+const GV_RECADOS_VEL = 30;
+const GV_RECADOS_PAUSA_FIM = 6000; // fica parado no final para ler o último recado
+function gvRecadosDurPorAltura(body, n, atrasoMs) {
+  const max = Math.max(0, body.scrollHeight - body.clientHeight);
+  if (max <= 4) return gvRecadosDurMs(n) + (atrasoMs > 4000 ? GV_POPUP_MS : 0); // tudo cabe: tempo por recado
+  const ms = atrasoMs + Math.round(max / GV_RECADOS_VEL * 1000) + GV_RECADOS_PAUSA_FIM;
+  return Math.min(15 * 60 * 1000, Math.max(30000, ms));
+}
+function gvAutoScrollRecados(body, durTotal, atrasoMs) {
+  slideAutoScrollStop();
+  body.scrollTop = 0;
+  _slideScrollTo = setTimeout(() => {
+    const max = body.scrollHeight - body.clientHeight;
+    if (max <= 4) return;
+    // nunca mais rápido que a velocidade de leitura; só acelera se o tempo do slide for menor
+    const disponivel = Math.max(5000, durTotal - atrasoMs - GV_RECADOS_PAUSA_FIM);
+    const dur = Math.min(Math.round(max / GV_RECADOS_VEL * 1000), disponivel);
+    const t0 = performance.now();
+    const step = t => {
+      const pr = Math.min(1, (t - t0) / dur);
+      body.scrollTop = max * pr;
+      if (pr < 1) _slideScrollRaf = requestAnimationFrame(step);
+    };
+    _slideScrollRaf = requestAnimationFrame(step);
+  }, atrasoMs);
 }
 
 // Duração do slide de recados: base + ~7s por recado (mín 30s, máx 3 min)
