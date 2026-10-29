@@ -1157,6 +1157,24 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
 .fin-grupo-empresas-list label:hover{background:var(--gray-100);border-radius:6px;}
 .fin-grupo-empresas-list input{cursor:pointer;flex:none;}
 
+/* ── Chips de Empresa Selecionada ── */
+.fin-empresa-chips-bar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.5rem .9rem .55rem;border-top:1px solid var(--gray-200);background:rgba(212,175,55,.04);}
+.fin-empresa-chips-bar:empty{display:none;}
+.fin-empresa-chip{display:inline-flex;align-items:center;gap:.35rem;background:rgba(212,175,55,.15);border:1.5px solid var(--accent);border-radius:20px;padding:.22rem .6rem .22rem .7rem;font-size:.75rem;font-weight:700;color:var(--accent-dk);cursor:default;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fin-empresa-chip button{background:none;border:none;cursor:pointer;color:var(--accent-dk);opacity:.7;padding:0;font-size:.7rem;line-height:1;display:flex;align-items:center;flex:none;}
+.fin-empresa-chip button:hover{opacity:1;color:var(--danger);}
+.fin-chips-label{font-size:.7rem;font-weight:700;color:var(--text-lt);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;flex:none;}
+.fin-chips-clear{background:none;border:none;cursor:pointer;font-size:.7rem;color:var(--text-lt);padding:.2rem .5rem;border-radius:12px;font-weight:700;flex:none;}
+.fin-chips-clear:hover{color:var(--danger);background:rgba(239,68,68,.07);}
+
+/* ── Soma por Empresa — modo cards selecionados ── */
+.fin-empresa-cards-wrap{position:relative;}
+.fin-empresa-cards-header{display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap;margin-bottom:.6rem;}
+.fin-empresa-cards-toggle{background:none;border:1.5px solid var(--gray-200);border-radius:var(--r8);font-size:.72rem;font-weight:700;color:var(--text-lt);cursor:pointer;padding:.28rem .75rem;display:flex;align-items:center;gap:.4rem;transition:.15s;}
+.fin-empresa-cards-toggle:hover{border-color:var(--primary-lt);color:var(--text);}
+.fin-empresa-cards-toggle.showing-all{border-color:var(--accent);color:var(--accent-dk);background:rgba(212,175,55,.08);}
+.fin-empresa-sel-total{font-size:.8rem;font-weight:800;color:var(--accent-dk);padding:.25rem .75rem;background:rgba(212,175,55,.12);border-radius:20px;white-space:nowrap;}
+
 /* Charts */
 .charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.4rem;margin-bottom:1.4rem;}
 .fin-charts-row{display:flex;flex-wrap:wrap;gap:1.4rem;margin-bottom:1.4rem;align-items:stretch;min-width:0;}
@@ -2253,10 +2271,19 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
               <button class="btn btn-gray" onclick="resetFinFilters()"><i class="fas fa-times"></i> Limpar</button>
               <button class="btn btn-success btn-sm" onclick="exportCSV(currentFinanceiroFiltered,'financeiro')"><i class="fas fa-download"></i> CSV</button>
             </div>
+            <div class="fin-empresa-chips-bar" id="finEmpresaChipsBar"></div>
           </div>
           <div class="dash-card">
-            <div class="dash-card-title"><i class="fas fa-building"></i> Soma por Empresa <span id="finEmpresaCardsSub" style="font-weight:400;color:var(--text-lt);font-size:.75rem;margin-left:.4rem"></span></div>
-            <div class="fin-empresa-cards" id="finRankTipoLocal"><div class="fin-empresa-cards-empty">Sem dados</div></div>
+            <div class="dash-card-title">
+              <span><i class="fas fa-building"></i> Soma por Empresa <span id="finEmpresaCardsSub" style="font-weight:400;color:var(--text-lt);font-size:.75rem;margin-left:.4rem"></span></span>
+              <div style="display:flex;align-items:center;gap:.6rem;margin-left:auto;">
+                <span class="fin-empresa-sel-total" id="finEmpresaSelTotal" style="display:none"></span>
+                <button class="fin-empresa-cards-toggle" id="finEmpresaCardsToggle" onclick="finToggleMostrarTodasEmpresas()" style="display:none"><i class="fas fa-eye"></i> <span id="finEmpresaCardsToggleTxt">Ver Todas</span></button>
+              </div>
+            </div>
+            <div class="fin-empresa-cards-wrap">
+              <div class="fin-empresa-cards" id="finRankTipoLocal"><div class="fin-empresa-cards-empty">Sem dados</div></div>
+            </div>
           </div>
           <div class="fin-charts-row">
             <div class="fin-rank-col">
@@ -8529,6 +8556,7 @@ let finEmpresasSelecionadas = [];   // empresas atualmente marcadas no filtro (a
 let finLocaisDisponiveis = [];      // [[nome, valor], ...] — última lista de empresas com dados (pro painel/modal)
 let finGruposEmpresas = {};         // {"NOME DO GRUPO": ["Empresa A", "Empresa B", ...]}
 let finGrupoEditando = null;        // nome do grupo em edição no modal (null = criando novo)
+let finMostrarTodasEmpresas = false; // toggle "Ver Todas" no painel de Soma por Empresa
 
 const FIN_GRUPOS_STORAGE_KEY = 'finGruposEmpresas';
 
@@ -8653,24 +8681,53 @@ function finEmpresaMsClear() {
 
 function finAtualizarBotaoEmpresa() {
   const btn = document.getElementById('finEmpresaMsBtn');
-  if (!btn) return;
-  const txt = btn.querySelector('.txt');
-  const n = finEmpresasSelecionadas.length;
-  const grpSel = document.getElementById('finGrupo');
-  const grp = grpSel ? grpSel.value : '';
-  if (!n && grp && finGruposEmpresas[grp]) {
-    txt.textContent = 'Grupo: ' + grp;
-    btn.classList.add('has-sel');
-  } else if (!n) {
-    txt.textContent = 'Todas';
-    btn.classList.remove('has-sel');
-  } else if (n === 1) {
-    txt.textContent = finEmpresasSelecionadas[0];
-    btn.classList.add('has-sel');
-  } else {
-    txt.textContent = n + ' empresas selecionadas';
-    btn.classList.add('has-sel');
+  if (btn) {
+    const txt = btn.querySelector('.txt');
+    const n = finEmpresasSelecionadas.length;
+    const grpSel = document.getElementById('finGrupo');
+    const grp = grpSel ? grpSel.value : '';
+    if (!n && grp && finGruposEmpresas[grp]) {
+      txt.textContent = 'Grupo: ' + grp;
+      btn.classList.add('has-sel');
+    } else if (!n) {
+      txt.textContent = 'Todas';
+      btn.classList.remove('has-sel');
+    } else {
+      txt.textContent = n + (n === 1 ? ' empresa' : ' empresas');
+      btn.classList.add('has-sel');
+    }
   }
+  // Renderiza chips de empresa
+  const chipsBar = document.getElementById('finEmpresaChipsBar');
+  if (!chipsBar) return;
+  if (!finEmpresasSelecionadas.length) {
+    chipsBar.innerHTML = '';
+    return;
+  }
+  const chips = finEmpresasSelecionadas.map(nome =>
+    `<span class="fin-empresa-chip" title="${escapeHTML(nome)}">${escapeHTML(nome)}<button type="button" onclick="finRemoverChipEmpresa('${nome.replace(/'/g,"\\'")}')"><i class="fas fa-times"></i></button></span>`
+  ).join('');
+  chipsBar.innerHTML =
+    `<span class="fin-chips-label"><i class="fas fa-filter" style="margin-right:.3rem"></i>Filtradas:</span>` +
+    chips +
+    `<button class="fin-chips-clear" onclick="finEmpresaMsClear()" title="Limpar seleção"><i class="fas fa-times-circle"></i> Limpar todas</button>`;
+}
+
+function finRemoverChipEmpresa(nome) {
+  const i = finEmpresasSelecionadas.indexOf(nome);
+  if (i !== -1) finEmpresasSelecionadas.splice(i, 1);
+  finRenderEmpresaOptions();
+  finAtualizarBotaoEmpresa();
+  applyFinFilters();
+}
+
+function finToggleMostrarTodasEmpresas() {
+  finMostrarTodasEmpresas = !finMostrarTodasEmpresas;
+  const btn = document.getElementById('finEmpresaCardsToggle');
+  const txt = document.getElementById('finEmpresaCardsToggleTxt');
+  if (btn) btn.classList.toggle('showing-all', finMostrarTodasEmpresas);
+  if (txt) txt.textContent = finMostrarTodasEmpresas ? 'Só Selecionadas' : 'Ver Todas';
+  applyFinFilters();
 }
 
 // ── Modal "Gerenciar Grupos" ──
@@ -10426,24 +10483,63 @@ function renderFinCharts(data, colValor, colCat, colDesc, colTipoContas, colLoca
   finAtualizarBotaoEmpresa();
   finPopularSelectGrupo();
 
-  // Cards de soma por Empresa — quando mais de uma empresa está marcada,
-  // mostra também o total somado das selecionadas no subtítulo.
+  // Cards de soma por Empresa — quando há seleção, mostra só as selecionadas
+  // (com toggle "Ver Todas" pra expandir); sem seleção, mostra tudo.
   const cardsEl = document.getElementById('finRankTipoLocal');
   const subEl = document.getElementById('finEmpresaCardsSub');
+  const selTotalEl = document.getElementById('finEmpresaSelTotal');
+  const toggleBtn = document.getElementById('finEmpresaCardsToggle');
+  const toggleTxt = document.getElementById('finEmpresaCardsToggleTxt');
+
+  const temSelecao = empresasAtivas.length > 0;
+  const totalSel = temSelecao
+    ? rankingLocaisFiltro.filter(([nome]) => empresasAtivas.includes(nome)).reduce((s, [, v]) => s + v, 0)
+    : 0;
+
   if (subEl) {
     let sub = catAtual ? `— categoria: ${catAtual}` : '— todas as categorias';
     if (empresasGrupo && grupoAtivo) sub = `— grupo: ${grupoAtivo} · ` + sub.replace('— ', '');
-    if (empresasAtivas.length > 1) {
-      const totalSel = rankingLocaisFiltro.filter(([nome]) => empresasAtivas.includes(nome)).reduce((s, [, v]) => s + v, 0);
-      sub += ` · ${empresasAtivas.length} empresas selecionadas: ${fmtMoney(totalSel)}`;
-    }
     subEl.textContent = sub;
   }
+
+  // Painel do total selecionado + botão toggle
+  if (selTotalEl) {
+    if (temSelecao) {
+      selTotalEl.style.display = '';
+      selTotalEl.textContent = `${empresasAtivas.length} selecionada${empresasAtivas.length > 1 ? 's' : ''}: ${fmtMoney(totalSel)}`;
+    } else {
+      selTotalEl.style.display = 'none';
+    }
+  }
+  if (toggleBtn) {
+    if (temSelecao) {
+      toggleBtn.style.display = '';
+      toggleBtn.classList.toggle('showing-all', finMostrarTodasEmpresas);
+      if (toggleTxt) toggleTxt.textContent = finMostrarTodasEmpresas ? 'Só Selecionadas' : 'Ver Todas';
+    } else {
+      toggleBtn.style.display = 'none';
+      // Sem seleção, sempre mostra tudo
+      finMostrarTodasEmpresas = false;
+    }
+  }
+
+  // Decide quais cards renderizar
+  let cardsList = rankingLocaisFiltro;
+  if (temSelecao && !finMostrarTodasEmpresas) {
+    // Só as selecionadas, na ordem do ranking
+    cardsList = rankingLocaisFiltro.filter(([nome]) => empresasAtivas.includes(nome));
+  }
+
   if (cardsEl) {
-    cardsEl.innerHTML = rankingLocaisFiltro.length
-      ? rankingLocaisFiltro.map(([nome, valor]) => `<div class="fin-empresa-card${empresasAtivas.includes(nome) ? ' active' : ''}" data-empresa="${escapeHTML(nome)}" title="${escapeHTML(nome)}"><div class="nome">${escapeHTML(nome)}</div><div class="valor">${fmtMoney(valor)}</div></div>`).join('')
+    cardsEl.innerHTML = cardsList.length
+      ? cardsList.map(([nome, valor]) => {
+          const ativa = empresasAtivas.includes(nome);
+          return `<div class="fin-empresa-card${ativa ? ' active' : ''}" data-empresa="${escapeHTML(nome)}" title="${escapeHTML(nome)}"><div class="nome">${escapeHTML(nome)}</div><div class="valor">${fmtMoney(valor)}</div></div>`;
+        }).join('')
       : '<div class="fin-empresa-cards-empty">Sem dados</div>';
-    if (membrosSemDados.length) cardsEl.innerHTML += membrosSemDados.map(n => `<div class="fin-empresa-card zero" title="Sem lançamentos no período/filtros"><div class="nome">${escapeHTML(n)}</div><div class="valor">R$ 0,00</div></div>`).join('');
+    if (membrosSemDados.length && (!temSelecao || finMostrarTodasEmpresas)) {
+      cardsEl.innerHTML += membrosSemDados.map(n => `<div class="fin-empresa-card zero" title="Sem lançamentos no período/filtros"><div class="nome">${escapeHTML(n)}</div><div class="valor">R$ 0,00</div></div>`).join('');
+    }
   }
 
   // Ranking por Tipo de Contas — lista ordenada da maior para a menor,
@@ -10494,6 +10590,7 @@ function resetFinFilters() {
   ['finDataInicio','finDataFim'].forEach(id => document.getElementById(id).value = '');
   ['finTipo','finCategoria','finMes','finAno'].forEach(id => { const el = document.getElementById(id); if (el) el.selectedIndex = 0; });
   finEmpresasSelecionadas = [];
+  finMostrarTodasEmpresas = false;
   const grpSel = document.getElementById('finGrupo');
   if (grpSel) grpSel.value = '';
   finAtualizarBotaoEmpresa();
