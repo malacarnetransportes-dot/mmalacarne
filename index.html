@@ -1118,12 +1118,12 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
 
 /* Multi-seleção de Empresas + Grupos (Financeiro) */
 .fin-ms{position:relative;}
-.fin-ms-btn{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.45rem .75rem;border-radius:var(--r8);border:1.5px solid var(--gray-200);font-size:.82rem;min-width:190px;max-width:230px;background:#fff;cursor:pointer;height:34px;color:var(--text);transition:.2s;}
+.fin-ms-btn{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.45rem .75rem;border-radius:var(--r8);border:1.5px solid var(--gray-200);font-size:.82rem;min-width:200px;max-width:260px;background:#fff;cursor:pointer;height:34px;color:var(--text);transition:.2s;}
 .fin-ms-btn:hover{border-color:var(--primary-lt);}
 .fin-ms-btn.has-sel{border-color:var(--accent);background:rgba(212,175,55,.08);color:var(--accent-dk);font-weight:700;}
 .fin-ms-btn span.txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;text-align:left;}
 .fin-ms-btn i{color:var(--text-lt);font-size:.68rem;flex:none;}
-.fin-ms-panel{position:absolute;top:calc(100% + 4px);left:0;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r12);box-shadow:var(--shadow-lg);width:300px;max-height:340px;display:none;flex-direction:column;z-index:200;}
+.fin-ms-panel{position:absolute;top:calc(100% + 4px);left:0;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r12);box-shadow:var(--shadow-lg);width:420px;max-height:380px;display:none;flex-direction:column;z-index:200;}
 .fin-ms-panel.open{display:flex;}
 .dash-card:has(#finEmpresaMsWrap){overflow:visible!important;position:relative;z-index:5;}
 .fin-ms-panel{z-index:1000!important;}
@@ -1134,11 +1134,11 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
 .fin-ms-panel-search input{width:100%;padding:.4rem .6rem;border-radius:6px;border:1px solid var(--gray-200);font-size:.78rem;}
 .fin-ms-panel-search input:focus{outline:none;border-color:var(--accent);}
 .fin-ms-panel-list{overflow-y:auto;padding:.4rem .55rem;flex:1;}
-.fin-ms-opt{display:flex;align-items:center;gap:.55rem;padding:.4rem .35rem;border-radius:6px;cursor:pointer;font-size:.8rem;}
+.fin-ms-opt{display:flex;align-items:flex-start;gap:.55rem;padding:.45rem .35rem;border-radius:6px;cursor:pointer;font-size:.8rem;}
 .fin-ms-opt:hover{background:var(--gray-100);}
-.fin-ms-opt input{cursor:pointer;flex:none;}
-.fin-ms-opt .nome{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.fin-ms-opt .valor{color:var(--text-lt);font-size:.7rem;flex:none;}
+.fin-ms-opt input{cursor:pointer;flex:none;margin-top:2px;}
+.fin-ms-opt .nome{flex:1;white-space:normal;word-break:break-word;line-height:1.35;overflow:visible;}
+.fin-ms-opt .valor{color:var(--text-lt);font-size:.7rem;flex:none;white-space:nowrap;padding-top:1px;}
 .fin-ms-panel-ftr{display:flex;justify-content:space-between;gap:.4rem;padding:.5rem .55rem;border-top:1px solid var(--gray-200);}
 .fin-ms-panel-ftr button{flex:1;font-size:.7rem;padding:.35rem .5rem;border-radius:6px;border:1px solid var(--gray-200);background:#fff;cursor:pointer;font-weight:700;color:var(--text-lt);}
 .fin-ms-panel-ftr button:hover{border-color:var(--accent);color:var(--accent-dk);}
@@ -1160,7 +1160,7 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
 /* ── Chips de Empresa Selecionada ── */
 .fin-empresa-chips-bar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.5rem .9rem .55rem;border-top:1px solid var(--gray-200);background:rgba(212,175,55,.04);}
 .fin-empresa-chips-bar:empty{display:none;}
-.fin-empresa-chip{display:inline-flex;align-items:center;gap:.35rem;background:rgba(212,175,55,.15);border:1.5px solid var(--accent);border-radius:20px;padding:.22rem .6rem .22rem .7rem;font-size:.75rem;font-weight:700;color:var(--accent-dk);cursor:default;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fin-empresa-chip{display:inline-flex;align-items:center;gap:.35rem;background:rgba(212,175,55,.15);border:1.5px solid var(--accent);border-radius:20px;padding:.22rem .6rem .22rem .7rem;font-size:.75rem;font-weight:700;color:var(--accent-dk);cursor:default;white-space:normal;word-break:break-word;}
 .fin-empresa-chip button{background:none;border:none;cursor:pointer;color:var(--accent-dk);opacity:.7;padding:0;font-size:.7rem;line-height:1;display:flex;align-items:center;flex:none;}
 .fin-empresa-chip button:hover{opacity:1;color:var(--danger);}
 .fin-chips-label{font-size:.7rem;font-weight:700;color:var(--text-lt);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;flex:none;}
@@ -3812,16 +3812,14 @@ if (typeof Chart !== 'undefined') {
 const DEFAULT_FINANCEIRO  = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZOvOYa2B9fg5pQuPa54usv9Tl0bRP7EDRBtYrmYnJuXZkK5_A7j4roQZdmiXaaQ/pub?output=csv";
 const DEFAULT_BATERIAS    = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRl21JTtpTiuYLD9QJVV82Hu5GDFwty4vYc-k467PnWyShcOgpXjXb5PnKdHMRCGA/pub?output=csv";
 const DEFAULT_CONTAS_RECEBER = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS8XHQ5cSbvBf7iRHpHy4Xx26DyBiN4biGMzfhsjYRjFPyVTl_6Dbw7aJmcMnu35Q/pub?output=csv";
-// Faturamento: cada motorista tem sua PRÓPRIA ABA dentro do mesmo documento
-// Google Sheets. Um link "Publicar na Web" em CSV só exporta uma aba por
-// vez, então usamos um link por aba (mesmo documento, gid diferente) e
-// combinamos tudo em loadFaturamentoData().
+// Faturamento: planilha unificada de Frota/Motorista publicada como CSV.
+// Conforme alterações na planilha os lançamentos refletem automaticamente.
 const FAT_DOC = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTe2DOUBArKJAsVfZ5HWuepUJ8hP2t-Rscv3uFRvBLgAQLXa2VwnGJ45dJkKMromA/pub";
 const DEFAULT_FATURAMENTO_DOCS = [
   683524434, 972019708, 1527968389, 1308561928, 93602328, 1313247063,
   1079171289, 125211003, 2028303270, 1843129283, 850971004, 1461140453
 ].map(gid => `${FAT_DOC}?gid=${gid}&single=true&output=csv`);
-const DEFAULT_FATURAMENTO = DEFAULT_FATURAMENTO_DOCS.join("\n");
+const DEFAULT_FATURAMENTO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR8lsoRGsbFIzthmm4cUDXIMeqICNVq9HfTSaICc8btfH7Tp7zFzpkQaKvxkUyk8D3dxuWBtsqVqI1b/pub?output=csv";
 
 // Doc do Google publicado que recebe automaticamente as mensagens/leituras
 // de pneus (ex.: robô que replica o grupo de WhatsApp para um Doc). É lido
