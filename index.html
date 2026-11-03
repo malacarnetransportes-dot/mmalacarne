@@ -3550,18 +3550,19 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
 
           <!-- KPIs -->
           <div class="kpi-grid">
-            <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-user-plus"></i></div><div><div class="kpi-val" id="rh-admitidos">—</div><div class="kpi-lbl">Admitidos (12 meses)</div></div></div>
-            <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-user-minus"></i></div><div><div class="kpi-val" id="rh-desligados">—</div><div class="kpi-lbl">Desligados (12 meses)</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-user-plus"></i></div><div><div class="kpi-val" id="rh-admitidos">—</div><div class="kpi-lbl" id="rh-lbl-admitidos">Admitidos (período)</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-user-minus"></i></div><div><div class="kpi-val" id="rh-desligados">—</div><div class="kpi-lbl" id="rh-lbl-desligados">Desligados (período)</div></div></div>
             <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-users"></i></div><div><div class="kpi-val" id="rh-ativos">—</div><div class="kpi-lbl">Quadro Ativo Atual</div></div></div>
-            <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-percent"></i></div><div><div class="kpi-val" id="rh-turnover">—</div><div class="kpi-lbl">Turnover (12 meses)</div></div></div>
+            <div class="kpi-card"><div class="kpi-icon yellow"><i class="fas fa-percent"></i></div><div><div class="kpi-val" id="rh-turnover">—</div><div class="kpi-lbl" id="rh-lbl-turnover">Turnover (período)</div></div></div>
             <div class="kpi-card"><div class="kpi-icon brown"><i class="fas fa-hourglass-half"></i></div><div><div class="kpi-val" id="rh-tempomedio">—</div><div class="kpi-lbl">Tempo Médio de Casa</div></div></div>
           </div>
 
           <!-- Filtros + botões -->
           <div class="dash-card">
+            <div class="dash-card-title" style="margin-bottom:.7rem"><i class="fas fa-filter"></i> Filtros</div>
             <div class="filters-bar">
               <div class="flt-grp"><label>Período</label>
-                <select id="rhPeriodo">
+                <select id="rhPeriodo" onchange="rhApplyFilters()">
                   <option value="12">Últimos 12 meses</option>
                   <option value="6">Últimos 6 meses</option>
                   <option value="24">Últimos 24 meses</option>
@@ -3569,16 +3570,16 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
                 </select>
               </div>
               <div class="flt-grp"><label>Nome</label><input type="text" id="rhNome" placeholder="Buscar por nome…" style="min-width:160px" oninput="rhApplyFilters()"></div>
-              <div class="flt-grp"><label>Empresa</label><select id="rhEmpresa"><option value="">Todas</option></select></div>
-              <div class="flt-grp"><label>Cargo</label><select id="rhCargo"><option value="">Todos</option></select></div>
+              <div class="flt-grp"><label>Empresa</label><select id="rhEmpresa" onchange="rhApplyFilters()"><option value="">Todas</option></select></div>
+              <div class="flt-grp"><label>Cargo</label><select id="rhCargo" onchange="rhApplyFilters()"><option value="">Todos</option></select></div>
               <div class="flt-grp"><label>Situação</label>
-                <select id="rhSituacao">
+                <select id="rhSituacao" onchange="rhApplyFilters()">
                   <option value="">Todos</option>
                   <option value="ativo">Ativos</option>
                   <option value="desligado">Desligados</option>
                 </select>
               </div>
-              <button class="btn btn-accent" onclick="rhApplyFilters()"><i class="fas fa-search"></i> Filtrar</button>
+              <button class="btn btn-accent" onclick="rhApplyFilters()"><i class="fas fa-filter"></i> Filtrar</button>
               <button class="btn btn-gray" onclick="rhReset()"><i class="fas fa-times"></i> Limpar</button>
               <button class="btn btn-success btn-sm" onclick="rhExportCSV()"><i class="fas fa-download"></i> CSV</button>
             </div>
@@ -4832,9 +4833,14 @@ function slideRhResumo(){
     .map(f => { const d = rhParseDate(f.admissao); return d ? rhDiasEntreDatas(d, hoje) : null; })
     .filter(d => d !== null && d >= 0);
   const mediaDias = temposDias.length ? temposDias.reduce((a,b) => a+b, 0) / temposDias.length : 0;
-  const mediaAnos = Math.floor(mediaDias / 365);
-  const mediaMeses = Math.floor((mediaDias % 365) / 30);
-  const tempoMedioStr = temposDias.length ? (mediaAnos > 0 ? `${mediaAnos}a ${mediaMeses}m` : `${mediaMeses}m`) : '—';
+  const mediaAnos  = Math.floor(mediaDias / 365);
+  const mediaMeses = Math.floor((mediaDias % 365) / 30.44);
+  const mediaDiasR2 = Math.floor(mediaDias % 30.44);
+  const _tp2 = [];
+  if (mediaAnos  > 0) _tp2.push(`${mediaAnos}a`);
+  if (mediaMeses > 0) _tp2.push(`${mediaMeses}m`);
+  if (mediaDiasR2 > 0 && mediaAnos === 0) _tp2.push(`${mediaDiasR2}d`);
+  const tempoMedioStr = temposDias.length ? (_tp2.length ? _tp2.join(' ') : '< 1m') : '—';
   const motivos = {};
   desligadosPeriodo.forEach(d => { const m = d.motivo || 'Não informado'; motivos[m] = (motivos[m] || 0) + 1; });
   const rankingMotivos = Object.entries(motivos).sort((a,b) => b[1]-a[1]);
@@ -20109,13 +20115,22 @@ function rhTempoCasa(admissaoStr, desligamentoStr) {
   const adm = rhParseDate(admissaoStr);
   const ate = desligamentoStr ? rhParseDate(desligamentoStr) : new Date();
   if (!adm || isNaN(adm)) return '—';
-  const dias = rhDiasEntreDatas(adm, ate);
-  if (dias === null || dias < 0) return '—';
-  const anos  = Math.floor(dias / 365);
-  const meses = Math.floor((dias % 365) / 30);
-  if (anos > 0) return `${anos}a ${meses}m`;
-  if (meses > 0) return `${meses} mês(es)`;
-  return `${dias} dia(s)`;
+  // Calcula anos, meses e dias exatos
+  let anos  = ate.getFullYear() - adm.getFullYear();
+  let meses = ate.getMonth()    - adm.getMonth();
+  let dias  = ate.getDate()     - adm.getDate();
+  if (dias < 0) {
+    meses--;
+    const ultimoDiaMesAnterior = new Date(ate.getFullYear(), ate.getMonth(), 0).getDate();
+    dias += ultimoDiaMesAnterior;
+  }
+  if (meses < 0) { anos--; meses += 12; }
+  if (anos < 0)  return '—';
+  const partes = [];
+  if (anos  > 0) partes.push(`${anos}a`);
+  if (meses > 0) partes.push(`${meses}m`);
+  if (dias  > 0) partes.push(`${dias}d`);
+  return partes.length ? partes.join(' ') : '< 1 dia';
 }
 
 // Fonte de funcionários únicos com admissão — de JORNADA_SEED + JORNADA_EXTRA
@@ -20249,10 +20264,22 @@ function rhRender(mesesFiltro, corte, hoje) {
     .map(f => { const d = rhParseDate(f.admissao); return d ? rhDiasEntreDatas(d, hoje) : null; })
     .filter(d => d !== null && d >= 0);
   const mediaDias = temposDias.length ? temposDias.reduce((a,b) => a+b, 0) / temposDias.length : 0;
-  const mediaAnos = Math.floor(mediaDias / 365);
-  const mediaMeses = Math.floor((mediaDias % 365) / 30);
-  const tempoMedioStr = mediaAnos > 0 ? `${mediaAnos}a ${mediaMeses}m` : `${mediaMeses}m`;
+  const mediaAnos  = Math.floor(mediaDias / 365);
+  const mediaMeses = Math.floor((mediaDias % 365) / 30.44);
+  const mediaDiasR = Math.floor(mediaDias % 30.44);
+  const _tp = [];
+  if (mediaAnos  > 0) _tp.push(`${mediaAnos}a`);
+  if (mediaMeses > 0) _tp.push(`${mediaMeses}m`);
+  if (mediaDiasR > 0 && mediaAnos === 0) _tp.push(`${mediaDiasR}d`); // mostra dias só quando < 1 ano
+  const tempoMedioStr = _tp.length ? _tp.join(' ') : (mediaDias > 0 ? '< 1m' : '—');
 
+  const periodoLbl = mesesFiltro > 0 ? `${mesesFiltro} meses` : 'histórico';
+  const _lblAdm  = document.getElementById('rh-lbl-admitidos');
+  const _lblDesl = document.getElementById('rh-lbl-desligados');
+  const _lblTurn = document.getElementById('rh-lbl-turnover');
+  if (_lblAdm)  _lblAdm.textContent  = `Admitidos (${periodoLbl})`;
+  if (_lblDesl) _lblDesl.textContent = `Desligados (${periodoLbl})`;
+  if (_lblTurn) _lblTurn.textContent = `Turnover (${periodoLbl})`;
   document.getElementById('rh-admitidos').textContent  = admitidosPeriodo.length;
   document.getElementById('rh-desligados').textContent = desligadosPeriodo.length;
   document.getElementById('rh-ativos').textContent     = ativos.length;
