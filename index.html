@@ -3569,7 +3569,8 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
                   <option value="0">Todos</option>
                 </select>
               </div>
-              <div class="flt-grp"><label>Nome</label><input type="text" id="rhNome" placeholder="Buscar por nome…" style="min-width:160px" oninput="rhApplyFilters()"></div>
+              <div class="flt-grp"><label>Nome</label><input type="text" id="rhNome" list="dlRhNomesFiltro" placeholder="Buscar por nome…" style="min-width:180px" oninput="rhApplyFilters()" autocomplete="off"></div>
+              <datalist id="dlRhNomesFiltro"></datalist>
               <div class="flt-grp"><label>Empresa</label><select id="rhEmpresa" onchange="rhApplyFilters()"><option value="">Todas</option></select></div>
               <div class="flt-grp"><label>Cargo</label><select id="rhCargo" onchange="rhApplyFilters()"><option value="">Todos</option></select></div>
               <div class="flt-grp"><label>Situação</label>
@@ -3613,36 +3614,6 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
           <div class="dash-card" id="rhAnaliseBox" style="border-left:4px solid var(--accent);display:none">
             <div class="dash-card-title"><i class="fas fa-lightbulb" style="color:var(--accent)"></i> Análise — RH & Turnover</div>
             <div id="rhAnaliseConteudo" style="font-size:.88rem;line-height:1.7;color:var(--text)"></div>
-          </div>
-
-          <!-- Formulário: adicionar desligamento manual -->
-          <div class="dash-card" style="border:1px solid rgba(212,175,55,.3)">
-            <div class="dash-card-title"><i class="fas fa-user-minus" style="color:var(--danger)"></i> Registrar Desligamento</div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.8rem;margin-top:.5rem">
-              <div class="flt-grp"><label>Funcionário</label><input type="text" id="rhDeslFuncionario" list="dlRhFuncionarios" placeholder="Nome"></div>
-              <datalist id="dlRhFuncionarios"></datalist>
-              <div class="flt-grp"><label>Matrícula</label><input type="text" id="rhDeslMatricula" placeholder="Matrícula"></div>
-              <div class="flt-grp"><label>Empresa</label><input type="text" id="rhDeslEmpresa" placeholder="Empresa"></div>
-              <div class="flt-grp"><label>Cargo</label><input type="text" id="rhDeslCargo" placeholder="Cargo"></div>
-              <div class="flt-grp"><label>Data de Admissão</label><input type="date" id="rhDeslAdmissao"></div>
-              <div class="flt-grp"><label>Data de Desligamento</label><input type="date" id="rhDeslData"></div>
-              <div class="flt-grp"><label>Motivo</label>
-                <select id="rhDeslMotivo">
-                  <option value="Pedido de demissão">Pedido de demissão</option>
-                  <option value="Demissão sem justa causa">Demissão sem justa causa</option>
-                  <option value="Demissão com justa causa">Demissão com justa causa</option>
-                  <option value="Término de contrato">Término de contrato</option>
-                  <option value="Aposentadoria">Aposentadoria</option>
-                  <option value="Falecimento">Falecimento</option>
-                  <option value="Outro">Outro</option>
-                </select>
-              </div>
-              <div class="flt-grp" style="grid-column:1/-1"><label>Observação</label><input type="text" id="rhDeslObs" placeholder="Opcional"></div>
-            </div>
-            <div style="margin-top:.8rem;display:flex;gap:.6rem;flex-wrap:wrap">
-              <button class="btn btn-accent" onclick="rhSalvarDesligamento()"><i class="fas fa-save"></i> Salvar Desligamento</button>
-            </div>
-            <div id="rhDeslStatus" style="margin-top:.5rem;font-size:.82rem"></div>
           </div>
 
           <!-- Tabela de Admissões (dos PDFs) -->
@@ -20164,9 +20135,12 @@ function rhInit() {
   document.getElementById('rhCargo').innerHTML =
     '<option value="">Todos</option>' + cargos.map(c => `<option>${escapeHTML(c)}</option>`).join('');
 
-  // Datalist para campo desligamento
-  document.getElementById('dlRhFuncionarios').innerHTML =
-    funcs.map(f => `<option value="${escapeHTML(f.nome)}">`).join('');
+  // Datalist para o filtro de Nome (autocomplete)
+  const dlNomes = document.getElementById('dlRhNomesFiltro');
+  if (dlNomes) {
+    const nomesUnicos = [...new Set(funcs.map(f => f.nome).filter(Boolean))].sort();
+    dlNomes.innerHTML = nomesUnicos.map(n => `<option value="${escapeHTML(n)}">`).join('');
+  }
 
   rhApplyFilters();
 }
@@ -20246,14 +20220,8 @@ function rhRender(mesesFiltro, corte, hoje) {
     return dt && dt >= corte;
   });
 
-  // Quadro ativo atual = admitidos - desligados (sem filtro de período para refletir situação atual)
-  const deslKeys = new Set(desligamentos.map(d =>
-    (d.matricula || d.nome || '').toString().trim().toUpperCase() + '||' + (d.empresa || '').trim().toUpperCase()
-  ));
-  const ativos = allFuncs.filter(f => {
-    const key = (f.matricula || '').toString().trim().toUpperCase() + '||' + (f.empresa || '').trim().toUpperCase();
-    return !deslKeys.has(key);
-  });
+  // Quadro ativo atual — respeita todos os filtros ativos (nome, empresa, cargo, situação)
+  const ativos = rhFiltradosAdm.filter(f => f._ativo);
 
   // Turnover = (admitidos + desligados) / 2 / quadro médio × 100
   const quadroMedio = (ativos.length + (ativos.length + desligadosPeriodo.length)) / 2 || 1;
@@ -20343,6 +20311,8 @@ function rhRender(mesesFiltro, corte, hoje) {
   const totalDesl12 = desligadosPeriodo.length;
   const totalFuncs  = allFuncs.length;
   const totalDeslTodos = desligamentos.length;
+  // Para gráficos: usa desligamentos filtrados por nome/empresa/cargo
+  const deslFiltrados = rhFiltradosDesl;
 
   // ─── helpers de pizza ───
   const PIE_OPTS = (labelEl, fmt) => ({
@@ -20358,20 +20328,21 @@ function rhRender(mesesFiltro, corte, hoje) {
     layout: { padding: 4 }
   });
 
-  // ── Pizza 1: Ativos vs Total Histórico ──
+  // ── Pizza 1: Ativos vs Desligados (filtrados) ──
+  const deslContFiltrado = deslFiltrados.length;
   if (rhChartMensalObj) rhChartMensalObj.destroy();
   rhChartMensalObj = new Chart(document.getElementById('rhChartMensal').getContext('2d'), {
     type: 'doughnut',
     data: {
       labels: ['Ativos hoje', 'Desligados (histórico)'],
-      datasets: [{ data: [ativos.length, totalDeslTodos],
+      datasets: [{ data: [ativos.length, deslContFiltrado],
         backgroundColor: ['rgba(34,197,94,.9)', 'rgba(239,68,68,.8)'],
         borderColor: ['#16a34a','#b91c1c'], borderWidth: 2 }]
     },
     options: PIE_OPTS()
   });
   const lbl1 = document.getElementById('rhLabelAtivosDesl');
-  if (lbl1) lbl1.textContent = `${ativos.length} ativos de ${ativos.length + totalDeslTodos} passagens`;
+  if (lbl1) lbl1.textContent = `${ativos.length} ativos de ${ativos.length + deslContFiltrado} passagens`;
 
   // ── Pizza 2: Tempo de Casa dos ATIVOS (faixas) ──
   const faixas = { 'Até 6 meses': 0, '6m – 1 ano': 0, '1 – 2 anos': 0, '2 – 5 anos': 0, '5+ anos': 0 };
@@ -20401,9 +20372,9 @@ function rhRender(mesesFiltro, corte, hoje) {
   const lbl2 = document.getElementById('rhLabelTempo');
   if (lbl2) lbl2.textContent = `Tempo médio: ${temposDias.length ? tempoMedioStr : '—'} — ${ativos.length} ativos`;
 
-  // ── Pizza 3: Motivos de Desligamento ──
+  // ── Pizza 3: Motivos de Desligamento (filtrados) ──
   const motivosMap = {};
-  desligamentos.forEach(d => { const m = (d.motivo||'Não informado').trim(); motivosMap[m] = (motivosMap[m]||0)+1; });
+  deslFiltrados.forEach(d => { const m = (d.motivo||'Não informado').trim(); motivosMap[m] = (motivosMap[m]||0)+1; });
   const motivEntries = Object.entries(motivosMap).sort((a,b)=>b[1]-a[1]);
   const PIE3_COLORS = ['rgba(239,68,68,.85)','rgba(251,146,60,.85)','rgba(250,204,21,.9)','rgba(34,197,94,.85)','rgba(59,130,246,.85)','rgba(168,85,247,.85)','rgba(236,72,153,.85)'];
   if (rhChartTurnoverObj) rhChartTurnoverObj.destroy();
@@ -20420,9 +20391,9 @@ function rhRender(mesesFiltro, corte, hoje) {
   const lbl3 = document.getElementById('rhLabelMotivos');
   if (lbl3 && motivEntries[0]) lbl3.textContent = `Principal: ${motivEntries[0][0]} (${motivEntries[0][1]}x)`;
 
-  // ── Pizza 4: Retenção Histórica (retidos vs desligados por período) ──
+  // ── Pizza 4: Retenção (filtrada) ──
   const retidos12  = Math.max(0, ativos.length);
-  const deslHist   = totalDeslTodos;
+  const deslHist   = deslContFiltrado;
   if (rhChartCargosObj) rhChartCargosObj.destroy();
   rhChartCargosObj = new Chart(document.getElementById('rhChartCargos').getContext('2d'), {
     type: 'doughnut',
@@ -20450,10 +20421,12 @@ function rhRender(mesesFiltro, corte, hoje) {
   if (analiseBox && analiseDiv) {
     const sinalTurnover = turnover > 5 ? '⚠️' : turnover > 3 ? '🟡' : '✅';
     const motivoPrincipal = motivEntries[0];
+    const nomeFiltroAtivo = (document.getElementById('rhNome')||{}).value || '';
+    const badgeFiltro = nomeFiltroAtivo.trim() ? `<span style="display:inline-block;background:#dbeafe;color:#1d4ed8;border-radius:20px;padding:.1rem .7rem;font-size:.72rem;font-weight:700;margin-left:.5rem">🔍 Filtro: ${escapeHTML(nomeFiltroAtivo.trim())}</span>` : '';
     analiseDiv.innerHTML = `
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1rem;margin-bottom:1rem">
         <div style="background:rgba(34,197,94,.08);border-radius:10px;padding:.8rem 1rem;border-left:3px solid #22c55e">
-          <div style="font-weight:600;color:#16a34a;margin-bottom:.3rem">📈 Movimentação (12 meses)</div>
+          <div style="font-weight:600;color:#16a34a;margin-bottom:.3rem">📈 Movimentação (${periodoLbl})${badgeFiltro}</div>
           <div>Admitidos: <strong>${totalAdm12}</strong> &nbsp;|&nbsp; Desligados: <strong>${totalDesl12}</strong></div>
           <div>Saldo: <strong style="color:${totalAdm12>=totalDesl12?'#16a34a':'#dc2626'}">${totalAdm12>=totalDesl12?'+':''}${totalAdm12-totalDesl12}</strong></div>
         </div>
@@ -20472,8 +20445,9 @@ function rhRender(mesesFiltro, corte, hoje) {
         (${deslHist>0?(motivoPrincipal[1]/deslHist*100).toFixed(0):0}% do total).
         ${motivoPrincipal[0]==='Oportunidade de Mercado'?'Alta concentração de saídas voluntárias indica concorrência externa por talentos — recomenda-se revisão de benefícios e reconhecimento.':
           motivoPrincipal[0]==='Demissão sem justa causa'?'Maioria das saídas por iniciativa da empresa — analisar padrão de perfil ou período de adaptação.':''}</p>` : ''}
-      <p><strong>Situação atual:</strong> ${ativos.length} motoristas ativos. ${totalAdm12>totalDesl12?`Crescimento líquido de ${totalAdm12-totalDesl12} colaborador(es) no período — frota em expansão.`:totalAdm12===totalDesl12?'Quadro estável no período.':
-        `Redução líquida de ${totalDesl12-totalAdm12} colaborador(es) — monitorar capacidade operacional.`}</p>
+      <p><strong>Situação atual:</strong> ${ativos.length} ${ativos.length===1?'colaborador ativo':'colaboradores ativos'}${nomeFiltroAtivo.trim()?` (filtro: "${escapeHTML(nomeFiltroAtivo.trim())}")`:''}.
+        ${totalAdm12>totalDesl12?`Crescimento líquido de ${totalAdm12-totalDesl12} no período — frota em expansão.`:totalAdm12===totalDesl12?'Quadro estável no período.':
+        `Redução líquida de ${totalDesl12-totalAdm12} no período — monitorar capacidade operacional.`}</p>
     `;
     analiseBox.style.display = 'block';
   }
@@ -20544,50 +20518,7 @@ function rhRender(mesesFiltro, corte, hoje) {
 }
 
 function rhSalvarDesligamento() {
-  const nome    = (document.getElementById('rhDeslFuncionario').value || '').trim();
-  const matric  = (document.getElementById('rhDeslMatricula').value   || '').trim();
-  const empresa = (document.getElementById('rhDeslEmpresa').value     || '').trim();
-  const cargo   = (document.getElementById('rhDeslCargo').value       || '').trim();
-  const adm     = document.getElementById('rhDeslAdmissao').value;
-  const data    = document.getElementById('rhDeslData').value;
-  const motivo  = document.getElementById('rhDeslMotivo').value;
-  const obs     = (document.getElementById('rhDeslObs').value         || '').trim();
-  const statusEl = document.getElementById('rhDeslStatus');
-
-  if (!nome) { statusEl.innerHTML = '<span style="color:#dc2626">⚠ Informe o nome do funcionário.</span>'; return; }
-  if (!data) { statusEl.innerHTML = '<span style="color:#dc2626">⚠ Informe a data de desligamento.</span>'; return; }
-
-  // Tenta preencher admissão e empresa a partir dos PDFs se não informado
-  let admFinal = adm, empresaFinal = empresa, cargoFinal = cargo, matricFinal = matric;
-  if (!admFinal || !empresaFinal || !cargoFinal) {
-    const match = rhTodosFuncionarios().find(f =>
-      f.nome.toUpperCase().includes(nome.toUpperCase()) ||
-      (matric && f.matricula === matric)
-    );
-    if (match) {
-      if (!admFinal) admFinal = match.admissao || '';
-      if (!empresaFinal) empresaFinal = match.empresa || '';
-      if (!cargoFinal)   cargoFinal   = match.cargo   || '';
-      if (!matricFinal)  matricFinal  = match.matricula || '';
-    }
-  }
-
-  const desligamentos = rhLoadDesligamentos();
-  desligamentos.push({
-    nome, matricula: matricFinal, empresa: empresaFinal, cargo: cargoFinal,
-    admissao: admFinal ? admFinal.split('-').reverse().join('/') : '',
-    dataDesligamento: data.split('-').reverse().join('/'),
-    motivo, obs, _savedAt: new Date().toISOString()
-  });
-  rhSaveDesligamentos(desligamentos);
-
-  // Limpa form
-  ['rhDeslFuncionario','rhDeslMatricula','rhDeslEmpresa','rhDeslCargo','rhDeslObs'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('rhDeslAdmissao').value = '';
-  document.getElementById('rhDeslData').value     = '';
-  statusEl.innerHTML = '<span style="color:#16a34a"><i class="fas fa-check-circle"></i> Desligamento salvo com sucesso.</span>';
-  setTimeout(() => { statusEl.innerHTML = ''; }, 3000);
-  rhApplyFilters();
+  // Formulário removido — função mantida para não quebrar referências antigas em localStorage
 }
 
 function rhExcluirDesligamento(idx) {
