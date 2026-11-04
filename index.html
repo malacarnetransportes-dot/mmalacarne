@@ -2010,6 +2010,20 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
               <div style="font-size:.78rem;color:var(--text-lt);margin-top:.4rem">Visão em tempo real de caixa, lucro, despesas, recebimentos, saldos, margens e custos por placa/motorista. As datas de recebimento são <b>calculadas automaticamente</b> a partir da data do frete e da regra de prazo de cada cliente (configurável abaixo) — cruzadas com as despesas do Financeiro (Contas a Pagar).</div>
             </div>
 
+            <div class="dash-card" style="margin-bottom:1rem">
+              <div class="dash-card-title" style="margin-bottom:.8rem"><i class="fas fa-filter"></i> Filtros — Fluxo de Caixa</div>
+              <div class="filters-bar">
+                <div class="flt-grp"><label>Cliente</label><select id="fcxCliente" onchange="fcxRender()"><option value="">Todos</option></select></div>
+                <div class="flt-grp"><label>Motorista</label><select id="fcxMotorista" onchange="fcxRender()"><option value="">Todos</option></select></div>
+                <div class="flt-grp"><label>Mês</label><select id="fcxMes" onchange="fcxAplicarMesAno()"><option value="">Todos</option><option value="0">Janeiro</option><option value="1">Fevereiro</option><option value="2">Março</option><option value="3">Abril</option><option value="4">Maio</option><option value="5">Junho</option><option value="6">Julho</option><option value="7">Agosto</option><option value="8">Setembro</option><option value="9">Outubro</option><option value="10">Novembro</option><option value="11">Dezembro</option></select></div>
+                <div class="flt-grp"><label>Ano</label><select id="fcxAno" onchange="fcxAplicarMesAno()"><option value="">Todos</option></select></div>
+                <div class="flt-grp"><label>Data Início</label><input type="date" id="fcxDataIni" onchange="fcxDataManual()"></div>
+                <div class="flt-grp"><label>Data Fim</label><input type="date" id="fcxDataFim" onchange="fcxDataManual()"></div>
+                <button class="btn btn-accent btn-sm" onclick="fcxRender()"><i class="fas fa-filter"></i> Filtrar</button>
+                <button class="btn btn-gray btn-sm" onclick="fcxResetFiltros()"><i class="fas fa-eraser"></i> Limpar</button>
+              </div>
+            </div>
+
             <!-- ── VEREDITO: LUCRO OU PREJUÍZO ── -->
             <div class="dash-card" id="fcxVeredito" style="margin-bottom:1rem;padding:0;overflow:hidden;border:2px solid var(--gray-200)">
               <div id="fcxVerBanner" style="padding:1.1rem 1.4rem;display:flex;flex-wrap:wrap;align-items:center;gap:1rem 2rem;background:var(--gray-100)">
@@ -2109,20 +2123,6 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
                   <button class="btn btn-accent btn-sm" onclick="fcxRegraAdd()"><i class="fas fa-plus"></i> Adicionar Regra</button>
                   <button class="btn btn-gray btn-sm" onclick="fcxRegrasRestaurarPadrao()"><i class="fas fa-rotate-left"></i> Restaurar Padrão</button>
                 </div>
-              </div>
-            </div>
-
-            <div class="dash-card" style="margin-bottom:1rem">
-              <div class="dash-card-title" style="margin-bottom:.8rem"><i class="fas fa-filter"></i> Filtros — Fluxo de Caixa</div>
-              <div class="filters-bar">
-                <div class="flt-grp"><label>Cliente</label><select id="fcxCliente" onchange="fcxRender()"><option value="">Todos</option></select></div>
-                <div class="flt-grp"><label>Motorista</label><select id="fcxMotorista" onchange="fcxRender()"><option value="">Todos</option></select></div>
-                <div class="flt-grp"><label>Mês</label><select id="fcxMes" onchange="fcxAplicarMesAno()"><option value="">Todos</option><option value="0">Janeiro</option><option value="1">Fevereiro</option><option value="2">Março</option><option value="3">Abril</option><option value="4">Maio</option><option value="5">Junho</option><option value="6">Julho</option><option value="7">Agosto</option><option value="8">Setembro</option><option value="9">Outubro</option><option value="10">Novembro</option><option value="11">Dezembro</option></select></div>
-                <div class="flt-grp"><label>Ano</label><select id="fcxAno" onchange="fcxAplicarMesAno()"><option value="">Todos</option></select></div>
-                <div class="flt-grp"><label>Data Início</label><input type="date" id="fcxDataIni" onchange="fcxDataManual()"></div>
-                <div class="flt-grp"><label>Data Fim</label><input type="date" id="fcxDataFim" onchange="fcxDataManual()"></div>
-                <button class="btn btn-accent btn-sm" onclick="fcxRender()"><i class="fas fa-filter"></i> Filtrar</button>
-                <button class="btn btn-gray btn-sm" onclick="fcxResetFiltros()"><i class="fas fa-eraser"></i> Limpar</button>
               </div>
             </div>
 
