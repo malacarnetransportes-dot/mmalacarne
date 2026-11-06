@@ -8454,28 +8454,42 @@ document.getElementById('refreshDataBtn').onclick = async () => {
   const icon = document.getElementById('refreshIcon');
   btn.disabled = true;
   if (icon) icon.classList.add('fa-spin');
-  // Força recarga de todas as tabs que já foram abertas
-  _tabCarregada.delete('tabFinanceiro');
-  _tabCarregada.delete('tabFaturamento');
-  _tabCarregada.delete('tabBaterias');
-  await Promise.allSettled([
-    loadFinanceiroData(),
-    loadFaturamentoData(),
-    loadBateriasData(),
-    vencInit(),
-    URL_AGENDA ? agSincronizarSheets(true) : Promise.resolve()
-  ]);
-  // Se aba NF-e está ativa, também atualiza
-  const nfePane = document.getElementById('tabNfe');
-  if(nfePane && nfePane.classList.contains('active') && NFE_CLIENT_ID) nfeBuscarSEFAZ();
-  // Se a aba Controle de Consumo está ativa, também atualiza
-  const consumoPane = document.getElementById('tabConsumoLitro');
-  if (consumoPane && consumoPane.classList.contains('active') && typeof loadAbastecimentos === 'function') loadAbastecimentos({ silencioso: true });
+
+  // ── FASE 1: recarrega APENAS a aba ativa (resposta rápida) ──
+  const abaAtiva = document.querySelector('.pa-pane.active');
+  const abaId    = abaAtiva ? abaAtiva.id : '';
+
+  const mapaRefresh = {
+    tabFinanceiro:    () => { _tabCarregada.delete('tabFinanceiro');  return loadFinanceiroData(); },
+    tabFaturamento:   () => { _tabCarregada.delete('tabFaturamento'); return loadFaturamentoData(); },
+    tabBaterias:      () => { _tabCarregada.delete('tabBaterias');    return loadBateriasData(); },
+    tabConsumoLitro:  () => typeof loadAbastecimentos === 'function' ? loadAbastecimentos({ silencioso: true }) : Promise.resolve(),
+    tabNfe:           () => NFE_CLIENT_ID ? nfeBuscarSEFAZ() : Promise.resolve(),
+    tabAgenda:        () => URL_AGENDA ? agSincronizarSheets(true) : Promise.resolve(),
+    tabVencimentos:   () => vencInit()
+  };
+
+  const fnAtiva = mapaRefresh[abaId];
+  if (fnAtiva) await fnAtiva().catch(() => {});
+  // Vencimentos sempre (badges de urgência), se não for a aba ativa
+  if (abaId !== 'tabVencimentos') vencInit().catch(() => {});
+
   updateLastUpdate();
   atualizarSelectMotoristasCalculadora();
   btn.disabled = false;
   if (icon) icon.classList.remove('fa-spin');
-  showToast('✓ Dados atualizados com sucesso');
+  showToast('✓ Aba atualizada');
+
+  // ── FASE 2: demais abas em background (sem travar o botão) ──
+  setTimeout(() => {
+    const abas = ['tabFinanceiro','tabFaturamento','tabBaterias','tabAgenda'];
+    abas.forEach(id => {
+      if (id !== abaId && mapaRefresh[id]) {
+        _tabCarregada.delete(id);
+        mapaRefresh[id]().catch(() => {});
+      }
+    });
+  }, 300);
 };
 
 // Sidebar toggle mobile
