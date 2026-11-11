@@ -1384,7 +1384,7 @@ body.mm-ticker-active { padding-bottom: 38px; }
 #mmTickerTrack {
   display: flex; align-items: center; height: 100%;
   white-space: nowrap;
-  animation: mmTickerScroll 110s linear infinite;
+  animation: mmTickerScroll var(--ticker-speed, 55s) linear infinite;
   will-change: transform;
 }
 #mmTickerTrack.paused { animation-play-state: paused; }
@@ -1392,6 +1392,32 @@ body.mm-ticker-active { padding-bottom: 38px; }
   0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
+
+/* ── Controles de velocidade ── */
+#mmTickerSpeedBtns {
+  display: flex; align-items: center; gap: 2px;
+  flex-shrink: 0; padding: 0 .4rem;
+  border-right: 1px solid rgba(201,162,39,.15);
+}
+.mmt-speed-btn {
+  background: transparent; border: 1px solid rgba(201,162,39,.25);
+  color: rgba(255,255,255,.45); font-size: .6rem; font-weight: 800;
+  letter-spacing: .04em; padding: 1px 5px; border-radius: 2px;
+  cursor: pointer; transition: all .15s; line-height: 1.6;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.mmt-speed-btn:hover, .mmt-speed-btn.active { background: rgba(201,162,39,.18); color: #c9a227; border-color: #c9a227; }
+
+/* ── Botão PIN ── */
+#mmTickerPin {
+  flex-shrink: 0; border: none; background: transparent;
+  color: rgba(255,255,255,.35); font-size: .72rem;
+  padding: 0 .6rem; height: 100%; cursor: pointer;
+  transition: color .2s; display: flex; align-items: center; gap: .28rem;
+}
+#mmTickerPin:hover { color: #c9a227; }
+#mmTickerPin.pinned { color: #c9a227; }
+#mmTickerPin .pin-txt { font-size: .58rem; font-weight: 800; letter-spacing: .08em; font-family: 'Inter', system-ui, sans-serif; }
 
 /* ── Cada item no estilo índice de bolsa ── */
 .mmt-item {
@@ -1455,6 +1481,12 @@ body.mm-ticker-active { padding-bottom: 38px; }
   <div id="mmTickerWindow">
     <div id="mmTickerTrack"></div>
   </div>
+  <div id="mmTickerSpeedBtns">
+    <button class="mmt-speed-btn" data-speed="90" title="Lento">1×</button>
+    <button class="mmt-speed-btn active" data-speed="55" title="Normal">2×</button>
+    <button class="mmt-speed-btn" data-speed="30" title="Rápido">3×</button>
+  </div>
+  <button id="mmTickerPin" title="Destacar em janela flutuante — continua visível em qualquer programa"><i class="fas fa-thumbtack"></i><span class="pin-txt">PIN</span></button>
   <button id="mmTickerClose" title="Fechar ticker"><i class="fas fa-times"></i></button>
 </div>
 
@@ -7763,22 +7795,171 @@ document.getElementById('slideCloseBtn').addEventListener('click', closeSlideMod
   const toggleBtn = document.getElementById('mmTickerToggleBtn');
   if (toggleBtn) toggleBtn.addEventListener('click', toggle);
 
+  // ── controle de velocidade ──
+  const LS_SPEED = 'mmTickerSpeed';
+  let _currentSpeed = 55;
+  try { const s = parseInt(localStorage.getItem(LS_SPEED)); if (s > 0) _currentSpeed = s; } catch(e){}
+
+  function aplicarVelocidade(segundos) {
+    _currentSpeed = segundos;
+    try { localStorage.setItem(LS_SPEED, segundos); } catch(e){}
+    document.getElementById('mmTickerBar').style.setProperty('--ticker-speed', segundos + 's');
+    // sincroniza botões ativos
+    document.querySelectorAll('.mmt-speed-btn').forEach(b => {
+      b.classList.toggle('active', parseInt(b.dataset.speed) === segundos);
+    });
+    // força reinício da animação com nova velocidade
+    const t = document.getElementById('mmTickerTrack');
+    if (t) {
+      t.style.animation = 'none';
+      void t.offsetHeight;
+      t.style.animation = '';
+    }
+    // sincroniza popup se aberto
+    if (_pinPopup && !_pinPopup.closed) pinPopupRenderizar();
+  }
+
+  document.querySelectorAll('.mmt-speed-btn').forEach(btn => {
+    btn.addEventListener('click', () => aplicarVelocidade(parseInt(btn.dataset.speed)));
+  });
+  // aplica velocidade salva na inicialização
+  aplicarVelocidade(_currentSpeed);
+
+  // ═══════════════════════════════════════════════════════
+  //  MODO PIN — janela flutuante independente
+  //  Abre popup 100%×52px fixado na borda inferior da tela
+  // ═══════════════════════════════════════════════════════
+  let _pinPopup = null;
+  const LS_PIN = 'mmTickerPinAtivo';
+
+  function buildPopupHtml(itens, speed) {
+    const itemsHtml = itens.map(item => {
+      const delta = item.delta
+        ? `<span class="d ${item.deltaCls||'neu'}">${item.delta}</span>` : '';
+      return `<span class="it"><span class="s">${item.sig}</span><span class="v">${item.val}</span>${delta}</span><span class="sep"></span>`;
+    }).join('');
+    const track = itemsHtml + itemsHtml;
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@700;800&family=Barlow+Condensed:wght@900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:52px;overflow:hidden;background:#03060d;border-top:2px solid #c9a227;cursor:default;user-select:none}
+#wrap{display:flex;align-items:center;height:52px;width:100%}
+#lbl{flex-shrink:0;display:flex;align-items:center;gap:.35rem;padding:0 .9rem;height:100%;
+  background:linear-gradient(135deg,#c9a227,#9b7b14);
+  font-family:'Barlow Condensed',sans-serif;font-size:.8rem;font-weight:900;
+  letter-spacing:.12em;color:#000;white-space:nowrap}
+#win{flex:1;overflow:hidden;position:relative;height:100%}
+#win::before{content:'';position:absolute;left:0;top:0;bottom:0;width:28px;background:linear-gradient(90deg,#03060d,transparent);z-index:1;pointer-events:none}
+#win::after{content:'';position:absolute;right:0;top:0;bottom:0;width:28px;background:linear-gradient(270deg,#03060d,transparent);z-index:1;pointer-events:none}
+#trk{display:flex;align-items:center;height:100%;white-space:nowrap;
+  animation:scroll ${speed}s linear infinite}
+#trk:hover{animation-play-state:paused}
+@keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.it{display:inline-flex;align-items:baseline;gap:.25rem;padding:0 .9rem;
+  border-right:1px solid rgba(201,162,39,.12);flex-shrink:0}
+.s{font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:900;color:#c9a227;letter-spacing:.06em;text-transform:uppercase}
+.v{font-family:'Inter',sans-serif;font-size:.8rem;font-weight:700;color:#fff}
+.d{font-family:'Inter',sans-serif;font-size:.7rem;font-weight:700}
+.d.up{color:#22c55e}.d.down{color:#f87171}.d.warn{color:#fbbf24}.d.neu{color:#94a3b8}
+.sep{display:inline-block;width:5px;height:5px;background:rgba(201,162,39,.4);border-radius:50%;margin:0 .25rem;align-self:center;flex-shrink:0}
+#close{flex-shrink:0;background:transparent;border:none;color:rgba(255,255,255,.3);
+  font-size:1rem;padding:0 .7rem;height:100%;cursor:pointer;font-family:sans-serif}
+#close:hover{color:#f87171}
+</style></head><body>
+<div id="wrap">
+  <div id="lbl">📊 M·MALACARNE</div>
+  <div id="win"><div id="trk">${track}</div></div>
+  <button id="close" onclick="window.close()" title="Fechar">✕</button>
+</div>
+<script>
+  // auto-refresh a cada 30s via postMessage ou reload
+  window.addEventListener('message', function(e){
+    if(e.data && e.data.type === 'mmTickerUpdate') {
+      const t = document.getElementById('trk');
+      if(!t) return;
+      const h = e.data.html;
+      t.innerHTML = h + h;
+      t.style.animation='none'; void t.offsetHeight; t.style.animation='';
+    }
+    if(e.data && e.data.type === 'mmTickerSpeed') {
+      const t = document.getElementById('trk');
+      if(!t) return;
+      t.style.animation='none'; void t.offsetHeight;
+      t.style.animation='scroll '+e.data.speed+'s linear infinite';
+    }
+  });
+<\/script></body></html>`;
+  }
+
+  function pinPopupRenderizar() {
+    if (!_pinPopup || _pinPopup.closed) return;
+    const itens = coletarItens();
+    const itemsHtml = itens.map(item => {
+      const delta = item.delta
+        ? `<span class="d ${item.deltaCls||'neu'}">${item.delta}</span>` : '';
+      return `<span class="it"><span class="s">${item.sig}</span><span class="v">${item.val}</span>${delta}</span><span class="sep"></span>`;
+    }).join('');
+    try {
+      _pinPopup.postMessage({ type: 'mmTickerUpdate', html: itemsHtml }, '*');
+      _pinPopup.postMessage({ type: 'mmTickerSpeed', speed: _currentSpeed }, '*');
+    } catch(e){}
+  }
+
+  function abrirPin() {
+    const sw = screen.width, sh = screen.height;
+    const ph = 52, py = sh - ph;
+    _pinPopup = window.open('', 'mmTickerPin',
+      `width=${sw},height=${ph},left=0,top=${py},resizable=yes,toolbar=no,menubar=no,scrollbars=no,status=no,location=no,directories=no`);
+    if (!_pinPopup) {
+      alert('⚠️ Popup bloqueado!\nPermita popups para este site no seu navegador e tente novamente.');
+      return;
+    }
+    _pinPopup.document.open();
+    _pinPopup.document.write(buildPopupHtml(coletarItens(), _currentSpeed));
+    _pinPopup.document.close();
+    document.getElementById('mmTickerPin').classList.add('pinned');
+    try { localStorage.setItem(LS_PIN, '1'); } catch(e){}
+    // monitor: se popup fechar, desativa o botão
+    const monitor = setInterval(() => {
+      if (!_pinPopup || _pinPopup.closed) {
+        clearInterval(monitor);
+        document.getElementById('mmTickerPin').classList.remove('pinned');
+        try { localStorage.removeItem(LS_PIN); } catch(e){}
+      }
+    }, 1000);
+  }
+
+  function fecharPin() {
+    if (_pinPopup && !_pinPopup.closed) _pinPopup.close();
+    _pinPopup = null;
+    document.getElementById('mmTickerPin').classList.remove('pinned');
+    try { localStorage.removeItem(LS_PIN); } catch(e){}
+  }
+
+  const pinBtn = document.getElementById('mmTickerPin');
+  if (pinBtn) pinBtn.addEventListener('click', () => {
+    if (_pinPopup && !_pinPopup.closed) fecharPin(); else abrirPin();
+  });
+
   // ── timer de atualização a cada 60s ──
   let _timer = null;
   function iniciarTimer() {
     clearInterval(_timer);
-    _timer = setInterval(renderizar, 60000);
+    _timer = setInterval(() => {
+      renderizar();
+      pinPopupRenderizar();
+    }, 60000);
   }
 
   // ── API pública (usada pelo openSlideMode se necessário) ──
-  window.mmTickerAtualizar = renderizar;
+  window.mmTickerAtualizar = function() { renderizar(); pinPopupRenderizar(); };
   window.mmTickerLigar    = ligar;
   window.mmTickerDesligar = desligar;
 
   // ── restaura estado salvo no localStorage ──
   try {
     if (localStorage.getItem(LS_KEY) === '1') {
-      // aguarda DOM pronto (já estamos num script síncrono, mas dados chegam depois)
       setTimeout(ligar, 800);
       iniciarTimer();
     }
