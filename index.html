@@ -1322,6 +1322,106 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
 .ag-check.checked{background:var(--success);border-color:var(--success);color:#fff;}
 .ag-modal-wrap{display:none!important;}
 .ag-modal-wrap.open{display:flex!important;}
+
+/* Ajuste de espaço para o ticker na Gestão à Vista */
+#slideOverlay.active .slide-dots { padding-bottom: .6rem; }
+#slideOverlay.active .slide-progress { margin-bottom: 36px; }
+
+/* ═══════════════════════════════════════════════════════
+   GV TICKER — barra Bloomberg/B3 fixa na Gestão à Vista
+   ═══════════════════════════════════════════════════════ */
+#gvTickerBar {
+  display: none;
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 36px;
+  background: #05080f;
+  border-top: 1.5px solid rgba(201,162,39,.35);
+  z-index: 20;
+  overflow: hidden;
+  align-items: center;
+}
+#slideOverlay.active #gvTickerBar { display: flex; }
+
+/* etiqueta lateral fixada */
+#gvTickerLabel {
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: .4rem;
+  padding: 0 .9rem;
+  height: 100%;
+  background: linear-gradient(135deg, #c9a227, #9b7b14);
+  font-family: 'Barlow Condensed', 'Inter', sans-serif;
+  font-size: .78rem; font-weight: 900;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: #000;
+  white-space: nowrap;
+  z-index: 2;
+}
+#gvTickerLabel::after {
+  content: '';
+  position: absolute;
+  left: calc(var(--label-w, 112px) - 1px);
+  top: 0; bottom: 0;
+  width: 18px;
+  background: linear-gradient(90deg, #9b7b14 0%, transparent 100%);
+  pointer-events: none;
+}
+
+/* janela deslizante */
+#gvTickerWindow {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  height: 100%;
+}
+
+/* fita que corre */
+#gvTickerTrack {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  white-space: nowrap;
+  animation: gvTickerScroll 90s linear infinite;
+  will-change: transform;
+}
+#gvTickerTrack.paused { animation-play-state: paused; }
+@keyframes gvTickerScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* item individual */
+.gvt-item {
+  display: inline-flex; align-items: center; gap: .38rem;
+  padding: 0 1.1rem;
+  font-family: 'Inter', 'Barlow Condensed', system-ui, sans-serif;
+  font-size: .73rem; font-weight: 600;
+  color: rgba(255,255,255,.82);
+  letter-spacing: .02em;
+  border-right: 1px solid rgba(201,162,39,.14);
+  flex-shrink: 0;
+}
+.gvt-item .gvt-lbl {
+  color: rgba(255,255,255,.38);
+  font-weight: 500; font-size: .67rem;
+  text-transform: uppercase; letter-spacing: .07em;
+}
+.gvt-item .gvt-val { color: #fff; font-weight: 700; }
+.gvt-item .gvt-val.red  { color: #f87171; }
+.gvt-item .gvt-val.gold { color: #fbbf24; }
+.gvt-item .gvt-val.green{ color: #34d399; }
+.gvt-item .gvt-val.ice  { color: #7ab3d0; }
+.gvt-item .gvt-ico { font-size: .68rem; opacity: .7; }
+
+/* separador decorativo */
+.gvt-sep {
+  display: inline-block;
+  width: 4px; height: 4px;
+  background: rgba(201,162,39,.5);
+  border-radius: 50%;
+  margin: 0 .5rem;
+  flex-shrink: 0;
+}
 </style>
 </head>
 <body>
@@ -1377,6 +1477,14 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
   <div class="slide-body" id="slideBody"></div>
   <div class="slide-dots" id="slideDots"></div>
   <div class="slide-progress"><div class="slide-progress-bar" id="slideProgressBar"></div></div>
+
+  <!-- TICKER BLOOMBERG/B3 — KPIs rolando fixos na parte inferior -->
+  <div id="gvTickerBar">
+    <div id="gvTickerLabel"><i class="fas fa-signal"></i>&nbsp;INDICADORES</div>
+    <div id="gvTickerWindow">
+      <div id="gvTickerTrack"></div>
+    </div>
+  </div>
 </div>
 
 <!-- ══════════════ MODAL TV ══════════════ -->
@@ -7110,6 +7218,9 @@ function openSlideMode(){
     document.documentElement.requestFullscreen().catch(()=>{});
   }
 
+  // Inicia o ticker de KPIs
+  if (typeof gvTickerIniciar === 'function') gvTickerIniciar();
+
   // Liga o rádio automaticamente ao abrir a Gestão à Vista
   slideRadioAutoRetryAtivo = true; // habilita o religa-sozinho em segundo plano enquanto o painel estiver aberto
   if (typeof slideRadioLigar === 'function' && !slideRadioLigado) {
@@ -7387,6 +7498,8 @@ function closeSlideMode(){
   if (slideFinChartInstance) { slideFinChartInstance.destroy(); slideFinChartInstance = null; }
   gvDestroyCharts();
   if (window._slideNoticiasRefreshTimer) { clearInterval(window._slideNoticiasRefreshTimer); window._slideNoticiasRefreshTimer = null; }
+  // Para o ticker
+  if (typeof gvTickerParar === 'function') gvTickerParar();
   // Rádio não fica tocando depois que o painel é fechado
   slideRadioAutoRetryAtivo = false;
   if (typeof slideRadioDesligar === 'function') slideRadioDesligar();
@@ -7398,6 +7511,191 @@ function closeSlideMode(){
 let slideClockTimer = null;
 document.getElementById('openSlideModeBtn').addEventListener('click', openSlideMode);
 document.getElementById('slideCloseBtn').addEventListener('click', closeSlideMode);
+
+// ═══════════════════════════════════════════════════════════════════
+// GV TICKER — barra Bloomberg/B3 de KPIs rolando na Gestão à Vista
+// ═══════════════════════════════════════════════════════════════════
+(function(){
+
+  /* Formata número como moeda BRL */
+  function fmtBRL(v) {
+    if (!v && v !== 0) return '—';
+    return 'R$ ' + Number(v).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
+  }
+  function fmtNum(v, dec) {
+    if (!v && v !== 0) return '—';
+    return Number(v).toLocaleString('pt-BR',{minimumFractionDigits:dec||0,maximumFractionDigits:dec||0});
+  }
+
+  /* Coleta KPIs das variáveis globais já carregadas */
+  function coletarKPIs() {
+    const itens = [];
+
+    // ── VENCIMENTOS ──
+    try {
+      if (typeof vencCounts !== 'undefined' && typeof VENC_CATEGORIAS !== 'undefined') {
+        let totalV = 0, totalP = 0;
+        VENC_CATEGORIAS.forEach(c => {
+          const cv = vencCounts[c.key];
+          if (cv) { totalV += (cv.vencidos||0); totalP += (cv.proximos||0); }
+        });
+        itens.push({ ico:'fa-triangle-exclamation', lbl:'VENCIDOS', val: totalV, cls: totalV > 0 ? 'red' : 'green' });
+        itens.push({ ico:'fa-clock', lbl:'A VENCER 30d', val: totalP, cls: totalP > 0 ? 'gold' : 'green' });
+      }
+    } catch(e){}
+
+    // ── FINANCEIRO ──
+    try {
+      if (typeof financeiroData !== 'undefined' && financeiroData.length) {
+        const now = new Date();
+        const mesAtual = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+        let recMes = 0, despMes = 0, recTotal = 0, despTotal = 0;
+        financeiroData.forEach(r => {
+          const v = Math.abs(parseFloat(r._valor||r.valor||r.Valor||0)||0);
+          const dt = r._data||r.data||r.Data||'';
+          const tipo = (r._tipo||r.tipo||r.Tipo||r._natureza||r.natureza||'').toLowerCase();
+          const isRec = tipo.includes('rec')||tipo.includes('entra')||tipo.includes('cred');
+          if (isRec) { recTotal += v; if (dt.startsWith(mesAtual)) recMes += v; }
+          else { despTotal += v; if (dt.startsWith(mesAtual)) despMes += v; }
+        });
+        if (recMes > 0) itens.push({ ico:'fa-arrow-up', lbl:'RECEITA (mês)', val: fmtBRL(recMes), cls:'green', raw:true });
+        if (despMes > 0) itens.push({ ico:'fa-arrow-down', lbl:'DESPESAS (mês)', val: fmtBRL(despMes), cls:'red', raw:true });
+        if (recTotal > 0) itens.push({ ico:'fa-sack-dollar', lbl:'RECEITA TOTAL', val: fmtBRL(recTotal), cls:'green', raw:true });
+      }
+    } catch(e){}
+
+    // ── FATURAMENTO (fretes) ──
+    try {
+      if (typeof faturamentoData !== 'undefined' && faturamentoData.length) {
+        const now = new Date();
+        const mesAtual = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+        let fatMes = 0, nFretes = 0;
+        faturamentoData.forEach(r => {
+          const v = Math.abs(parseFloat(r._valor||r.valor||r.Valor||r.frete||r.Frete||0)||0);
+          const dt = r._data||r.data||r.Data||r.emissao||r.Emissao||'';
+          if (dt.startsWith(mesAtual)) { fatMes += v; nFretes++; }
+        });
+        if (fatMes > 0) itens.push({ ico:'fa-file-invoice-dollar', lbl:'FATURAMENTO (mês)', val: fmtBRL(fatMes), cls:'ice', raw:true });
+        if (nFretes > 0) itens.push({ ico:'fa-route', lbl:'FRETES (mês)', val: fmtNum(nFretes), cls:'ice' });
+      }
+    } catch(e){}
+
+    // ── CONSUMO DE COMBUSTÍVEL ──
+    try {
+      if (typeof abastAllRecords !== 'undefined' && abastAllRecords.length) {
+        // Calcula média km/L global (período corrente)
+        const now = new Date();
+        const mesAtual = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+        let kmAcum = 0, litAcum = 0;
+        abastAllRecords.forEach(r => {
+          const dt = r._data||r.data||r.Data||'';
+          if (!dt.startsWith(mesAtual)) return;
+          const km = parseFloat(r.kmPercorrido||r.km_percorrido||r.kmRodado||0)||0;
+          const lt = parseFloat(r._litros||r.litros||r.Litros||0)||0;
+          if (km>0 && lt>0) { kmAcum += km; litAcum += lt; }
+        });
+        if (litAcum > 0) {
+          const media = kmAcum / litAcum;
+          itens.push({ ico:'fa-gas-pump', lbl:'MÉDIA km/L (mês)', val: fmtNum(media,2), cls: media >= 2.5 ? 'green' : media >= 2.0 ? 'gold' : 'red' });
+        }
+        // Total de litros no mês
+        let litMes = 0;
+        abastAllRecords.forEach(r => {
+          const dt = r._data||r.data||r.Data||'';
+          if (!dt.startsWith(mesAtual)) return;
+          litMes += parseFloat(r._litros||r.litros||r.Litros||0)||0;
+        });
+        if (litMes > 0) itens.push({ ico:'fa-oil-can', lbl:'COMBUSTÍVEL (mês)', val: fmtNum(litMes,0) + ' L', cls:'gold', raw:true });
+      }
+    } catch(e){}
+
+    // ── FROTA ──
+    try {
+      if (typeof frotas !== 'undefined' && frotas.length) {
+        const ativos = frotas.filter(f => {
+          const st = (f.status||f.situacao||'').toLowerCase();
+          return !st.includes('inativ') && !st.includes('vendid') && !st.includes('sucata');
+        });
+        if (ativos.length) itens.push({ ico:'fa-truck', lbl:'FROTA ATIVA', val: ativos.length, cls:'ice' });
+      }
+    } catch(e){}
+
+    // ── MOTORISTAS ──
+    try {
+      if (typeof motoristas !== 'undefined' && motoristas.length) {
+        const ativos = motoristas.filter(m => {
+          const st = (m.status||m.situacao||'').toLowerCase();
+          return !st.includes('deslig') && !st.includes('inativ') && !st.includes('afastado');
+        });
+        if (ativos.length) itens.push({ ico:'fa-id-badge', lbl:'MOTORISTAS', val: ativos.length, cls:'ice' });
+      }
+    } catch(e){}
+
+    // Se ainda não há dados, usa placeholders informativos
+    if (!itens.length) {
+      itens.push({ ico:'fa-spinner fa-spin', lbl:'STATUS', val:'Carregando dados…', cls:'gold', raw:true });
+    }
+
+    return itens;
+  }
+
+  /* Renderiza os itens na fita (duplicados para loop contínuo) */
+  function renderTicker(itens) {
+    const track = document.getElementById('gvTickerTrack');
+    if (!track) return;
+
+    function buildItems(arr) {
+      return arr.map(item => {
+        const valTxt = item.raw ? item.val : (typeof item.val === 'number' ? fmtNum(item.val) : item.val);
+        return `<span class="gvt-item">` +
+          `<i class="fas ${item.ico} gvt-ico"></i>` +
+          `<span class="gvt-lbl">${item.lbl}</span>` +
+          `<span class="gvt-val ${item.cls||''}">${valTxt}</span>` +
+          `</span><span class="gvt-sep"></span>`;
+      }).join('');
+    }
+
+    // Duplica para o scroll infinito (a animação move -50%)
+    track.innerHTML = buildItems(itens) + buildItems(itens);
+    // Reseta animação para evitar salto
+    track.classList.add('paused');
+    track.style.animation = 'none';
+    track.offsetHeight; // reflow
+    track.style.animation = '';
+    track.classList.remove('paused');
+  }
+
+  /* Atualiza o ticker — chamado ao abrir e a cada 60s */
+  window.gvTickerAtualizar = function() {
+    renderTicker(coletarKPIs());
+  };
+
+  /* Pausa/retoma ao passar o mouse */
+  const bar = document.getElementById('gvTickerBar');
+  if (bar) {
+    bar.addEventListener('mouseenter', () => {
+      const t = document.getElementById('gvTickerTrack');
+      if (t) t.classList.add('paused');
+    });
+    bar.addEventListener('mouseleave', () => {
+      const t = document.getElementById('gvTickerTrack');
+      if (t) t.classList.remove('paused');
+    });
+  }
+
+  /* Timer de atualização periódica */
+  let _tickerTimer = null;
+  window.gvTickerIniciar = function() {
+    gvTickerAtualizar();
+    clearInterval(_tickerTimer);
+    _tickerTimer = setInterval(gvTickerAtualizar, 60000);
+  };
+  window.gvTickerParar = function() {
+    clearInterval(_tickerTimer);
+  };
+
+})();
+
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && document.getElementById('slideOverlay').classList.contains('active')) closeSlideMode();
 });
