@@ -1324,104 +1324,120 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
 .ag-modal-wrap.open{display:flex!important;}
 
 /* Ajuste de espaço para o ticker na Gestão à Vista */
-#slideOverlay.active .slide-dots { padding-bottom: .6rem; }
-#slideOverlay.active .slide-progress { margin-bottom: 36px; }
-
-/* ═══════════════════════════════════════════════════════
-   GV TICKER — barra Bloomberg/B3 fixa na Gestão à Vista
-   ═══════════════════════════════════════════════════════ */
-#gvTickerBar {
-  display: none;
-  position: absolute;
+/* ═══════════════════════════════════════════════════════════════
+   MM-TICKER — barra Bloomberg/B3 independente, fixed na tela
+   Ativada pelo botão na sidebar; persiste em localStorage
+   ═══════════════════════════════════════════════════════════════ */
+#mmTickerBar {
+  display: none;          /* hidden by default; JS mostra via .mm-ticker-on */
+  position: fixed;
   bottom: 0; left: 0; right: 0;
-  height: 36px;
-  background: #05080f;
-  border-top: 1.5px solid rgba(201,162,39,.35);
-  z-index: 20;
-  overflow: hidden;
+  height: 38px;
+  background: #03060d;
+  border-top: 2px solid #c9a227;
+  z-index: 9999;
   align-items: center;
+  box-shadow: 0 -4px 24px rgba(0,0,0,.55);
 }
-#slideOverlay.active #gvTickerBar { display: flex; }
+#mmTickerBar.mm-ticker-on { display: flex; }
 
-/* etiqueta lateral fixada */
-#gvTickerLabel {
+/* Quando o ticker está ativo, afasta o conteúdo do rodapé */
+body.mm-ticker-active { padding-bottom: 38px; }
+/* Gestão à Vista em tela cheia: ticker fica por cima */
+#slideOverlay.active #mmTickerBar { z-index: 9999; }
+
+/* ── Etiqueta esquerda ── */
+#mmTickerLabel {
   flex-shrink: 0;
-  display: flex; align-items: center; gap: .4rem;
-  padding: 0 .9rem;
+  display: flex; align-items: center; gap: .45rem;
+  padding: 0 1rem;
   height: 100%;
-  background: linear-gradient(135deg, #c9a227, #9b7b14);
+  background: linear-gradient(135deg, #c9a227 0%, #9b7b14 100%);
   font-family: 'Barlow Condensed', 'Inter', sans-serif;
-  font-size: .78rem; font-weight: 900;
-  letter-spacing: .12em; text-transform: uppercase;
-  color: #000;
-  white-space: nowrap;
-  z-index: 2;
+  font-size: .82rem; font-weight: 900;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: #000; white-space: nowrap; user-select: none;
+  position: relative; z-index: 2;
 }
-#gvTickerLabel::after {
+/* sombra de degradê após a etiqueta */
+#mmTickerLabel::after {
   content: '';
-  position: absolute;
-  left: calc(var(--label-w, 112px) - 1px);
-  top: 0; bottom: 0;
-  width: 18px;
-  background: linear-gradient(90deg, #9b7b14 0%, transparent 100%);
+  position: absolute; right: -16px; top: 0; bottom: 0; width: 16px;
+  background: linear-gradient(90deg, #9b7b14, transparent);
   pointer-events: none;
 }
 
-/* janela deslizante */
-#gvTickerWindow {
-  flex: 1;
-  overflow: hidden;
-  position: relative;
-  height: 100%;
+/* ── Janela de rolagem ── */
+#mmTickerWindow {
+  flex: 1; overflow: hidden; position: relative; height: 100%;
 }
+/* máscara fade nas bordas */
+#mmTickerWindow::before,
+#mmTickerWindow::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 32px;
+  z-index: 1; pointer-events: none;
+}
+#mmTickerWindow::before { left: 0;  background: linear-gradient(90deg, #03060d, transparent); }
+#mmTickerWindow::after  { right: 0; background: linear-gradient(270deg, #03060d, transparent); }
 
-/* fita que corre */
-#gvTickerTrack {
-  display: flex;
-  align-items: center;
-  height: 100%;
+/* ── Fita animada ── */
+#mmTickerTrack {
+  display: flex; align-items: center; height: 100%;
   white-space: nowrap;
-  animation: gvTickerScroll 90s linear infinite;
+  animation: mmTickerScroll 110s linear infinite;
   will-change: transform;
 }
-#gvTickerTrack.paused { animation-play-state: paused; }
-@keyframes gvTickerScroll {
+#mmTickerTrack.paused { animation-play-state: paused; }
+@keyframes mmTickerScroll {
   0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
 
-/* item individual */
-.gvt-item {
-  display: inline-flex; align-items: center; gap: .38rem;
-  padding: 0 1.1rem;
+/* ── Cada item no estilo índice de bolsa ── */
+.mmt-item {
+  display: inline-flex; align-items: baseline; gap: .28rem;
+  padding: 0 1.05rem;
   font-family: 'Inter', 'Barlow Condensed', system-ui, sans-serif;
-  font-size: .73rem; font-weight: 600;
-  color: rgba(255,255,255,.82);
-  letter-spacing: .02em;
-  border-right: 1px solid rgba(201,162,39,.14);
-  flex-shrink: 0;
+  flex-shrink: 0; cursor: default;
+  border-right: 1px solid rgba(201,162,39,.12);
+  line-height: 1;
 }
-.gvt-item .gvt-lbl {
-  color: rgba(255,255,255,.38);
-  font-weight: 500; font-size: .67rem;
-  text-transform: uppercase; letter-spacing: .07em;
+/* Sigla tipo "IBOV" */
+.mmt-sig {
+  font-size: .74rem; font-weight: 800;
+  color: #c9a227; letter-spacing: .06em;
+  text-transform: uppercase;
 }
-.gvt-item .gvt-val { color: #fff; font-weight: 700; }
-.gvt-item .gvt-val.red  { color: #f87171; }
-.gvt-item .gvt-val.gold { color: #fbbf24; }
-.gvt-item .gvt-val.green{ color: #34d399; }
-.gvt-item .gvt-val.ice  { color: #7ab3d0; }
-.gvt-item .gvt-ico { font-size: .68rem; opacity: .7; }
+/* Valor principal */
+.mmt-val {
+  font-size: .78rem; font-weight: 700; color: #fff;
+  letter-spacing: .01em;
+}
+/* Variação com seta */
+.mmt-delta {
+  font-size: .68rem; font-weight: 700; letter-spacing: .01em;
+  display: inline-flex; align-items: center; gap: .1rem;
+}
+.mmt-delta.up   { color: #22c55e; }
+.mmt-delta.down { color: #f87171; }
+.mmt-delta.warn { color: #fbbf24; }
+.mmt-delta.neu  { color: #94a3b8; }
 
-/* separador decorativo */
-.gvt-sep {
-  display: inline-block;
-  width: 4px; height: 4px;
-  background: rgba(201,162,39,.5);
-  border-radius: 50%;
-  margin: 0 .5rem;
-  flex-shrink: 0;
+/* separador bola dourada */
+.mmt-sep {
+  display: inline-block; width: 5px; height: 5px;
+  background: rgba(201,162,39,.4); border-radius: 50%;
+  flex-shrink: 0; margin: 0 .3rem; align-self: center;
 }
+
+/* ── Botão fechar no ticker ── */
+#mmTickerClose {
+  flex-shrink: 0; border: none; background: transparent;
+  color: rgba(255,255,255,.3); font-size: .75rem;
+  padding: 0 .65rem; height: 100%; cursor: pointer;
+  transition: color .2s;
+}
+#mmTickerClose:hover { color: #f87171; }
 </style>
 </head>
 <body>
@@ -1432,6 +1448,15 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
 
 <!-- TOAST -->
 <div id="toast" class="toast"></div>
+
+<!-- MM-TICKER — barra Bloomberg/B3 de KPIs (independente, fixed) -->
+<div id="mmTickerBar">
+  <div id="mmTickerLabel"><i class="fas fa-chart-bar"></i>&nbsp;M·MALACARNE</div>
+  <div id="mmTickerWindow">
+    <div id="mmTickerTrack"></div>
+  </div>
+  <button id="mmTickerClose" title="Fechar ticker"><i class="fas fa-times"></i></button>
+</div>
 
 <!-- GESTÃO À VISTA — MODO SLIDE -->
 <div id="slideOverlay" class="slide-overlay">
@@ -1478,13 +1503,6 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
   <div class="slide-dots" id="slideDots"></div>
   <div class="slide-progress"><div class="slide-progress-bar" id="slideProgressBar"></div></div>
 
-  <!-- TICKER BLOOMBERG/B3 — KPIs rolando fixos na parte inferior -->
-  <div id="gvTickerBar">
-    <div id="gvTickerLabel"><i class="fas fa-signal"></i>&nbsp;INDICADORES</div>
-    <div id="gvTickerWindow">
-      <div id="gvTickerTrack"></div>
-    </div>
-  </div>
 </div>
 
 <!-- ══════════════ MODAL TV ══════════════ -->
@@ -1984,6 +2002,7 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
         <button class="pa-nav-item" data-tab="tabAgenda"><i class="fas fa-calendar-check"></i> Agenda / Lembretes</button>
       </nav>
       <div class="pa-sidebar-footer">
+        <button class="pa-nav-item" id="mmTickerToggleBtn" style="font-size:.8rem;color:#3b82f6" title="Ligar/desligar barra de indicadores Bloomberg/B3"><i class="fas fa-chart-bar"></i> <span id="mmTickerBtnLabel">Ticker de KPIs</span></button>
         <button class="pa-nav-item" id="openSlideModeBtn" style="font-size:.8rem;color:var(--accent)"><i class="fas fa-tv"></i> Gestão à Vista (Slide)</button>
         <button class="pa-nav-item" id="openTvLinkBtn" style="font-size:.8rem;color:#3b82f6" title="Gerar link para abrir na TV Samsung"><i class="fas fa-cast"></i> Abrir na TV</button>
         <button class="pa-nav-item" id="openUrlConfig" style="font-size:.8rem"><i class="fas fa-cog"></i> Config URLs</button>
@@ -7218,8 +7237,8 @@ function openSlideMode(){
     document.documentElement.requestFullscreen().catch(()=>{});
   }
 
-  // Inicia o ticker de KPIs
-  if (typeof gvTickerIniciar === 'function') gvTickerIniciar();
+  // Atualiza o ticker de KPIs ao abrir a Gestão à Vista
+  if (typeof mmTickerAtualizar === 'function') setTimeout(mmTickerAtualizar, 500);
 
   // Liga o rádio automaticamente ao abrir a Gestão à Vista
   slideRadioAutoRetryAtivo = true; // habilita o religa-sozinho em segundo plano enquanto o painel estiver aberto
@@ -7498,8 +7517,6 @@ function closeSlideMode(){
   if (slideFinChartInstance) { slideFinChartInstance.destroy(); slideFinChartInstance = null; }
   gvDestroyCharts();
   if (window._slideNoticiasRefreshTimer) { clearInterval(window._slideNoticiasRefreshTimer); window._slideNoticiasRefreshTimer = null; }
-  // Para o ticker
-  if (typeof gvTickerParar === 'function') gvTickerParar();
   // Rádio não fica tocando depois que o painel é fechado
   slideRadioAutoRetryAtivo = false;
   if (typeof slideRadioDesligar === 'function') slideRadioDesligar();
@@ -7513,23 +7530,54 @@ document.getElementById('openSlideModeBtn').addEventListener('click', openSlideM
 document.getElementById('slideCloseBtn').addEventListener('click', closeSlideMode);
 
 // ═══════════════════════════════════════════════════════════════════
-// GV TICKER — barra Bloomberg/B3 de KPIs rolando na Gestão à Vista
+// MM-TICKER — fita de texto correndo estilo B3/Bloomberg
 // ═══════════════════════════════════════════════════════════════════
 (function(){
+  'use strict';
 
-  /* Formata número como moeda BRL */
-  function fmtBRL(v) {
-    if (!v && v !== 0) return '—';
-    return 'R$ ' + Number(v).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
+  const LS_KEY = 'mmTickerAtivo';
+  const SEP = '  ◆  ';   // ◆  separador entre itens
+
+  // ── helpers de formatação ──
+  function brl(v) {
+    if (v == null || isNaN(v)) return '—';
+    const n = Math.abs(Number(v));
+    if (n >= 1e6)  return 'R$ ' + (n/1e6).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}) + ' M';
+    if (n >= 1e3)  return 'R$ ' + (n/1e3).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}) + ' K';
+    return 'R$ ' + n.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
   }
-  function fmtNum(v, dec) {
-    if (!v && v !== 0) return '—';
-    return Number(v).toLocaleString('pt-BR',{minimumFractionDigits:dec||0,maximumFractionDigits:dec||0});
+  function num(v, d) {
+    if (v == null || isNaN(v)) return '—';
+    return Number(v).toLocaleString('pt-BR',{minimumFractionDigits:d||0,maximumFractionDigits:d||0});
+  }
+  function pct(v) {
+    if (v == null || isNaN(v)) return null;
+    const s = v > 0 ? '+' : '';
+    return s + Number(v).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}) + '%';
+  }
+  function arrow(v) { return v > 0 ? '▲' : v < 0 ? '▼' : '—'; }
+  function cls(v, invert) {
+    if (v == null) return 'neu';
+    const pos = invert ? v < 0 : v > 0;
+    const neg = invert ? v > 0 : v < 0;
+    if (pos) return 'up';
+    if (neg) return 'down';
+    return 'neu';
   }
 
-  /* Coleta KPIs das variáveis globais já carregadas */
-  function coletarKPIs() {
-    const itens = [];
+  // ── coleta KPIs e monta a lista de itens ──
+  function coletarItens() {
+    const items = [];
+    const now = new Date();
+    const mesAtual  = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+    const mesPassado = (function(){
+      const d = new Date(now.getFullYear(), now.getMonth()-1, 1);
+      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    })();
+
+    function push(sig, val, delta, deltaCls, unit) {
+      items.push({ sig, val: unit ? val + (unit?' '+unit:'') : val, delta, deltaCls });
+    }
 
     // ── VENCIMENTOS ──
     try {
@@ -7537,75 +7585,75 @@ document.getElementById('slideCloseBtn').addEventListener('click', closeSlideMod
         let totalV = 0, totalP = 0;
         VENC_CATEGORIAS.forEach(c => {
           const cv = vencCounts[c.key];
-          if (cv) { totalV += (cv.vencidos||0); totalP += (cv.proximos||0); }
+          if (cv) { totalV += cv.vencidos||0; totalP += cv.proximos||0; }
         });
-        itens.push({ ico:'fa-triangle-exclamation', lbl:'VENCIDOS', val: totalV, cls: totalV > 0 ? 'red' : 'green' });
-        itens.push({ ico:'fa-clock', lbl:'A VENCER 30d', val: totalP, cls: totalP > 0 ? 'gold' : 'green' });
+        const dV = totalV > 0 ? '▲ '+totalV : null;
+        push('VENCIDOS', num(totalV), dV, totalV > 0 ? 'down' : 'up');
+        push('PRÓX·30d', num(totalP), totalP > 0 ? '▲ '+totalP : null, totalP > 0 ? 'warn' : 'up');
       }
     } catch(e){}
 
     // ── FINANCEIRO ──
     try {
       if (typeof financeiroData !== 'undefined' && financeiroData.length) {
-        const now = new Date();
-        const mesAtual = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
-        let recMes = 0, despMes = 0, recTotal = 0, despTotal = 0;
+        let recMes=0, despMes=0, recAnt=0, despAnt=0;
         financeiroData.forEach(r => {
           const v = Math.abs(parseFloat(r._valor||r.valor||r.Valor||0)||0);
           const dt = r._data||r.data||r.Data||'';
-          const tipo = (r._tipo||r.tipo||r.Tipo||r._natureza||r.natureza||'').toLowerCase();
-          const isRec = tipo.includes('rec')||tipo.includes('entra')||tipo.includes('cred');
-          if (isRec) { recTotal += v; if (dt.startsWith(mesAtual)) recMes += v; }
-          else { despTotal += v; if (dt.startsWith(mesAtual)) despMes += v; }
+          const tp = (r._tipo||r.tipo||r.Tipo||r._natureza||r.natureza||'').toLowerCase();
+          const isR = tp.includes('rec')||tp.includes('entra')||tp.includes('cred');
+          if (dt.startsWith(mesAtual))  { isR ? (recMes+=v)  : (despMes+=v); }
+          if (dt.startsWith(mesPassado)){ isR ? (recAnt+=v)  : (despAnt+=v); }
         });
-        if (recMes > 0) itens.push({ ico:'fa-arrow-up', lbl:'RECEITA (mês)', val: fmtBRL(recMes), cls:'green', raw:true });
-        if (despMes > 0) itens.push({ ico:'fa-arrow-down', lbl:'DESPESAS (mês)', val: fmtBRL(despMes), cls:'red', raw:true });
-        if (recTotal > 0) itens.push({ ico:'fa-sack-dollar', lbl:'RECEITA TOTAL', val: fmtBRL(recTotal), cls:'green', raw:true });
+        // variação mês vs mês anterior
+        const varRec  = recAnt  > 0 ? ((recMes -recAnt )/recAnt *100) : null;
+        const varDesp = despAnt > 0 ? ((despMes-despAnt)/despAnt*100) : null;
+        if (recMes  > 0) push('RECEITA',  brl(recMes),  varRec  != null ? arrow(varRec) +' '+ pct(varRec)  : null, cls(varRec));
+        if (despMes > 0) push('DESPESAS', brl(despMes), varDesp != null ? arrow(varDesp)+' '+ pct(varDesp) : null, cls(varDesp, true));
+        if (recMes > 0 && despMes > 0) {
+          const margem = recMes > 0 ? ((recMes - despMes) / recMes * 100) : 0;
+          push('MARGEM', num(margem,1)+'%', null, margem >= 10 ? 'up' : margem >= 5 ? 'warn' : 'down');
+        }
       }
     } catch(e){}
 
-    // ── FATURAMENTO (fretes) ──
+    // ── FATURAMENTO ──
     try {
       if (typeof faturamentoData !== 'undefined' && faturamentoData.length) {
-        const now = new Date();
-        const mesAtual = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
-        let fatMes = 0, nFretes = 0;
+        let fatMes=0, fatAnt=0, nMes=0, nAnt=0;
         faturamentoData.forEach(r => {
           const v = Math.abs(parseFloat(r._valor||r.valor||r.Valor||r.frete||r.Frete||0)||0);
           const dt = r._data||r.data||r.Data||r.emissao||r.Emissao||'';
-          if (dt.startsWith(mesAtual)) { fatMes += v; nFretes++; }
+          if (dt.startsWith(mesAtual))  { fatMes+=v; nMes++; }
+          if (dt.startsWith(mesPassado)){ fatAnt+=v; nAnt++; }
         });
-        if (fatMes > 0) itens.push({ ico:'fa-file-invoice-dollar', lbl:'FATURAMENTO (mês)', val: fmtBRL(fatMes), cls:'ice', raw:true });
-        if (nFretes > 0) itens.push({ ico:'fa-route', lbl:'FRETES (mês)', val: fmtNum(nFretes), cls:'ice' });
+        const varFat = fatAnt > 0 ? ((fatMes-fatAnt)/fatAnt*100) : null;
+        if (fatMes > 0) push('FATURAMENTO', brl(fatMes), varFat != null ? arrow(varFat)+' '+pct(varFat) : null, cls(varFat));
+        if (nMes   > 0) push('FRETES', num(nMes), nAnt > 0 ? arrow(nMes-nAnt)+' '+(nMes-nAnt>0?'+':'')+num(nMes-nAnt) : null, cls(nMes-nAnt));
       }
     } catch(e){}
 
-    // ── CONSUMO DE COMBUSTÍVEL ──
+    // ── COMBUSTÍVEL ──
     try {
       if (typeof abastAllRecords !== 'undefined' && abastAllRecords.length) {
-        // Calcula média km/L global (período corrente)
-        const now = new Date();
-        const mesAtual = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
-        let kmAcum = 0, litAcum = 0;
+        let kmM=0, litM=0, kmA=0, litA=0, litTotM=0, litTotA=0;
         abastAllRecords.forEach(r => {
           const dt = r._data||r.data||r.Data||'';
-          if (!dt.startsWith(mesAtual)) return;
-          const km = parseFloat(r.kmPercorrido||r.km_percorrido||r.kmRodado||0)||0;
+          const km = parseFloat(r.kmPercorrido||r.km_percorrido||0)||0;
           const lt = parseFloat(r._litros||r.litros||r.Litros||0)||0;
-          if (km>0 && lt>0) { kmAcum += km; litAcum += lt; }
+          if (dt.startsWith(mesAtual))  { if(km>0&&lt>0){kmM+=km;litM+=lt;} litTotM+=lt; }
+          if (dt.startsWith(mesPassado)){ if(km>0&&lt>0){kmA+=km;litA+=lt;} litTotA+=lt; }
         });
-        if (litAcum > 0) {
-          const media = kmAcum / litAcum;
-          itens.push({ ico:'fa-gas-pump', lbl:'MÉDIA km/L (mês)', val: fmtNum(media,2), cls: media >= 2.5 ? 'green' : media >= 2.0 ? 'gold' : 'red' });
+        if (litM > 0) {
+          const medM = kmM/litM, medA = litA>0 ? kmA/litA : 0;
+          const varMed = medA > 0 ? ((medM-medA)/medA*100) : null;
+          push('KM/L', num(medM,2), varMed != null ? arrow(varMed)+' '+pct(varMed) : null,
+            medM >= 2.5 ? 'up' : medM >= 2.0 ? 'warn' : 'down');
         }
-        // Total de litros no mês
-        let litMes = 0;
-        abastAllRecords.forEach(r => {
-          const dt = r._data||r.data||r.Data||'';
-          if (!dt.startsWith(mesAtual)) return;
-          litMes += parseFloat(r._litros||r.litros||r.Litros||0)||0;
-        });
-        if (litMes > 0) itens.push({ ico:'fa-oil-can', lbl:'COMBUSTÍVEL (mês)', val: fmtNum(litMes,0) + ' L', cls:'gold', raw:true });
+        if (litTotM > 0) {
+          const varLit = litTotA > 0 ? ((litTotM-litTotA)/litTotA*100) : null;
+          push('DIESEL', num(litTotM,0)+' L', varLit != null ? arrow(varLit)+' '+pct(varLit) : null, cls(varLit, true));
+        }
       }
     } catch(e){}
 
@@ -7613,10 +7661,10 @@ document.getElementById('slideCloseBtn').addEventListener('click', closeSlideMod
     try {
       if (typeof frotas !== 'undefined' && frotas.length) {
         const ativos = frotas.filter(f => {
-          const st = (f.status||f.situacao||'').toLowerCase();
-          return !st.includes('inativ') && !st.includes('vendid') && !st.includes('sucata');
+          const s = (f.status||f.situacao||'').toLowerCase();
+          return !s.includes('inativ')&&!s.includes('vendid')&&!s.includes('sucata');
         });
-        if (ativos.length) itens.push({ ico:'fa-truck', lbl:'FROTA ATIVA', val: ativos.length, cls:'ice' });
+        push('FROTA', num(ativos.length)+' veíc', null, 'neu');
       }
     } catch(e){}
 
@@ -7624,75 +7672,121 @@ document.getElementById('slideCloseBtn').addEventListener('click', closeSlideMod
     try {
       if (typeof motoristas !== 'undefined' && motoristas.length) {
         const ativos = motoristas.filter(m => {
-          const st = (m.status||m.situacao||'').toLowerCase();
-          return !st.includes('deslig') && !st.includes('inativ') && !st.includes('afastado');
+          const s = (m.status||m.situacao||'').toLowerCase();
+          return !s.includes('deslig')&&!s.includes('inativ')&&!s.includes('afastado');
         });
-        if (ativos.length) itens.push({ ico:'fa-id-badge', lbl:'MOTORISTAS', val: ativos.length, cls:'ice' });
+        push('MOTORISTAS', num(ativos.length)+' ativos', null, 'neu');
       }
     } catch(e){}
 
-    // Se ainda não há dados, usa placeholders informativos
-    if (!itens.length) {
-      itens.push({ ico:'fa-spinner fa-spin', lbl:'STATUS', val:'Carregando dados…', cls:'gold', raw:true });
+    // placeholder se vazio
+    if (!items.length) {
+      items.push({ sig:'STATUS', val:'Carregando dados…', delta:null, deltaCls:'warn' });
     }
-
-    return itens;
+    return items;
   }
 
-  /* Renderiza os itens na fita (duplicados para loop contínuo) */
-  function renderTicker(itens) {
-    const track = document.getElementById('gvTickerTrack');
+  // ── renderiza fita (duplicada para loop perfeito) ──
+  function renderizar() {
+    const track = document.getElementById('mmTickerTrack');
     if (!track) return;
 
-    function buildItems(arr) {
+    function buildHtml(arr) {
       return arr.map(item => {
-        const valTxt = item.raw ? item.val : (typeof item.val === 'number' ? fmtNum(item.val) : item.val);
-        return `<span class="gvt-item">` +
-          `<i class="fas ${item.ico} gvt-ico"></i>` +
-          `<span class="gvt-lbl">${item.lbl}</span>` +
-          `<span class="gvt-val ${item.cls||''}">${valTxt}</span>` +
-          `</span><span class="gvt-sep"></span>`;
+        const delta = item.delta
+          ? `<span class="mmt-delta ${item.deltaCls||'neu'}">${item.delta}</span>`
+          : '';
+        return `<span class="mmt-item">` +
+          `<span class="mmt-sig">${item.sig}</span>` +
+          `<span class="mmt-val">${item.val}</span>` +
+          delta +
+          `</span><span class="mmt-sep"></span>`;
       }).join('');
     }
 
-    // Duplica para o scroll infinito (a animação move -50%)
-    track.innerHTML = buildItems(itens) + buildItems(itens);
-    // Reseta animação para evitar salto
+    const html = buildHtml(coletarItens());
+    track.innerHTML = html + html;   // duplica → loop via translateX(-50%)
+
+    // reset da animação
     track.classList.add('paused');
     track.style.animation = 'none';
-    track.offsetHeight; // reflow
+    void track.offsetHeight;
     track.style.animation = '';
     track.classList.remove('paused');
   }
 
-  /* Atualiza o ticker — chamado ao abrir e a cada 60s */
-  window.gvTickerAtualizar = function() {
-    renderTicker(coletarKPIs());
-  };
+  // ── ligar / desligar ──
+  function ligar() {
+    const bar = document.getElementById('mmTickerBar');
+    const btn = document.getElementById('mmTickerBtnLabel');
+    if (!bar) return;
+    bar.classList.add('mm-ticker-on');
+    document.body.classList.add('mm-ticker-active');
+    if (btn) btn.textContent = 'Ticker ON';
+    try { localStorage.setItem(LS_KEY, '1'); } catch(e){}
+    renderizar();
+  }
+  function desligar() {
+    const bar = document.getElementById('mmTickerBar');
+    const btn = document.getElementById('mmTickerBtnLabel');
+    if (!bar) return;
+    bar.classList.remove('mm-ticker-on');
+    document.body.classList.remove('mm-ticker-active');
+    if (btn) btn.textContent = 'Ticker de KPIs';
+    try { localStorage.removeItem(LS_KEY); } catch(e){}
+    clearInterval(_timer);
+  }
+  function toggle() {
+    const bar = document.getElementById('mmTickerBar');
+    if (!bar) return;
+    bar.classList.contains('mm-ticker-on') ? desligar() : ligar();
+  }
 
-  /* Pausa/retoma ao passar o mouse */
-  const bar = document.getElementById('gvTickerBar');
+  // ── pausa no hover ──
+  const bar = document.getElementById('mmTickerBar');
   if (bar) {
     bar.addEventListener('mouseenter', () => {
-      const t = document.getElementById('gvTickerTrack');
+      const t = document.getElementById('mmTickerTrack');
       if (t) t.classList.add('paused');
     });
     bar.addEventListener('mouseleave', () => {
-      const t = document.getElementById('gvTickerTrack');
+      const t = document.getElementById('mmTickerTrack');
       if (t) t.classList.remove('paused');
     });
   }
 
-  /* Timer de atualização periódica */
-  let _tickerTimer = null;
-  window.gvTickerIniciar = function() {
-    gvTickerAtualizar();
-    clearInterval(_tickerTimer);
-    _tickerTimer = setInterval(gvTickerAtualizar, 60000);
-  };
-  window.gvTickerParar = function() {
-    clearInterval(_tickerTimer);
-  };
+  // ── botão fechar no próprio ticker ──
+  const closeBtn = document.getElementById('mmTickerClose');
+  if (closeBtn) closeBtn.addEventListener('click', desligar);
+
+  // ── botão da sidebar ──
+  const toggleBtn = document.getElementById('mmTickerToggleBtn');
+  if (toggleBtn) toggleBtn.addEventListener('click', toggle);
+
+  // ── timer de atualização a cada 60s ──
+  let _timer = null;
+  function iniciarTimer() {
+    clearInterval(_timer);
+    _timer = setInterval(renderizar, 60000);
+  }
+
+  // ── API pública (usada pelo openSlideMode se necessário) ──
+  window.mmTickerAtualizar = renderizar;
+  window.mmTickerLigar    = ligar;
+  window.mmTickerDesligar = desligar;
+
+  // ── restaura estado salvo no localStorage ──
+  try {
+    if (localStorage.getItem(LS_KEY) === '1') {
+      // aguarda DOM pronto (já estamos num script síncrono, mas dados chegam depois)
+      setTimeout(ligar, 800);
+      iniciarTimer();
+    }
+  } catch(e){}
+
+  // ── relança o timer quando o ticker é ligado ──
+  const origLigar = ligar;
+  window.mmTickerLigar = function() { origLigar(); iniciarTimer(); };
 
 })();
 
