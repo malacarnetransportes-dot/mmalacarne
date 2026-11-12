@@ -22141,21 +22141,26 @@ document.getElementById('tvBtnOpen').addEventListener('click', function() {
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════
-     WIDGET FLUTUANTE — GESTÃO À VISTA
-     Quadro por cima de tudo, draggable, resizable, independente
+     WIDGET FLUTUANTE — GESTÃO À VISTA  v2  (KPI compacto)
      ═══════════════════════════════════════════════════════════ -->
 <style>
-/* ── Widget container ── */
+/* ══════════════════════════════════════════════════════
+   WIDGET FLUTUANTE v2 — KPI compacto, sempre legível
+   ══════════════════════════════════════════════════════ */
 #gvFloat {
   position: fixed;
   z-index: 9900;
   display: none;
   flex-direction: column;
-  background: #fff;
-  border-radius: 14px;
-  box-shadow: 0 20px 60px rgba(0,0,0,.28), 0 0 0 1px rgba(0,0,0,.08);
+  background: #0d1c2e;
+  border-radius: 16px;
+  box-shadow: 0 24px 72px rgba(0,0,0,.55), 0 0 0 1px rgba(201,162,39,.18);
   overflow: hidden;
-  min-width: 320px;
+  width: 400px;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  right: 20px;
+  bottom: 20px;
+  /* sem resize nativo — tamanho fixo para manter qualidade visual */
   min-height: 200px;
   /* posição inicial: canto inferior direito */
   right: 24px;
