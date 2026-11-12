@@ -1877,6 +1877,7 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
       </nav>
       <div class="pa-sidebar-footer">
         <button class="pa-nav-item" id="openSlideModeBtn" style="font-size:.8rem;color:var(--accent)"><i class="fas fa-tv"></i> Gestão à Vista (Slide)</button>
+        <button class="pa-nav-item" id="openGvWidgetBtn" style="font-size:.8rem;color:var(--accent)" title="Widget flutuante — acompanhe por cima de tudo"><i class="fas fa-window-restore"></i> Gestão Flutuante</button>
         <button class="pa-nav-item" id="openTvLinkBtn" style="font-size:.8rem;color:#3b82f6" title="Gerar link para abrir na TV Samsung"><i class="fas fa-cast"></i> Abrir na TV</button>
         <button class="pa-nav-item" id="openUrlConfig" style="font-size:.8rem"><i class="fas fa-cog"></i> Config URLs</button>
         <button class="pa-nav-item" id="logoutPrivateBtn" style="font-size:.8rem;color:#ef4444"><i class="fas fa-sign-out-alt"></i> Sair</button>
@@ -6485,16 +6486,22 @@ function slideKpiCard(k){
   return `<div class="slide-kpi-card${cls}"><div class="ig-ico"><i class="fas ${k.icon || ico}"></i></div><div class="slide-kpi-val">${k.val}</div><div class="slide-kpi-lbl">${k.lbl}</div></div>`;
 }
 
+/* ── Widget flutuante: contexto de renderização ── */
+let _gvwMode = false;
+function _slideBody(){ return document.getElementById(_gvwMode ? 'gvFloatBody' : 'slideBody'); }
+function _slideDotsEl(){ return document.getElementById(_gvwMode ? 'gvFloatDots' : 'slideDots'); }
+function _slideProgressBarEl(){ return document.getElementById(_gvwMode ? 'gvFloatProgressBar' : 'slideProgressBar'); }
+
 function slideRender(){
   const slides = slideBuildSlides();
-  const idx = slideIdx % slides.length;
+  const idx = (_gvwMode ? gvwIdx : slideIdx) % slides.length;
   const s = slides[idx];
-  const body = document.getElementById('slideBody');
+  const body = _slideBody();
   body.classList.remove('show');
   slideAutoScrollStop();
   gvDestroyCharts();
-  const counterEl = document.getElementById('slideCounter');
-  if (counterEl) counterEl.textContent = `${idx + 1} / ${slides.length} · v${GV_BUILD}`;
+  const counterEl = document.getElementById(_gvwMode ? 'gvFloatCounter' : 'slideCounter');
+  if (counterEl) counterEl.textContent = `${idx + 1} / ${slides.length}`;
 
   setTimeout(() => {
     if (s.type === 'weather-concordia') {
@@ -6972,7 +6979,8 @@ function slideRender(){
 }
 
 function slideRenderDots(slides, idx){
-  const dots = document.getElementById('slideDots');
+  const dots = _slideDotsEl();
+  if (!dots) return;
   dots.innerHTML = slides.map((_,i) => `<div class="slide-dot${i===idx?' active':''}"></div>`).join('');
 }
 
@@ -7007,15 +7015,16 @@ function slideAgendar(){
   slideTimer = setTimeout(slideNext, slideDurFor(slideIdx));
 }
 function slideStartProgress(){
-  clearInterval(slideProgressTimer);
-  const bar = document.getElementById('slideProgressBar');
+  clearInterval(_gvwMode ? gvwProgressTimer : slideProgressTimer);
+  const bar = _slideProgressBarEl();
   let pct = 0;
   const _dur = slideDurFor(slideIdx);
   bar.style.width = '0%';
-  slideProgressTimer = setInterval(() => {
+  const timerId = setInterval(() => {
     pct += 100 / (_dur/100);
-    bar.style.width = Math.min(pct,100) + '%';
+    if (bar) bar.style.width = Math.min(pct,100) + '%';
   }, 100);
+  if (_gvwMode) gvwProgressTimer = timerId; else slideProgressTimer = timerId;
 }
 
 function slideNext(){
@@ -7070,6 +7079,8 @@ function openSlideMode(){
       .catch(() => { _slideConsumoCarregando = false; });
   }
 
+  // pausa o widget flutuante enquanto o overlay principal está ativo
+  if (typeof gvwPause === 'function') gvwPause();
   document.getElementById('slideOverlay').classList.add('active');
   document.getElementById('slideBody').classList.remove('show');
   slideRender();
@@ -7381,6 +7392,8 @@ document.addEventListener('fullscreenchange', function(){
 
 function closeSlideMode(){
   document.getElementById('slideOverlay').classList.remove('active');
+  // retoma widget flutuante se estava aberto antes
+  if (typeof gvwResume === 'function') gvwResume();
   clearTimeout(slideTimer);
   clearInterval(slideProgressTimer);
   clearInterval(slideClockTimer);
@@ -22125,6 +22138,424 @@ document.getElementById('tvBtnOpen').addEventListener('click', function() {
   })();} /* fim do bloco original desativado */
 
 })();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════
+     WIDGET FLUTUANTE — GESTÃO À VISTA
+     Quadro por cima de tudo, draggable, resizable, independente
+     ═══════════════════════════════════════════════════════════ -->
+<style>
+/* ── Widget container ── */
+#gvFloat {
+  position: fixed;
+  z-index: 9900;
+  display: none;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.28), 0 0 0 1px rgba(0,0,0,.08);
+  overflow: hidden;
+  min-width: 320px;
+  min-height: 200px;
+  /* posição inicial: canto inferior direito */
+  right: 24px;
+  bottom: 24px;
+  width: 480px;
+  height: 400px;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  transition: box-shadow .2s;
+  /* resize nativo — o usuário puxa o canto */
+  resize: both;
+  will-change: transform;
+}
+#gvFloat.gvw-open { display: flex; }
+#gvFloat.gvw-minimized { height: 46px !important; resize: none; }
+#gvFloat.gvw-minimized #gvFloatBody,
+#gvFloat.gvw-minimized #gvFloatDots,
+#gvFloat.gvw-minimized .gvw-progress { display: none; }
+#gvFloat.gvw-dragging { box-shadow: 0 32px 80px rgba(0,0,0,.38), 0 0 0 2px var(--pub-gold); user-select: none; }
+
+/* ── Barra de título (drag handle) ── */
+#gvFloatBar {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: 0 .6rem 0 .9rem;
+  height: 46px;
+  flex: none;
+  background: linear-gradient(90deg, #0a1628, #1a2a40);
+  cursor: grab;
+  user-select: none;
+  border-radius: 14px 14px 0 0;
+}
+#gvFloatBar:active { cursor: grabbing; }
+.gvw-logo {
+  width: 22px; height: 22px; border-radius: 5px;
+  object-fit: cover; flex: none;
+  opacity: .85;
+}
+.gvw-title {
+  font-family: 'Barlow Condensed', 'Inter', sans-serif;
+  font-weight: 800; font-size: .78rem; letter-spacing: .08em;
+  color: #fff; text-transform: uppercase; flex: 1; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gvw-clock {
+  font-family: 'Barlow Condensed', monospace;
+  font-size: .88rem; font-weight: 700;
+  color: var(--pub-gold, #c9a227);
+  letter-spacing: .06em; white-space: nowrap;
+}
+#gvFloatCounter {
+  font-size: .68rem; color: rgba(255,255,255,.45);
+  letter-spacing: .05em; white-space: nowrap;
+}
+/* botões da barra */
+.gvw-btn {
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.12);
+  color: rgba(255,255,255,.75);
+  width: 28px; height: 28px; border-radius: 7px;
+  cursor: pointer; font-size: .78rem;
+  display: flex; align-items: center; justify-content: center;
+  flex: none; transition: .15s;
+}
+.gvw-btn:hover { background: rgba(255,255,255,.18); color: #fff; }
+.gvw-btn.gvw-btn-gold { background: rgba(201,162,39,.15); border-color: rgba(201,162,39,.3); color: var(--pub-gold, #c9a227); }
+.gvw-btn.gvw-btn-gold:hover { background: rgba(201,162,39,.28); }
+.gvw-nav-sep { width: 1px; height: 18px; background: rgba(255,255,255,.12); flex: none; }
+
+/* ── Corpo dos slides ── */
+#gvFloatBody {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: .6rem .8rem .4rem;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity .4s ease, transform .4s ease;
+  font-size: .82rem;
+  /* escala para caber conteúdo maior */
+  transform-origin: top left;
+}
+#gvFloatBody.show { opacity: 1; transform: translateY(0); }
+
+/* override de tamanhos dos elementos dos slides para o widget */
+#gvFloat .slide-section-title { font-size: 1rem !important; margin-bottom: .7rem !important; }
+#gvFloat .slide-kpi-grid { gap: .6rem !important; }
+#gvFloat .slide-kpi-card { padding: .7rem .6rem !important; border-radius: 10px !important; }
+#gvFloat .slide-kpi-val { font-size: 1.3rem !important; }
+#gvFloat .slide-kpi-lbl { font-size: .62rem !important; }
+#gvFloat .slide-venc-list { grid-template-columns: 1fr !important; gap: .3rem .6rem !important; }
+#gvFloat .slide-venc-row { padding: .4rem .6rem !important; border-radius: 8px !important; }
+#gvFloat .slide-venc-nome { font-size: .82rem !important; }
+#gvFloat .slide-venc-data { font-size: .75rem !important; }
+#gvFloat .slide-status-card { border-radius: 12px !important; padding: .9rem 1rem !important; }
+#gvFloat .slide-status-card-head { font-size: .82rem !important; margin-bottom: .6rem !important; }
+#gvFloat .slide-status-row { font-size: .75rem !important; }
+#gvFloat .gv-capa { min-height: 220px !important; padding: 1rem !important; }
+#gvFloat .gvc-empresa { font-size: 1.4rem !important; }
+#gvFloat .gvc-titulo { font-size: 1.8rem !important; }
+#gvFloat .gvc-chips { gap: .4rem !important; }
+#gvFloat .gvc-chip { padding: .4rem .6rem !important; font-size: .7rem !important; }
+#gvFloat .ig-exec { grid-template-columns: repeat(2,1fr) !important; gap: .6rem !important; }
+#gvFloat .ig-bars { padding: .7rem .9rem !important; }
+#gvFloat .ig-bar-row { grid-template-columns: 130px 1fr 100px !important; gap: .5rem !important; font-size: .72rem !important; }
+#gvFloat .ig-bar { height: 10px !important; }
+#gvFloat .slide-links-grid { grid-template-columns: 1fr 1fr !important; }
+
+/* ── Rodapé: dots + barra de progresso ── */
+#gvFloatDots {
+  display: flex; gap: .3rem; justify-content: center;
+  padding: .4rem 0 .2rem;
+  flex: none;
+}
+#gvFloatDots .slide-dot { width: 7px; height: 7px; }
+#gvFloatDots .slide-dot.active { width: 16px; }
+.gvw-progress { height: 2px; background: rgba(0,0,0,.07); flex: none; }
+#gvFloatProgressBar { height: 100%; background: linear-gradient(90deg, var(--pub-gold,#c9a227), #b8941f); width: 0%; transition: width .1s linear; }
+
+/* ── Overlay de pausa (overlay principal aberto) ── */
+#gvFloatPauseOverlay {
+  display: none;
+  position: absolute; inset: 0;
+  background: rgba(10,22,40,.88);
+  align-items: center; justify-content: center;
+  flex-direction: column; gap: .5rem;
+  color: #fff; font-size: .82rem;
+  border-radius: 14px;
+  z-index: 2;
+}
+#gvFloatPauseOverlay.show { display: flex; }
+#gvFloatPauseOverlay i { font-size: 2rem; color: var(--pub-gold,#c9a227); margin-bottom: .2rem; }
+
+/* ── Responsivo: em tela pequena fica menor ── */
+@media (max-width: 540px) {
+  #gvFloat { width: calc(100vw - 24px) !important; right: 12px; left: 12px; }
+}
+
+/* botão flutuante de acesso rápido (canto inferior esq quando widget fechado) */
+#gvFloatToggleBtn {
+  position: fixed;
+  left: 24px; bottom: 24px;
+  z-index: 9800;
+  display: none;
+  align-items: center; gap: .5rem;
+  background: linear-gradient(135deg, #0a1628, #1a3050);
+  color: #fff;
+  border: none; border-radius: 50px;
+  padding: .5rem .9rem .5rem .6rem;
+  font-size: .75rem; font-weight: 700; letter-spacing: .04em;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(0,0,0,.3);
+  transition: .2s;
+}
+#gvFloatToggleBtn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,.4); }
+#gvFloatToggleBtn i { color: var(--pub-gold,#c9a227); font-size: .95rem; }
+</style>
+
+<!-- HTML do Widget -->
+<div id="gvFloat">
+  <!-- Barra de título (drag handle) -->
+  <div id="gvFloatBar">
+    <img class="gvw-logo" src="Screenshot_2.jpg" alt="" onerror="this.style.display='none'">
+    <span class="gvw-title">GESTÃO À VISTA</span>
+    <span class="gvw-clock" id="gvwClock">--:--</span>
+    <span class="gvw-nav-sep"></span>
+    <button class="gvw-btn" title="Slide anterior" onclick="gvwPrev()"><i class="fas fa-chevron-left"></i></button>
+    <span id="gvFloatCounter" style="margin:0 .2rem">-/-</span>
+    <button class="gvw-btn" title="Próximo slide" onclick="gvwNext()"><i class="fas fa-chevron-right"></i></button>
+    <span class="gvw-nav-sep"></span>
+    <button class="gvw-btn gvw-btn-gold" title="Abrir tela cheia" onclick="gvwExpandFull()" id="gvwExpandBtn"><i class="fas fa-expand-arrows-alt"></i></button>
+    <button class="gvw-btn" title="Minimizar" onclick="gvwToggleMinimize()" id="gvwMinBtn"><i class="fas fa-window-minimize"></i></button>
+    <button class="gvw-btn" title="Fechar widget" onclick="closeGvWidget()" style="color:#ef4444;border-color:rgba(239,68,68,.3)"><i class="fas fa-times"></i></button>
+  </div>
+  <!-- Corpo dos slides -->
+  <div id="gvFloatBody" class="slide-body"></div>
+  <!-- Overlay de pausa -->
+  <div id="gvFloatPauseOverlay">
+    <i class="fas fa-pause-circle"></i>
+    <span>Gestão à Vista aberta em tela cheia</span>
+    <span style="font-size:.7rem;color:rgba(255,255,255,.5)">Widget retoma ao fechar</span>
+  </div>
+  <!-- Rodapé -->
+  <div id="gvFloatDots"></div>
+  <div class="gvw-progress"><div id="gvFloatProgressBar"></div></div>
+</div>
+
+<!-- Botão flutuante de reabrir -->
+<button id="gvFloatToggleBtn" title="Reabrir widget Gestão à Vista">
+  <i class="fas fa-window-restore"></i> Gestão Flutuante
+</button>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   WIDGET FLUTUANTE — Gestão à Vista
+   Estado independente, renderização compartilhada com o overlay
+   ═══════════════════════════════════════════════════════════ */
+
+let gvwIdx = 0;
+let gvwTimer = null;
+let gvwProgressTimer = null;
+let gvwClockTimer = null;
+let gvwActive = false;
+let gvwMinimized = false;
+let gvwWasPausedByOverlay = false;
+
+// ── Helpers ──
+function gvwRender(){
+  _gvwMode = true;
+  const prevIdx = slideIdx;
+  slideIdx = gvwIdx;
+  try { slideRender(); } catch(e) {}
+  slideIdx = prevIdx;
+  _gvwMode = false;
+}
+function gvwStartProgress(){
+  _gvwMode = true;
+  const prevIdx = slideIdx;
+  slideIdx = gvwIdx;
+  try { slideStartProgress(); } catch(e) {}
+  slideIdx = prevIdx;
+  _gvwMode = false;
+}
+function gvwAgendar(){
+  clearTimeout(gvwTimer);
+  gvwTimer = setTimeout(gvwNext, slideDurFor(gvwIdx));
+}
+function gvwNext(){
+  gvwIdx++;
+  gvwRender();
+  gvwStartProgress();
+  gvwAgendar();
+}
+function gvwPrev(){
+  gvwIdx = Math.max(0, gvwIdx - 1);
+  gvwRender();
+  gvwStartProgress();
+  gvwAgendar();
+}
+function gvwUpdateClock(){
+  const el = document.getElementById('gvwClock');
+  if (el) el.textContent = new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+}
+
+// ── Abrir/Fechar ──
+function openGvWidget(){
+  gvwActive = true;
+  gvwIdx = 0;
+  document.getElementById('gvFloat').classList.add('gvw-open');
+  document.getElementById('gvFloatToggleBtn').style.display = 'none';
+  document.getElementById('gvFloatPauseOverlay').classList.remove('show');
+  gvwRender();
+  gvwStartProgress();
+  gvwAgendar();
+  gvwUpdateClock();
+  gvwClockTimer = setInterval(gvwUpdateClock, 1000);
+  // pré-carrega dados se necessário
+  if ((!Array.isArray(abastAllRecords) || !abastAllRecords.length) && typeof loadAbastecimentos === 'function') {
+    Promise.resolve(loadAbastecimentos({ silencioso: true })).catch(()=>{});
+  }
+}
+function closeGvWidget(){
+  gvwActive = false;
+  gvwWasPausedByOverlay = false;
+  document.getElementById('gvFloat').classList.remove('gvw-open');
+  document.getElementById('gvFloatToggleBtn').style.display = 'none';
+  clearTimeout(gvwTimer);
+  clearInterval(gvwProgressTimer);
+  clearInterval(gvwClockTimer);
+  gvDestroyCharts();
+}
+
+// ── Pausa/Retoma (quando overlay principal abre/fecha) ──
+function gvwPause(){
+  if (!gvwActive) return;
+  gvwWasPausedByOverlay = true;
+  clearTimeout(gvwTimer);
+  clearInterval(gvwProgressTimer);
+  document.getElementById('gvFloatPauseOverlay').classList.add('show');
+}
+function gvwResume(){
+  if (!gvwActive || !gvwWasPausedByOverlay) return;
+  gvwWasPausedByOverlay = false;
+  document.getElementById('gvFloatPauseOverlay').classList.remove('show');
+  gvwRender();
+  gvwStartProgress();
+  gvwAgendar();
+}
+
+// ── Minimizar ──
+function gvwToggleMinimize(){
+  const el = document.getElementById('gvFloat');
+  gvwMinimized = !gvwMinimized;
+  el.classList.toggle('gvw-minimized', gvwMinimized);
+  const btn = document.getElementById('gvwMinBtn');
+  if (btn) btn.innerHTML = gvwMinimized
+    ? '<i class="fas fa-window-maximize"></i>'
+    : '<i class="fas fa-window-minimize"></i>';
+}
+
+// ── Expandir para tela cheia ──
+function gvwExpandFull(){
+  closeGvWidget();
+  if (typeof openSlideMode === 'function') openSlideMode();
+}
+
+// ── Arraste (drag) ──
+(function(){
+  const el = () => document.getElementById('gvFloat');
+  const bar = () => document.getElementById('gvFloatBar');
+  let dragging = false, ox = 0, oy = 0, startR = 0, startB = 0;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const b = bar();
+    if (!b) return;
+    b.addEventListener('mousedown', e => {
+      if (e.button !== 0) return;
+      const w = el();
+      const rect = w.getBoundingClientRect();
+      dragging = true;
+      ox = e.clientX - rect.left;
+      oy = e.clientY - rect.top;
+      w.classList.add('gvw-dragging');
+      // converter de right/bottom para left/top para facilitar o drag
+      w.style.right = 'auto'; w.style.bottom = 'auto';
+      w.style.left = rect.left + 'px';
+      w.style.top  = rect.top  + 'px';
+      e.preventDefault();
+    });
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const w = el();
+    const nx = e.clientX - ox;
+    const ny = e.clientY - oy;
+    // limita dentro da janela
+    const maxX = window.innerWidth  - w.offsetWidth;
+    const maxY = window.innerHeight - w.offsetHeight;
+    w.style.left = Math.max(0, Math.min(nx, maxX)) + 'px';
+    w.style.top  = Math.max(0, Math.min(ny, maxY)) + 'px';
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    el().classList.remove('gvw-dragging');
+  });
+})();
+
+// ── Touch drag ──
+(function(){
+  const el = () => document.getElementById('gvFloat');
+  const bar = () => document.getElementById('gvFloatBar');
+  let touching = false, ox = 0, oy = 0;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const b = bar();
+    if (!b) return;
+    b.addEventListener('touchstart', e => {
+      const w = el();
+      const rect = w.getBoundingClientRect();
+      const t = e.touches[0];
+      touching = true;
+      ox = t.clientX - rect.left;
+      oy = t.clientY - rect.top;
+      w.style.right = 'auto'; w.style.bottom = 'auto';
+      w.style.left = rect.left + 'px';
+      w.style.top  = rect.top  + 'px';
+    }, { passive: true });
+  });
+
+  document.addEventListener('touchmove', e => {
+    if (!touching) return;
+    const w = el();
+    const t = e.touches[0];
+    const nx = t.clientX - ox;
+    const ny = t.clientY - oy;
+    const maxX = window.innerWidth  - w.offsetWidth;
+    const maxY = window.innerHeight - w.offsetHeight;
+    w.style.left = Math.max(0, Math.min(nx, maxX)) + 'px';
+    w.style.top  = Math.max(0, Math.min(ny, maxY)) + 'px';
+  }, { passive: true });
+
+  document.addEventListener('touchend', () => { touching = false; });
+})();
+
+// ── Duplo clique na barra: minimizar/restaurar ──
+document.addEventListener('DOMContentLoaded', () => {
+  const b = document.getElementById('gvFloatBar');
+  if (b) b.addEventListener('dblclick', gvwToggleMinimize);
+});
+
+// ── Wire up botões ──
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('openGvWidgetBtn');
+  if (btn) btn.addEventListener('click', openGvWidget);
+  const tb = document.getElementById('gvFloatToggleBtn');
+  if (tb) tb.addEventListener('click', openGvWidget);
+});
 </script>
 </body>
 </html>
