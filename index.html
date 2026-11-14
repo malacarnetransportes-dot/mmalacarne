@@ -2271,6 +2271,7 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
               <button class="btn btn-accent" onclick="applyFinFilters()"><i class="fas fa-search"></i> Filtrar</button>
               <button class="btn btn-gray" onclick="resetFinFilters()"><i class="fas fa-times"></i> Limpar</button>
               <button class="btn btn-success btn-sm" onclick="exportCSV(currentFinanceiroFiltered,'financeiro')"><i class="fas fa-download"></i> CSV</button>
+              <button class="btn btn-accent btn-sm" onclick="finImprimir()" title="Imprimir em paisagem: 2DA e M MALACARNE separados, com subtotais e total geral"><i class="fas fa-print"></i> Imprimir</button>
             </div>
             <div class="fin-empresa-chips-bar" id="finEmpresaChipsBar"></div>
           </div>
@@ -4289,6 +4290,97 @@ function updateLastUpdate() {
   const data = now.toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit'});
   const el = document.getElementById('lastUpdate');
   if (el) el.innerHTML = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--success);flex-shrink:0"></span> ${data} ${hora}`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// FINANCEIRO — IMPRESSÃO (paisagem · 2DA / M MALACARNE · subtotais)
+// Imprime os lançamentos hoje filtrados na tela (respeita Data/Mês/Ano/
+// Tipo/Categoria/Empresa/Grupo). Os lançamentos com "2DA" (ou "D2A") na
+// descrição/empresa vão num bloco; o restante vai no bloco M MALACARNE,
+// ao final. Cada bloco tem subtotal e no fim há o quadro com o total geral.
+// Descrição e Valor saem em letra maior; Documento fica estreito.
+// ═══════════════════════════════════════════════════════════
+function finImprimir() {
+  const rows = (typeof currentFinanceiroFiltered !== 'undefined' && currentFinanceiroFiltered) ? currentFinanceiroFiltered : [];
+  if (!rows.length) { showToast('Sem dados para imprimir.'); return; }
+  const headers = Object.keys(rows[0]);
+  const colData  = findCol(headers, ['data','date','vencimento','competencia','lan']);
+  const colValor = findCol(headers, ['valor','value','montante','total','vl ','vlr','preco','price']);
+  const colCat   = finColCategoria(headers);
+  const colEmp   = finColLocal(headers);
+  const colDescG = findCol(headers, ['descricao','historico','memo','description','lancamento','servico','produto']);
+  const colDesc  = colEmp || colDescG;
+  const resto    = headers.filter(h => h !== colDesc && h !== colData && h !== colValor);
+  const colDoc   = findCol(resto, ['documento','parcela','nota','doc','nf']);
+  const colObs   = findCol(resto.filter(h => h !== colDoc), ['observ','obs','servico','historico','descricao','detalhe']);
+
+  const OBS_MAX = 1500; // observações muito longas ficam fora, para caber em poucas páginas
+  let omitidas = 0;
+  const txt = (r, h) => h ? String(r[h] == null ? '' : r[h]).trim() : '';
+  const um = t => escapeHTML(t.replace(/\s*[\r\n]+\s*/g, ' | '));
+  const money = n => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const isDa = r => /\b(2DA|D2A)\b/i.test([colEmp, colDescG, colDesc].filter(Boolean).map(h => txt(r, h)).join(' '));
+
+  const g2da = [], gMM = [];
+  rows.forEach(r => (isDa(r) ? g2da : gMM).push(r));
+
+  // Período do título: filtros de data, se houver; senão menor/maior data dos lançamentos
+  const dts = colData ? rows.map(r => parseDate(r[colData])).filter(Boolean).sort((a, b) => a - b) : [];
+  const dIni = document.getElementById('finDataInicio').value, dFim = document.getElementById('finDataFim').value;
+  const fmtD = d => d.toLocaleDateString('pt-BR');
+  const iniD = dIni ? new Date(dIni + 'T00:00:00') : dts[0], fimD = dFim ? new Date(dFim + 'T00:00:00') : dts[dts.length - 1];
+  const periodo = (iniD && fimD) ? ` — ${fmtD(iniD)} a ${fmtD(fimD)}` : '';
+
+  function bloco(titulo, sub, grp, corSec) {
+    let soma = 0, h = `<tr class="sec" style="background:${corSec}"><td colspan="5">${titulo}</td></tr>`;
+    grp.forEach((r, i) => {
+      const v = Math.abs(finValorLinha(r, colValor, colCat, colDescG));
+      soma += v;
+      let obs = txt(r, colObs);
+      if (obs.length > OBS_MAX) { obs = ''; omitidas++; }
+      const d = colData ? parseDate(r[colData]) : null;
+      h += `<tr${i % 2 ? ' class="z"' : ''}><td class="d">${um(txt(r, colDesc))}</td><td>${d ? fmtD(d) : escapeHTML(txt(r, colData))}</td><td>${um(txt(r, colDoc))}</td><td class="v">${money(v)}</td><td>${um(obs)}</td></tr>`;
+    });
+    h += `<tr class="sub"><td colspan="3">SUBTOTAL — ${sub}</td><td class="v">${money(soma)}</td><td></td></tr>`;
+    return { h, soma };
+  }
+  const b1 = bloco('LANÇAMENTOS 2DA', '2DA', g2da, '#FFE699');
+  const b2 = bloco('LANÇAMENTOS M MALACARNE', 'M MALACARNE', gMM, '#BDD7EE');
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Contas a pagar${periodo}</title><style>
+@page{size:A4 landscape;margin:7mm 8mm}
+*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{font-family:Helvetica,Arial,sans-serif;color:#000;margin:0}
+h1{font-size:12pt;margin:0 0 1px}.s{font-size:8pt;color:#444;margin-bottom:4px}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th,td{border:.3pt solid #999;padding:1.2pt 3pt 1.8pt;vertical-align:top;font-size:10pt;line-height:1.25;overflow-wrap:anywhere}
+thead{display:table-header-group}
+th{background:#1F3864;color:#fff;text-align:left}
+tr{page-break-inside:avoid;break-inside:avoid}
+td.d{font-size:10.5pt}td.v,th.v{text-align:right}td.v{font-size:10.5pt;font-weight:700}
+tr.z td{background:#f2f2f2}
+tr.sec td{font-size:10.5pt;font-weight:700}
+tr.sub td{background:#D9E2F3;font-size:10.5pt;font-weight:700}
+table.t{width:240pt;margin:6px 0 0 auto;page-break-inside:avoid;break-inside:avoid}
+table.t td{font-size:10.5pt;font-weight:700;padding:2pt 3pt}table.t td+td{text-align:right}
+table.t tr:last-child td{background:#D9E2F3}
+.n{font-size:7pt;color:#555;margin-top:4px}
+</style></head><body>
+<h1>Contas a pagar${periodo}</h1>
+<div class="s">${rows.length} lançamentos (${g2da.length} da 2DA + ${gMM.length} da M MALACARNE)</div>
+<table><colgroup><col style="width:29%"><col style="width:8%"><col style="width:12%"><col style="width:10%"><col style="width:41%"></colgroup>
+<thead><tr><th>Descrição</th><th>Data</th><th>Documento / Parcela</th><th class="v">Valor (R$)</th><th>Observação</th></tr></thead>
+<tbody>${b1.h}${b2.h}</tbody></table>
+<table class="t"><tr><td>Total 2DA</td><td>R$ ${money(b1.soma)}</td></tr><tr><td>Total M MALACARNE</td><td>R$ ${money(b2.soma)}</td></tr><tr><td>TOTAL GERAL</td><td>R$ ${money(b1.soma + b2.soma)}</td></tr></table>
+${omitidas ? `<div class="n">${omitidas} observação(ões) muito longa(s) não impressa(s) para caber melhor na página.</div>` : ''}
+</body></html>`;
+
+  const f = document.createElement('iframe');
+  f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+  document.body.appendChild(f);
+  const d = f.contentWindow.document;
+  d.open(); d.write(html); d.close();
+  setTimeout(() => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { showToast('Não foi possível abrir a impressão.'); } setTimeout(() => f.remove(), 60000); }, 300);
 }
 
 function exportCSV(data, name) {
