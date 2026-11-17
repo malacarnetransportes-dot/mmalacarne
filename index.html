@@ -1257,6 +1257,38 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
 .calc-result .result-lbl{font-size:.8rem;color:#065f46;margin-top:.3rem;}
 
 /* URL modal */
+
+/* ── Alerta de Frete em Aberto (Contas a Receber) ── */
+#crAlertaBackdrop{position:fixed;inset:0;background:rgba(15,15,20,.62);z-index:6000;display:none;}
+#crAlertaBackdrop.active{display:block;}
+#crAlertaModal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:6001;width:94%;max-width:860px;max-height:90vh;display:none;flex-direction:column;background:#fff;border-radius:var(--r16);box-shadow:0 24px 64px rgba(0,0,0,.4);overflow:hidden;border:2px solid var(--danger);}
+#crAlertaModal.active{display:flex;}
+#crAlertaModal.pulsando{animation:crAlertaPulse 1.1s ease-in-out infinite;}
+@keyframes crAlertaPulse{0%,100%{box-shadow:0 24px 64px rgba(0,0,0,.4),0 0 0 0 rgba(239,68,68,.55);}50%{box-shadow:0 24px 64px rgba(0,0,0,.4),0 0 0 12px rgba(239,68,68,0);}}
+@media (prefers-reduced-motion:reduce){#crAlertaModal.pulsando{animation:none;}}
+.cr-alerta-head{background:var(--danger);color:#fff;padding:.9rem 1.2rem;display:flex;align-items:center;gap:.7rem;}
+.cr-alerta-head i{font-size:1.4rem;}
+.cr-alerta-head h3{margin:0;font-size:1.05rem;font-weight:700;}
+.cr-alerta-head small{display:block;font-weight:400;opacity:.9;font-size:.78rem;margin-top:.1rem;}
+.cr-alerta-bar{display:flex;gap:.8rem;align-items:flex-end;flex-wrap:wrap;padding:.8rem 1.2rem;border-bottom:1px solid var(--gray-200);background:var(--gray-100);}
+.cr-alerta-bar .flt-grp{margin:0;min-width:200px;}
+.cr-alerta-resumo{margin-left:auto;font-size:.82rem;color:var(--text-lt);text-align:right;}
+.cr-alerta-resumo b{color:var(--danger);font-size:1.05rem;}
+.cr-alerta-lista{overflow-y:auto;padding:.4rem 1.2rem;flex:1;}
+.cr-alerta-item{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.5fr) auto;gap:.3rem .9rem;align-items:center;padding:.65rem 0;border-bottom:1px solid var(--gray-200);font-size:.82rem;}
+.cr-alerta-item:last-child{border-bottom:none;}
+.cr-alerta-item .l1{font-weight:700;color:var(--text);}
+.cr-alerta-item .l2{color:var(--text-lt);font-size:.76rem;}
+.cr-alerta-item .val{font-weight:700;text-align:right;white-space:nowrap;}
+.cr-alerta-tag{display:inline-block;padding:.12rem .55rem;border-radius:30px;font-size:.68rem;font-weight:800;margin-top:.2rem;}
+.cr-alerta-tag.venc{background:rgba(239,68,68,.14);color:var(--danger);}
+.cr-alerta-tag.aven{background:rgba(245,158,11,.16);color:#b45309;}
+.cr-alerta-tag.sem{background:var(--gray-100);color:var(--text-lt);}
+.cr-alerta-item.novo{border-left:4px solid var(--danger);padding-left:.6rem;}
+.cr-alerta-foot{padding:.8rem 1.2rem;border-top:1px solid var(--gray-200);display:flex;gap:.6rem;flex-wrap:wrap;justify-content:flex-end;background:#fff;}
+@media (max-width:620px){.cr-alerta-item{grid-template-columns:1fr auto;}.cr-alerta-item .rota{grid-column:1 / -1;}}
+#crAlertaBtn.tem-pend{background:var(--danger);color:#fff;border-color:var(--danger);}
+#crAlertaBadge{display:inline-block;min-width:1.3rem;padding:0 .35rem;margin-left:.25rem;border-radius:30px;background:rgba(255,255,255,.28);font-size:.72rem;font-weight:800;text-align:center;}
 .url-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3999;display:none;}
 .url-modal-backdrop.active{display:block;}
 .url-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;z-index:4000;padding:1.5rem;border-radius:var(--r16);width:92%;max-width:540px;display:none;box-shadow:var(--shadow-lg);max-height:90vh;overflow-y:auto;}
@@ -1837,6 +1869,24 @@ window.addEventListener('load',function(){ if(location.hash==='#privacidade') lg
 
 <!-- ══════════════ URL CONFIG MODAL ══════════════ -->
 
+<div id="crAlertaBackdrop"></div>
+<div id="crAlertaModal" role="alertdialog" aria-modal="true" aria-labelledby="crAlertaTitulo">
+  <div class="cr-alerta-head">
+    <i class="fas fa-bell"></i>
+    <div><h3 id="crAlertaTitulo">Fretes em aberto</h3><small id="crAlertaSub"></small></div>
+  </div>
+  <div class="cr-alerta-bar">
+    <div class="flt-grp"><label>Embarcador</label><select id="crAlertaEmb" onchange="crRenderAlerta()"><option value="">Todos</option></select></div>
+    <div class="cr-alerta-resumo" id="crAlertaResumo"></div>
+  </div>
+  <div class="cr-alerta-lista" id="crAlertaLista"></div>
+  <div class="cr-alerta-foot">
+    <button class="btn btn-gray" id="crAlertaMudoBtn" onclick="crPararSomAlerta()"><i class="fas fa-volume-xmark"></i> Silenciar som</button>
+    <button class="btn btn-gray" id="crAlertaFecharBtn" onclick="crFecharAlerta()" style="display:none">Fechar</button>
+    <button class="btn btn-accent" id="crAlertaCienteBtn" onclick="crConfirmarAlerta()"><i class="fas fa-check"></i> Ciente, visualizei</button>
+  </div>
+</div>
+
 <div id="crDetalheModalBackdrop" class="url-modal-backdrop" onclick="crCloseDetalhe()"></div>
 <div id="crDetalheModal" class="url-modal" style="max-width:640px">
   <h3 style="margin-bottom:.8rem"><i class="fas fa-file-invoice-dollar" style="color:var(--accent)"></i> Detalhes do Lançamento</h3>
@@ -2081,7 +2131,8 @@ window.addEventListener('load',function(){ if(location.hash==='#privacidade') lg
               <div class="flt-grp"><label>Mês</label><select id="crMes" onchange="applyCRFilters()"><option value="">Todos os Meses</option></select></div>
               <div class="flt-grp"><label>Motorista</label><select id="crMotorista" onchange="applyCRFilters()"><option value="">Todos</option></select></div>
               <div class="flt-grp"><label>Placa</label><input type="text" id="crPlaca" placeholder="Ex: RYE7J26" oninput="applyCRFilters()"></div>
-              <div class="flt-grp"><label>Cliente</label><select id="crCliente" onchange="applyCRFilters()"><option value="">Todos</option></select></div>
+              <div class="flt-grp"><label>Embarcador</label><select id="crEmbarcador" onchange="applyCRFilters()"><option value="">Todos</option></select></div>
+              <div class="flt-grp" id="crClienteGrp"><label>Cliente</label><select id="crCliente" onchange="applyCRFilters()"><option value="">Todos</option></select></div>
               <div class="flt-grp"><label>CTE</label><input type="text" id="crCte" placeholder="Nº do CTE" oninput="applyCRFilters()"></div>
               <div class="flt-grp"><label>Tipo / Diária</label><select id="crTipo" onchange="applyCRFilters()"><option value="">Todos</option></select></div>
               <div class="flt-grp"><label>Emissão Início</label><input type="date" id="crDataEmissaoIni" onchange="applyCRFilters()"></div>
@@ -2094,6 +2145,7 @@ window.addEventListener('load',function(){ if(location.hash==='#privacidade') lg
               <button class="btn btn-gray btn-sm" onclick="resetCRFilters()"><i class="fas fa-eraser"></i> Limpar</button>
               <button class="btn btn-info btn-sm" onclick="loadContasReceberData(false)" title="Reintegra rápido com a planilha"><i class="fas fa-sync-alt"></i> Atualizar</button>
               <button class="btn btn-gray btn-sm" onclick="exportCSV(currentCRFiltered, 'contas_a_receber')"><i class="fas fa-download"></i> Exportar CSV</button>
+              <button class="btn btn-gray btn-sm" id="crAlertaBtn" onclick="crAbrirAlerta(null,false)" title="Fretes cujo STATUS não está como PAGO"><i class="fas fa-bell"></i> Fretes em aberto <span id="crAlertaBadge">0</span></button>
             </div>
           </div>
 
@@ -5220,6 +5272,7 @@ document.getElementById('logoutPrivateBtn').addEventListener('click', () => {
   if (typeof currentFinanceiroFiltered !== 'undefined') currentFinanceiroFiltered = [];
   document.getElementById('publicSite').style.display = 'block';
   document.getElementById('privateArea').style.display = 'none';
+  if (typeof crFecharAlerta === 'function') crFecharAlerta();
   // Reexibe o modal de login (reset de campos)
   document.getElementById('loginUser').value = '';
   document.getElementById('loginPass').value = '';
@@ -9130,10 +9183,13 @@ async function refreshAllData() {
   // Isso reduz o tempo de login e o número de requisições externas simultâneas.
   _tabCarregada.add('tabFinanceiro');
   _tabCarregada.add('tabBaterias');
+  crAlertaForcarLogin = true; // todo login mostra o popup de fretes em aberto
+  _tabCarregada.add('tabContasReceber'); // carrega no login para disparar o alerta de frete em aberto
   await Promise.allSettled([
     loadFinanceiroData(),
     loadBateriasData(),
-    vencInit()
+    vencInit(),
+    loadContasReceberData(true)
   ]);
   atualizarSelectMotoristasCalculadora();
   updateLastUpdate();
@@ -9659,7 +9715,9 @@ function crCols(headers) {
     freteValor:   findCol(headers, ['frete valor', 'valor frete', 'vlr frete', 'valor bruto', 'bruto', 'frete bruto', 'frete']),
     freteReceber: findCol(headers, ['frete a receber', 'a receber', 'vlr receber', 'valor receber', 'valor a receber', 'liquido', 'valor liquido', 'vlr liquido', 'receber']),
     icms:         findCol(headers, ['icms', 'imposto', 'tributo']),
-    obs:          findCol(headers, ['obs', 'observacao', 'complemento', 'detalhes', 'anotacao'])
+    obs:          findCol(headers, ['obs', 'observacao', 'complemento', 'detalhes', 'anotacao']),
+    embarcador:   findCol(headers, ['embarcador']),
+    status:       findCol(headers, ['status', 'situacao'])
   };
 }
 
@@ -9673,6 +9731,7 @@ async function loadContasReceberData(silencioso) {
     contasReceberData = rows || [];
     crPopularFiltros(contasReceberData);
     applyCRFilters();
+    try { crAvaliarAlertas(); } catch (e) { console.error('Alerta frete em aberto:', e); }
     if (!silencioso) showToast('Contas a Receber atualizado!');
   } catch (e) {
     if (loadingEl) loadingEl.innerHTML = `<span style="color:var(--danger)"><i class="fas fa-exclamation-circle"></i>
@@ -9691,8 +9750,9 @@ function crPopularFiltros(rows) {
   if (!rows.length) return;
   const headers = Object.keys(rows[0]);
   const C = crCols(headers);
-  const motoristas = new Set(), clientes = new Set(), tipos = new Set(), meses = new Set();
+  const motoristas = new Set(), clientes = new Set(), tipos = new Set(), meses = new Set(), embarcadores = new Set();
   rows.forEach(r => {
+    if (C.embarcador && r[C.embarcador]) embarcadores.add(String(r[C.embarcador]).trim());
     if (C.mot && r[C.mot]) motoristas.add(String(r[C.mot]).trim());
     if (C.cliente && r[C.cliente]) clientes.add(String(r[C.cliente]).trim());
     if (C.descr && r[C.descr]) tipos.add(String(r[C.descr]).trim());
@@ -9710,6 +9770,10 @@ function crPopularFiltros(rows) {
   };
   fill('crMotorista', motoristas);
   fill('crCliente', clientes);
+  fill('crEmbarcador', embarcadores);
+  // Se "Cliente" lê a mesma coluna do Embarcador, esconde o duplicado.
+  const _cg = document.getElementById('crClienteGrp');
+  if (_cg) _cg.style.display = (C.embarcador && C.embarcador === C.cliente) ? 'none' : '';
   fill('crTipo', tipos);
 
   // Padrão inicial: Tipo = FRETE (Frete Valor e Frete a Receber abrem só com
@@ -9783,6 +9847,7 @@ function applyCRFilters() {
   const fMot     = (document.getElementById('crMotorista') || {}).value || '';
   const fPlaca   = ((document.getElementById('crPlaca') || {}).value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
   const fCliente = (document.getElementById('crCliente') || {}).value || '';
+  const fEmb     = (document.getElementById('crEmbarcador') || {}).value || '';
   const fCte     = ((document.getElementById('crCte') || {}).value || '').trim().toLowerCase();
   const fTipo    = (document.getElementById('crTipo') || {}).value || '';
   const deIni    = (document.getElementById('crDataEmissaoIni') || {}).value;
@@ -9797,6 +9862,7 @@ function applyCRFilters() {
     }
     if (fMot && C.mot && String(row[C.mot] || '').trim() !== fMot) return false;
     if (fCliente && C.cliente && String(row[C.cliente] || '').trim() !== fCliente) return false;
+    if (fEmb && C.embarcador && String(row[C.embarcador] || '').trim() !== fEmb) return false;
     if (fTipo && C.descr && String(row[C.descr] || '').trim() !== fTipo) return false;
     if (fCte && C.cte && !String(row[C.cte] || '').toLowerCase().includes(fCte)) return false;
     if (fPlaca) {
@@ -9988,7 +10054,7 @@ function crRenderTabela(filtered, C) {
   if (wrapEl) wrapEl.style.display = 'block';
   const cols = [
     ['Tipo', C.descr], ['Motorista', C.mot], ['Placa CV', C.placaCv], ['Placa CR', C.placaCr],
-    ['CTE', C.cte], ['Emissão', C.dataEmissao], ['Pagamento', C.dataPgto], ['Cliente', C.cliente],
+    ['CTE', C.cte], ['Emissão', C.dataEmissao], ['Pagamento', C.dataPgto], [(C.embarcador && C.embarcador === C.cliente) ? 'Embarcador' : 'Cliente', C.cliente],
     ['Origem', C.origem], ['Destino', C.destino], ['Frete Valor', C.freteValor], ['Frete a Receber', C.freteReceber]
   ].filter(([, c]) => c);
   document.getElementById('crTableHead').innerHTML = cols.map(([label]) => `<th>${label}</th>`).join('');
@@ -10024,7 +10090,9 @@ function crShowDetalhe(i) {
       ${campo('CTE', C.cte)}
       ${campo('Data Emissão', C.dataEmissao)}
       ${campo('Data Pagamento', C.dataPgto)}
-      ${campo('Cliente', C.cliente)}
+      ${campo((C.embarcador && C.embarcador === C.cliente) ? 'Embarcador' : 'Cliente', C.cliente)}
+      ${C.embarcador && C.embarcador !== C.cliente ? campo('Embarcador', C.embarcador) : ''}
+      ${campo('Status', C.status)}
       ${campo('Origem', C.origem)}
       ${campo('Destino', C.destino)}
       ${campo('Frete Valor', C.freteValor, true)}
@@ -10040,8 +10108,172 @@ function crCloseDetalhe() {
   document.getElementById('crDetalheModal').classList.remove('active');
 }
 
+
+// ═══════════════════════════════════════════════════════════
+// CONTAS A RECEBER — ALERTA DE FRETE EM ABERTO
+// Pendente = coluna STATUS diferente de "PAGO" (vazio = pendente).
+// Um aviso por pedido (CTE). O popup toca som repetido até o usuário
+// clicar em "Ciente". Pedido já visto só avisa de novo quando vencer.
+// ═══════════════════════════════════════════════════════════
+const CR_ALERTA_LS = 'mm_cr_alertas_vistos';
+let crAlertaPend = [];       // todos os fretes em aberto
+let crAlertaExibir = [];     // pedidos mostrados no popup agora
+let crAlertaModoNovos = false;
+let crAlertaTimer = null;
+let crAlertaCtx = null;
+let crAlertaForcarLogin = false; // true no login: mostra todos os pendentes, mesmo os já vistos
+
+function crAlertaLerVistos() {
+  try { return new Set(JSON.parse(localStorage.getItem(CR_ALERTA_LS) || '[]')); } catch (e) { return new Set(); }
+}
+function crAlertaSalvarVistos(set) {
+  try { localStorage.setItem(CR_ALERTA_LS, JSON.stringify([...set].slice(-3000))); } catch (e) {}
+}
+function crStatusPago(v) {
+  return /^(pago|paga|pg|recebido|quitado)\b/.test(crNorm(v));
+}
+
+function crColetarPendentes() {
+  if (!contasReceberData.length) return [];
+  const C = crCols(Object.keys(contasReceberData[0]));
+  if (!C.status) return [];
+  const soFrete = !!C.descr && contasReceberData.some(r => crEhFrete(r[C.descr]));
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  const out = [];
+  contasReceberData.forEach((r, idx) => {
+    if (soFrete && !crEhFrete(r[C.descr])) return;
+    if (crStatusPago(r[C.status])) return;
+    const valor = parseMoney(C.freteReceber ? r[C.freteReceber] : '') || parseMoney(C.freteValor ? r[C.freteValor] : '');
+    if (!(valor > 0)) return;
+    const dp = C.dataPgto ? parseDate(r[C.dataPgto]) : null;
+    let dias = null, vencido = false;
+    if (dp) { dias = Math.round((dp - hoje) / 86400000); vencido = dias < 0; }
+    const cte = String(C.cte ? r[C.cte] : '').trim();
+    const emi = String(C.dataEmissao ? r[C.dataEmissao] : '').trim();
+    const mot = String(C.mot ? r[C.mot] : '').trim();
+    out.push({
+      id: [cte, emi, mot, idx].join('|').replace(/\s+/g, ' '),
+      idEst: [cte, emi, mot].join('|').replace(/\s+/g, ' '),
+      cte, emi, mot, valor, dp, dias, vencido,
+      emb: String((C.embarcador ? r[C.embarcador] : (C.cliente ? r[C.cliente] : '')) || '').trim() || '(sem embarcador)',
+      origem: String(C.origem ? r[C.origem] : '').trim(),
+      destino: String(C.destino ? r[C.destino] : '').trim()
+    });
+  });
+  // vencidos primeiro (mais atrasados no topo), depois por vencimento
+  out.sort((a, b) => (b.vencido - a.vencido) || ((a.dias ?? 9e9) - (b.dias ?? 9e9)));
+  return out;
+}
+function crAlertaChave(p) { return p.idEst + (p.vencido ? ':V' : ':A'); }
+
+function crAvaliarAlertas() {
+  crAlertaPend = crColetarPendentes();
+  const btn = document.getElementById('crAlertaBtn');
+  const badge = document.getElementById('crAlertaBadge');
+  if (badge) badge.textContent = crAlertaPend.length;
+  if (btn) btn.classList.toggle('tem-pend', crAlertaPend.length > 0);
+  if (!crAlertaPend.length) return;
+  const vistos = crAlertaLerVistos();
+  let novos = crAlertaPend.filter(p => !vistos.has(crAlertaChave(p)));
+  if (crAlertaForcarLogin) { novos = crAlertaPend.slice(); crAlertaForcarLogin = false; }
+  const aberto = document.getElementById('crAlertaModal');
+  if (novos.length && !(aberto && aberto.classList.contains('active'))) crAbrirAlerta(novos, true);
+}
+
+function crAlertaBeep() {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    if (!crAlertaCtx) crAlertaCtx = new AC();
+    if (crAlertaCtx.state === 'suspended') crAlertaCtx.resume();
+    const t0 = crAlertaCtx.currentTime;
+    [[880, 0], [660, 0.22], [880, 0.44]].forEach(([f, d]) => {
+      const o = crAlertaCtx.createOscillator(), g = crAlertaCtx.createGain();
+      o.type = 'square'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t0 + d);
+      g.gain.exponentialRampToValueAtTime(0.22, t0 + d + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + d + 0.18);
+      o.connect(g); g.connect(crAlertaCtx.destination);
+      o.start(t0 + d); o.stop(t0 + d + 0.2);
+    });
+  } catch (e) { console.warn('Som do alerta:', e); }
+}
+function crIniciarSomAlerta() {
+  crPararSomAlerta();
+  crAlertaBeep();
+  crAlertaTimer = setInterval(crAlertaBeep, 2800);
+  const m = document.getElementById('crAlertaModal'); if (m) m.classList.add('pulsando');
+  const b = document.getElementById('crAlertaMudoBtn'); if (b) b.style.display = '';
+}
+function crPararSomAlerta() {
+  if (crAlertaTimer) { clearInterval(crAlertaTimer); crAlertaTimer = null; }
+  const m = document.getElementById('crAlertaModal'); if (m) m.classList.remove('pulsando');
+  const b = document.getElementById('crAlertaMudoBtn'); if (b) b.style.display = 'none';
+}
+
+function crAbrirAlerta(lista, modoNovos) {
+  if (!lista) { crAlertaPend = crColetarPendentes(); lista = crAlertaPend; }
+  crAlertaModoNovos = !!modoNovos;
+  crAlertaExibir = lista;
+  document.getElementById('crAlertaTitulo').textContent = modoNovos ? 'Atenção: frete(s) em aberto' : 'Fretes em aberto';
+  document.getElementById('crAlertaSub').textContent = modoNovos
+    ? 'STATUS sem “PAGO” na planilha. Confirme para parar o som.'
+    : 'Todos os pedidos cujo STATUS não está como PAGO.';
+  document.getElementById('crAlertaCienteBtn').style.display = modoNovos ? '' : 'none';
+  document.getElementById('crAlertaFecharBtn').style.display = modoNovos ? 'none' : '';
+  const sel = document.getElementById('crAlertaEmb');
+  const embs = [...new Set(lista.map(p => p.emb))].sort();
+  sel.innerHTML = '<option value="">Todos</option>' + embs.map(e => `<option value="${escapeHTML(e)}">${escapeHTML(e)}</option>`).join('');
+  document.getElementById('crAlertaBackdrop').classList.add('active');
+  document.getElementById('crAlertaModal').classList.add('active');
+  crRenderAlerta();
+  if (modoNovos) crIniciarSomAlerta(); else crPararSomAlerta();
+}
+
+function crRenderAlerta() {
+  const fEmb = document.getElementById('crAlertaEmb').value;
+  const vistos = crAlertaModoNovos ? new Set() : crAlertaLerVistos();
+  const itens = crAlertaExibir.filter(p => !fEmb || p.emb === fEmb);
+  const total = itens.reduce((a, p) => a + p.valor, 0);
+  const venc = itens.filter(p => p.vencido).length;
+  document.getElementById('crAlertaResumo').innerHTML =
+    `<b>${itens.length}</b> pedido(s) · ${fmtMoney(total)}${venc ? ` · <span style="color:var(--danger)">${venc} vencido(s)</span>` : ''}`;
+  document.getElementById('crAlertaLista').innerHTML = itens.map(p => {
+    let tag;
+    if (p.dias === null) tag = '<span class="cr-alerta-tag sem">Sem data de pagamento</span>';
+    else if (p.vencido) tag = `<span class="cr-alerta-tag venc">Vencido há ${Math.abs(p.dias)} dia(s) · ${fmtDate(p.dp)}</span>`;
+    else if (p.dias === 0) tag = `<span class="cr-alerta-tag aven">Vence hoje · ${fmtDate(p.dp)}</span>`;
+    else tag = `<span class="cr-alerta-tag aven">Vence em ${p.dias} dia(s) · ${fmtDate(p.dp)}</span>`;
+    return `<div class="cr-alerta-item${crAlertaModoNovos ? ' novo' : ''}">
+      <div><div class="l1">CTE ${escapeHTML(p.cte || '—')}</div><div class="l2">${escapeHTML(p.emb)} · Emissão ${escapeHTML(p.emi || '—')}</div></div>
+      <div class="rota"><div class="l1">${escapeHTML(p.mot || '—')}</div><div class="l2">${escapeHTML(p.origem || '—')} → ${escapeHTML(p.destino || '—')}</div></div>
+      <div style="text-align:right"><div class="val">${fmtMoney(p.valor)}</div>${tag}</div>
+    </div>`;
+  }).join('') || '<div style="padding:1.4rem;text-align:center;color:var(--text-lt)">Nenhum frete em aberto para este embarcador.</div>';
+}
+
+function crConfirmarAlerta() {
+  // Marca como visualizados todos os pedidos do popup (inclusive os de outros embarcadores).
+  const vistos = crAlertaLerVistos();
+  crAlertaExibir.forEach(p => vistos.add(crAlertaChave(p)));
+  crAlertaSalvarVistos(vistos);
+  crFecharAlerta();
+}
+function crFecharAlerta() {
+  crPararSomAlerta();
+  document.getElementById('crAlertaBackdrop').classList.remove('active');
+  document.getElementById('crAlertaModal').classList.remove('active');
+}
+// O backdrop não fecha o popup de novos pedidos: só "Ciente" para o aviso.
+document.getElementById('crAlertaBackdrop').addEventListener('click', () => { if (!crAlertaModoNovos) crFecharAlerta(); });
+// Atualiza a planilha a cada 5 min (com a área logada aberta) para avisar de novos pedidos.
+setInterval(() => {
+  const pa = document.getElementById('privateArea');
+  if (pa && pa.style.display === 'block') loadContasReceberData(true);
+}, 5 * 60 * 1000);
+
 function resetCRFilters() {
-  ['crMotorista', 'crPlaca', 'crCliente', 'crCte', 'crTipo', 'crDataEmissaoIni', 'crDataEmissaoFim', 'crDataPgtoIni', 'crDataPgtoFim'].forEach(id => {
+  ['crMotorista', 'crPlaca', 'crCliente', 'crEmbarcador', 'crCte', 'crTipo', 'crDataEmissaoIni', 'crDataEmissaoFim', 'crDataPgtoIni', 'crDataPgtoFim'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
