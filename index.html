@@ -1151,6 +1151,8 @@ body.tv-hide-cursor,body.tv-hide-cursor *{cursor:none!important;}
 .cr-detalhe-item span{color:var(--text-lt);font-size:.72rem;text-transform:uppercase;letter-spacing:.3px;}
 .cr-detalhe-item b{color:#1e2a3a;}
 .rank-list li{counter-increment:rank;display:flex;justify-content:space-between;align-items:center;padding:.7rem 1rem;background:var(--gray-100);border-radius:var(--r8);margin-bottom:.5rem;font-size:.85rem;flex-wrap:wrap;gap:.5rem;}
+.rank-list li[style*="justify-content:center"]{counter-increment:none;}
+.rank-list li[style*="justify-content:center"]::before{display:none;}
 .rank-list li::before{content:counter(rank)"º";background:var(--accent);color:#111;padding:.15rem .6rem;border-radius:30px;font-size:.75rem;font-weight:800;margin-right:.7rem;}
 
 /* Cards de soma por Empresa (Financeiro) */
@@ -6269,8 +6271,8 @@ function slideConsumoResumo() {
     // abastecimentos que têm km percorrido (cavalo, sem carreta/arla).
     // Limiar mínimo de 0,3 km/L: deltas menores indicam erro de odômetro
     // (ex.: carro parado no pátio abasteceu cheio mas delta foi 1 km).
-    if (r.tipoAbastecido !== 'carreta' && r.tipoAbastecido !== 'arla' && (r.kmPercorrido || 0) > 0 && (r.litrosCavalo || 0) > 0 && (r.kmPercorrido / r.litrosCavalo) >= 0.3) {
-      cavMap[p].kmPar += r.kmPercorrido;
+    if (r.tipoAbastecido !== 'carreta' && r.tipoAbastecido !== 'arla' && r.dentroCadeia && (r.litrosCavalo || 0) > 0) {
+      cavMap[p].kmPar += r.kmPercorrido || 0;
       cavMap[p].litrosPar += r.litrosCavalo;
     }
     if (r.motorista) cavMap[p].motoristas.add(r.motorista);
@@ -6356,15 +6358,15 @@ function gvMediasMes(ref) {
   recs.forEach(r => {
     const pc = normalizaPlaca(r.placaCavalo);
     if (pc && r.tipoAbastecido !== 'carreta' && r.tipoAbastecido !== 'arla' &&
-        (r.kmPercorrido || 0) > 0 && (r.litrosCavalo || 0) > 0 && (r.kmPercorrido / r.litrosCavalo) >= 0.3) {
+        r.dentroCadeia && (r.litrosCavalo || 0) > 0) {
       const o = cav[pc] || (cav[pc] = { placa: r.placaCavalo, km: 0, lt: 0, mot: new Set() });
-      o.km += r.kmPercorrido; o.lt += r.litrosCavalo; if (r.motorista) o.mot.add(r.motorista);
+      o.km += r.kmPercorrido || 0; o.lt += r.litrosCavalo; if (r.motorista) o.mot.add(r.motorista);
     }
     const pk = normalizaPlaca(r.placaCarreta);
     const ehCar = r.tipoAbastecido === 'carreta' || (r.litrosCarreta || 0) > 0;
-    if (pk && ehCar && (r.kmPercorrido || 0) > 0 && (r.litrosCarreta || 0) > 0) {
+    if (pk && ehCar && r.dentroCadeia && (r.litrosCarreta || 0) > 0) {
       const o = car[pk] || (car[pk] = { placa: r.placaCarreta, h: 0, lt: 0, mot: new Set() });
-      o.h += r.kmPercorrido; o.lt += r.litrosCarreta; if (r.motorista) o.mot.add(r.motorista);
+      o.h += r.kmPercorrido || 0; o.lt += r.litrosCarreta; if (r.motorista) o.mot.add(r.motorista);
     }
   });
   const cavalos = Object.values(cav).map(o => ({ placa: o.placa, media: o.lt > 0 && o.km > 0 ? o.km / o.lt : 0, mot: [...o.mot].join(', ') || '—' }))
@@ -13536,25 +13538,23 @@ function fatRenderConsumoTab(dados) {
       cavMap[p].km      += r.km || 0;
       cavMap[p].litros  += r.litrosCavalo || 0;
       cavMap[p].kmTotal += r.kmPercorrido || 0;
-      if ((r.litrosCavalo || 0) > 0) {                          // todas as abastecidas do período
+      // CORREÇÃO (24/11/2026): MESMA regra do quadro "Resultados do filtro":
+      // km/L = Σ km percorrido ÷ Σ litros dos abastecimentos dentro da cadeia de
+      // odômetro (r.dentroCadeia). Antes, o ranking descartava abastecidas com
+      // km/litros < 0,3 e as "fora da sequência" — tirava os litros do divisor
+      // mas o delta de km já cobria esse trecho → média inflada (2,39 x 2,04).
+      // Σ dos deltas = KM final − KM inicial, então erros pontuais de odômetro
+      // se cancelam e o limiar de 0,3 km/L deixou de ser necessário.
+      const _litC = r.litrosCavalo || 0;
+      if (_litC > 0) {                                          // todas as abastecidas do período
         cavMap[p].regsTotal++;
-        if (r.statusCalc === 'sem-leitura') cavMap[p].semLeitura++;
-        else if (r.statusCalc === 'fora')   cavMap[p].foraSeq++;
-        else if (r.statusCalc === 'inicio') cavMap[p].inicio++;
-      }
-      // CORREÇÃO (19/09/2026): o km/L do ranking só pode usar os litros dos
-      // abastecimentos que TÊM km percorrido (delta de odômetro válido).
-      // Antes, litros de abastecidas sem leitura de KM (1ª do período, KM
-      // faltando, leitura fora da cadeia) entravam no divisor mas seus km
-      // não entravam no dividendo — a média despencava (ex.: 0,83 km/L) e o
-      // ranking não batia com a coluna "Média" das linhas da tabela.
-      // CORREÇÃO (30/09/2026): limiar mínimo de 0,3 km/L — deltas menores
-      // indicam erro de odômetro (veículo parado/pátio com delta ínfimo mas
-      // abastecimento cheio), distorcendo a média geral do período.
-      if ((r.kmPercorrido || 0) > 0 && (r.litrosCavalo || 0) > 0 && (r.kmPercorrido / r.litrosCavalo) >= 0.3) {
-        cavMap[p].kmPar     += r.kmPercorrido;
-        cavMap[p].litrosPar += r.litrosCavalo;
-        cavMap[p].regsPar++;
+        if (r.dentroCadeia) {
+          cavMap[p].regsPar++;
+          cavMap[p].litrosPar += _litC;
+          cavMap[p].kmPar     += r.kmPercorrido || 0;
+        } else if (r.statusCalc === 'sem-leitura') cavMap[p].semLeitura++;
+        else if (r.statusCalc === 'fora')          cavMap[p].foraSeq++;
+        else if (r.statusCalc === 'inicio')        cavMap[p].inicio++;
       }
     }
     if (r.mediaCavalo > 0 || r.litrosCavalo > 0) cavMap[p].registros++;
@@ -13601,17 +13601,18 @@ function fatRenderConsumoTab(dados) {
     carMap[p].litros    += r.litrosCarreta || 0;
     // kmPercorrido nas carretas é delta do horímetro (horas de funcionamento).
     carMap[p].horasTotal += (ehAbastCarreta ? r.kmPercorrido : 0) || 0;
-    if (ehAbastCarreta && (r.litrosCarreta || 0) > 0) {                          // todas as abastecidas do período
+    // CORREÇÃO (24/11/2026): mesma regra do quadro de resultados — litros e
+    // horas só das abastecidas dentro da cadeia de horímetro (dentroCadeia).
+    const _litK = r.litrosCarreta || 0;
+    if (_litK > 0) {                                            // todas as abastecidas do período
       carMap[p].regsTotal++;
-      if (r.statusCalc === 'sem-leitura') carMap[p].semLeitura++;
-      else if (r.statusCalc === 'fora')   carMap[p].foraSeq++;
-      else if (r.statusCalc === 'inicio') carMap[p].inicio++;
-    }
-    // Só pareia litros com horas quando o abastecimento TEM delta de horímetro.
-    if (ehAbastCarreta && (r.kmPercorrido || 0) > 0 && (r.litrosCarreta || 0) > 0) {
-      carMap[p].horasPar  += r.kmPercorrido;
-      carMap[p].litrosPar += r.litrosCarreta;
-      carMap[p].regsPar++;
+      if (r.dentroCadeia) {
+        carMap[p].regsPar++;
+        carMap[p].litrosPar += _litK;
+        carMap[p].horasPar  += r.kmPercorrido || 0;
+      } else if (r.statusCalc === 'sem-leitura') carMap[p].semLeitura++;
+      else if (r.statusCalc === 'fora')          carMap[p].foraSeq++;
+      else if (r.statusCalc === 'inicio')        carMap[p].inicio++;
     }
     if (r.mediaCarreta > 0 || r.litrosCarreta > 0) carMap[p].registros++;
     if (r.motorista) carMap[p].motoristas.add(r.motorista);
@@ -13629,7 +13630,11 @@ function fatRenderConsumoTab(dados) {
   ).sort((a,b) => a.media - b.media); // carreta: MENOR L/h = melhor — crescente
 
   // ── KPIs ──
-  const mediaGeral = arr => arr.length ? arr.reduce((s,v)=>s+v.media,0)/arr.length : 0;
+  // CORREÇÃO (24/11/2026): média ponderada (Σ km ÷ Σ litros / Σ litros ÷ Σ horas),
+  // igual ao quadro de resultados. A média simples das médias por placa dava
+  // o mesmo peso a um cavalo com 1 abastecida e a outro com 30.
+  const mediaGeralCav = arr => { const k = arr.reduce((s,v)=>s+v.kmPar,0), l = arr.reduce((s,v)=>s+v.litrosPar,0); return k > 0 && l > 0 ? k / l : 0; };
+  const mediaGeralCar = arr => { const h = arr.reduce((s,v)=>s+v.horasPar,0), l = arr.reduce((s,v)=>s+v.litrosPar,0); return h > 0 && l > 0 ? l / h : 0; };
   const totalLitros = dados.reduce((s,r)=>s+(r.litrosCavalo||0)+(r.litrosCarreta||0),0);
   // CORREÇÃO (17/09/2026): mesmo bug da sub-aba de Faturamento — v.km é a
   // soma bruta das leituras de odômetro, não a distância percorrida.
@@ -13641,8 +13646,8 @@ function fatRenderConsumoTab(dados) {
   const totalCustoArla  = dados.reduce((s,r)=>s+(r.valorArla||0),0);
 
   const setV = (id,val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
-  setV('fatct-mediacv', fmtKmL(mediaGeral(cavArr)));
-  setV('fatct-mediacr', fmtLH(mediaGeral(carArr)));
+  setV('fatct-mediacv', fmtKmL(mediaGeralCav(cavArr)));
+  setV('fatct-mediacr', fmtLH(mediaGeralCar(carArr)));
   setV('fatct-litros',  fmtNum(totalLitros) + ' L');
   setV('fatct-km',      fmtNum(totalKm) + ' km');
   setV('fatct-melhorcv', cavArr.length ? `${cavArr[0].placa} — ${fmtKmL(cavArr[0].media)}` : '—');
@@ -14458,7 +14463,22 @@ async function atualizarAbastSmart() {
   return loadAbastecimentos();
 }
 
+// CORREÇÃO (24/11/2026): se qualquer etapa lançasse erro depois de carregar a
+// planilha, o botão ficava eternamente em "Carregando..." (desabilitado).
+// O wrapper garante o reset do botão em qualquer saída.
 async function loadAbastecimentos(opts) {
+  const silencioso = !!(opts && opts.silencioso);
+  try {
+    return await _loadAbastecimentosImpl(opts);
+  } catch (e) {
+    console.error('loadAbastecimentos:', e);
+    if (!silencioso && typeof showToast === 'function') showToast('Erro ao processar abastecimentos: ' + (e && e.message ? e.message : e), 6000);
+  } finally {
+    const _b = document.getElementById('btnAtualizarConsumoTab');
+    if (_b && !silencioso) { _b.disabled = false; _b.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar'; }
+  }
+}
+async function _loadAbastecimentosImpl(opts) {
   const silencioso = !!(opts && opts.silencioso);
   const btn = document.getElementById('btnAtualizarConsumoTab');
   if (btn && !silencioso) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...'; }
