@@ -4089,11 +4089,14 @@ if (URL_AGENDA === "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCjwo2zV2NW
 // trazia a aba padrão do documento).
 const FAT_URLS_OBSOLETAS = new Set([
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vRI6KeOkDW3Vc8KhSTaxjKLxeg_38R98Yl7v5rRPUnM2OauNVcLDLiRah6Rnnrduw/pub?output=csv",
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTe2DOUBArKJAsVfZ5HWuepUJ8hP2t-Rscv3uFRvBLgAQLXa2VwnGJ45dJkKMromA/pub?output=csv"
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTe2DOUBArKJAsVfZ5HWuepUJ8hP2t-Rscv3uFRvBLgAQLXa2VwnGJ45dJkKMromA/pub?output=csv",
+  DEFAULT_FATURAMENTO  // URL única legada — substituída pelas 12 abas individuais
 ]);
-let URL_FAT = localStorage.getItem("urlFaturamento") || DEFAULT_FATURAMENTO;
+// Padrão: 12 abas individuais (uma por motorista), formato "NOME|URL" ou só "URL".
+const DEFAULT_FAT_URLS = DEFAULT_FATURAMENTO_DOCS.join('\n');
+let URL_FAT = localStorage.getItem("urlFaturamento") || '';
 if (!URL_FAT || FAT_URLS_OBSOLETAS.has(URL_FAT.trim()) || /\/export\?format=csv/i.test(URL_FAT)) {
-  URL_FAT = DEFAULT_FATURAMENTO;
+  URL_FAT = DEFAULT_FAT_URLS;
   localStorage.removeItem("urlFaturamento");
 }
 
@@ -9066,7 +9069,7 @@ document.getElementById('saveUrlsBtn').onclick = () => {
   URL_CR = document.getElementById('urlContasReceber').value || DEFAULT_CONTAS_RECEBER;
   localStorage.setItem('urlContasReceber', URL_CR);
   URL_BAT = document.getElementById('urlBaterias').value || DEFAULT_BATERIAS;
-  URL_FAT = document.getElementById('urlFaturamento').value || DEFAULT_FATURAMENTO;
+  URL_FAT = document.getElementById('urlFaturamento').value || DEFAULT_FAT_URLS;
   URL_AGENDA = document.getElementById('urlAgenda').value.trim() || DEFAULT_AGENDA;
   localStorage.setItem('urlFinanceiro', URL_FIN);
   localStorage.setItem('urlBaterias', URL_BAT);
@@ -12499,7 +12502,7 @@ async function listarPDFsDrive(folderId) {
 // Lê o PDF do Drive via MCP (autenticado) e extrai dados estruturados com IA num único call
 async function lerPDFEExtrairDados(arquivo) {
   const statusEl = document.getElementById('fatDriveStatus');
-  statusEl.innerHTML = `<i class="fas fa-robot" style="color:var(--accent)"></i> IA lendo e extraindo dados de <b>${escapeHTML(arquivo.nome)}</b>...`;
+  if (statusEl) statusEl.innerHTML = `<i class="fas fa-robot" style="color:var(--accent)"></i> IA lendo e extraindo dados de <b>${escapeHTML(arquivo.nome)}</b>...`;
 
   // Usa Claude API + MCP Drive: baixa e lê o PDF em um único call autenticado.
   // Isso evita erros de CORS ao tentar baixar diretamente do Drive sem autenticação.
@@ -12563,19 +12566,19 @@ async function carregarPDFsDrive() {
   const listEl   = document.getElementById('fatPdfList');
 
   if (!folderId) {
-    statusEl.innerHTML = '<span style="color:var(--danger)"><i class="fas fa-exclamation-circle"></i> Configure a URL da pasta do Drive em <b>Config URLs</b>.</span>';
+    if (statusEl) statusEl.innerHTML = '<span style="color:var(--danger)"><i class="fas fa-exclamation-circle"></i> Configure a URL da pasta do Drive em <b>Config URLs</b>.</span>';
     return;
   }
 
-  statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Listando arquivos da pasta...';
-  listEl.innerHTML = '';
+  if (statusEl) statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Listando arquivos da pasta...';
+  if (listEl) listEl.innerHTML = '';
 
   let arquivos = [];
   try {
     arquivos = await listarPDFsDrive(folderId);
   } catch(e) {
     // Fallback: se não conseguiu listar, pede para inserir IDs manualmente
-    statusEl.innerHTML = `
+    if (statusEl) statusEl.innerHTML = `
       <span style="color:var(--warning)"><i class="fas fa-exclamation-triangle"></i> Não foi possível listar automaticamente (limitação CORS do Drive).</span>
       <br><small>Use o botão abaixo para adicionar PDFs manualmente pelo link de compartilhamento.</small>
       <br><button class="btn btn-accent btn-sm" style="margin-top:.5rem" onclick="adicionarPDFManual()">
@@ -12587,14 +12590,14 @@ async function carregarPDFsDrive() {
   const pdfArquivos = arquivos.filter(a => a.nome.toLowerCase().endsWith('.pdf'));
 
   if (!pdfArquivos.length) {
-    statusEl.innerHTML = '<span style="color:var(--warning)"><i class="fas fa-folder-open"></i> Nenhum PDF encontrado na pasta. Verifique se a pasta está pública e contém arquivos PDF.</span>';
+    if (statusEl) statusEl.innerHTML = '<span style="color:var(--warning)"><i class="fas fa-folder-open"></i> Nenhum PDF encontrado na pasta. Verifique se a pasta está pública e contém arquivos PDF.</span>';
     return;
   }
 
-  statusEl.innerHTML = `<i class="fas fa-check-circle" style="color:var(--success)"></i> <b>${pdfArquivos.length} PDF(s)</b> encontrado(s). Clique em "Processar" para extrair os dados.`;
+  if (statusEl) statusEl.innerHTML = `<i class="fas fa-check-circle" style="color:var(--success)"></i> <b>${pdfArquivos.length} PDF(s)</b> encontrado(s). Clique em "Processar" para extrair os dados.`;
 
   // Renderiza cards dos PDFs encontrados
-  listEl.innerHTML = pdfArquivos.map(a => `
+  if (listEl) listEl.innerHTML = pdfArquivos.map(a => `
     <div id="pdfcard_${a.id}" style="background:var(--gray-100);border-radius:var(--r12);padding:1rem;border:1px solid var(--gray-200)">
       <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem">
         <i class="fas fa-file-pdf" style="font-size:1.4rem;color:#e74c3c"></i>
@@ -12611,7 +12614,7 @@ async function carregarPDFsDrive() {
   `).join('');
 
   // Botão para processar todos
-  statusEl.innerHTML += `
+  if (statusEl) statusEl.innerHTML += `
     <button class="btn btn-success btn-sm" style="margin-top:.6rem" onclick="processarTodosPDFs(${JSON.stringify(pdfArquivos).replace(/"/g,'&quot;')})">
       <i class="fas fa-layer-group"></i> Processar TODOS os PDFs
     </button>`;
@@ -12633,20 +12636,21 @@ async function processarUmPDF(id, nome, urlDownload) {
     // Adiciona source para saber de qual PDF vieram
     lancamentos.forEach(l => l._pdf = nome);
 
-    // Mescla com dados existentes (evita duplicatas pelo número do lançamento)
-    const existingIds = new Set(faturamentoData.map(r => r.lancamento));
+    // Mescla com dados existentes via fatAllRecords (evita duplicatas pelo número do lançamento)
+    const existingIds = new Set(fatAllRecords.map(r => r.lancamento));
     const novos = lancamentos.filter(l => !existingIds.has(l.lancamento));
-    faturamentoData = [...faturamentoData, ...novos];
-    currentFaturamentoFiltered = [...faturamentoData];
+    fatAllRecords = [...fatAllRecords, ...novos];
 
     if (cardStatus) cardStatus.innerHTML = `<i class="fas fa-check" style="color:var(--success)"></i> ${novos.length} lançamentos extraídos`;
 
-    popularFiltroMotorista(faturamentoData);
-    aplicarFiltrosFaturamento();
-    document.getElementById('fat-pdfs').textContent = new Set(faturamentoData.map(r=>r._pdf)).size;
-
-    document.getElementById('fatDriveStatus').innerHTML =
-      `<i class="fas fa-check-circle" style="color:var(--success)"></i> Total: <b>${faturamentoData.length} lançamentos</b> carregados de <b>${new Set(faturamentoData.map(r=>r._pdf)).size} PDF(s)</b>.`;
+    fatPopularFiltros();
+    fatApplyFilters();
+    const totalPdfs = new Set(fatAllRecords.map(r=>r._pdf).filter(Boolean)).size;
+    const elPdfs = document.getElementById('fat-pdfs');
+    if (elPdfs) elPdfs.textContent = totalPdfs;
+    const elDriveStatus = document.getElementById('fatDriveStatus');
+    if (elDriveStatus) elDriveStatus.innerHTML =
+      `<i class="fas fa-check-circle" style="color:var(--success)"></i> Total: <b>${fatAllRecords.length} lançamentos</b> carregados de <b>${totalPdfs} PDF(s)</b>.`;
 
   } catch(e) {
     if (cardStatus) cardStatus.innerHTML = `<span style="color:var(--danger)"><i class="fas fa-times"></i> Erro: ${e.message}</span>`;
@@ -12692,7 +12696,7 @@ function adicionarPDFManual() {
     </div>
     <div id="pdfstatus_${id}" style="font-size:.75rem;color:var(--text-lt);margin-top:.4rem"></div>
   `;
-  listEl.appendChild(card);
+  if (listEl) listEl.appendChild(card);
 }
 
 // ═══════════════════════════════════════════════════════════
